@@ -8,18 +8,18 @@ import (
 //VerboseLogLevel specifies if log messages with level LOG should be logged
 var VerboseLogLevel = true
 
-// Performs logging to configuration database ConfigDB initiated during bootstrap
-func LogToDB(instanceId int, level string, msg ...interface{}) {
+// LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
+func LogToDB(instanceID int, level string, msg ...interface{}) {
 	if level == "LOG" && !VerboseLogLevel {
 		return
 	}
-	fmt.Printf("[%s:%d]:\t%s\n", level, instanceId, fmt.Sprint(msg...))
-	if instanceId == 0 {
+	fmt.Printf("[%s:%d]:\t%s\n", level, instanceID, fmt.Sprint(msg...))
+	if instanceID == 0 {
 		ConfigDb.MustExec(`INSERT INTO cyberbackup.t_log(pid, database_host_id, log_level, message) 
 				VALUES ($1, NULL, $2, $3)`, os.Getpid(), level, fmt.Sprint(msg...))
 	} else {
 		ConfigDb.MustExec(`INSERT INTO cyberbackup.t_log(pid, database_host_id, log_level, message) 
-			VALUES ($1, $2, $3, $4)`, os.Getpid(), instanceId, level, fmt.Sprint(msg...))
+			VALUES ($1, $2, $3, $4)`, os.Getpid(), instanceID, level, fmt.Sprint(msg...))
 	}
 	if level == "PANIC" {
 		panic(fmt.Sprint(msg...))
