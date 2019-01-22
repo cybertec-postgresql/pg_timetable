@@ -157,10 +157,15 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
       FROM   scheduler.database_connection AS a 
    WHERE a.database_connection = x.database_connection) AS b 
    FROM x`
+
   const sqlInsertRunStatus = `INSERT INTO scheduler.run_status 
 (chain_id, execution_status, started, start_status, chain_execution_config) 
 VALUES ($1, 'STARTED', now(), currval('scheduler.run_status_run_status_seq'), $2) 
 RETURNING run_status`
+
+  const sqlInsertFinishStatus = `INSERT INTO scheduler.run_status 
+(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
+VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
 
   var ChainElements []ChainElementExecution
   var runStatusID int
@@ -183,7 +188,7 @@ RETURNING run_status`
 
   /* now we can loop through every element of the task chain */
   for _, chainElemExec := range ChainElements {
-
+    chainElemExec.ChainID = chainID
     retCode := executeСhainElement(chainElemExec)
     pgengine.ConfigDb.MustExec(
       "INSERT INTO scheduler.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
@@ -193,14 +198,13 @@ RETURNING run_status`
       chainElemExec.Script, chainElemExec.IsSQL, retCode)
 
     if retCode < 0 {
-      tx.MustExec(
-        "INSERT INTO scheduler.run_status (chain_id, execution_status, "+
-          " current_execution_element, started, last_status_update, start_status, chain_execution_config) "+
-          " VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)",
-        chainElemExec.ChainID, "CHAIN_FAILED", chainElemExec.TaskID, runStatusID, chainConfigID)
+      tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "CHAIN_FAILED",
+        chainElemExec.TaskID, runStatusID, chainConfigID)
       pgengine.LogToDB(0, "ERROR", "Chain execution failed: ", chainElemExec)
+      return
     }
   }
+  tx.MustExec(sqlInsertFinishStatus, chainID, "CHAIN_DONE", nil, runStatusID, chainConfigID)
 }
 
 func executeСhainElement(ChainElemExec ChainElementExecution) int {
