@@ -2,6 +2,7 @@ package scheduler
 
 import (
   "fmt"
+  "os/exec"
   "time"
 
   "github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -189,7 +190,8 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
   /* now we can loop through every element of the task chain */
   for _, chainElemExec := range ChainElements {
     chainElemExec.ChainID = chainID
-    retCode := executeСhainElement(chainElemExec)
+    tx.MustExec(sqlInsertFinishStatus, chainID, "RUNNING", chainElemExec.TaskID, runStatusID, chainConfigID)
+    retCode := executeСhainElement(tx, chainElemExec)
     pgengine.ConfigDb.MustExec(
       "INSERT INTO scheduler.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
         "is_sql, last_run, finished, returncode, pid) "+
@@ -198,16 +200,57 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
       chainElemExec.Script, chainElemExec.IsSQL, retCode)
 
     if retCode < 0 {
-      tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "CHAIN_FAILED",
+      tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "FAILED",
         chainElemExec.TaskID, runStatusID, chainConfigID)
       pgengine.LogToDB(0, "ERROR", "Chain execution failed: ", chainElemExec)
       return
     }
+
+    tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "SUCCESS",
+      chainElemExec.TaskID, runStatusID, chainConfigID)
   }
   tx.MustExec(sqlInsertFinishStatus, chainID, "CHAIN_DONE", nil, runStatusID, chainConfigID)
 }
 
-func executeСhainElement(ChainElemExec ChainElementExecution) int {
+func executeСhainElement(tx *sqlx.Tx, ChainElemExec ChainElementExecution) int {
+  const sqlGetParamValues = `SELECT value
+FROM  timetable.chain_execution_parameters
+WHERE chain_execution_config = $1
+  AND chain_id = $2
+ORDER BY order_id ASC`
+  var err error
+
+  pgengine.LogToDB(0, "LOG", fmt.Sprintf(
+    "Executing task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
+    ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+
+  var paramValues []string
+  err = tx.Select(&paramValues, sqlGetParamValues, ChainElemExec.ChainConfig, ChainElemExec.ChainID)
+  if err != nil {
+    pgengine.LogToDB(0, "ERROR", "Cannot fetch parameters values for chain: ", err)
+    return -1
+  }
+
+  pgengine.LogToDB(0, "LOG", fmt.Sprintf(
+    "Parameters found for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
+    ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+
+  if ChainElemExec.IsSQL {
+    _, err = tx.Exec(ChainElemExec.Script, paramValues)
+  } else {
+    command := exec.Command(ChainElemExec.Script, paramValues...) // #nosec
+    err = command.Run()
+  }
+  if err != nil {
+    pgengine.LogToDB(0, "ERROR", fmt.Sprintf(
+      "Chain execution failed for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
+      ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+    return -1
+  }
+
+  pgengine.LogToDB(0, "LOG", fmt.Sprintf(
+    "Chain executed successfully for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
+    ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
   return 0
 }
 
