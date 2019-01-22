@@ -99,33 +99,28 @@ func Run() {
 }
 
 func chainWorker(chains <-chan Chain) {
+
+  const sqlCanProcees = `SELECT $1 > count(*) 
+FROM scheduler.get_running_jobs($2) AS (chain_execution_config int4, start_status int4)
+GROUP BY 1 
+LIMIT 1`
+
   for chain := range chains {
     pgengine.LogToDB(0, "log", fmt.Sprintf("calling process chain for %+v", chain))
 
     tx := pgengine.ConfigDb.MustBegin()
 
-    query := "SELECT $1 > count(*) " +
-      " FROM scheduler.get_running_jobs($2) AS (chain_execution_config int4, start_status int4) " +
-      " GROUP BY 1 LIMIT 1"
-
     for canProceed := false; !canProceed; {
-      if err := tx.Get(&canProceed, query, chain.MaxInstances, chain.ChainExecutionConfigID); err != nil {
+      if err := tx.Get(&canProceed, sqlCanProcees, chain.MaxInstances, chain.ChainExecutionConfigID); err != nil {
         pgengine.LogToDB(0, "PANIC", "Application cannot read information concurrent running jobs: ", err)
       }
       time.Sleep(3 * time.Second)
     }
-
-    /* execute a chain */
     executeChain(tx, chain.ChainExecutionConfigID, chain.ChainID)
-
-    /* we can safely check for "self_destruct" here. if we fucked up inside the chain
-     * we will never make it to this code here. we would have exited before already.
-     * so, if the variable is true, we can start the DB and kill the chain_execution_config. */
     if chain.SelfDestruct {
       tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
         chain.ChainExecutionConfigID)
     }
-
     if err := tx.Commit(); err != nil {
       pgengine.LogToDB(0, "PANIC", "Application cannot commit after job finished: ", err)
     }
