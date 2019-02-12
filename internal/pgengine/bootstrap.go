@@ -12,6 +12,9 @@ import (
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
 
+// SQLSchemaFile contains the name of the file should be executed during bootstrap
+const SQLSchemaFile string = "ddl.sql"
+
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode, schemafile string) {
 	var err error
