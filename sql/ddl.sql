@@ -117,12 +117,12 @@ CREATE TABLE timetable.execution_log (
 	pid             		bigint
 );
 
-CREATE TYPE execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
+CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
 
 CREATE TABLE timetable.run_status (
 	run_status 			bigserial, 
 	start_status			int4,
-	execution_status 		execution_status, 
+	execution_status 		timetable.execution_status, 
 	chain_id 			int4, 
 	current_execution_element 	int4, 
 	started 			timestamp, 
