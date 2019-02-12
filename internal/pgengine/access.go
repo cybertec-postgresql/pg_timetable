@@ -9,20 +9,17 @@ import (
 var VerboseLogLevel = true
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
-func LogToDB(instanceID int, level string, msg ...interface{}) {
+func LogToDB(clientID string, level string, msg ...interface{}) {
 	if level == "LOG" && !VerboseLogLevel {
 		return
 	}
-	fmt.Printf("[%s:%d]:\t%s\n", level, instanceID, fmt.Sprint(msg...))
-	if instanceID == 0 {
-		ConfigDb.MustExec(`INSERT INTO timetable.t_log(pid, database_host_id, log_level, message) 
-				VALUES ($1, NULL, $2, $3)`, os.Getpid(), level, fmt.Sprint(msg...))
-	} else {
-		ConfigDb.MustExec(`INSERT INTO timetable.t_log(pid, database_host_id, log_level, message) 
-			VALUES ($1, $2, $3, $4)`, os.Getpid(), instanceID, level, fmt.Sprint(msg...))
-	}
+	ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) 
+		VALUES ($1, $2, $3, $4)`, os.Getpid(), clientID, level, fmt.Sprint(msg...))
+	s := fmt.Sprintf("[%s:%s]:\t%s\n", level, clientID, fmt.Sprint(msg...))
 	if level == "PANIC" {
-		panic(fmt.Sprint(msg...))
+		panic(s)
+	} else {
+		fmt.Println(s)
 	}
 }
 
