@@ -90,6 +90,19 @@ CREATE TABLE timetable.chain_execution_parameters(
 );
 
 
+-- log client application related actions
+CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC');
+
+CREATE TABLE timetable.log
+(
+	id					bigserial		PRIMARY KEY,
+	ts					timestamptz	DEFAULT now(),
+	client_name	        text,
+	pid					int 		NOT NULL,
+	log_level			timetable.log_type	NOT NULL,
+	message				text
+);
+
 -- log timetable related action
 CREATE TABLE timetable.execution_log (
 	chain_execution_config		integer, 
