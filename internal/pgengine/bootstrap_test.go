@@ -9,7 +9,7 @@ import (
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	t.Log("setup test case")
 	return func(t *testing.T) {
-		ConfigDb.MustExec("DROP IF EXISTS SCHEMA timetable")
+		ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable")
 		t.Log("test schema dropped")
 	}
 }
