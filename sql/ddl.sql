@@ -1,7 +1,7 @@
-CREATE SCHEMA timetable;
+CREATE SCHEMA pg_timetable;
 
 -- define database connections for script execution
-CREATE TABLE timetable.database_connection (
+CREATE TABLE pg_timetable.database_connection (
 	database_connection 	bigserial, 
 	connect_string 		text		NOT NULL, 
 	comment 		text, 
@@ -15,7 +15,7 @@ CREATE TABLE timetable.database_connection (
 --      command string to be executed
 --      
 -- "is_sql" indicates whether "script" is SQL or external
-CREATE TABLE timetable.base_task (
+CREATE TABLE pg_timetable.base_task (
 	task_id		bigserial  	PRIMARY KEY,
 	name		text    	NOT NULL UNIQUE,
 	script		text		NOT NULL,
@@ -33,16 +33,16 @@ CREATE TABLE timetable.base_task (
 -- "ignore_error" indicates whether the next task
 --      in the chain can be executed regardless of the
 --      success of the current one
-CREATE TABLE timetable.task_chain (
+CREATE TABLE pg_timetable.task_chain (
 	chain_id        	bigserial	PRIMARY KEY,
-	parent_id			integer 	UNIQUE  REFERENCES timetable.task_chain(chain_id)
+	parent_id			integer 	UNIQUE  REFERENCES pg_timetable.task_chain(chain_id)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
-	task_id				integer		NOT NULL REFERENCES timetable.base_task(task_id)
+	task_id				integer		NOT NULL REFERENCES pg_timetable.base_task(task_id)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
 	run_uid				text,
-	database_connection		int4	REFERENCES timetable.database_connection(database_connection)
+	database_connection		int4	REFERENCES pg_timetable.database_connection(database_connection)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
 	ignore_error			boolean		DEFAULT false
@@ -57,9 +57,9 @@ CREATE TABLE timetable.task_chain (
 -- "max_instances" is the number of instances this chain can run in parallel
 -- "live" is the indication that the chain is finalized, the system can run it
 -- "self_destruct" is the indication that this chain will delete itself after run
-CREATE TABLE timetable.chain_execution_config (
+CREATE TABLE pg_timetable.chain_execution_config (
     chain_execution_config   	bigserial		PRIMARY KEY,
-    chain_id        		integer 	REFERENCES timetable.task_chain(chain_id)
+    chain_id        		integer 	REFERENCES pg_timetable.task_chain(chain_id)
                                             	ON UPDATE CASCADE
 						ON DELETE CASCADE,
     chain_name      		text		NOT NULL UNIQUE,
@@ -77,11 +77,11 @@ CREATE TABLE timetable.chain_execution_config (
 
 
 -- parameter passing for config
-CREATE TABLE timetable.chain_execution_parameters(
-	chain_execution_config		int4	REFERENCES timetable.chain_execution_config (chain_execution_config)
+CREATE TABLE pg_timetable.chain_execution_parameters(
+	chain_execution_config		int4	REFERENCES pg_timetable.chain_execution_config (chain_execution_config)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE, 
-	chain_id 			int4 		REFERENCES timetable.task_chain(chain_id)
+	chain_id 			int4 		REFERENCES pg_timetable.task_chain(chain_id)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
 	order_id 			int4		CHECK (order_id > 0),
@@ -90,8 +90,8 @@ CREATE TABLE timetable.chain_execution_parameters(
 );
 
 
--- log timetable related action
-CREATE TABLE timetable.execution_log (
+-- log pg_timetable related action
+CREATE TABLE pg_timetable.execution_log (
 	chain_execution_config		integer, 
 	chain_id        		integer,
 	task_id         		integer,
@@ -106,7 +106,7 @@ CREATE TABLE timetable.execution_log (
 
 CREATE TYPE execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
 
-CREATE TABLE timetable.run_status (
+CREATE TABLE pg_timetable.run_status (
 	run_status 			bigserial, 
 	start_status			int4,
 	execution_status 		execution_status, 
@@ -125,7 +125,7 @@ CREATE TABLE timetable.run_status (
 -- this stored procedure will tell us which scripts chains
 -- have to be executed
 -- $1: chain execution config id
-CREATE OR REPLACE FUNCTION timetable.check_task(int) RETURNS boolean AS 
+CREATE OR REPLACE FUNCTION pg_timetable.check_task(int) RETURNS boolean AS 
 $$
 DECLARE	
 	v_chain_exec_conf	ALIAS FOR $1;
@@ -134,7 +134,7 @@ DECLARE
 	v_return		boolean;
 BEGIN
 	SELECT * 	
-		FROM 	timetable.chain_execution_config 
+		FROM 	pg_timetable.chain_execution_config 
 		WHERE 	chain_execution_config = v_chain_exec_conf
 		INTO v_record;
 
@@ -156,9 +156,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 
-DROP TRIGGER IF EXISTS trig_task_chain_fixer ON timetable.base_task;
+DROP TRIGGER IF EXISTS trig_task_chain_fixer ON pg_timetable.base_task;
 
-CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
+CREATE OR REPLACE FUNCTION pg_timetable.trig_chain_fixer() RETURNS trigger AS $$
 	DECLARE
 		tmp_parent_id INTEGER;
 		tmp_chain_id INTEGER;
@@ -169,7 +169,7 @@ CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 		--raise notice 'Fixing chain for deletion of base_task#%', OLD.task_id;
 
 		FOR orig_chain_id IN
-			SELECT chain_id FROM timetable.task_chain WHERE task_id = OLD.task_id
+			SELECT chain_id FROM pg_timetable.task_chain WHERE task_id = OLD.task_id
 		LOOP
 
 			--raise notice 'chain_id#%', orig_chain_id;	
@@ -177,21 +177,21 @@ CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 			i := 0;
 			LOOP
 				i := i + 1;
-				SELECT parent_id INTO tmp_parent_id FROM timetable.task_chain
+				SELECT parent_id INTO tmp_parent_id FROM pg_timetable.task_chain
 					WHERE chain_id = tmp_chain_id;
 				EXIT WHEN tmp_parent_id IS NULL;
 				IF i > 100 THEN
-					RAISE EXCEPTION 'Infinite loop at timetable.task_chain.chain_id=%', tmp_chain_id;
+					RAISE EXCEPTION 'Infinite loop at pg_timetable.task_chain.chain_id=%', tmp_chain_id;
 					RETURN NULL;
 				END IF;
 				tmp_chain_id := tmp_parent_id;
 			END LOOP;
 			
-			SELECT chain_head_id INTO tmp_chain_head_id FROM timetable.task_chain_head
+			SELECT chain_head_id INTO tmp_chain_head_id FROM pg_timetable.task_chain_head
 				WHERE chain_id = tmp_chain_id;
 				
 			--raise notice 'PERFORM task_chain_delete(%,%)', tmp_chain_head_id, orig_chain_id;
-			PERFORM timetable.task_chain_delete(tmp_chain_head_id, orig_chain_id);
+			PERFORM pg_timetable.task_chain_delete(tmp_chain_head_id, orig_chain_id);
 
 		END LOOP;
 		
@@ -200,16 +200,16 @@ CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 $$ LANGUAGE 'plpgsql';
 
 CREATE TRIGGER trig_task_chain_fixer
-        BEFORE DELETE ON timetable.base_task
-        FOR EACH ROW EXECUTE PROCEDURE timetable.trig_chain_fixer();
+        BEFORE DELETE ON pg_timetable.base_task
+        FOR EACH ROW EXECUTE PROCEDURE pg_timetable.trig_chain_fixer();
 
 
 -- see which jobs are running
-CREATE OR REPLACE FUNCTION timetable.get_running_jobs (int) RETURNS SETOF record AS $$
+CREATE OR REPLACE FUNCTION pg_timetable.get_running_jobs (int) RETURNS SETOF record AS $$
 	SELECT  chain_execution_config, start_status
-		FROM	timetable.run_status
+		FROM	pg_timetable.run_status
 		WHERE 	start_status IN ( SELECT   start_status
-				FROM	timetable.run_status
+				FROM	pg_timetable.run_status
 				WHERE	execution_status IN ('STARTED', 'CHAIN_FAILED',
 						     'CHAIN_DONE', 'DEAD')
 					AND (chain_execution_config = $1 OR chain_execution_config = 0)

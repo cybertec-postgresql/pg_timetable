@@ -118,7 +118,7 @@ LIMIT 1`
     }
     executeChain(tx, chain.ChainExecutionConfigID, chain.ChainID)
     if chain.SelfDestruct {
-      tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
+      tx.MustExec("DELETE FROM pg_timetable.chain_execution_config WHERE chain_execution_config = $1 ",
         chain.ChainExecutionConfigID)
     }
     if err := tx.Commit(); err != nil {
@@ -209,7 +209,7 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
 
 func executeСhainElement(tx *sqlx.Tx, ChainElemExec ChainElementExecution) int {
   const sqlGetParamValues = `SELECT value
-FROM  timetable.chain_execution_parameters
+FROM  pg_timetable.chain_execution_parameters
 WHERE chain_execution_config = $1
   AND chain_id = $2
 ORDER BY order_id ASC`
