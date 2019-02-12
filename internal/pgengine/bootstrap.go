@@ -37,10 +37,7 @@ func createConfigDBSchema(schemafile string) {
 	if err != nil {
 		log.Fatalln("Cannot open schema file.", err)
 	}
-	_, err = ConfigDb.Exec(string(b))
-	if err != nil {
-		log.Fatalln(err)
-	}
+	ConfigDb.MustExec(string(b))
 	LogToDB("LOG", fmt.Sprintf("Created timetable schema from file: %s", schemafile))
 }
 
