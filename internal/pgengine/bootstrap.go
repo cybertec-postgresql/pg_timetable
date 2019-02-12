@@ -30,7 +30,7 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode, 
 	}
 
 	var exists bool
-	row := ConfigDb.QueryRow("SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'pg_timetable')")
+	row := ConfigDb.QueryRow("SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err := row.Scan(&exists); err != nil {
 		log.Fatalln(err)
 	}
@@ -50,7 +50,7 @@ func createConfigDBSchema(schemafile string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	LogToDB(0, "LOG", fmt.Sprintf("Created pg_timetable schema from file: %s", schemafile))
+	LogToDB(0, "LOG", fmt.Sprintf("Created timetable schema from file: %s", schemafile))
 }
 
 // FinalizeConfigDBConnection closes session

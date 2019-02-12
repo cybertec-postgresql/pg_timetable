@@ -15,10 +15,10 @@ func LogToDB(instanceID int, level string, msg ...interface{}) {
 	}
 	fmt.Printf("[%s:%d]:\t%s\n", level, instanceID, fmt.Sprint(msg...))
 	if instanceID == 0 {
-		ConfigDb.MustExec(`INSERT INTO pg_timetable.t_log(pid, database_host_id, log_level, message) 
+		ConfigDb.MustExec(`INSERT INTO timetable.t_log(pid, database_host_id, log_level, message) 
 				VALUES ($1, NULL, $2, $3)`, os.Getpid(), level, fmt.Sprint(msg...))
 	} else {
-		ConfigDb.MustExec(`INSERT INTO pg_timetable.t_log(pid, database_host_id, log_level, message) 
+		ConfigDb.MustExec(`INSERT INTO timetable.t_log(pid, database_host_id, log_level, message) 
 			VALUES ($1, $2, $3, $4)`, os.Getpid(), instanceID, level, fmt.Sprint(msg...))
 	}
 	if level == "PANIC" {
@@ -30,10 +30,10 @@ func LogToDB(instanceID int, level string, msg ...interface{}) {
 and marked as stopped at a certain point */
 func FixSchedulerCrash() {
 	ConfigDb.MustExec(
-		`INSERT INTO pg_timetable.run_status (execution_status, started, last_status_update, start_status)
+		`INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
   SELECT 'SCHEDULER_DEATH', now(), now(), start_status FROM (
    SELECT   start_status
-     FROM   pg_timetable.run_status
+     FROM   timetable.run_status
      WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED',
                 'CHAIN_DONE', 'SCHEDULER_DEATH')
      GROUP BY 1
