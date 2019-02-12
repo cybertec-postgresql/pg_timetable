@@ -56,7 +56,7 @@ func Run() {
 
     if doStartUpTasks {
       /* This is the first task execution after startup, so we will execute one-time tasks... */
-      pgengine.LogToDB(0, "log", "checking for startup task chains ...")
+      pgengine.LogToDB("log", "checking for startup task chains ...")
       query = " SELECT   chain_execution_config, chain_id, chain_name, " +
         "    self_destruct, exclusive_execution, excluded_execution_configs, " +
         "    COALESCE(max_instances, 999), " +
@@ -67,7 +67,7 @@ func Run() {
       doStartUpTasks = false
     } else {
       /* ask the database which chains it has to perform */
-      pgengine.LogToDB(0, "log", "checking for task chains ...")
+      pgengine.LogToDB("log", "checking for task chains ...")
 
       query = " SELECT   chain_execution_config, chain_id, chain_name, " +
         "    self_destruct, exclusive_execution, excluded_execution_configs, " +
@@ -81,14 +81,14 @@ func Run() {
     headChains := []Chain{}
     err := pgengine.ConfigDb.Select(&headChains, query)
     if err != nil {
-      pgengine.LogToDB(0, "log", "could not query pending tasks:", err)
+      pgengine.LogToDB("log", "could not query pending tasks:", err)
       return
     }
-    pgengine.LogToDB(0, "log", "Number of chain head tuples: ", len(headChains))
+    pgengine.LogToDB("log", "Number of chain head tuples: ", len(headChains))
 
     /* now we can loop through so chains */
     for _, headChain := range headChains {
-      pgengine.LogToDB(0, "log", fmt.Sprintf("calling process chain for %+v", headChain))
+      pgengine.LogToDB("log", fmt.Sprintf("calling process chain for %+v", headChain))
       // put headChain to the channel, then chainWorker will do the magic
       chains <- headChain
     }
@@ -106,13 +106,13 @@ GROUP BY 1
 LIMIT 1`
 
   for chain := range chains {
-    pgengine.LogToDB(0, "log", fmt.Sprintf("calling process chain for %+v", chain))
+    pgengine.LogToDB("log", fmt.Sprintf("calling process chain for %+v", chain))
 
     tx := pgengine.ConfigDb.MustBegin()
 
     for canProceed := false; !canProceed; {
       if err := tx.Get(&canProceed, sqlCanProcees, chain.MaxInstances, chain.ChainExecutionConfigID); err != nil {
-        pgengine.LogToDB(0, "PANIC", "Application cannot read information concurrent running jobs: ", err)
+        pgengine.LogToDB("PANIC", "Application cannot read information concurrent running jobs: ", err)
       }
       time.Sleep(3 * time.Second)
     }
@@ -122,7 +122,7 @@ LIMIT 1`
         chain.ChainExecutionConfigID)
     }
     if err := tx.Commit(); err != nil {
-      pgengine.LogToDB(0, "PANIC", "Application cannot commit after job finished: ", err)
+      pgengine.LogToDB("PANIC", "Application cannot commit after job finished: ", err)
     }
   }
 }
@@ -166,20 +166,20 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
   var ChainElements []ChainElementExecution
   var runStatusID int
 
-  pgengine.LogToDB(0, "LOG", "Executing chain: ", chainID)
+  pgengine.LogToDB("LOG", "Executing chain: ", chainID)
 
   /* init the execution run log. we will use to effectively control
    * scheduler concurrency */
   err := tx.Get(&runStatusID, sqlInsertRunStatus, chainID, chainConfigID)
   if err != nil {
-    pgengine.LogToDB(0, "ERROR", "Cannot save information about the chain run status: ", err)
+    pgengine.LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
   }
 
   /* execute query */
   err = tx.Select(&ChainElements, sqlSelectChains, chainID)
 
   if err != nil {
-    pgengine.LogToDB(0, "ERROR", "Recursive queries to fetch task chain failed: ", err)
+    pgengine.LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
   }
 
   /* now we can loop through every element of the task chain */
@@ -197,7 +197,7 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
     if retCode < 0 {
       tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "FAILED",
         chainElemExec.TaskID, runStatusID, chainConfigID)
-      pgengine.LogToDB(0, "ERROR", "Chain execution failed: ", chainElemExec)
+      pgengine.LogToDB("ERROR", "Chain execution failed: ", chainElemExec)
       return
     }
 
@@ -215,18 +215,18 @@ WHERE chain_execution_config = $1
 ORDER BY order_id ASC`
   var err error
 
-  pgengine.LogToDB(0, "LOG", fmt.Sprintf(
+  pgengine.LogToDB("LOG", fmt.Sprintf(
     "Executing task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
     ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
 
   var paramValues []string
   err = tx.Select(&paramValues, sqlGetParamValues, ChainElemExec.ChainConfig, ChainElemExec.ChainID)
   if err != nil {
-    pgengine.LogToDB(0, "ERROR", "Cannot fetch parameters values for chain: ", err)
+    pgengine.LogToDB("ERROR", "Cannot fetch parameters values for chain: ", err)
     return -1
   }
 
-  pgengine.LogToDB(0, "LOG", fmt.Sprintf(
+  pgengine.LogToDB("LOG", fmt.Sprintf(
     "Parameters found for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
     ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
 
@@ -237,13 +237,13 @@ ORDER BY order_id ASC`
     err = command.Run()
   }
   if err != nil {
-    pgengine.LogToDB(0, "ERROR", fmt.Sprintf(
+    pgengine.LogToDB("ERROR", fmt.Sprintf(
       "Chain execution failed for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
       ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
     return -1
   }
 
-  pgengine.LogToDB(0, "LOG", fmt.Sprintf(
+  pgengine.LogToDB("LOG", fmt.Sprintf(
     "Chain executed successfully for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
     ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
   return 0

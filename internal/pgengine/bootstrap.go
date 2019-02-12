@@ -12,6 +12,9 @@ import (
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
 
+// ClientName is unique ifentifier of the scheduler application running
+var ClientName string
+
 // SQLSchemaFile contains the name of the file should be executed during bootstrap
 const SQLSchemaFile string = "ddl.sql"
 
@@ -24,9 +27,9 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode, 
 	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		createConfigDBSchema(schemafile)
-		LogToDB(0, "LOG", "Configuration schema created...")
+		LogToDB("LOG", "Configuration schema created...")
 	}
-	LogToDB(0, "LOG", "Connection established...")
+	LogToDB("LOG", "Connection established...")
 }
 
 func createConfigDBSchema(schemafile string) {
@@ -38,12 +41,12 @@ func createConfigDBSchema(schemafile string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	LogToDB(0, "LOG", fmt.Sprintf("Created timetable schema from file: %s", schemafile))
+	LogToDB("LOG", fmt.Sprintf("Created timetable schema from file: %s", schemafile))
 }
 
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
-	LogToDB(0, "LOG", "Closing session")
+	LogToDB("LOG", "Closing session")
 	if err := ConfigDb.Close(); err != nil {
 		log.Fatalln("Cannot close database connection:", err)
 	}
