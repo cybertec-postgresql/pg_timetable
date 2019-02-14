@@ -10,3 +10,9 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Visual Studio Code internal folder
+.vscode
+
+# delve debugger file
+debug
