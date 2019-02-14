@@ -35,7 +35,7 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode, 
 func createConfigDBSchema(schemafile string) {
 	b, err := ioutil.ReadFile(schemafile) // nolint: gosec
 	if err != nil {
-		log.Fatalln("Cannot open schema file.", err)
+		panic(err)
 	}
 	ConfigDb.MustExec(string(b))
 	LogToDB("LOG", fmt.Sprintf("Created timetable schema from file: %s", schemafile))
@@ -47,4 +47,5 @@ func FinalizeConfigDBConnection() {
 	if err := ConfigDb.Close(); err != nil {
 		log.Fatalln("Cannot close database connection:", err)
 	}
+	ConfigDb = nil
 }

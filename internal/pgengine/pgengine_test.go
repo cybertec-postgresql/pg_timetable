@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,6 +19,10 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 
 func TestBootstrapSQLFileExists(t *testing.T) {
 	assert.FileExists(t, "../../sql/"+SQLSchemaFile, "Bootstrap file doesn't exist")
+}
+
+func TestCreateConfigDBSchemaWithoutFile(t *testing.T) {
+	assert.Panics(t, func() { createConfigDBSchema("wrong path") }, "Should panic with nonexistent file")
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
@@ -74,5 +77,13 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 
 	t.Run("Check fix scheduler crash", func(t *testing.T) {
 		assert.NotPanics(t, FixSchedulerCrash, "Fix scheduler crash failed")
+	})
+
+	t.Run("Check connection closing", func(t *testing.T) {
+		FinalizeConfigDBConnection()
+		assert.Nil(t, ConfigDb, "Connection isn't closed properly")
+		// reinit connection to execute teardown actions
+		InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
+			"scheduler", "disable", "../../sql/"+SQLSchemaFile)
 	})
 }
