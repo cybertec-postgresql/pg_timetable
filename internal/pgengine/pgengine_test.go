@@ -71,4 +71,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("Check fix scheduler crash", func(t *testing.T) {
+		assert.NotPanics(t, FixSchedulerCrash, "Fix scheduler crash failed")
+	})
 }
