@@ -8,6 +8,9 @@ import (
 // VerboseLogLevel specifies if log messages with level LOG should be logged
 var VerboseLogLevel = true
 
+// InvalidOid specifies value for non-existent objects
+const InvalidOid = 0
+
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(level string, msg ...interface{}) {
 	if level == "LOG" && !VerboseLogLevel {
