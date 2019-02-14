@@ -3,6 +3,8 @@ package pgengine
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +17,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 }
 
 func TestBootstrapSQLFileExists(t *testing.T) {
-	require.FileExists(t, "../../sql/"+SQLSchemaFile, "Bootstrap file doesn't exist")
+	assert.FileExists(t, "../../sql/"+SQLSchemaFile, "Bootstrap file doesn't exist")
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
@@ -26,4 +28,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		"scheduler", "disable", "../../sql/"+SQLSchemaFile)
 
 	require.NotNil(t, ConfigDb, "ConfigDB should be initialized")
+	ConfigDb.MustExec("SELECT 'timetable.log' :: regclass")
+
 }
