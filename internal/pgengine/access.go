@@ -33,13 +33,12 @@ func LogToDB(level string, msg ...interface{}) {
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func FixSchedulerCrash() {
-	ConfigDb.MustExec(
-		`INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
-  SELECT 'SCHEDULER_DEATH', now(), now(), start_status FROM (
+	ConfigDb.MustExec(`
+INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
+  SELECT 'DEAD', now(), now(), start_status FROM (
    SELECT   start_status
      FROM   timetable.run_status
-     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED',
-                'CHAIN_DONE', 'SCHEDULER_DEATH')
+     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
      GROUP BY 1
      HAVING count(*) < 2 ) AS abc`)
 }
