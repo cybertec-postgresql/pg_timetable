@@ -41,4 +41,34 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			assert.NotEqual(t, InvalidOid, oid, fmt.Sprintf("timetable.%s table doesn't exist", tableName))
 		}
 	})
+
+	t.Run("Check log facility", func(t *testing.T) {
+		var count int
+		logLevels := []string{"DEBUG", "NOTICE", "LOG", "ERROR", "PANIC"}
+		for _, VerboseLogLevel = range []bool{true, false} {
+			ConfigDb.MustExec("TRUNCATE timetable.log")
+			for _, logLevel := range logLevels {
+				if logLevel == "PANIC" {
+					assert.Panics(t, func() {
+						LogToDB(logLevel, logLevel)
+					}, "LogToDB did not panic")
+				} else {
+					assert.NotPanics(t, func() {
+						LogToDB(logLevel, logLevel)
+					}, "LogToDB panicked")
+				}
+
+				if !VerboseLogLevel {
+					switch logLevel {
+					case "DEBUG", "NOTICE", "LOG":
+						continue
+					}
+				}
+				err := ConfigDb.Get(&count, "SELECT count(1) FROM timetable.log WHERE log_level = $1 AND message = $2",
+					logLevel, logLevel)
+				assert.NoError(t, err, fmt.Sprintf("Query for %s log entry failed", logLevel))
+				assert.Equal(t, 1, count, fmt.Sprintf("%s log entry doesn't exist", logLevel))
+			}
+		}
+	})
 }
