@@ -47,7 +47,7 @@ useful for you. Internal task is something, we implemented directly in Go.
 Sending emails or so is really easier to handle in a high-level programming
 language and therefore we decided to do that in the Go application directly to
 make things more portable and easier to use (running "mail" from command line is
-not what post people are looking for - especially not on Windows or so).
+not what most people are looking for - especially not on Windows or so).
 
 The next building block is a "chain". A chain is simply a list of tasks. An
 example of a chain would be:
