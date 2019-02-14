@@ -153,6 +153,40 @@ to check out the timetable.run_status table. It contains information about which
 jobs are running at the moment and which parameters happen to be in use. It
 helps you to debug your infrastructure fast and easily.
 
+Install and run
+---------------
+
+1. You need to downlod and [install Go](https://golang.org/doc/install) in your system.
+2. Download and install `pg_timetable` sources and dependent packages:
+```
+$ env GIT_TERMINAL_PROMPT=1 go get github.com/cybertec-postgresql/pg_timetable/cmd/pg_timetable
+Username for 'https://github.com': cyberboy
+Password for 'https://cyberboy@github.com': <cyberpwd> 
+```
+3. Setup PostgreSQL database and role:
+```
+CREATE DATABASE timetable;
+CREATE USER scheduler PASSWORD 'somestrong';
+GRANT CREATE ON DATABASE timetable TO scheduler;
+```
+
+4. Run `pg_timetable`:
+```
+$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/cmd/pg_timetable
+$ go run main.go --dbname=dbname --name=worker001 --user=scheduler --password=somestrong
+```
+or
+```
+$ go build
+$ ./pg_timetable --dbname=dbname --name=worker001 --user=scheduler --password=somestrong
+```
+
+5. Run tests in all sub-folders of the project:
+```
+$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
+$ go get github.com/stretchr/testify/
+$ go test ./...
+```
 
 Patches are welcome
 ----------------------
