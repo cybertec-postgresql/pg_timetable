@@ -31,13 +31,13 @@ type cmdOptions struct {
 var cmdOpts cmdOptions
 
 func main() {
-	if len(os.Args) < 2 {
-		usage()
-		return
-	}
 	parser := flags.NewParser(&cmdOpts, flags.Default)
 	if _, err := parser.Parse(); err != nil {
 		panic(err)
+	}
+	if len(os.Args) < 2 {
+		parser.WriteHelp(os.Stdout)
+		return
 	}
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
 	if cmdOpts.Verbose {
@@ -47,17 +47,5 @@ func main() {
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v\n", cmdOpts))
 	defer pgengine.FinalizeConfigDBConnection()
 	scheduler.Run()
-	return
-}
-
-/* display the syntax of this program */
-func usage() {
-	fmt.Print(`
-pg_timetable - task scheduler and executor
-Usage: pg_timetable [options] 
-  -f: configuration file used to configure the connect string.
-  -d  defines the number of days we want to keep in the run log
-  -h  display usage
-Reports bugs to https://github.com/cybertec-postgresql/pg_timetable`)
 	return
 }
