@@ -13,8 +13,12 @@ const InvalidOid = 0
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(level string, msg ...interface{}) {
-	if level == "LOG" && !VerboseLogLevel {
-		return
+	if !VerboseLogLevel {
+		switch level {
+		case
+			"DEBUG", "NOTICE", "LOG":
+			return
+		}
 	}
 	ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) 
 		VALUES ($1, $2, $3, $4)`, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
