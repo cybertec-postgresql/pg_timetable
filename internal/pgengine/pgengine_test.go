@@ -10,7 +10,9 @@ import (
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	ClientName = "pgengine_unit_test"
-	t.Log("setup test case")
+	t.Log("Setup test case")
+	InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
+		"scheduler", "disable", "../../sql/"+SQLSchemaFile)
 	return func(t *testing.T) {
 		ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
@@ -29,8 +31,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
 
-	InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-		"scheduler", "disable", "../../sql/"+SQLSchemaFile)
 	require.NotNil(t, ConfigDb, "ConfigDB should be initialized")
 
 	t.Run("Check timetable tables", func(t *testing.T) {
@@ -75,15 +75,24 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		}
 	})
 
-	t.Run("Check fix scheduler crash", func(t *testing.T) {
-		assert.NotPanics(t, FixSchedulerCrash, "Fix scheduler crash failed")
-	})
-
 	t.Run("Check connection closing", func(t *testing.T) {
 		FinalizeConfigDBConnection()
 		assert.Nil(t, ConfigDb, "Connection isn't closed properly")
 		// reinit connection to execute teardown actions
 		InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
 			"scheduler", "disable", "../../sql/"+SQLSchemaFile)
+	})
+}
+
+func TestSchedulerFunctions(t *testing.T) {
+	teardownTestCase := setupTestCase(t)
+	defer teardownTestCase(t)
+
+	t.Run("Check fix scheduler crash", func(t *testing.T) {
+		assert.NotPanics(t, FixSchedulerCrash, "Fix scheduler crash failed")
+	})
+
+	t.Run("Check CanProceedChainExecution funtion", func(t *testing.T) {
+		assert.Equal(t, true, CanProceedChainExecution(0, 0), "Should proceed with clean database")
 	})
 }
