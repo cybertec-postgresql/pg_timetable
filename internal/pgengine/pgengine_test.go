@@ -95,4 +95,11 @@ func TestSchedulerFunctions(t *testing.T) {
 	t.Run("Check CanProceedChainExecution funtion", func(t *testing.T) {
 		assert.Equal(t, true, CanProceedChainExecution(0, 0), "Should proceed with clean database")
 	})
+
+	t.Run("Check DeleteChainConfig funtion", func(t *testing.T) {
+		tx := StartTransaction()
+		assert.Equal(t, false, DeleteChainConfig(tx, 0), "Should not delete in clean database")
+		MustCommitTransaction(tx)
+	})
+
 }
