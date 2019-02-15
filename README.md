@@ -159,7 +159,7 @@ Install and run
 1. You need to downlod and [install Go](https://golang.org/doc/install) in your system.
 2. Download and install `pg_timetable` sources and dependent packages:
 ```
-$ env GIT_TERMINAL_PROMPT=1 go get github.com/cybertec-postgresql/pg_timetable/cmd/pg_timetable
+$ env GIT_TERMINAL_PROMPT=1 go get github.com/cybertec-postgresql/pg_timetable/
 Username for 'https://github.com': cyberboy
 Password for 'https://cyberboy@github.com': <cyberpwd> 
 ```
@@ -172,7 +172,7 @@ GRANT CREATE ON DATABASE timetable TO scheduler;
 
 4. Run `pg_timetable`:
 ```
-$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/cmd/pg_timetable
+$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
 $ go run main.go --dbname=dbname --name=worker001 --user=scheduler --password=somestrong
 ```
 or
