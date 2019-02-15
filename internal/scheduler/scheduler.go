@@ -110,16 +110,12 @@ LIMIT 1`
 
     tx := pgengine.ConfigDb.MustBegin()
 
-    for canProceed := false; !canProceed; {
-      if err := tx.Get(&canProceed, sqlCanProcees, chain.MaxInstances, chain.ChainExecutionConfigID); err != nil {
-        pgengine.LogToDB("PANIC", "Application cannot read information concurrent running jobs: ", err)
-      }
+    for !pgengine.CanProceedChainExecution(chain.ChainExecutionConfigID, chain.MaxInstances) {
       time.Sleep(3 * time.Second)
     }
     executeChain(tx, chain.ChainExecutionConfigID, chain.ChainID)
     if chain.SelfDestruct {
-      tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
-        chain.ChainExecutionConfigID)
+      pgengine.DeleteExecutionConfig(tx, chain.ChainExecutionConfigID)
     }
     if err := tx.Commit(); err != nil {
       pgengine.LogToDB("PANIC", "Application cannot commit after job finished: ", err)

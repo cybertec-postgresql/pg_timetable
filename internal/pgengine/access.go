@@ -1,8 +1,11 @@
 package pgengine
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // VerboseLogLevel specifies if log messages with level LOG should be logged
@@ -41,4 +44,28 @@ INSERT INTO timetable.run_status (execution_status, started, last_status_update,
      WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
      GROUP BY 1
      HAVING count(*) < 2 ) AS abc`)
+}
+
+// CanProceedChainExecution checks if particular chain can be exeuted in parallel
+func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
+	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id int4, status int4) GROUP BY id"
+	var procCount int
+	err := ConfigDb.Get(&procCount, sqlProcCount, chainConfigID)
+	switch {
+	case err == sql.ErrNoRows:
+		return true
+	case err == nil:
+		return procCount < maxInstances
+	default:
+		LogToDB("PANIC", "Application cannot read information about concurrent running jobs: ", err)
+		return false
+	}
+}
+
+// DeleteExecutionConfig delete chaing configuration for self destructive chains
+func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
+	res := tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
+		chainConfigID)
+	rowsDeleted, err := res.RowsAffected()
+	return err == nil && rowsDeleted == 1
 }
