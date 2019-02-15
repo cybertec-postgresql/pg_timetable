@@ -62,7 +62,7 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	}
 }
 
-// DeleteExecutionConfig delete chaing configuration for self destructive chains
+// DeleteChainConfig delete chaing configuration for self destructive chains
 func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
 	res := tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
 		chainConfigID)
