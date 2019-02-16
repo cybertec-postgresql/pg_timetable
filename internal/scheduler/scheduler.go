@@ -129,8 +129,8 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
     tc.run_uid, 
     tc.ignore_error, 
     tc.database_connection 
-    FROM scheduler.task_chain tc JOIN 
-    scheduler.base_task bt USING (task_id) 
+    FROM timetable.task_chain tc JOIN 
+    timetable.base_task bt USING (task_id) 
     WHERE tc.parent_id IS NULL AND tc.chain_id = $1 
     UNION ALL 
     SELECT tc.chain_id, tc.task_id, bt.name, 
@@ -138,20 +138,20 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
     tc.run_uid, 
     tc.ignore_error, 
     tc.database_connection 
-    FROM scheduler.task_chain tc JOIN 
-    scheduler.base_task bt USING (task_id) JOIN 
+    FROM timetable.task_chain tc JOIN 
+    timetable.base_task bt USING (task_id) JOIN 
     x ON (x.chain_id = tc.parent_id) 
   ) SELECT *, (SELECT connect_string 
-      FROM   scheduler.database_connection AS a 
+      FROM   timetable.database_connection AS a 
    WHERE a.database_connection = x.database_connection) AS b 
    FROM x`
 
-	const sqlInsertRunStatus = `INSERT INTO scheduler.run_status 
+	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
 (chain_id, execution_status, started, start_status, chain_execution_config) 
-VALUES ($1, 'STARTED', now(), currval('scheduler.run_status_run_status_seq'), $2) 
+VALUES ($1, 'STARTED', now(), currval('timetable.run_status_run_status_seq'), $2) 
 RETURNING run_status`
 
-	const sqlInsertFinishStatus = `INSERT INTO scheduler.run_status 
+	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
 VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
 
@@ -180,7 +180,7 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
 		tx.MustExec(sqlInsertFinishStatus, chainID, "RUNNING", chainElemExec.TaskID, runStatusID, chainConfigID)
 		retCode := executeСhainElement(tx, chainElemExec)
 		pgengine.ConfigDb.MustExec(
-			"INSERT INTO scheduler.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+			"INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
 				"is_sql, last_run, finished, returncode, pid) "+
 				"VALUES ($1, $2, $3, $4, $5, $6, now(), clock_timestamp(), $7, txid_current())",
 			chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,

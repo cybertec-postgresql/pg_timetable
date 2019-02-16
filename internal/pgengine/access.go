@@ -23,8 +23,8 @@ func LogToDB(level string, msg ...interface{}) {
 			return
 		}
 	}
-	ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) 
-		VALUES ($1, $2, $3, $4)`, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+	ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
+		os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 	s := fmt.Sprintf("[%s:%s]:\t%s\n", level, ClientName, fmt.Sprint(msg...))
 	if level == "PANIC" {
 		panic(s)
