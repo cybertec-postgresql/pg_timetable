@@ -72,9 +72,11 @@ WITH RECURSIVE x
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
 func InsertChainRunStatus(tx *sqlx.Tx, chainConfigID int, chainID int) int {
-	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
+	const sqlInsertRunStatus = `
+INSERT INTO timetable.run_status 
 (chain_id, execution_status, started, start_status, chain_execution_config) 
-VALUES ($1, 'STARTED', now(), currval('timetable.run_status_run_status_seq'), $2) 
+VALUES 
+($1, 'STARTED', now(), currval('timetable.run_status_run_status_seq'), $2) 
 RETURNING run_status`
 	var id int
 	err := tx.Get(&id, sqlInsertRunStatus, chainID, chainConfigID)
@@ -82,4 +84,14 @@ RETURNING run_status`
 		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
 	}
 	return id
+}
+
+// UpdateChainRunStatus inserts status information about running chain elements
+func UpdateChainRunStatus(tx *sqlx.Tx, chainElemExec *ChainElementExecution, runStatusID int, status string) {
+	const sqlInsertFinishStatus = `
+INSERT INTO timetable.run_status 
+(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
+VALUES 
+($1, $2, $3, clock_timestamp(), now(), $4, $5)`
+	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
 }

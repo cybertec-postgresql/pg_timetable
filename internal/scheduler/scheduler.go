@@ -101,16 +101,10 @@ func chainWorker(chains <-chan Chain) {
 
 /* execute a chain of tasks */
 func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
-
-  const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
-VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
-
   var ChainElements []pgengine.ChainElementExecution
-  var runStatusID int
 
   pgengine.LogToDB("LOG", "Executing chain: ", chainID)
-  runStatusID = pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
+  runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
 
   if err := pgengine.GetChainElements(tx, &ChainElements, chainID); err != nil {
     return
@@ -119,23 +113,23 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
   /* now we can loop through every element of the task chain */
   for _, chainElemExec := range ChainElements {
     chainElemExec.ChainConfig = chainConfigID
-    tx.MustExec(sqlInsertFinishStatus, chainID, "RUNNING", chainElemExec.TaskID, runStatusID, chainConfigID)
-    retCode := executeСhainElement(tx, chainElemExec)
+    pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "RUNNING")
+    retCode := executeСhainElement(tx, &chainElemExec)
     pgengine.LogChainElementExecution(&chainElemExec, retCode)
     if retCode < 0 {
-      tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "FAILED",
-        chainElemExec.TaskID, runStatusID, chainConfigID)
+      pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "FAILED")
       pgengine.LogToDB("ERROR", "Chain execution failed: ", chainElemExec)
       return
     }
-
-    tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "SUCCESS",
-      chainElemExec.TaskID, runStatusID, chainConfigID)
+    pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "SUCCESS")
   }
-  tx.MustExec(sqlInsertFinishStatus, chainID, "CHAIN_DONE", nil, runStatusID, chainConfigID)
+  pgengine.UpdateChainRunStatus(tx,
+    &pgengine.ChainElementExecution{
+      ChainID:     chainID,
+      ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
 }
 
-func executeСhainElement(tx *sqlx.Tx, ChainElemExec pgengine.ChainElementExecution) int {
+func executeСhainElement(tx *sqlx.Tx, ChainElemExec *pgengine.ChainElementExecution) int {
   const sqlGetParamValues = `SELECT value
 FROM  timetable.chain_execution_parameters
 WHERE chain_execution_config = $1
