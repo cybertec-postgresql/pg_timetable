@@ -105,7 +105,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	t.Run("Check GetChainElements funtion", func(t *testing.T) {
 		var chains []ChainElementExecution
 		tx := StartTransaction()
-		assert.NoError(t, GetChainElements(tx, &chains, 0), "Should no error in clean database")
+		assert.True(t, GetChainElements(tx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
 		MustCommitTransaction(tx)
 	})
