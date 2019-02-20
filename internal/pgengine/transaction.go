@@ -32,7 +32,7 @@ func MustCommitTransaction(tx *sqlx.Tx) {
 }
 
 // GetChainElements returns all elements for a given chain
-func GetChainElements(tx *sqlx.Tx, chains interface{}, chainID int) error {
+func GetChainElements(tx *sqlx.Tx, chains interface{}, chainID int) bool {
 	const sqlSelectChains = `
 WITH RECURSIVE x
 (chain_id, task_id, task_name, script, is_sql, run_uid, ignore_error, database_connection) AS 
@@ -65,9 +65,25 @@ WITH RECURSIVE x
 
 	if err != nil {
 		LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
+		return false
 	}
+	return true
+}
 
-	return err
+// GetChainParamValues returns parameter values to pass for task being executed
+func GetChainParamValues(tx *sqlx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
+	const sqlGetParamValues = `
+SELECT value
+FROM  timetable.chain_execution_parameters
+WHERE chain_execution_config = $1
+  AND chain_id = $2
+ORDER BY order_id ASC`
+	err := tx.Select(paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
+	if err != nil {
+		LogToDB("ERROR", "Cannot fetch parameters values for chain: ", err)
+		return false
+	}
+	return true
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency

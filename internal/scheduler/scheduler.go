@@ -106,7 +106,7 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
   pgengine.LogToDB("LOG", "Executing chain: ", chainID)
   runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
 
-  if err := pgengine.GetChainElements(tx, &ChainElements, chainID); err != nil {
+  if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
     return
   }
 
@@ -129,45 +129,39 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
       ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
 }
 
-func executeСhainElement(tx *sqlx.Tx, ChainElemExec *pgengine.ChainElementExecution) int {
+func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
   const sqlGetParamValues = `SELECT value
 FROM  timetable.chain_execution_parameters
 WHERE chain_execution_config = $1
   AND chain_id = $2
 ORDER BY order_id ASC`
+  var paramValues []string
   var err error
 
-  pgengine.LogToDB("LOG", fmt.Sprintf(
-    "Executing task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
-    ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+  pgengine.LogToDB("LOG", fmt.Sprintf("Executing task: %v", chainElemExec))
 
-  var paramValues []string
-  err = tx.Select(&paramValues, sqlGetParamValues, ChainElemExec.ChainConfig, ChainElemExec.ChainID)
-  if err != nil {
-    pgengine.LogToDB("ERROR", "Cannot fetch parameters values for chain: ", err)
+  if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
     return -1
   }
 
-  pgengine.LogToDB("LOG", fmt.Sprintf(
-    "Parameters found for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
-    ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+  pgengine.LogToDB("LOG", fmt.Sprintf("Parameters found for task id: %v", chainElemExec))
 
-  if ChainElemExec.IsSQL {
-    _, err = tx.Exec(ChainElemExec.Script, paramValues)
+  if chainElemExec.IsSQL {
+    _, err = tx.Exec(chainElemExec.Script, paramValues)
   } else {
-    command := exec.Command(ChainElemExec.Script, paramValues...) // #nosec
+    command := exec.Command(chainElemExec.Script, paramValues...) // #nosec
     err = command.Run()
   }
   if err != nil {
     pgengine.LogToDB("ERROR", fmt.Sprintf(
       "Chain execution failed for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
-      ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+      chainElemExec.TaskID, chainElemExec.ChainID, chainElemExec.TaskName, chainElemExec.IsSQL))
     return -1
   }
 
   pgengine.LogToDB("LOG", fmt.Sprintf(
     "Chain executed successfully for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
-    ChainElemExec.TaskID, ChainElemExec.ChainID, ChainElemExec.TaskName, ChainElemExec.IsSQL))
+    chainElemExec.TaskID, chainElemExec.ChainID, chainElemExec.TaskName, chainElemExec.IsSQL))
   return 0
 }
 
