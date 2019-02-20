@@ -88,7 +88,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
 
-	t.Run("Check fix scheduler crash", func(t *testing.T) {
+	t.Run("Check FixSchedulerCrash function", func(t *testing.T) {
 		assert.NotPanics(t, FixSchedulerCrash, "Fix scheduler crash failed")
 	})
 
