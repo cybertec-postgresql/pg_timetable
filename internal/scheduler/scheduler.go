@@ -102,11 +102,6 @@ func chainWorker(chains <-chan Chain) {
 /* execute a chain of tasks */
 func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 
-  const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(chain_id, execution_status, started, start_status, chain_execution_config) 
-VALUES ($1, 'STARTED', now(), currval('timetable.run_status_run_status_seq'), $2) 
-RETURNING run_status`
-
   const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
 VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
@@ -115,13 +110,7 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
   var runStatusID int
 
   pgengine.LogToDB("LOG", "Executing chain: ", chainID)
-
-  /* init the execution run log. we will use to effectively control
-   * scheduler concurrency */
-  err := tx.Get(&runStatusID, sqlInsertRunStatus, chainID, chainConfigID)
-  if err != nil {
-    pgengine.LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
-  }
+  runStatusID = pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
 
   if err := pgengine.GetChainElements(tx, &ChainElements, chainID); err != nil {
     return
@@ -129,7 +118,7 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
 
   /* now we can loop through every element of the task chain */
   for _, chainElemExec := range ChainElements {
-    chainElemExec.ChainID = chainID
+    chainElemExec.ChainConfig = chainConfigID
     tx.MustExec(sqlInsertFinishStatus, chainID, "RUNNING", chainElemExec.TaskID, runStatusID, chainConfigID)
     retCode := executeСhainElement(tx, chainElemExec)
     pgengine.ConfigDb.MustExec(

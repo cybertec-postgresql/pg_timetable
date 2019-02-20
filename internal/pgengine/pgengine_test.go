@@ -110,4 +110,12 @@ func TestSchedulerFunctions(t *testing.T) {
 		MustCommitTransaction(tx)
 	})
 
+	t.Run("Check InsertChainRunStatus funtion", func(t *testing.T) {
+		var id int
+		tx := StartTransaction()
+		assert.NotPanics(t, func() { id = InsertChainRunStatus(tx, 0, 0) }, "Should no error in clean database")
+		assert.NotZero(t, id, "Run status id should be greater then 0")
+		MustCommitTransaction(tx)
+	})
+
 }

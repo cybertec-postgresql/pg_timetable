@@ -69,3 +69,17 @@ WITH RECURSIVE x
 
 	return err
 }
+
+// InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
+func InsertChainRunStatus(tx *sqlx.Tx, chainConfigID int, chainID int) int {
+	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
+(chain_id, execution_status, started, start_status, chain_execution_config) 
+VALUES ($1, 'STARTED', now(), currval('timetable.run_status_run_status_seq'), $2) 
+RETURNING run_status`
+	var id int
+	err := tx.Get(&id, sqlInsertRunStatus, chainID, chainConfigID)
+	if err != nil {
+		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
+	}
+	return id
+}
