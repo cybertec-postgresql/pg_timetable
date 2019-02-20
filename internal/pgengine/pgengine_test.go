@@ -110,6 +110,16 @@ func TestSchedulerFunctions(t *testing.T) {
 		MustCommitTransaction(tx)
 	})
 
+	t.Run("Check GetChainParamValues funtion", func(t *testing.T) {
+		var paramVals []string
+		tx := StartTransaction()
+		assert.True(t, GetChainParamValues(tx, &paramVals, &ChainElementExecution{
+			ChainID:     0,
+			ChainConfig: 0}), "Should no error in clean database")
+		assert.Empty(t, paramVals, "Should be empty in clean database")
+		MustCommitTransaction(tx)
+	})
+
 	t.Run("Check InsertChainRunStatus funtion", func(t *testing.T) {
 		var id int
 		tx := StartTransaction()
