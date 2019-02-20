@@ -121,13 +121,7 @@ VALUES ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
     chainElemExec.ChainConfig = chainConfigID
     tx.MustExec(sqlInsertFinishStatus, chainID, "RUNNING", chainElemExec.TaskID, runStatusID, chainConfigID)
     retCode := executeСhainElement(tx, chainElemExec)
-    pgengine.ConfigDb.MustExec(
-      "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
-        "is_sql, last_run, finished, returncode, pid) "+
-        "VALUES ($1, $2, $3, $4, $5, $6, now(), clock_timestamp(), $7, txid_current())",
-      chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
-      chainElemExec.Script, chainElemExec.IsSQL, retCode)
-
+    pgengine.LogChainElementExecution(&chainElemExec, retCode)
     if retCode < 0 {
       tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, "FAILED",
         chainElemExec.TaskID, runStatusID, chainConfigID)
