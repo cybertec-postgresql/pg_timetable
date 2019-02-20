@@ -74,7 +74,7 @@ func Run() {
 
     /* now we can loop through so chains */
     for _, headChain := range headChains {
-      pgengine.LogToDB("LOG", fmt.Sprintf("Сalling process chain for %+v", headChain))
+      pgengine.LogToDB("LOG", fmt.Sprintf("Сalling process chain for %+v\n", headChain))
       // put headChain to the channel, then chainWorker will do the magic
       chains <- headChain
     }
@@ -86,7 +86,7 @@ func Run() {
 
 func chainWorker(chains <-chan Chain) {
   for chain := range chains {
-    pgengine.LogToDB("log", fmt.Sprintf("calling process chain for %+v", chain))
+    pgengine.LogToDB("log", fmt.Sprintf("calling process chain for %+v\n", chain))
     for !pgengine.CanProceedChainExecution(chain.ChainExecutionConfigID, chain.MaxInstances) {
       time.Sleep(3 * time.Second)
     }
@@ -138,13 +138,13 @@ ORDER BY order_id ASC`
   var paramValues []string
   var err error
 
-  pgengine.LogToDB("LOG", fmt.Sprintf("Executing task: %v", chainElemExec))
+  pgengine.LogToDB("LOG", fmt.Sprintf("Executing task: %+v\n", chainElemExec))
 
   if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
     return -1
   }
 
-  pgengine.LogToDB("LOG", fmt.Sprintf("Parameters found for task id: %v", chainElemExec))
+  pgengine.LogToDB("LOG", fmt.Sprintf("Parameters found for task: %+v\n", chainElemExec))
 
   if chainElemExec.IsSQL {
     _, err = tx.Exec(chainElemExec.Script, paramValues)
@@ -153,19 +153,10 @@ ORDER BY order_id ASC`
     err = command.Run()
   }
   if err != nil {
-    pgengine.LogToDB("ERROR", fmt.Sprintf(
-      "Chain execution failed for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
-      chainElemExec.TaskID, chainElemExec.ChainID, chainElemExec.TaskName, chainElemExec.IsSQL))
+    pgengine.LogToDB("ERROR", fmt.Sprintf("Chain execution failed for task: %+v\n", chainElemExec))
     return -1
   }
 
-  pgengine.LogToDB("LOG", fmt.Sprintf(
-    "Chain executed successfully for task id: %d, chain_id: %d: task_name: %s, is_sql: %t",
-    chainElemExec.TaskID, chainElemExec.ChainID, chainElemExec.TaskName, chainElemExec.IsSQL))
+  pgengine.LogToDB("LOG", fmt.Sprintf("Chain executed successfully for task: %+v\n", chainElemExec))
   return 0
-}
-
-func init() {
-  // checkExeExists(walExec, "WAL receiver executable not found!")
-  // checkExeExists(baseBackupExec, "Base backup executable not found!")
 }
