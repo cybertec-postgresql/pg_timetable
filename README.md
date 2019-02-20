@@ -188,6 +188,10 @@ $ go get github.com/stretchr/testify/
 $ go test ./...
 ```
 
+Schema diagram
+---------------------
+![Schema diagram](sql/timetable_schema.png?raw=true "Schema diagram")
+
 Patches are welcome
 ----------------------
 
