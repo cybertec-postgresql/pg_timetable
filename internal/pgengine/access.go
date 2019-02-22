@@ -73,8 +73,8 @@ func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
 // LogChainElementExecution will log current chain element execution status including retcode
 func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int) {
 	ConfigDb.MustExec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
-		"is_sql, last_run, finished, returncode, pid) "+
+		"kind, last_run, finished, returncode, pid) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, now(), clock_timestamp(), $7, txid_current())",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
-		chainElemExec.Script, chainElemExec.IsSQL, retCode)
+		chainElemExec.Script, chainElemExec.Kind, retCode)
 }

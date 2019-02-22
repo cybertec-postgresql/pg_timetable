@@ -11,7 +11,7 @@ type ChainElementExecution struct {
 	TaskID             int    `db:"task_id"`
 	TaskName           string `db:"task_name"`
 	Script             string `db:"script"`
-	IsSQL              bool   `db:"is_sql"`
+	Kind               bool   `db:"kind"`
 	RunUID             string `db:"run_uid"`
 	IgnoreError        bool   `db:"ignore_error"`
 	DatabaseConnection int    `db:"database_connection"`
@@ -35,10 +35,10 @@ func MustCommitTransaction(tx *sqlx.Tx) {
 func GetChainElements(tx *sqlx.Tx, chains interface{}, chainID int) bool {
 	const sqlSelectChains = `
 WITH RECURSIVE x
-(chain_id, task_id, task_name, script, is_sql, run_uid, ignore_error, database_connection) AS 
+(chain_id, task_id, task_name, script, kind, run_uid, ignore_error, database_connection) AS 
 (
 	SELECT tc.chain_id, tc.task_id, bt.name, 
-	bt.script, bt.is_sql, 
+	bt.script, bt.kind, 
 	tc.run_uid, 
 	tc.ignore_error, 
 	tc.database_connection 
@@ -47,7 +47,7 @@ WITH RECURSIVE x
 	WHERE tc.parent_id IS NULL AND tc.chain_id = $1 
 	UNION ALL 
 	SELECT tc.chain_id, tc.task_id, bt.name, 
-	bt.script, bt.is_sql, 
+	bt.script, bt.kind, 
 	tc.run_uid, 
 	tc.ignore_error, 
 	tc.database_connection 
