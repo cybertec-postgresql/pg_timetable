@@ -130,11 +130,6 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 }
 
 func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
-  const sqlGetParamValues = `SELECT value
-FROM  timetable.chain_execution_parameters
-WHERE chain_execution_config = $1
-  AND chain_id = $2
-ORDER BY order_id ASC`
   var paramValues []string
   var err error
 
@@ -144,8 +139,6 @@ ORDER BY order_id ASC`
     return -1
   }
 
-  pgengine.LogToDB("LOG", fmt.Sprintf("Parameters found for task: %+v\n", chainElemExec))
-
   if chainElemExec.IsSQL {
     _, err = tx.Exec(chainElemExec.Script, paramValues)
   } else {
@@ -153,7 +146,7 @@ ORDER BY order_id ASC`
     err = command.Run()
   }
   if err != nil {
-    pgengine.LogToDB("ERROR", fmt.Sprintf("Chain execution failed for task: %+v\n", chainElemExec))
+    pgengine.LogToDB("ERROR", fmt.Sprintf("Chain execution failed for task: %+v\n; Error: %s", chainElemExec, err))
     return -1
   }
 
