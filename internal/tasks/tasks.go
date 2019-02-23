@@ -13,12 +13,10 @@ var tasks = map[string](func(string) error){
 
 // ExecuteTask executes built-in task depending on task name and returns err result
 func ExecuteTask(name string, paramValues []string) error {
-	if name == "SendMail" {
-		for _, val := range paramValues {
-			err := taskSendMail(val)
-			if err != nil {
-				return err
-			}
+	for _, val := range paramValues {
+		err := tasks[name](val)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
