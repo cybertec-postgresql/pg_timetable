@@ -11,7 +11,7 @@ type ChainElementExecution struct {
 	TaskID             int    `db:"task_id"`
 	TaskName           string `db:"task_name"`
 	Script             string `db:"script"`
-	Kind               bool   `db:"kind"`
+	Kind               string `db:"kind"`
 	RunUID             string `db:"run_uid"`
 	IgnoreError        bool   `db:"ignore_error"`
 	DatabaseConnection int    `db:"database_connection"`

@@ -6,6 +6,7 @@ import (
   "time"
 
   "github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+  "github.com/cybertec-postgresql/pg_timetable/internal/tasks"
   "github.com/jmoiron/sqlx"
 )
 
@@ -139,12 +140,16 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
     return -1
   }
 
-  if chainElemExec.IsSQL {
+  switch chainElemExec.Kind {
+  case "SQL":
     _, err = tx.Exec(chainElemExec.Script, paramValues)
-  } else {
+  case "SHELL":
     command := exec.Command(chainElemExec.Script, paramValues...) // #nosec
     err = command.Run()
+  default:
+    err = tasks.ExecuteTask(chainElemExec.Script, paramValues)
   }
+
   if err != nil {
     pgengine.LogToDB("ERROR", fmt.Sprintf("Chain execution failed for task: %+v\n; Error: %s", chainElemExec, err))
     return -1

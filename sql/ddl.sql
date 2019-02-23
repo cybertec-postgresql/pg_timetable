@@ -87,7 +87,7 @@ CREATE TABLE timetable.chain_execution_parameters(
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
 	order_id 			int4		CHECK (order_id > 0),
-	value 				text, 
+	value 				jsonb, 
 	PRIMARY KEY (chain_execution_config, chain_id, order_id)
 );
 
