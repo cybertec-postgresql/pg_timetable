@@ -12,7 +12,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	ClientName = "pgengine_unit_test"
 	t.Log("Setup test case")
 	InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-		"scheduler", "disable", "../../sql/"+SQLSchemaFile)
+		"scheduler", "disable", SQLSchemaFiles)
 	return func(t *testing.T) {
 		ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
@@ -20,7 +20,9 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 }
 
 func TestBootstrapSQLFileExists(t *testing.T) {
-	assert.FileExists(t, "../../sql/"+SQLSchemaFile, "Bootstrap file doesn't exist")
+	for _, f := range SQLSchemaFiles {
+		assert.FileExists(t, f, "Bootstrap file doesn't exist")
+	}
 }
 
 func TestCreateConfigDBSchemaWithoutFile(t *testing.T) {
@@ -80,7 +82,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		assert.Nil(t, ConfigDb, "Connection isn't closed properly")
 		// reinit connection to execute teardown actions
 		InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-			"scheduler", "disable", "../../sql/"+SQLSchemaFile)
+			"scheduler", "disable", SQLSchemaFiles)
 	})
 }
 
@@ -128,4 +130,10 @@ func TestSchedulerFunctions(t *testing.T) {
 		MustCommitTransaction(tx)
 	})
 
+}
+
+func init() {
+	for i := 0; i < len(SQLSchemaFiles); i++ {
+		SQLSchemaFiles[i] = "../../sql/" + SQLSchemaFiles[i]
+	}
 }
