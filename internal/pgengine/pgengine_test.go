@@ -43,7 +43,21 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		for _, tableName := range tableNames {
 			err := ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName))
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", tableName))
-			assert.NotEqual(t, InvalidOid, oid, fmt.Sprintf("timetable.%s table doesn't exist", tableName))
+			assert.NotEqual(t, InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", tableName))
+		}
+	})
+
+	t.Run("Check timetable functions", func(t *testing.T) {
+		var oid int
+		funcNames := []string{"_validate_json_schema_type(text, jsonb)",
+			"validate_json_schema(jsonb, jsonb, jsonb)",
+			"get_running_jobs(int)",
+			"trig_chain_fixer()",
+			"check_task(int)"}
+		for _, funcName := range funcNames {
+			err := ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName))
+			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", funcName))
+			assert.NotEqual(t, InvalidOid, oid, fmt.Sprintf("timetable.%s table doesn't exist", funcName))
 		}
 	})
 
