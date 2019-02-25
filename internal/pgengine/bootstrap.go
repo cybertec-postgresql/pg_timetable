@@ -16,7 +16,7 @@ var ConfigDb *sqlx.DB
 var ClientName string
 
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
-var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql"}
+var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql"}
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {

@@ -15,14 +15,14 @@ CREATE TABLE timetable.database_connection (
 --      command string to be executed
 --      
 -- "kind" indicates whether "script" is SQL, built-in function or external program
-CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'SHELL', 'BUILT-IN');
+CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'SHELL', 'BUILTIN');
 
 CREATE TABLE timetable.base_task (
 	task_id		bigserial  			PRIMARY KEY,
 	name		text    		    NOT NULL UNIQUE,
-	script		text				NOT NULL,
 	kind		timetable.task_kind	NOT NULL DEFAULT 'SQL',
-	num_params	integer 		 	NOT NULL
+	script		text,
+	CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
 );
 
 -- Task chain declaration:

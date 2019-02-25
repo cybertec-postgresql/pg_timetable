@@ -146,8 +146,8 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
   case "SHELL":
     command := exec.Command(chainElemExec.Script, paramValues...) // #nosec
     err = command.Run()
-  default:
-    err = tasks.ExecuteTask(chainElemExec.Script, paramValues)
+  case "BUILTIN":
+    err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
   }
 
   if err != nil {

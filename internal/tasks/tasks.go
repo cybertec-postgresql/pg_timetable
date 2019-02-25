@@ -8,8 +8,8 @@ import (
 var tasks = map[string](func(string) error){
 	"NoOp":     taskNoOp,
 	"Sleep":    taskSleep,
-	"SendMail": taskSendMail,
 	"Log":      taskLog,
+	"SendMail": taskSendMail,
 	"Download": taskDownloadFile}
 
 // ExecuteTask executes built-in task depending on task name and returns err result
