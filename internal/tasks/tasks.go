@@ -9,7 +9,8 @@ var tasks = map[string](func(string) error){
 	"NoOp":     taskNoOp,
 	"Sleep":    taskSleep,
 	"SendMail": taskSendMail,
-	"Log":      taskLog}
+	"Log":      taskLog,
+	"Download": taskDownloadFile}
 
 // ExecuteTask executes built-in task depending on task name and returns err result
 func ExecuteTask(name string, paramValues []string) error {
