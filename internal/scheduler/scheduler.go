@@ -145,8 +145,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
   case "SQL":
     _, err = tx.Exec(chainElemExec.Script, paramValues)
   case "SHELL":
-    cmd := exec.Command(chainElemExec.Script, paramValues...) // #nosec
-    out, err = cmd.CombinedOutput()
+    out, err = exec.Command(chainElemExec.Script, paramValues...).CombinedOutput() // #nosec
     pgengine.LogToDB("LOG", "Output of the shell command for task:\n", out)
   case "BUILTIN":
     err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
