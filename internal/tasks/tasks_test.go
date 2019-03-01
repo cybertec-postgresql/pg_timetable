@@ -30,6 +30,12 @@ func TestBuiltInTasks(t *testing.T) {
 	})
 }
 
+func TestDownloadFile(t *testing.T) {
+	downloadUrls = func(urls []string, dest string, workers int) error { return nil }
+	assert.EqualError(t, taskDownloadFile(""), `unexpected end of JSON input`,
+		"Download with empty param should fail")
+}
+
 func init() {
 	for i := 0; i < len(pgengine.SQLSchemaFiles); i++ {
 		pgengine.SQLSchemaFiles[i] = "../../sql/" + pgengine.SQLSchemaFiles[i]

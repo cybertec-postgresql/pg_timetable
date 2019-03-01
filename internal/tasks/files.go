@@ -14,25 +14,30 @@ type downloadOpts struct {
 	DestPath   string   `json:"destpath"`
 }
 
+var downloadUrls func(urls []string, dest string, workers int) error
+
 func taskDownloadFile(paramValues string) error {
 	var opts downloadOpts
 	if err := json.Unmarshal([]byte(paramValues), &opts); err != nil {
 		return err
 	}
+	return downloadUrls(opts.FileUrls, opts.DestPath, opts.WorkersNum)
+}
+
+// downloadUrls function implemented using grab library
+func grabDownloadUrls(urls []string, dest string, workers int) error {
 	// create multiple download requests
 	reqs := make([]*grab.Request, 0)
-	for _, url := range opts.FileUrls {
-		req, err := grab.NewRequest(opts.DestPath, url)
+	for _, url := range urls {
+		req, err := grab.NewRequest(dest, url)
 		if err != nil {
 			return err
 		}
 		reqs = append(reqs, req)
 	}
-
-	// start downloads with workers, if < 0 => worker for each file
+	// start downloads with workers, if WorkersNum <= 0, then worker for each file
 	client := grab.NewClient()
-	respch := client.DoBatch(opts.WorkersNum, reqs...)
-
+	respch := client.DoBatch(workers, reqs...)
 	// check each response
 	var errstrings []string
 	for resp := range respch {
@@ -42,9 +47,12 @@ func taskDownloadFile(paramValues string) error {
 			pgengine.LogToDB("LOG", fmt.Sprintf("Downloaded %s to %s\n", resp.Request.URL(), resp.Filename))
 		}
 	}
-
 	if len(errstrings) > 0 {
 		return fmt.Errorf("download failed: %v", errstrings)
 	}
 	return nil
+}
+
+func init() {
+	downloadUrls = grabDownloadUrls
 }
