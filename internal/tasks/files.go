@@ -2,7 +2,9 @@ package tasks
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/cavaliercoder/grab"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -19,6 +21,12 @@ var downloadUrls func(urls []string, dest string, workers int) error
 func taskDownloadFile(paramValues string) error {
 	var opts downloadOpts
 	if err := json.Unmarshal([]byte(paramValues), &opts); err != nil {
+		return err
+	}
+	if len(opts.FileUrls) == 0 {
+		return errors.New("Files to download are not specified")
+	}
+	if _, err := os.Stat(opts.DestPath); err != nil {
 		return err
 	}
 	return downloadUrls(opts.FileUrls, opts.DestPath, opts.WorkersNum)
