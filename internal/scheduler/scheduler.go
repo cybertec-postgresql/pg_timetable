@@ -141,7 +141,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 
 	switch chainElemExec.Kind {
 	case "SQL":
-		_, err = tx.Exec(chainElemExec.Script, paramValues)
+		err = pgengine.ExecuteSQLCommand(tx, chainElemExec.Script, paramValues)
 	case "SHELL":
 		err = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":

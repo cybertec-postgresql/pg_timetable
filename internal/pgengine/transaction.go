@@ -1,6 +1,9 @@
 package pgengine
 
 import (
+	"encoding/json"
+	"errors"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -84,6 +87,31 @@ ORDER BY order_id ASC`
 		return false
 	}
 	return true
+}
+
+// ExecuteSQLCommand executes chain script with parameters inside transaction
+func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
+	if script == "" {
+		return errors.New("SQL script cannot be empty")
+	}
+	if len(paramValues) == 0 { //mimic empty param
+		paramValues = []string{""}
+	}
+	for _, val := range paramValues {
+		params := []string{}
+		if val > "" {
+			if err := json.Unmarshal([]byte(val), &params); err != nil {
+				return err
+			}
+		}
+		res, err := tx.Exec(script, params)
+		cnt, _ := res.RowsAffected()
+		LogToDB("LOG", "Result of the command:\n", script, params, "\nAffected: ", cnt)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
