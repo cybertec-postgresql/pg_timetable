@@ -21,7 +21,7 @@ CREATE TABLE timetable.base_task (
 	task_id		bigserial  			PRIMARY KEY,
 	name		text    		    NOT NULL UNIQUE,
 	kind		timetable.task_kind	NOT NULL DEFAULT 'SQL',
-	script		text,
+	script		text				NOT NULL,
 	CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
 );
 
