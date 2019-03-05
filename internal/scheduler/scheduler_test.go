@@ -20,7 +20,7 @@ func (c testCommander) CombinedOutput(command string, args ...string) ([]byte, e
 }
 
 func TestShellCommand(t *testing.T) {
-	commander = testCommander{}
+	cmd = testCommander{}
 	assert.EqualError(t, executeShellCommand("", []string{""}), "Shell command cannot be empty",
 		"Empty command should fail")
 	assert.NoError(t, executeShellCommand("ping0", nil),
@@ -31,6 +31,8 @@ func TestShellCommand(t *testing.T) {
 		"Command with empty string param is OK")
 	assert.NoError(t, executeShellCommand("ping3", []string{"[]"}),
 		"Command with empty json array param is OK")
+	assert.NoError(t, executeShellCommand("ping3", []string{"[null]"}),
+		"Command with nil array param is OK")
 	assert.NoError(t, executeShellCommand("ping4", []string{`["localhost"]`}),
 		"Command with one param is OK")
 	assert.NoError(t, executeShellCommand("ping5", []string{`["localhost", "-4"]`}),

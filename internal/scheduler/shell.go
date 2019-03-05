@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"os/exec"
+	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
-// Commander base interface providing CombinedOutput method
-type Commander interface {
+type commander interface {
 	CombinedOutput(string, ...string) ([]byte, error)
 }
 
@@ -19,11 +19,11 @@ func (c realCommander) CombinedOutput(command string, args ...string) ([]byte, e
 	return exec.Command(command, args...).CombinedOutput()
 }
 
-var commander Commander
+var cmd commander
 
 // ExecuteTask executes built-in task depending on task name and returns err result
 func executeShellCommand(command string, paramValues []string) error {
-	if command == "" {
+	if strings.TrimSpace(command) == "" {
 		return errors.New("Shell command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
@@ -36,7 +36,7 @@ func executeShellCommand(command string, paramValues []string) error {
 				return err
 			}
 		}
-		out, err := commander.CombinedOutput(command, params...) // #nosec
+		out, err := cmd.CombinedOutput(command, params...) // #nosec
 		pgengine.LogToDB("LOG", "Output of the shell command for command:\n", command, params, "\n", string(out))
 		if err != nil {
 			return err
@@ -46,5 +46,5 @@ func executeShellCommand(command string, paramValues []string) error {
 }
 
 func init() {
-	commander = realCommander{}
+	cmd = realCommander{}
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
+	"gopkg.in/guregu/null.v3"
 )
 
 // ChainElementExecution structure describes each chain execution process
@@ -98,7 +99,7 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 		paramValues = []string{""}
 	}
 	for _, val := range paramValues {
-		params := []string{}
+		params := []null.String{}
 		if val > "" {
 			if err := json.Unmarshal([]byte(val), &params); err != nil {
 				return err
