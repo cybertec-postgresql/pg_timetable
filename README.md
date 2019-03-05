@@ -73,7 +73,7 @@ But there is more: In a chain there are also a couple of more field:
 
 ignore_error specifies is a chain ends after a job has failed or if it can
 continue safely. Why do we care? Suppose we download some files to import them.
-The download files but we still want to insert into the database that no rows
+The download fails but we still want to insert into the database that no rows
 have been imported and that we at least attempted to import.
 
 database_connection allows you to run a chain given a certain database
@@ -202,7 +202,7 @@ it to make pg_timetable even better in the future.
 Support
 -------
 
-Open an [issue][issue] on Gitgub if you have problems or questions.
+Open an [issue][issue] on Github if you have problems or questions.
 
 For professional support, please contact [Cybertec][cybertec].
 
