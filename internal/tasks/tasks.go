@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-var tasks = map[string](func(string) error){
+// Tasks maps builtin task names with event handlers
+var Tasks = map[string](func(string) error){
 	"NoOp":     taskNoOp,
 	"Sleep":    taskSleep,
 	"Log":      taskLog,
@@ -15,7 +16,7 @@ var tasks = map[string](func(string) error){
 // ExecuteTask executes built-in task depending on task name and returns err result
 func ExecuteTask(name string, paramValues []string) error {
 	for _, val := range paramValues {
-		err := tasks[name](val)
+		err := Tasks[name](val)
 		if err != nil {
 			return err
 		}
