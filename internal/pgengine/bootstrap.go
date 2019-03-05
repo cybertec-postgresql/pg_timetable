@@ -27,14 +27,15 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode s
 	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for _, schemafile := range schemafiles {
-			createConfigDBSchema(schemafile)
+			CreateConfigDBSchema(schemafile)
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
 	LogToDB("LOG", "Connection established...")
 }
 
-func createConfigDBSchema(schemafile string) {
+// CreateConfigDBSchema executes SQL script from file
+func CreateConfigDBSchema(schemafile string) {
 	b, err := ioutil.ReadFile(schemafile) // nolint: gosec
 	if err != nil {
 		panic(err)
