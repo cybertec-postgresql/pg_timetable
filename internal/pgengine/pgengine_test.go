@@ -8,11 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// setupTestDBFunc used to conect and to initialize test PostgreSQL database
+var setupTestDBFunc = func() {
+	InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler", "scheduler", "disable", SQLSchemaFiles)
+}
+
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	ClientName = "pgengine_unit_test"
 	t.Log("Setup test case")
-	InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-		"scheduler", "disable", SQLSchemaFiles)
+	setupTestDBFunc()
 	return func(t *testing.T) {
 		ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
@@ -95,8 +99,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		FinalizeConfigDBConnection()
 		assert.Nil(t, ConfigDb, "Connection isn't closed properly")
 		// reinit connection to execute teardown actions
-		InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-			"scheduler", "disable", SQLSchemaFiles)
+		setupTestDBFunc()
 	})
 }
 
