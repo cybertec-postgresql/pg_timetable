@@ -18,6 +18,13 @@ var ClientName string
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
 var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql"}
 
+//PrefixSchemaFiles adds specific path for bootstrap SQL schema files
+func PrefixSchemaFiles(prefix string) {
+	for i := 0; i < len(SQLSchemaFiles); i++ {
+		SQLSchemaFiles[i] = prefix + SQLSchemaFiles[i]
+	}
+}
+
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
 	ConfigDb = sqlx.MustConnect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
