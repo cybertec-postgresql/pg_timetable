@@ -164,7 +164,5 @@ func TestBuiltInTasks(t *testing.T) {
 }
 
 func init() {
-	for i := 0; i < len(pgengine.SQLSchemaFiles); i++ {
-		pgengine.SQLSchemaFiles[i] = "../../sql/" + pgengine.SQLSchemaFiles[i]
-	}
+	pgengine.PrefixSchemaFiles("../../sql/")
 }
