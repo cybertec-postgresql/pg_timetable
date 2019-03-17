@@ -140,7 +140,7 @@ CREATE TABLE timetable.run_status (
 -- this stored procedure will tell us which scripts chains
 -- have to be executed
 -- $1: chain execution config id
-CREATE OR REPLACE FUNCTION timetable.check_task(int) RETURNS boolean AS 
+CREATE OR REPLACE FUNCTION timetable.check_task(bigint) RETURNS boolean AS 
 $$
 DECLARE	
 	v_chain_exec_conf	ALIAS FOR $1;

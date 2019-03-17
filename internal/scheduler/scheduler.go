@@ -20,12 +20,10 @@ type Chain struct {
 	ExclusiveExecution       bool   `db:"exclusive_execution"`
 	ExcludedExecutionConfigs []int  `db:"excluded_execution_configs"`
 	MaxInstances             int    `db:"max_instances"`
-	TaskType                 string `db:"task_type"`
 }
 
 //Run executes jobs
 func Run() {
-	var doStartUpTasks = true
 	var query string
 
 	// create channel for passing chains to workers
@@ -40,29 +38,14 @@ func Run() {
 	/* loop forever or until we ask it to stop */
 	for {
 
-		if doStartUpTasks {
-			/* This is the first task execution after startup, so we will execute one-time tasks... */
-			pgengine.LogToDB("LOG", "checking for startup task chains ...")
-			query = " SELECT   chain_execution_config, chain_id, chain_name, " +
-				"    self_destruct, exclusive_execution, excluded_execution_configs, " +
-				"    COALESCE(max_instances, 999), " +
-				"     task_type " +
-				" FROM   timetable.chain_execution_config " +
-				" WHERE live = 't' " +
-				"  AND  task_type = 'S' "
-			doStartUpTasks = false
-		} else {
-			/* ask the database which chains it has to perform */
-			pgengine.LogToDB("log", "checking for task chains ...")
+		/* ask the database which chains it has to perform */
+		pgengine.LogToDB("LOG", "checking for task chains ...")
 
-			query = " SELECT   chain_execution_config, chain_id, chain_name, " +
-				"    self_destruct, exclusive_execution, excluded_execution_configs, " +
-				"    COALESCE(max_instances, 999), " +
-				"    task_type " +
-				" FROM   timetable.chain_execution_config " +
-				" WHERE live = 't' AND (task_type <> 'S' OR task_type IS NULL) " +
-				"  AND  timetable.check_task(chain_execution_config) = 't' "
-		}
+		query = " SELECT chain_execution_config, chain_id, chain_name, " +
+			" self_destruct, exclusive_execution, excluded_execution_configs, " +
+			" COALESCE(max_instances, 16) as max_instances" +
+			" FROM   timetable.chain_execution_config " +
+			" WHERE live AND timetable.check_task(chain_execution_config)"
 
 		headChains := []Chain{}
 		err := pgengine.ConfigDb.Select(&headChains, query)
