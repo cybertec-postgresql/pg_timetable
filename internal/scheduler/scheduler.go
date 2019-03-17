@@ -42,7 +42,7 @@ func Run() {
 
 		if doStartUpTasks {
 			/* This is the first task execution after startup, so we will execute one-time tasks... */
-			pgengine.LogToDB("log", "checking for startup task chains ...")
+			pgengine.LogToDB("LOG", "checking for startup task chains ...")
 			query = " SELECT   chain_execution_config, chain_id, chain_name, " +
 				"    self_destruct, exclusive_execution, excluded_execution_configs, " +
 				"    COALESCE(max_instances, 999), " +
