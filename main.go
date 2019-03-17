@@ -39,6 +39,7 @@ func main() {
 		parser.WriteHelp(os.Stdout)
 		return
 	}
+	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
 	if cmdOpts.Verbose {
 		fmt.Printf("%+v\n", cmdOpts)

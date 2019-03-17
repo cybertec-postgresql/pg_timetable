@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -27,7 +28,7 @@ func LogToDB(level string, msg ...interface{}) {
 		ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
 			os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 	}
-	s := fmt.Sprintf("[%s:%s]:\t%s\n", level, ClientName, fmt.Sprint(msg...))
+	s := fmt.Sprintf("[%v|%s|%s]\t%s\n", time.Now().Format("2006-01-01 15:04:05.000"), level, ClientName, fmt.Sprint(msg...))
 	if level == "PANIC" {
 		panic(s)
 	} else {
