@@ -3,6 +3,8 @@ package tasks
 import (
 	"strconv"
 	"time"
+
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
 // Tasks maps builtin task names with event handlers
@@ -25,6 +27,7 @@ func ExecuteTask(name string, paramValues []string) error {
 }
 
 func taskNoOp(val string) error {
+	pgengine.LogToDB("DEBUG", "NoOp task called with value: ", val)
 	return nil
 }
 
@@ -33,6 +36,7 @@ func taskSleep(val string) (err error) {
 	if d, err = strconv.Atoi(val); err != nil {
 		return err
 	}
+	pgengine.LogToDB("DEBUG", "Sleep task called for ", d, " seconds")
 	time.Sleep(time.Duration(d) * time.Second)
 	return nil
 }
