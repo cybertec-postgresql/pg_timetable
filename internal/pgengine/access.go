@@ -28,7 +28,7 @@ func LogToDB(level string, msg ...interface{}) {
 		ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
 			os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 	}
-	s := fmt.Sprintf("[%v | %s | %s]\t%s", time.Now().Format("2006-01-01 15:04:05.000"), level, ClientName, fmt.Sprint(msg...))
+	s := fmt.Sprintf("[%v | %s | %-6s]:\t %s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level, fmt.Sprint(msg...))
 	if level == "PANIC" {
 		panic(s)
 	} else {
@@ -53,6 +53,7 @@ INSERT INTO timetable.run_status (execution_status, started, last_status_update,
 func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id int4, status int4) GROUP BY id"
 	var procCount int
+	LogToDB("DEBUG", fmt.Sprintf("checking if can proceed with chaing config id: %d", chainConfigID))
 	err := ConfigDb.Get(&procCount, sqlProcCount, chainConfigID)
 	switch {
 	case err == sql.ErrNoRows:
@@ -60,7 +61,7 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		LogToDB("PANIC", "Application cannot read information about concurrent running jobs: ", err)
+		LogToDB("PANIC", "application cannot read information about concurrent running jobs: ", err)
 		return false
 	}
 }
