@@ -23,6 +23,11 @@ type ChainElementExecution struct {
 	ConnectString      sql.NullString `db:"connect_string"`
 }
 
+func (chainElem ChainElementExecution) String() string {
+	data, _ := json.Marshal(chainElem)
+	return string(data)
+}
+
 // StartTransaction return transaction object and panic in the case of error
 func StartTransaction() *sqlx.Tx {
 	return ConfigDb.MustBegin()

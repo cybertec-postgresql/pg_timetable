@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -20,6 +21,11 @@ type Chain struct {
 	SelfDestruct           bool   `db:"self_destruct"`
 	ExclusiveExecution     bool   `db:"exclusive_execution"`
 	MaxInstances           int    `db:"max_instances"`
+}
+
+func (chain Chain) String() string {
+	data, _ := json.Marshal(chain)
+	return string(data)
 }
 
 //Run executes jobs
@@ -57,7 +63,7 @@ func Run() {
 
 		/* now we can loop through so chains */
 		for _, headChain := range headChains {
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("putting head chain %+v to the execution channel", headChain))
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("putting head chain %s to the execution channel", headChain))
 			chains <- headChain
 		}
 
@@ -68,9 +74,9 @@ func Run() {
 
 func chainWorker(chains <-chan Chain) {
 	for chain := range chains {
-		pgengine.LogToDB("LOG", fmt.Sprintf("calling process chain for %+v", chain))
+		pgengine.LogToDB("LOG", fmt.Sprintf("calling process chain for %s", chain))
 		for !pgengine.CanProceedChainExecution(chain.ChainExecutionConfigID, chain.MaxInstances) {
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("cannot proceed with chain %+v. Sleeping...", chain))
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("cannot proceed with chain %s. Sleeping...", chain))
 			time.Sleep(3 * time.Second)
 		}
 		tx := pgengine.StartTransaction()
@@ -86,7 +92,7 @@ func chainWorker(chains <-chan Chain) {
 func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
 
-	pgengine.LogToDB("LOG", "executing chain: ", chainID)
+	pgengine.LogToDB("LOG", "executing chain with id: ", chainID)
 	runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
 
 	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
@@ -101,7 +107,7 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 		pgengine.LogChainElementExecution(&chainElemExec, retCode)
 		if retCode < 0 {
 			pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_FAILED")
-			pgengine.LogToDB("ERROR", fmt.Sprintf("chain execution failed: %+v", chainElemExec))
+			pgengine.LogToDB("ERROR", fmt.Sprintf("chain execution failed: %s", chainElemExec))
 			return
 		}
 		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_DONE")
@@ -116,7 +122,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var paramValues []string
 	var err error
 
-	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %+v", chainElemExec))
+	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %s", chainElemExec))
 
 	if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
 		return -1
@@ -132,10 +138,10 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	}
 
 	if err != nil {
-		pgengine.LogToDB("ERROR", fmt.Sprintf("task execution failed: %+v\n; Error: %s", chainElemExec, err))
+		pgengine.LogToDB("ERROR", fmt.Sprintf("task execution failed: %s\n; Error: %s", chainElemExec, err))
 		return -1
 	}
 
-	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %+v", chainElemExec))
+	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
 	return 0
 }
