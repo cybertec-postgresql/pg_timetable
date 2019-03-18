@@ -1,6 +1,6 @@
 WITH chain_insert(chain_id) AS (
     INSERT INTO timetable.task_chain 
-    (chain_id,  parent_id,  task_id,    run_uid,    database_connection,    ignore_error)
+        (chain_id,  parent_id,  task_id,    run_uid,    database_connection,    ignore_error)
     VALUES 
         (DEFAULT,   NULL,       1,          NULL,       NULL,                   TRUE)
     RETURNING chain_id
