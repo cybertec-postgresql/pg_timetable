@@ -220,7 +220,7 @@ CREATE TRIGGER trig_task_chain_fixer
 
 
 -- see which jobs are running
-CREATE OR REPLACE FUNCTION timetable.get_running_jobs (int) RETURNS SETOF record AS $$
+CREATE OR REPLACE FUNCTION timetable.get_running_jobs (bigint) RETURNS SETOF record AS $$
 	SELECT  chain_execution_config, start_status
 		FROM	timetable.run_status
 		WHERE 	start_status IN ( SELECT   start_status
