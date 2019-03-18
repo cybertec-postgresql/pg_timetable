@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 
@@ -10,16 +11,16 @@ import (
 
 // ChainElementExecution structure describes each chain execution process
 type ChainElementExecution struct {
-	ChainConfig        int    `db:"chain_config"`
-	ChainID            int    `db:"chain_id"`
-	TaskID             int    `db:"task_id"`
-	TaskName           string `db:"task_name"`
-	Script             string `db:"script"`
-	Kind               string `db:"kind"`
-	RunUID             string `db:"run_uid"`
-	IgnoreError        bool   `db:"ignore_error"`
-	DatabaseConnection int    `db:"database_connection"`
-	ConnectString      string `db:"connect_string"`
+	ChainConfig        int            `db:"chain_config"`
+	ChainID            int            `db:"chain_id"`
+	TaskID             int            `db:"task_id"`
+	TaskName           string         `db:"task_name"`
+	Script             string         `db:"script"`
+	Kind               string         `db:"kind"`
+	RunUID             sql.NullString `db:"run_uid"`
+	IgnoreError        bool           `db:"ignore_error"`
+	DatabaseConnection sql.NullString `db:"database_connection"`
+	ConnectString      sql.NullString `db:"connect_string"`
 }
 
 // StartTransaction return transaction object and panic in the case of error
@@ -68,7 +69,7 @@ WITH RECURSIVE x
 	err := tx.Select(chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
+		LogToDB("PANIC", "Recursive queries to fetch task chain failed: ", err)
 		return false
 	}
 	return true
@@ -84,7 +85,7 @@ WHERE chain_execution_config = $1
 ORDER BY order_id ASC`
 	err := tx.Select(paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
-		LogToDB("ERROR", "Cannot fetch parameters values for chain: ", err)
+		LogToDB("PANIC", "cannot fetch parameters values for chain: ", err)
 		return false
 	}
 	return true
