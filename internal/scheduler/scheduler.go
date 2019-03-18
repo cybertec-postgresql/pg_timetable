@@ -10,6 +10,7 @@ import (
 )
 
 const workersNumber = 16
+const refetchTimeout = 10
 
 // Chain structure used to represent tasks chains
 type Chain struct {
@@ -63,7 +64,7 @@ func Run() {
 		}
 
 		/* wait for the next full minute to show up */
-		time.Sleep(60 * time.Second)
+		time.Sleep(refetchTimeout * time.Second)
 	}
 }
 
