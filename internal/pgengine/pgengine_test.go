@@ -58,13 +58,13 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		var oid int
 		funcNames := []string{"_validate_json_schema_type(text, jsonb)",
 			"validate_json_schema(jsonb, jsonb, jsonb)",
-			"get_running_jobs(int)",
+			"get_running_jobs(bigint)",
 			"trig_chain_fixer()",
-			"check_task(int)"}
+			"check_task(bigint)"}
 		for _, funcName := range funcNames {
 			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName))
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", funcName))
-			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s table doesn't exist", funcName))
+			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", funcName))
 		}
 	})
 
