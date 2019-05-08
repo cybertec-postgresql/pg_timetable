@@ -37,10 +37,10 @@ CREATE TABLE timetable.base_task (
 --      success of the current one
 CREATE TABLE timetable.task_chain (
 	chain_id        	bigserial	PRIMARY KEY,
-	parent_id			integer 	UNIQUE  REFERENCES timetable.task_chain(chain_id)
+	parent_id			bigint 	UNIQUE  REFERENCES timetable.task_chain(chain_id)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
-	task_id				integer		NOT NULL REFERENCES timetable.base_task(task_id)
+	task_id				bigint		NOT NULL REFERENCES timetable.base_task(task_id)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
 	run_uid				text,
@@ -61,7 +61,7 @@ CREATE TABLE timetable.task_chain (
 -- "self_destruct" is the indication that this chain will delete itself after run
 CREATE TABLE timetable.chain_execution_config (
     chain_execution_config   	bigserial		PRIMARY KEY,
-    chain_id        		integer 	REFERENCES timetable.task_chain(chain_id)
+    chain_id        		bigint 	REFERENCES timetable.task_chain(chain_id)
                                             	ON UPDATE CASCADE
 						ON DELETE CASCADE,
     chain_name      		text		NOT NULL UNIQUE,
@@ -80,10 +80,10 @@ CREATE TABLE timetable.chain_execution_config (
 
 -- parameter passing for config
 CREATE TABLE timetable.chain_execution_parameters(
-	chain_execution_config		int4	REFERENCES timetable.chain_execution_config (chain_execution_config)
+	chain_execution_config		int8	REFERENCES timetable.chain_execution_config (chain_execution_config)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE, 
-	chain_id 			int4 		REFERENCES timetable.task_chain(chain_id)
+	chain_id 			int8 		REFERENCES timetable.task_chain(chain_id)
 								ON UPDATE CASCADE
 								ON DELETE CASCADE,
 	order_id 			int4		CHECK (order_id > 0),
@@ -107,9 +107,9 @@ CREATE TABLE timetable.log
 
 -- log timetable related action
 CREATE TABLE timetable.execution_log (
-	chain_execution_config		integer, 
-	chain_id        		integer,
-	task_id         		integer,
+	chain_execution_config		bigint,
+	chain_id        		bigint,
+	task_id         		bigint,
 	name            		text		NOT NULL, -- expanded details about the task run
 	script          		text,
 	kind          			text,
