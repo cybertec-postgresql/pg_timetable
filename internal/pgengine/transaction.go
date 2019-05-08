@@ -98,26 +98,30 @@ ORDER BY order_id ASC`
 
 // ExecuteSQLCommand executes chain script with parameters inside transaction
 func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
+	var err error
+	var res sql.Result
+	params := []null.String{}
+
 	if script == "" {
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		paramValues = []string{""}
-	}
-	for _, val := range paramValues {
-		params := []null.String{}
-		if val > "" {
-			if err := json.Unmarshal([]byte(val), &params); err != nil {
-				return err
+		res, err = tx.Exec(script)
+	} else {
+		for _, val := range paramValues {
+			if val > "" {
+				if err := json.Unmarshal([]byte(val), &params); err != nil {
+					return err
+				}
 			}
 		}
-		res, err := tx.Exec(script, params)
-		cnt, _ := res.RowsAffected()
-		LogToDB("LOG", "Result of the command:\n", script, params, "\nAffected: ", cnt)
-		if err != nil {
-			return err
-		}
+		res, err = tx.Exec(script, params)
 	}
+	if err != nil {
+		return err
+	}
+	cnt, _ := res.RowsAffected()
+	LogToDB("LOG", "Result of the command:\n", script, params, "\nAffected: ", cnt)
 	return nil
 }
 
