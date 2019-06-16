@@ -22,9 +22,9 @@ func (c realCommander) CombinedOutput(command string, args ...string) ([]byte, e
 var cmd commander
 
 // ExecuteTask executes built-in task depending on task name and returns err result
-func executeShellCommand(command string, paramValues []string) error {
+func executeShellCommand(command string, paramValues []string) (error, int){
 	if strings.TrimSpace(command) == "" {
-		return errors.New("Shell command cannot be empty")
+		return errors.New("Shell command cannot be empty"), -1
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		paramValues = []string{""}
@@ -33,16 +33,22 @@ func executeShellCommand(command string, paramValues []string) error {
 		params := []string{}
 		if val > "" {
 			if err := json.Unmarshal([]byte(val), &params); err != nil {
-				return err
+				return err, -1
 			}
 		}
 		out, err := cmd.CombinedOutput(command, params...) // #nosec
 		pgengine.LogToDB("LOG", "Output of the shell command for command:\n", command, params, "\n", string(out))
 		if err != nil {
-			return err
+			//check if we're dealing with an ExitError - i.e. return code other than 0
+			if exitError, ok := err.(*exec.ExitError); ok {
+				exitCode := exitError.ProcessState.ExitCode()
+				pgengine.LogToDB("DEBUG", "Return value of the shell command:\n", command, params, "\n", exitCode )
+				return exitError, exitCode
+			}
+			return err, -1
 		}
 	}
-	return nil
+	return nil, 0
 }
 
 func init() {

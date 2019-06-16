@@ -121,6 +121,7 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
 	var paramValues []string
 	var err error
+	var retCode int
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %s", chainElemExec))
 
@@ -132,14 +133,18 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	case "SQL":
 		err = pgengine.ExecuteSQLCommand(tx, chainElemExec.Script, paramValues)
 	case "SHELL":
-		err = executeShellCommand(chainElemExec.Script, paramValues)
+		err, retCode = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
 	}
 
 	if err != nil {
 		pgengine.LogToDB("ERROR", fmt.Sprintf("task execution failed: %s\n; Error: %s", chainElemExec, err))
-		return -1
+		if retCode != 0 {
+			return retCode
+		}else{
+			return -1
+		}
 	}
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))

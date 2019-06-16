@@ -12,8 +12,8 @@ import (
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	pgengine.InitAndTestConfigDBConnection("localhost", "5432", "timetable_test", "scheduler",
-		"scheduler", "disable", pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
+		"somestrong", "disable", pgengine.SQLSchemaFiles)
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
