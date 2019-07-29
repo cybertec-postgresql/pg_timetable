@@ -65,13 +65,14 @@ $ go test ./...
 ### 3.1. Base task
 
 In **pg_timetable**, the most basic building block is a ***base task***. Currently, there are three different kinds of task:
+
 | Base task kind   | Example                                                                                                                                                             |
 | :--------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | SQL snippet      | Starting a cleanup, refreshing a materialized view or processing data.                                                                                              |
 | External program | Anything that can be called from the command line.                                                                                                                  |
 | Internal Task    | A prebuilt functionality included in **pg_timetable**. These include: <ul style="margin-top:12px"><li>Sleep</li><li>Log</li><li>SendMail</li><li>Download</li></ul> |
 
-A new base task can be created by creating a new entry in `timetable.base_task`.
+A new base task can be created by inserting a new entry into `timetable.base_task`.
 
 <p align="center">Excerpt of <code>timetable.base_task</code></p>
 
