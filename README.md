@@ -6,20 +6,21 @@ It is completely database driven and provides a couple of advanced concepts.
 
 ## Contents
 - [pg_timetable: Advanced scheduling for PostgreSQL](#pgtimetable-advanced-scheduling-for-postgresql)
-	- [Contents](#contents)
-	- [1. Main features](#1-main-features)
-	- [2. Installation](#2-installation)
-	- [3. Features and advanced functionality](#3-features-and-advanced-functionality)
-		- [3.1. Base task](#31-base-task)
-		- [3.2. Task chain](#32-task-chain)
-		- [3.3. Chain execution configuration](#33-chain-execution-configuration)
-		- [3.4. Chain execution parameters](#34-chain-execution-parameters)
-	- [4. Database logging and transactions](#4-database-logging-and-transactions)
-	- [5. Runtime information](#5-runtime-information)
-	- [6. Schema diagram](#6-schema-diagram)
-	- [7. Contributing](#7-contributing)
-	- [8. Support](#8-support)
-	- [9. Authors](#9-authors)
+  - [Contents](#contents)
+  - [1. Main features](#1-main-features)
+  - [2. Installation](#2-installation)
+  - [3. Features and advanced functionality](#3-features-and-advanced-functionality)
+    - [3.1. Base task](#31-base-task)
+    - [3.2. Task chain](#32-task-chain)
+    - [3.3. Chain execution configuration](#33-chain-execution-configuration)
+    - [3.4. Chain execution parameters](#34-chain-execution-parameters)
+    - [3.5. Example usages](#35-example-usages)
+  - [4. Database logging and transactions](#4-database-logging-and-transactions)
+  - [5. Runtime information](#5-runtime-information)
+  - [6. Schema diagram](#6-schema-diagram)
+  - [7. Contributing](#7-contributing)
+  - [8. Support](#8-support)
+  - [9. Authors](#9-authors)
 
 ## 1. Main features
 
@@ -118,12 +119,12 @@ Once a chain has been created, it has to be scheduled. For this, **pg_timetable*
     <tr>
 	<td>chain_id</td>
 	<td><code>bigint</code></td>
-	<td>The id of the ***chain***.</td>
+	<td>The id of the <b><i>task chain</i></b>.</td>
     </tr>
     <tr>
 	<td>chain_name</td>
 	<td><code>text</code></td>
-	<td>TODO: Why can you declare both the ID and the name of the chain?</td>
+	<td>The name of the <b><i>chain</i></b>.</td>
     </tr>
     <tr>
         <td><code>run_at_minute</code></td>
@@ -186,6 +187,10 @@ In most cases, they have to be brought to live by passing parameters to the exec
 | `chain_id`               | bigint  | The ID of the chain.                             |
 | `order_id`               | integer | The order of the parameter.                      |
 | `value`                  | jsonb   | A `string` JSON array containing the paramaters. |
+
+### 3.5. Example usages
+
+A variety of examples can be found in the `/samples` directory.
 
 ## 4. Database logging and transactions
 
