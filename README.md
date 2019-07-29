@@ -164,6 +164,13 @@ Username for 'https://github.com': cyberboy
 Password for 'https://cyberboy@github.com': <cyberpwd> 
 ```
 3. Setup PostgreSQL database and role:
+Consider running a postgres container:
+```
+podman pull postgres
+podman run -dt --rm --name pg_timetable_db -e POSTGRES_PASSWORD=docker -p 127.0.0.1:5432:5432 postgres
+```
+> Note: that pod will not store anything persistent. Everything you do will be gone once you `podman rm -f pg_timetable_db` .
+
 ```
 CREATE DATABASE timetable;
 CREATE USER scheduler PASSWORD 'somestrong';
@@ -173,12 +180,12 @@ GRANT CREATE ON DATABASE timetable TO scheduler;
 4. Run `pg_timetable`:
 ```
 $ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
-$ go run main.go --dbname=dbname --name=worker001 --user=scheduler --password=somestrong
+$ go run main.go --dbname=timetable --name=worker001 --user=scheduler --password=somestrong -v
 ```
 or
 ```
 $ go build
-$ ./pg_timetable --dbname=dbname --name=worker001 --user=scheduler --password=somestrong
+$ ./pg_timetable --dbname=timetable --name=worker001 --user=scheduler --password=somestrong -v
 ```
 
 5. Run tests in all sub-folders of the project:
@@ -187,6 +194,49 @@ $ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
 $ go get github.com/stretchr/testify/
 $ go test ./...
 ```
+
+6. Now take pg_timetable for a test drive!
+> Make sure your pod and pg_timetable are running!
+
+```shell
+psql -U postgres -h localhost -d timetable
+```
+```sql
+-- Create a new base task. This will be a simple unix command call to `/bin/date`.
+INSERT INTO timetable.base_task (name, kind, script) VALUES ('/bin/date test', 'SHELL'::timetable.task_kind, '/bin/date') RETURNING task_id;
+-- take note of the returned task_id
+-- insert a task chain for this base task_id :
+INSERT INTO timetable.task_chain (task_id) VALUES (6) RETURNING chain_id;
+-- take note of the returned chain_id
+-- insert a chain execution config for this chain_id :
+INSERT INTO timetable.chain_execution_config (chain_id, chain_name, live) VALUES (1, 'output date every second', true);
+```
+Now, the (verbose) output of the pg_timetable executable should produce something like this every cycle:
+```log
+[2019-07-07 22:31:36.644 | worker001 | LOG   ]:	 checking for task chains ...
+[2019-07-07 22:31:36.646 | worker001 | DEBUG ]:	 number of chain head tuples: 1
+[2019-07-07 22:31:36.647 | worker001 | DEBUG ]:	 putting head chain {"ChainExecutionConfigID":2,"ChainID":1,"ChainName":"test /bin/true every second","SelfDestruct":false,"ExclusiveExecution":false,"MaxInstances":16} to the execution channel
+[2019-07-07 22:31:36.648 | worker001 | LOG   ]:	 calling process chain for {"ChainExecutionConfigID":2,"ChainID":1,"ChainName":"test /bin/true every second","SelfDestruct":false,"ExclusiveExecution":false,"MaxInstances":16}
+[2019-07-07 22:31:36.649 | worker001 | DEBUG ]:	 checking if can proceed with chaing config id: 2
+[2019-07-07 22:31:36.654 | worker001 | LOG   ]:	 executing chain with id: 1
+[2019-07-07 22:31:36.658 | worker001 | LOG   ]:	 executing task: {"ChainConfig":2,"ChainID":1,"TaskID":6,"TaskName":"/bin/true test","Script":"/bin/date","Kind":"SHELL","RunUID":{"String":"","Valid":false},"IgnoreError":false,"DatabaseConnection":{"String":"","Valid":false},"ConnectString":{"String":"","Valid":false}}
+[2019-07-07 22:31:36.660 | worker001 | LOG   ]:	 Output of the shell command for command:
+/bin/date[]
+Wed Jul 24 22:31:36 CEST 2019
+
+[2019-07-07 22:31:36.661 | worker001 | LOG   ]:	 task executed successfully: {"ChainConfig":2,"ChainID":1,"TaskID":6,"TaskName":"/bin/true test","Script":"/bin/date","Kind":"SHELL","RunUID":{"String":"","Valid":false},"IgnoreError":false,"DatabaseConnection":{"String":"","Valid":false},"ConnectString":{"String":"","Valid":false}}
+```
+You can also verify that the script is running by checking the `timetable.log` and `timetable.execution_log` tables.
+
+> Please be aware that currently, tasks of "SHELL" kind are not actually executed in a shell environment, so you can't do any piping magic.
+
+7. Exercise!
+
+For starters, you could try running `/bin/echo` and having two different chain_execution_config entries.
+One should call echo with the argument `"hello world"` and the other one should produce `"hello mars"`.
+
+If you'd like, you can configure it in such a way that the latter is only echoed every minute.
+
 
 Schema diagram
 ---------------------
