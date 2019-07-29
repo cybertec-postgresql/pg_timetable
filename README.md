@@ -84,7 +84,7 @@ A new base task can be created by inserting a new entry into `timetable.base_tas
 
 ### 3.2. Task chain
 
-The next building block is a ***chain***, whcih simply represents a list of tasks. An example would be:
+The next building block is a ***chain***, which simply represents a list of tasks. An example would be:
 - Start a transaction
 - Download files from a server
 - Import files
