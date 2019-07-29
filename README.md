@@ -4,9 +4,7 @@ pg_timetable: Advanced scheduling for PostgreSQL
 **pg_timetable** is an advanced job scheduler for PostgreSQL, offering many advantages over traditional schedulers such as **cron** and others.
 It is completely database driven and provides a couple of advanced concepts.
 
-## Contents
-- [pg_timetable: Advanced scheduling for PostgreSQL](#pgtimetable-advanced-scheduling-for-postgresql)
-  - [Contents](#contents)
+## Table of Contents
   - [1. Main features](#1-main-features)
   - [2. Installation](#2-installation)
   - [3. Features and advanced functionality](#3-features-and-advanced-functionality)
@@ -209,7 +207,7 @@ In order to examine the activity of **pg_timetable**, the table `timetable.run_s
 
 ## 7. Contributing
 
-If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even submit a pull request.
+If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a pull request.
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
 
