@@ -51,7 +51,7 @@ INSERT INTO timetable.run_status (execution_status, started, last_status_update,
 
 // CanProceedChainExecution checks if particular chain can be exeuted in parallel
 func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
-	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id int4, status int4) GROUP BY id"
+	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
 	LogToDB("DEBUG", fmt.Sprintf("checking if can proceed with chaing config id: %d", chainConfigID))
 	err := ConfigDb.Get(&procCount, sqlProcCount, chainConfigID)

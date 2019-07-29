@@ -2,9 +2,9 @@ CREATE SCHEMA timetable;
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
-	database_connection 	bigserial, 
-	connect_string 		text		NOT NULL, 
-	comment 		text, 
+	database_connection BIGSERIAL,
+	connect_string 		TEXT		NOT NULL,
+	comment 			TEXT,
 	PRIMARY KEY (database_connection)
 );
 
@@ -13,15 +13,15 @@ CREATE TABLE timetable.database_connection (
 --
 -- "script" contains either an SQL script, or
 --      command string to be executed
---      
+--
 -- "kind" indicates whether "script" is SQL, built-in function or external program
 CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'SHELL', 'BUILTIN');
 
 CREATE TABLE timetable.base_task (
-	task_id		bigserial  			PRIMARY KEY,
-	name		text    		    NOT NULL UNIQUE,
+	task_id		BIGSERIAL  			PRIMARY KEY,
+	name		TEXT    		    NOT NULL UNIQUE,
 	kind		timetable.task_kind	NOT NULL DEFAULT 'SQL',
-	script		text				NOT NULL,
+	script		TEXT				NOT NULL,
 	CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
 );
 
@@ -36,18 +36,18 @@ CREATE TABLE timetable.base_task (
 --      in the chain can be executed regardless of the
 --      success of the current one
 CREATE TABLE timetable.task_chain (
-	chain_id        	bigserial	PRIMARY KEY,
-	parent_id			bigint 	UNIQUE  REFERENCES timetable.task_chain(chain_id)
-								ON UPDATE CASCADE
-								ON DELETE CASCADE,
-	task_id				bigint		NOT NULL REFERENCES timetable.base_task(task_id)
-								ON UPDATE CASCADE
-								ON DELETE CASCADE,
-	run_uid				text,
-	database_connection		int4	REFERENCES timetable.database_connection(database_connection)
-								ON UPDATE CASCADE
-								ON DELETE CASCADE,
-	ignore_error			boolean		DEFAULT false
+	chain_id        	BIGSERIAL	PRIMARY KEY,
+	parent_id			BIGINT 		UNIQUE  REFERENCES timetable.task_chain(chain_id)
+									ON UPDATE CASCADE
+									ON DELETE CASCADE,
+	task_id				BIGINT		NOT NULL REFERENCES timetable.base_task(task_id)
+									ON UPDATE CASCADE
+									ON DELETE CASCADE,
+	run_uid				TEXT,
+	database_connection	BIGINT		REFERENCES timetable.database_connection(database_connection)
+									ON UPDATE CASCADE
+									ON DELETE CASCADE,
+	ignore_error		BOOLEAN		DEFAULT false
 );
 
 
@@ -60,34 +60,34 @@ CREATE TABLE timetable.task_chain (
 -- "live" is the indication that the chain is finalized, the system can run it
 -- "self_destruct" is the indication that this chain will delete itself after run
 CREATE TABLE timetable.chain_execution_config (
-    chain_execution_config   	bigserial		PRIMARY KEY,
-    chain_id        		bigint 	REFERENCES timetable.task_chain(chain_id)
-                                            	ON UPDATE CASCADE
-						ON DELETE CASCADE,
-    chain_name      		text		NOT NULL UNIQUE,
-    run_at_minute			integer,
-    run_at_hour			integer,
-    run_at_day			integer,
-    run_at_month			integer,
-    run_at_day_of_week		integer,
-    max_instances			integer,
-    live				boolean		DEFAULT false,
-    self_destruct			boolean		DEFAULT false,
-	exclusive_execution		boolean		DEFAULT false,
-	excluded_execution_configs	integer[]
+    chain_execution_config		BIGSERIAL	PRIMARY KEY,
+    chain_id        			BIGINT 		REFERENCES timetable.task_chain(chain_id)
+                                            ON UPDATE CASCADE
+											ON DELETE CASCADE,
+    chain_name      			TEXT		NOT NULL UNIQUE,
+    run_at_minute				INTEGER,
+    run_at_hour					INTEGER,
+    run_at_day					INTEGER,
+    run_at_month				INTEGER,
+    run_at_day_of_week			INTEGER,
+    max_instances				INTEGER,
+    live						BOOLEAN		DEFAULT false,
+    self_destruct				BOOLEAN		DEFAULT false,
+	exclusive_execution			BOOLEAN		DEFAULT false,
+	excluded_execution_configs	INTEGER[]
 );
 
 
 -- parameter passing for config
 CREATE TABLE timetable.chain_execution_parameters(
-	chain_execution_config		int8	REFERENCES timetable.chain_execution_config (chain_execution_config)
-								ON UPDATE CASCADE
-								ON DELETE CASCADE, 
-	chain_id 			int8 		REFERENCES timetable.task_chain(chain_id)
-								ON UPDATE CASCADE
-								ON DELETE CASCADE,
-	order_id 			int4		CHECK (order_id > 0),
-	value 				jsonb, 
+	chain_execution_config	BIGINT	REFERENCES timetable.chain_execution_config (chain_execution_config)
+									ON UPDATE CASCADE
+									ON DELETE CASCADE,
+	chain_id 				BIGINT 	REFERENCES timetable.task_chain(chain_id)
+									ON UPDATE CASCADE
+									ON DELETE CASCADE,
+	order_id 				INTEGER	CHECK (order_id > 0),
+	value 					jsonb,
 	PRIMARY KEY (chain_execution_config, chain_id, order_id)
 );
 
@@ -97,39 +97,39 @@ CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANI
 
 CREATE TABLE timetable.log
 (
-	id					bigserial		PRIMARY KEY,
-	ts					timestamptz	DEFAULT now(),
-	client_name	        text,
-	pid					int 		NOT NULL,
+	id					BIGSERIAL			PRIMARY KEY,
+	ts					TIMESTAMPTZ			DEFAULT now(),
+	client_name	        TEXT,
+	pid					INTEGER 			NOT NULL,
 	log_level			timetable.log_type	NOT NULL,
-	message				text
+	message				TEXT
 );
 
 -- log timetable related action
 CREATE TABLE timetable.execution_log (
-	chain_execution_config		bigint,
-	chain_id        		bigint,
-	task_id         		bigint,
-	name            		text		NOT NULL, -- expanded details about the task run
-	script          		text,
-	kind          			text,
-	last_run       	 		timestamp	DEFAULT now(),
-	finished        		timestamp,
-	returncode      		integer,
-	pid             		bigint
+	chain_execution_config	BIGINT,
+	chain_id        		BIGINT,
+	task_id         		BIGINT,
+	name            		TEXT		NOT NULL, -- expanded details about the task run
+	script          		TEXT,
+	kind          			TEXT,
+	last_run       	 		TIMESTAMPTZ	DEFAULT now(),
+	finished        		TIMESTAMPTZ,
+	returncode      		INTEGER,
+	pid             		BIGINT
 );
 
 CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
 
 CREATE TABLE timetable.run_status (
-	run_status 			bigserial, 
-	start_status			int4,
-	execution_status 		timetable.execution_status, 
-	chain_id 			int4, 
-	current_execution_element 	int4, 
-	started 			timestamp, 
-	last_status_update 		timestamp 	DEFAULT clock_timestamp(), 
-	chain_execution_config 		int4,
+	run_status 					BIGSERIAL,
+	start_status				BIGINT,
+	execution_status 			timetable.execution_status,
+	chain_id 					BIGINT,
+	current_execution_element	BIGINT,
+	started 					TIMESTAMPTZ,
+	last_status_update 			TIMESTAMPTZ 				DEFAULT clock_timestamp(),
+	chain_execution_config 		BIGINT,
 	PRIMARY KEY (run_status)
 );
 
@@ -140,13 +140,13 @@ CREATE TABLE timetable.run_status (
 -- this stored procedure will tell us which scripts chains
 -- have to be executed
 -- $1: chain execution config id
-CREATE OR REPLACE FUNCTION timetable.check_task(bigint) RETURNS boolean AS 
+CREATE OR REPLACE FUNCTION timetable.check_task(BIGINT) RETURNS BOOLEAN AS
 $$
 DECLARE	
 	v_chain_exec_conf	ALIAS FOR $1;
 
 	v_record		record;
-	v_return		boolean;
+	v_return		BOOLEAN;
 BEGIN
 	SELECT * 	
 		FROM 	timetable.chain_execution_config 
@@ -175,11 +175,11 @@ DROP TRIGGER IF EXISTS trig_task_chain_fixer ON timetable.base_task;
 
 CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 	DECLARE
-		tmp_parent_id INTEGER;
-		tmp_chain_id INTEGER;
-		orig_chain_id INTEGER;
-		tmp_chain_head_id INTEGER;
-		i INTEGER;
+		tmp_parent_id BIGINT;
+		tmp_chain_id BIGINT;
+		orig_chain_id BIGINT;
+		tmp_chain_head_id BIGINT;
+		i BIGINT;
 	BEGIN
 		--raise notice 'Fixing chain for deletion of base_task#%', OLD.task_id;
 
@@ -220,7 +220,7 @@ CREATE TRIGGER trig_task_chain_fixer
 
 
 -- see which jobs are running
-CREATE OR REPLACE FUNCTION timetable.get_running_jobs (bigint) RETURNS SETOF record AS $$
+CREATE OR REPLACE FUNCTION timetable.get_running_jobs (BIGINT) RETURNS SETOF record AS $$
 	SELECT  chain_execution_config, start_status
 		FROM	timetable.run_status
 		WHERE 	start_status IN ( SELECT   start_status
@@ -236,11 +236,11 @@ CREATE OR REPLACE FUNCTION timetable.get_running_jobs (bigint) RETURNS SETOF rec
 		ORDER BY 1, 2 DESC
 $$ LANGUAGE 'sql';
 
-CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name text, IN parent_task_id bigint)
-RETURNS int8 AS $$
+CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name TEXT, IN parent_task_id BIGINT)
+RETURNS BIGINT AS $$
 DECLARE
-	builtin_id int8;
-	result_id int8;
+	builtin_id BIGINT;
+	result_id BIGINT;
 BEGIN
 	SELECT task_id FROM timetable.base_task WHERE name = task_name INTO builtin_id;
 	IF NOT FOUND THEN
