@@ -62,15 +62,23 @@ $ go test ./...
 
 ## 3. Features and advanced functionality
 
+The scheduling in **pg_timetable** encompasses *three* different stages to facilitate the reuse with other parameters or additional schedules.
+
+
+The first stage, ***base_task***, defines what to do.\
+The second stage, ***task_chain***, contains a list of base tasks to run sequentially.\
+The third stage consists of the ***chain_execution_config*** and defines *if*, *when*, and *how often* a chain should be executed.
+
+Additionally, to provide the base tasks with parameters and influence their behavior, each entry in a task chain can be accompanied by an ***execution parameter***.
+
 ### 3.1. Base task
 
 In **pg_timetable**, the most basic building block is a ***base task***. Currently, there are three different kinds of task:
-
-| Base task kind   | Example                                                                                                                                                             |
-| :--------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| SQL snippet      | Starting a cleanup, refreshing a materialized view or processing data.                                                                                              |
-| External program | Anything that can be called from the command line.                                                                                                                  |
-| Internal Task    | A prebuilt functionality included in **pg_timetable**. These include: <ul style="margin-top:12px"><li>Sleep</li><li>Log</li><li>SendMail</li><li>Download</li></ul> |
+| Base task kind   | Task kind type | Example                                                                                                                                                             |
+| :--------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| SQL snippet      | `SQL`          | Starting a cleanup, refreshing a materialized view or processing data.                                                                                              |
+| External program | `SHELL`        | Anything that can be called from the command line.                                                                                                                  |
+| Internal Task    | `BUILTIN`      | A prebuilt functionality included in **pg_timetable**. These include: <ul style="margin-top:12px"><li>Sleep</li><li>Log</li><li>SendMail</li><li>Download</li></ul> |
 
 A new base task can be created by inserting a new entry into `timetable.base_task`.
 
@@ -104,7 +112,7 @@ Through chains, **pg_timetable** creates the ability to span transactions over m
 | `database_connection` | `integer` | TODO: Why is this an integer?                                                     |
 | `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `true`). |
 
-### 3.3. Chain execution configuration
+#### 3.2.1. Chain execution configuration
 
 Once a chain has been created, it has to be scheduled. For this, **pg_timetable** builds upon the standard **cron**-string, all the while adding multiple configuration options.
 
@@ -173,9 +181,9 @@ Once a chain has been created, it has to be scheduled. For this, **pg_timetable*
     </tr>
 </table>​
 
-### 3.4. Chain execution parameters
+#### 3.2.2. Chain execution parameters
 
-As mentioned before, base tasks are simple skeletons (e.g. *send email*, *vacuum*, etc.).
+As mentioned above, base tasks are simple skeletons (e.g. *send email*, *vacuum*, etc.).
 In most cases, they have to be brought to live by passing parameters to the execution.
 
 <p align="center">Excerpt of <code>timetable.chain_execution_paramaters</code></p>
