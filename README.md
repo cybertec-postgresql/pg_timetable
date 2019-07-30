@@ -10,9 +10,9 @@ It is completely database driven and provides a couple of advanced concepts.
   - [3. Features and advanced functionality](#3-features-and-advanced-functionality)
     - [3.1. Base task](#31-base-task)
     - [3.2. Task chain](#32-task-chain)
-    - [3.3. Chain execution configuration](#33-chain-execution-configuration)
-    - [3.4. Chain execution parameters](#34-chain-execution-parameters)
-    - [3.5. Example usages](#35-example-usages)
+    - [3.2.1. Chain execution configuration](#321-chain-execution-configuration)
+    - [3.2.2. Chain execution parameters](#322-chain-execution-parameters)
+    - [3.3. Example usages](#33-example-usages)
   - [4. Database logging and transactions](#4-database-logging-and-transactions)
   - [5. Runtime information](#5-runtime-information)
   - [6. Schema diagram](#6-schema-diagram)
@@ -74,6 +74,7 @@ Additionally, to provide the base tasks with parameters and influence their beha
 ### 3.1. Base task
 
 In **pg_timetable**, the most basic building block is a ***base task***. Currently, there are three different kinds of task:
+
 | Base task kind   | Task kind type | Example                                                                                                                                                             |
 | :--------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | SQL snippet      | `SQL`          | Starting a cleanup, refreshing a materialized view or processing data.                                                                                              |
@@ -195,7 +196,7 @@ In most cases, they have to be brought to live by passing parameters to the exec
 | `order_id`               | integer | The order of the parameter.                      |
 | `value`                  | jsonb   | A `string` JSON array containing the paramaters. |
 
-### 3.5. Example usages
+### 3.3. Example usages
 
 A variety of examples can be found in the `/samples` directory.
 
