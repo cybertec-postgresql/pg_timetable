@@ -29,10 +29,9 @@ func LogToDB(level string, msg ...interface{}) {
 			os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 	}
 	s := fmt.Sprintf("[%v | %s | %-6s]:\t %s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level, fmt.Sprint(msg...))
+	fmt.Println(s)
 	if level == "PANIC" {
 		panic(s)
-	} else {
-		fmt.Println(s)
 	}
 }
 
