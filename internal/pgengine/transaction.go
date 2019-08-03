@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/guregu/null.v3"
 )
 
 // ChainElementExecution structure describes each chain execution process
@@ -100,7 +100,7 @@ ORDER BY order_id ASC`
 func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 	var err error
 	var res sql.Result
-	params := []null.String{}
+	var params []interface{}
 
 	if script == "" {
 		return errors.New("SQL script cannot be empty")
@@ -113,15 +113,16 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 				if err := json.Unmarshal([]byte(val), &params); err != nil {
 					return err
 				}
+				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("\nWith parameters: %+v", params))
+				res, err = tx.Exec(script, params...)
 			}
 		}
-		res, err = tx.Exec(script, params)
 	}
 	if err != nil {
 		return err
 	}
 	cnt, _ := res.RowsAffected()
-	LogToDB("LOG", "Result of the command:\n", script, params, "\nAffected: ", cnt)
+	LogToDB("LOG", "Successfully executed command: ", script, "\nAffected: ", cnt)
 	return nil
 }
 

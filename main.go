@@ -47,7 +47,7 @@ func main() {
 	pgengine.PrefixSchemaFiles("sql/")
 	pgengine.InitAndTestConfigDBConnection(cmdOpts.Host, cmdOpts.Port,
 		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, "disable", pgengine.SQLSchemaFiles)
-	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v\n", cmdOpts))
+	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v", cmdOpts))
 	defer pgengine.FinalizeConfigDBConnection()
 	scheduler.Run()
 	return

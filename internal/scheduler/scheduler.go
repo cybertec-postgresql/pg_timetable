@@ -56,7 +56,7 @@ func Run() {
 		headChains := []Chain{}
 		err := pgengine.ConfigDb.Select(&headChains, query)
 		if err != nil {
-			pgengine.LogToDB("LOG", "could not query pending tasks:", err)
+			pgengine.LogToDB("PANIC", "could not query pending tasks:", err)
 			return
 		}
 		pgengine.LogToDB("DEBUG", "number of chain head tuples: ", len(headChains))
@@ -142,9 +142,8 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		pgengine.LogToDB("ERROR", fmt.Sprintf("task execution failed: %s\n; Error: %s", chainElemExec, err))
 		if retCode != 0 {
 			return retCode
-		}else{
-			return -1
 		}
+		return -1
 	}
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
