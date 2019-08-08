@@ -11,6 +11,7 @@ import (
 )
 
 const workersNumber = 16
+/* the main loop period. Should be 60 (sec) for release configuration. Now is 10 (sec) for debug purposes */
 const refetchTimeout = 10
 
 // Chain structure used to represent tasks chains
