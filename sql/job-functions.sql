@@ -117,8 +117,7 @@ END;
 $BODY$
     LANGUAGE plpgsql VOLATILE
                      COST 100;
-ALTER FUNCTION timetable.cron_element_to_array(text, text)
-    OWNER TO scheduler_user;
+
 
 
 
@@ -129,14 +128,14 @@ CREATE OR REPLACE FUNCTION timetable.job_add(
     task_function text,
     task_type timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
     by_cron text DEFAULT NULL::text,
-    by_month text DEFAULT NULL::text,
-    by_day text DEFAULT NULL::text,
-    by_hour text DEFAULT NULL::text,
     by_minute text DEFAULT NULL::text,
+    by_hour text DEFAULT NULL::text,
+    by_day text DEFAULT NULL::text,
+    by_month text DEFAULT NULL::text,
     by_day_of_week text DEFAULT NULL::text,
     max_instances integer DEFAULT NULL::integer,
-    live boolean DEFAULT false::boolean,
-    self_destruct boolean DEFAULT false::boolean)
+    live boolean DEFAULT false,
+    self_destruct boolean DEFAULT false)
     RETURNS text AS
 $BODY$
 DECLARE
@@ -152,7 +151,6 @@ DECLARE
     a_by_month integer[];
     a_by_day_of_week integer[];
 
-    v_random text;
     tmp_num numeric;
 BEGIN
 
@@ -272,37 +270,43 @@ BEGIN
 
 
     --calculate TimeMatrix
-    OPEN c_matrix FOR SELECT
-                          v_min as min, v_hour as hour, v_day as day, v_month as month, v_day_of_week as  dow
+    OPEN c_matrix FOR WITH v_min(y) AS (
+        SELECT unnest(a) FROM ( VALUES(a_by_minute)) x(a) -- Minutes
+    ),
+                           v_hour(y) AS (
+                               SELECT unnest(a) FROM ( VALUES(a_by_hour)) x(a) -- Hours
+                           ),
+                           v_day(y) AS (
+                               SELECT unnest(a) FROM ( VALUES(a_by_day)) x(a) -- Days
+                           ),
+                           v_month(y) AS (
+                               SELECT unnest(a) FROM ( VALUES(a_by_month)) x(a) -- Months
+                           ),
+                           v_day_of_week(y) AS (
+                               SELECT unnest(a) FROM ( VALUES(a_by_day_of_week)) x(a) -- Day of week
+                           )
+                      SELECT
+                          v_min.y as min, v_hour.y as hour, v_day.y as day, v_month.y as month, v_day_of_week.y as  dow
                       FROM
-                          unnest(a_by_minute) as v_min
-                              CROSS JOIN unnest(a_by_hour) as v_hour
-                              CROSS JOIN unnest(a_by_day) as v_day
-                              CROSS JOIN unnest(a_by_month) as v_month
-                              CROSS JOIN unnest(a_by_day_of_week) as v_day_of_week
+                          v_min CROSS JOIN v_hour CROSS JOIN v_day CROSS JOIN v_month CROSS JOIN v_day_of_week
                       ORDER BY
-                          v_min, v_hour, v_day, v_month, v_day_of_week ;
+                          v_min.y, v_hour.y, v_day.y, v_month.y, v_day_of_week.y;
 
     LOOP
         FETCH c_matrix INTO r_matrix;
         EXIT WHEN NOT FOUND;
-        --v_random :=  md5(now()::text);
-        v_random := (CASE WHEN r_matrix.min IS NULL THEN 0 ELSE r_matrix.min END)::text;
-        v_random := v_random || (CASE WHEN r_matrix.hour IS NULL THEN 0 ELSE r_matrix.hour END)::text;
-        v_random := v_random || (CASE WHEN r_matrix.day IS NULL THEN 0 ELSE r_matrix.day END)::text;
-        v_random := v_random || (CASE WHEN r_matrix.month IS NULL THEN 0 ELSE r_matrix.month END)::text;
-        v_random := v_random || (CASE WHEN r_matrix.dow IS NULL THEN 0 ELSE r_matrix.dow END)::text;
+        RAISE NOTICE 'min: %, hour: %, day: %, month: %',r_matrix.min, r_matrix.hour, r_matrix.day, r_matrix.month;
 
         INSERT INTO timetable.chain_execution_config VALUES
         (
             DEFAULT, -- chain_execution_config,
             v_chain_id, -- chain_id,
-            'JOB_'||v_task_id||'#'||v_random, -- chain_name,
+            'chain_', -- chain_name,
             r_matrix.min, -- run_at_minute,
             r_matrix.hour, -- run_at_hour,
             r_matrix.day, -- run_at_day,
             r_matrix.month, -- run_at_month,
-            null, -- run_at_day_of_week,
+            r_matrix.dow, -- run_at_day_of_week,
             max_instances, -- max_instances,
             live, -- live,
             self_destruct, -- self_destruct,
