@@ -1,4 +1,4 @@
-pg_timetable: Advanced scheduling for PostgreSQL
+pg_timetable: Advanced scheduling for PostgreSQL test
 ================================================
 
 **pg_timetable** is an advanced job scheduler for PostgreSQL, offering many advantages over traditional schedulers such as **cron** and others.
