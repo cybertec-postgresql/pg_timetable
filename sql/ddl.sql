@@ -93,7 +93,7 @@ CREATE TABLE timetable.chain_execution_parameters(
 
 
 -- log client application related actions
-CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC');
+CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC','USER');
 
 CREATE TABLE timetable.log
 (
