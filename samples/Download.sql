@@ -37,7 +37,7 @@ BEGIN
 
 		-- "workersnum":   Number of workers - If the supplied value is less than one, a
 		--                worker will be created for each request. 
-		-- "fileurls":    Provide urls from where you wanna download files, User can mention n number of 
+		-- "fileurls":    String array of URLs from which files will be downloaded
 		--                comma separated urls 
 		--"destpath":     Destination path 
 
