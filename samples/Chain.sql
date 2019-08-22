@@ -13,7 +13,7 @@ DECLARE
     v_chain_config_id   bigint;
 BEGIN
 
-    -- In order to implement chain pperation, we will create a table(One time)
+    -- Create a showcase table on which we will demonstrate the chain operations.
 
     CREATE TABLE timetable.chain_log (
         chain_log BIGSERIAL,
