@@ -1,7 +1,7 @@
 DO $$
 
-    -- In order to create chain of tasks, We will create few base tasks and each task_id will be associated with
-    -- a chain_id
+    -- In order to create chain of tasks, We will create few base tasks and 
+    -- each task_id will be associated with a chain_id.
     -- There will be only one HEAD chain (parent_id = null).
     -- chain_id of HEAD chain will be parent_id of other chains.
 
@@ -13,14 +13,14 @@ DECLARE
     v_chain_config_id   bigint;
 BEGIN
 
-    -- In order to implement chain pperation , We will create a table(One time)
+    -- In order to implement chain pperation, we will create a table(One time)
 
     CREATE TABLE timetable.chain_log (
-	    chain_log           BIGSERIAL,
-        event               TEXT,
-	    time 		        TIMESTAMPTZ,
-	    PRIMARY KEY (chain_log)
-    );
+        chain_log BIGSERIAL,
+        EVENT TEXT,
+        time TIMESTAMPTZ,
+        PRIMARY KEY (chain_log)
+    )
 
 
     --Add a Task
@@ -29,7 +29,7 @@ BEGIN
 	    DEFAULT, 						                                                -- task_id
 	    'insert in chain log task',	                                                    -- name
 	    DEFAULT, 						                                                -- 'SQL' :: timetable.task_kind
-	    'Insert into timetable.chain_log (event,time) Values($1,current_timestamp);'	-- task script
+	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'	-- task script
 	    )
     RETURNING task_id INTO v_parent_task_id;
 	
@@ -47,7 +47,7 @@ BEGIN
 	    DEFAULT, 						                                                    -- task_id
 	    'Update Chain_log child task',				                                        -- name
 	    DEFAULT, 						                                                    -- 'SQL' :: timetable.task_kind
-	    'Insert into timetable.chain_log (event,time) Values($1,current_timestamp);'		-- task script
+	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'		-- task script
 	    )
     RETURNING task_id into v_child_task_id;
 	
