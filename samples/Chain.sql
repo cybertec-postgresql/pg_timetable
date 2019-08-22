@@ -23,7 +23,7 @@ BEGIN
     )
 
 
-    --Add a Task
+    -- Add a Task
 
     INSERT INTO timetable.base_task VALUES (
 	    DEFAULT, 						                                                -- task_id
