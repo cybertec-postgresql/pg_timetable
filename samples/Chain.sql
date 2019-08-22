@@ -27,9 +27,9 @@ BEGIN
 
     INSERT INTO timetable.base_task VALUES (
 	    DEFAULT, 						                                                -- task_id
-	    'insert in chain log task',	                                                    -- name
+	    'insert in chain log task',	                                                                        -- name
 	    DEFAULT, 						                                                -- 'SQL' :: timetable.task_kind
-	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'	-- task script
+	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'	                -- task script
 	    )
     RETURNING task_id INTO v_parent_task_id;
 	
@@ -45,9 +45,9 @@ BEGIN
     -- Add few nore tasks and chains, these chains will keep parent_id value which is chain_id of HEAD node
     INSERT INTO timetable.base_task VALUES (
 	    DEFAULT, 						                                                    -- task_id
-	    'Update Chain_log child task',				                                        -- name
+	    'Update Chain_log child task',				                                            -- name
 	    DEFAULT, 						                                                    -- 'SQL' :: timetable.task_kind
-	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'		-- task script
+	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'		            -- task script
 	    )
     RETURNING task_id into v_child_task_id;
 	
