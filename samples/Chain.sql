@@ -82,7 +82,8 @@ BEGIN
         )
     RETURNING  chain_execution_config INTO v_chain_config_id;
 
-    --Paremeter for HEAD(Parent) Chain
+
+    -- Parameter for the HEAD chain
     INSERT INTO timetable.chain_execution_parameters(
         chain_execution_config, 
         chain_id, 
