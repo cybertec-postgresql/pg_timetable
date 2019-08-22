@@ -44,12 +44,8 @@ BEGIN
 
     -- Add a few more tasks and chains, all of which will receive the chain_id of the HEAD chain as their parent_id
     INSERT INTO timetable.base_task VALUES (
-	    DEFAULT, 						                                                    -- task_id
-	    'Update Chain_log child task',				                                            -- name
-	    DEFAULT, 						                                                    -- 'SQL' :: timetable.task_kind
-	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'		            -- task script
-	    )
-    RETURNING task_id into v_child_task_id;
+	    DEFAULT, 'Update Chain_log child task', DEFAULT, 'INSERT INTO timetable.chain_log (event, time) VALUES ($1, CURRENT_TIMESTAMP);')		            
+	    RETURNING task_id into v_child_task_id;
 	
     INSERT INTO timetable.task_chain 
             (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
