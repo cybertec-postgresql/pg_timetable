@@ -1,5 +1,5 @@
 DO $$
-	-- An example for Download task.
+	-- An example of the Download task.
 DECLARE
 	v_task_id bigint;
 	v_chain_id bigint;
