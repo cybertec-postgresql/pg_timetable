@@ -37,7 +37,7 @@ BEGIN
     RETURNING  chain_execution_config INTO v_chain_config_id;
 
 	-- Create the parameters for the chain configuration
-		-- 	"username":   Sender Email Id
+		-- "username":   The username used for authenticating on the mail server
 		-- "password":    Sender Mail id Password
 		-- "serverhost":  Your Email Id service provider detail
 		-- "serverport":  Port
