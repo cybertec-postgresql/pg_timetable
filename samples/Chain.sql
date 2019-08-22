@@ -98,7 +98,7 @@ BEGIN
         );
   
 
-    --Parameter for child  chains
+    -- Parameter for the child chains
     INSERT INTO timetable.chain_execution_parameters (
         chain_execution_config,
         chain_id, 
