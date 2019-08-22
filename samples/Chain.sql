@@ -33,7 +33,7 @@ BEGIN
 	    )
     RETURNING task_id INTO v_parent_task_id;
 	
-    -- attach task to a chain, This chain will be HEAD chain
+    -- Attach the task to a chain (this will be our HEAD chain)
 
     INSERT INTO timetable.task_chain 
             (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
