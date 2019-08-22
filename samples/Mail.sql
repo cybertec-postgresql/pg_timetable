@@ -42,7 +42,7 @@ BEGIN
 		-- "serverhost":  The IP address or hostname of the mail server
 		-- "serverport":  The port of the mail server
 		-- "senderaddr":  The email that will appear as the sender
-		-- "toaddr":      Reciever mail Id, You can add multiple comma separated reciver ids, 
+		-- "toaddr":      String array of recipients email addresses 
 		-- "msgbody":	  Email Body
 	INSERT INTO timetable.chain_execution_parameters (
 		chain_execution_config,
