@@ -1,7 +1,7 @@
 DO $$
 
     -- In order to create a task chain, we have to create a number of base tasks,
-    -- each task_id will be associated with a chain_id.
+    -- each of which will be associated with a chain_id.
     -- There will be only one HEAD chain (parent_id = null).
     -- chain_id of HEAD chain will be parent_id of other chains.
 
