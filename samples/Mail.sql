@@ -38,7 +38,7 @@ BEGIN
 
 	-- Create the parameters for the chain configuration
 		-- "username":   The username used for authenticating on the mail server
-		-- "password":    Sender Mail id Password
+		-- "password":    The password used for authenticating on the mail server
 		-- "serverhost":  The IP address or hostname of the mail server
 		-- "serverport":  The port of the mail server
 		-- "senderaddr":  The email that will appear as the sender
