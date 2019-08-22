@@ -38,7 +38,7 @@ BEGIN
 		-- "workersnum":   Number of workers - If the supplied value is less than one, a
 		--                worker will be created for each request. 
 		-- "fileurls":    String array of URLs from which files will be downloaded
-		--"destpath":     Destination path 
+		-- "destpath":     Destination path 
 
 	INSERT INTO timetable.chain_execution_parameters (
 		chain_execution_config,
