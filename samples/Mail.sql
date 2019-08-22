@@ -39,7 +39,7 @@ BEGIN
 	-- Create the parameters for the chain configuration
 		-- "username":   The username used for authenticating on the mail server
 		-- "password":    Sender Mail id Password
-		-- "serverhost":  Your Email Id service provider detail
+		-- "serverhost":  The IP address or hostname of the mail server
 		-- "serverport":  Port
 		-- "senderaddr":  The email that will appear as the sender
 		-- "toaddr":      Reciever mail Id, You can add multiple comma separated reciver ids, 
