@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -11,8 +12,12 @@ import (
 )
 
 const workersNumber = 16
+
 /* the main loop period. Should be 60 (sec) for release configuration. Now is 10 (sec) for debug purposes */
 const refetchTimeout = 10
+
+/* if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes */
+const maxChainsThreshold = workersNumber * refetchTimeout
 
 // Chain structure used to represent tasks chains
 type Chain struct {
@@ -60,10 +65,14 @@ func Run() {
 			pgengine.LogToDB("PANIC", "could not query pending tasks:", err)
 			return
 		}
-		pgengine.LogToDB("DEBUG", "number of chain head tuples: ", len(headChains))
+		headChainsCount := len(headChains)
+		pgengine.LogToDB("DEBUG", "number of chain head tuples: ", headChainsCount)
 
 		/* now we can loop through so chains */
 		for _, headChain := range headChains {
+			if headChainsCount > maxChainsThreshold {
+				time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
+			}
 			pgengine.LogToDB("DEBUG", fmt.Sprintf("putting head chain %s to the execution channel", headChain))
 			chains <- headChain
 		}
@@ -123,6 +132,8 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var paramValues []string
 	var err error
 	var retCode int
+	var execTx *sqlx.Tx
+	var remoteDb *sqlx.DB
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %s", chainElemExec))
 
@@ -132,7 +143,32 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 
 	switch chainElemExec.Kind {
 	case "SQL":
-		err = pgengine.ExecuteSQLCommand(tx, chainElemExec.Script, paramValues)
+		execTx = tx
+		//Connect to Remote DB
+		if chainElemExec.DatabaseConnection.Valid {
+			var connectionString string
+			connectionString = pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
+			//connection string is empty then don't proceed
+			if strings.TrimSpace(connectionString) == "" {
+				pgengine.LogToDB("ERROR", fmt.Sprintf("Connection string is blank"))
+				return -1
+			}
+			remoteDb, execTx = pgengine.GetRemoteDBTransaction(connectionString)
+			//don't proceed when remote db connection not established
+			if execTx == nil {
+				pgengine.LogToDB("ERROR", fmt.Sprintf("Couldn't connect to remote database"))
+				return -1
+			}
+			defer pgengine.FinalizeRemoteDBConnection(remoteDb)
+		}
+
+		// Set Role
+		if chainElemExec.RunUID.Valid {
+			pgengine.SetRole(execTx, chainElemExec.RunUID)
+		}
+
+		err = pgengine.ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
+
 	case "SHELL":
 		err, retCode = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
@@ -148,5 +184,16 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	}
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
+
+	//Reset The Role
+	if chainElemExec.RunUID.Valid {
+		pgengine.ResetRole(execTx)
+	}
+
+	// Commit changes on remote server
+	if chainElemExec.DatabaseConnection.Valid {
+		pgengine.MustCommitTransaction(execTx)
+	}
+
 	return 0
 }

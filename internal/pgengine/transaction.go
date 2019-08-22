@@ -152,3 +152,52 @@ VALUES
 	defer SoftPanic("Update Chain Status failed ")
 	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
 }
+
+//GetConnectionString of database_connection
+func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
+	rows := ConfigDb.QueryRow("SELECT connect_string FROM  timetable.database_connection WHERE database_connection = $1", databaseConnection)
+	err := rows.Scan(&connectionString)
+	if err != nil {
+		LogToDB("ERROR", "Issue while fetching connection string:", err)
+	}
+	return connectionString
+}
+
+//GetRemoteDBTransaction create a remote db connection and returns transaction object
+func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
+	remoteDb, err := sqlx.Connect("postgres", connectionString)
+	if err != nil {
+		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v\n", connectionString))
+		return nil, nil
+	}
+	LogToDB("LOG", "Remote Connection established...")
+	return remoteDb, remoteDb.MustBegin()
+}
+
+// FinalizeRemoteDBConnection closes session
+func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
+	LogToDB("LOG", "Closing remote session")
+	if err := remoteDb.Close(); err != nil {
+		LogToDB("PANIC", "Cannot close database connection:", err)
+	}
+	remoteDb = nil
+}
+
+// SetRole - set the current user identifier of the current session
+func SetRole(tx *sqlx.Tx, runUID sql.NullString) {
+	LogToDB("LOG", "Setting Role to ", runUID.String)
+	_, err := tx.Exec(fmt.Sprintf("SET ROLE %v", runUID.String))
+	if err != nil {
+		LogToDB("ERROR", "Error in Setting role", err)
+	}
+}
+
+//ResetRole - RESET forms reset the current user identifier to be the current session user identifier
+func ResetRole(tx *sqlx.Tx) {
+	LogToDB("LOG", "Resetting Role")
+	const sqlResetRole = `RESET ROLE`
+	_, err := tx.Exec(sqlResetRole)
+	if err != nil {
+		LogToDB("ERROR", "Error in ReSetting role", err)
+	}
+}
