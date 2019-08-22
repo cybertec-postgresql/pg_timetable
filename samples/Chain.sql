@@ -42,7 +42,7 @@ BEGIN
     RETURNING chain_id INTO v_parent_id;
 
 
-    -- Add few nore tasks and chains, these chains will keep parent_id value which is chain_id of HEAD node
+    -- Add a few more tasks and chains, all of which will receive the chain_id of the HEAD chain as their parent_id
     INSERT INTO timetable.base_task VALUES (
 	    DEFAULT, 						                                                    -- task_id
 	    'Update Chain_log child task',				                                            -- name
