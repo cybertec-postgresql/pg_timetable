@@ -43,7 +43,7 @@ BEGIN
 		v_chain_config_id,
 		v_chain_id, 
 		1, 
-        '{"Description":"Logs Execution"}'::jsonb
+                '{"Description":"Logs Execution"}'::jsonb
 	);
 
 END;
