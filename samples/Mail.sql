@@ -40,7 +40,7 @@ BEGIN
 		-- "username":   The username used for authenticating on the mail server
 		-- "password":    Sender Mail id Password
 		-- "serverhost":  The IP address or hostname of the mail server
-		-- "serverport":  Port
+		-- "serverport":  The port of the mail server
 		-- "senderaddr":  The email that will appear as the sender
 		-- "toaddr":      Reciever mail Id, You can add multiple comma separated reciver ids, 
 		-- "msgbody":	  Email Body
