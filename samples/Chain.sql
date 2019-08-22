@@ -17,7 +17,7 @@ BEGIN
 
     CREATE TABLE timetable.chain_log (
         chain_log BIGSERIAL,
-        EVENT TEXT,
+        event TEXT,
         time TIMESTAMPTZ,
         PRIMARY KEY (chain_log)
     )
