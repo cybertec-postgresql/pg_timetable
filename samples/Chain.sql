@@ -29,7 +29,7 @@ BEGIN
 	    DEFAULT, 						                                                -- task_id
 	    'insert in chain log task',	                                                                        -- name
 	    DEFAULT, 						                                                -- 'SQL' :: timetable.task_kind
-	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'	                -- task script
+	    'INSERT INTO timetable.chain_log (event, time) VALUES ($1, CURRENT_TIMESTAMP);'	                -- task script
 	    )
     RETURNING task_id INTO v_parent_task_id;
 	
