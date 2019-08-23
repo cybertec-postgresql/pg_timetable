@@ -15,8 +15,9 @@ BEGIN
 	RETURNING chain_id INTO v_chain_id;
 
 	-- Create the chain execution configuration
-	INSERT INTO timetable.chain_execution_config VALUES 
-    	(
+	INSERT INTO timetable.chain_execution_config 
+	VALUES
+	(
         DEFAULT, -- chain_execution_config, 
         v_chain_id, -- chain_id, 
         'Download a file', -- chain_name
@@ -30,8 +31,8 @@ BEGIN
         FALSE, -- self_destruct,
         FALSE, -- exclusive_execution, 
         NULL -- excluded_execution_configs
-    )
-    RETURNING  chain_execution_config INTO v_chain_config_id;
+    	)
+    	RETURNING  chain_execution_config INTO v_chain_config_id;
 
 	-- Create the parameters for the chain configuration
 
