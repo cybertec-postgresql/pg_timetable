@@ -36,12 +36,12 @@ BEGIN
 	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
 		VALUES (v_chain_config_id, v_chain_id, 1, '{
 				"username":     "Userid@example.com", 
-				"password":		"Password", 
+				"password":	"Password", 
 				"serverhost":	"smtp.example.com",
 				"serverport":	"587",
 				"senderaddr":   "Userid@example.com",
 				"toaddr":       ["toAddr@example.com"],
-				"msgbody":	    "Hello, Its pg_timetable test"
+				"msgbody":	"Hello, Its pg_timetable test"
 				}'::jsonb);
 END;
 $$
