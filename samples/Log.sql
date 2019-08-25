@@ -6,7 +6,7 @@ DECLARE
 BEGIN
 	-- Get the chain id
 	v_chain_id := timetable.insert_base_task (task_name := 'Log',
-    parent_task_id := NULL);
+        parent_task_id := NULL);
 	
 	-- Create the chain execution configuration
 	INSERT INTO timetable.chain_execution_config
@@ -30,7 +30,7 @@ BEGIN
 
 	-- Chain Execution Parameters
 	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-    VALUES (v_chain_config_id, v_chain_id, 1, '{"Description":"Logs Execution"}'::jsonb);
+        VALUES (v_chain_config_id, v_chain_id, 1, '{"Description":"Logs Execution"}'::jsonb);
 
 END;
 $$
