@@ -3,7 +3,7 @@ DO $$
     -- In order to create a task chain, we have to create a number of base tasks,
     -- each of which will be associated with a chain_id.
     -- There will be only one HEAD chain (parent_id = null).
-    -- chain_id of HEAD chain will be parent_id of other chains.
+    -- The HEADs chain_id will be the parent_id of all other chains.
 
 DECLARE
     v_child_task_id     bigint;
@@ -26,10 +26,10 @@ BEGIN
         VALUES ('insert in chain log task', 'SQL', 'INSERT INTO timetable.chain_log (event, time) VALUES ($1, CURRENT_TIMESTAMP);')
         RETURNING
             task_id INTO v_parent_task_id;
-	
+
     -- Attach the task to a chain (this will be our HEAD chain)
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-        VALUES (DEFAULT, NULL, v_parent_task_id, NULL, NULL, TRUE)
+    INSERT INTO timetable.task_chain (task_id)
+        VALUES (v_parent_task_id)
         RETURNING
             chain_id INTO v_parent_id;
 
@@ -39,27 +39,13 @@ BEGIN
         RETURNING
             task_id INTO v_child_task_id;
 
-	
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-        VALUES (DEFAULT, v_parent_id, v_child_task_id, NULL, NULL, TRUE)
+    INSERT INTO timetable.task_chain (parent_id, task_id)
+        VALUES (v_parent_id, v_child_task_id)
         RETURNING
             chain_id INTO v_chain_id;
 
-    INSERT INTO timetable.chain_execution_config
-        VALUES (DEFAULT, -- chain_execution_config,
-            v_parent_id, -- chain_id,
-            'chain operation', -- chain_name
-            NULL, -- run_at_minute,
-            NULL, -- run_at_hour,
-            NULL, -- run_at_day,
-            NULL, -- run_at_month,
-            NULL, -- run_at_day_of_week,
-            1, -- max_instances,
-            TRUE, -- live,
-            FALSE, -- self_destruct,
-            FALSE, -- exclusive_execution,
-            NULL -- excluded_execution_configs
-        )
+    INSERT INTO timetable.chain_execution_config (chain_id, chain_name, max_instances, live)
+        VALUES (v_parent_id, 'chain operation', 1, TRUE)
         RETURNING
             chain_execution_config INTO v_chain_config_id;
 
