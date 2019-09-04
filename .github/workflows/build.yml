@@ -18,8 +18,8 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
-      with:
-          path: /home/runner/go
+      # with:
+      #     path: go
 
     - name: Get dependencies
       run: |
