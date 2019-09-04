@@ -16,7 +16,7 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
       with:
-          path: $GOPATH
+          path: /home/runner/go
 
     - name: Get dependencies
       run: |
