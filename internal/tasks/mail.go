@@ -65,7 +65,7 @@ func taskSendMail(paramValues string) error {
 			return err
 		}))
 	}
-
+	// Send Mail
 	dialer := gomail.NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
 	s, err := dialer.Dial()
 	if err != nil {
