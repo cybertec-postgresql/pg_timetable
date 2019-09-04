@@ -18,9 +18,14 @@ jobs:
 
     - name: Get dependencies
       run: |
-        # allow private repo pull
-        git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        go get -v -t -d ./...
+        go get \
+          github.com/jessevdk/go-flags \
+          github.com/jmoiron/sqlx \
+          github.com/lib/pq \
+          github.com/stretchr/testify \
+          github.com/cavaliercoder/grab \
+          github.com/stretchr/testify/assert \
+          github.com/stretchr/testify/require
         if [ -f Gopkg.toml ]; then
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
