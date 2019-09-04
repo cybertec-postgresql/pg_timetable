@@ -19,7 +19,7 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
       with:
-        path: ../../go/github.com/cybertec-postgresql/pg_timetable/
+        path: go/src/github.com/cybertec-postgresql/
 
     - name: Get dependencies
       run: |
@@ -31,7 +31,7 @@ jobs:
           github.com/cavaliercoder/grab \
           github.com/stretchr/testify/assert \
           github.com/stretchr/testify/require
-        # export GOPATH=/home/runner/go:$(pwd)
+        export GOPATH=/home/runner/work/pg_timetable/go
         echo
         echo "-- Environment variables ----------------------------------------------"
         env
