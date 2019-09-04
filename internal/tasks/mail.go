@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"io"
 	"io/ioutil"
