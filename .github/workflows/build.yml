@@ -18,6 +18,8 @@ jobs:
 
     - name: Get dependencies
       run: |
+        # allow private repo pull
+        git config --global url."https://2581425026ba784913933f5fa3fc2286a6a8cf5a:x-oauth-basic@github.com/".insteadOf "https://github.com/"
         go get -v -t -d ./...
         if [ -f Gopkg.toml ]; then
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
