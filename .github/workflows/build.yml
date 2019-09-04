@@ -19,8 +19,8 @@ jobs:
           path: /home/runner/go
 
     - name: Log all environment variables
-      uses: hmarr/debug-action
-      
+      uses: hmarr/debug-action@v1
+
     - name: Get dependencies
       run: |
         go get -v -t -d ./...
