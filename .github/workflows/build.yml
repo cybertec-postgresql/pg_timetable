@@ -23,7 +23,7 @@ jobs:
 
     - name: Get dependencies
       run: |
-        go get \
+        go get -v \
           github.com/jessevdk/go-flags \
           github.com/jmoiron/sqlx \
           github.com/lib/pq \
