@@ -20,6 +20,7 @@ jobs:
       uses: actions/checkout@v1
       with:
         path: go/src/github.com/cybertec-postgresql/
+        fetch-depth: 1
 
     - name: Get dependencies
       run: |
@@ -38,4 +39,6 @@ jobs:
         echo "-----------------------------------------------------------------------"
 
     - name: Build
-      run: go build -v .
+      run: |
+        export GOPATH=/home/runner/work/pg_timetable/go
+        go build -v .
