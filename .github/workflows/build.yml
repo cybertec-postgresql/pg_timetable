@@ -31,7 +31,7 @@ jobs:
           github.com/cavaliercoder/grab \
           github.com/stretchr/testify/assert \
           github.com/stretchr/testify/require
-        export GOPATH=$GOPATH:$(pwd)
+        export GOPATH=/home/runner/go:$(pwd)
         echo
         echo "-- Environment variables ----------------------------------------------"
         env
