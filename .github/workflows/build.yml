@@ -25,14 +25,7 @@ jobs:
     - name: Get dependencies
       run: |
         export GOPATH=/home/runner/work/pg_timetable/go
-        go get -v \
-          github.com/jessevdk/go-flags \
-          github.com/jmoiron/sqlx \
-          github.com/lib/pq \
-          github.com/stretchr/testify \
-          github.com/cavaliercoder/grab \
-          github.com/stretchr/testify/assert \
-          github.com/stretchr/testify/require
+        go get -v -t -d ./...
         echo
         echo "-- Environment variables ----------------------------------------------"
         env
