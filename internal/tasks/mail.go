@@ -66,11 +66,11 @@ func taskSendMail(paramValues string) error {
 			return err
 		}))
 	}
-
+	//Send Mail
 	dialer := gomail.NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
-	dialer.TLSConfig = &tls.Config{
-		InsecureSkipVerify: false,
-		ServerName:         conn.ServerHost,
+	s, err := dialer.Dial()
+	if err != nil {
+		return err
 	}
-	return dialer.DialAndSend(mail)
+	return gomail.Send(s, mail)
 }
