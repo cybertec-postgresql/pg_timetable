@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 
@@ -22,11 +23,36 @@ type emailConn struct {
 	Attachments []string `json:"attachment"`
 }
 
+var sendMail func(m emailConn) error
+
 func taskSendMail(paramValues string) error {
 	var conn emailConn
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
 		return err
 	}
+	if conn.ServerHost == "" {
+		return errors.New("The IP address or hostname of the mail server not specified")
+	}
+	if conn.ServerPort == 0 {
+		return errors.New("The port of the mail server not specified")
+	}
+	if conn.Username == "" {
+		return errors.New("The username used for authenticating on the mail server not specified")
+	}
+	if conn.Password == "" {
+		return errors.New("The password used for authenticating on the mail server not specified")
+	}
+	if conn.SenderAddr == "" {
+		return errors.New("Sender address not specified")
+	}
+	if len(conn.ToAddr) == 0 && len(conn.CcAddr) == 0 && len(conn.BccAddr) == 0 {
+		return errors.New("Recipient address not specified")
+	}
+
+	return sendMail(conn)
+}
+
+func gomailSendMail(conn emailConn) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", conn.SenderAddr)
 
@@ -72,4 +98,8 @@ func taskSendMail(paramValues string) error {
 		return err
 	}
 	return gomail.Send(s, mail)
+}
+
+func init() {
+	sendMail = gomailSendMail
 }
