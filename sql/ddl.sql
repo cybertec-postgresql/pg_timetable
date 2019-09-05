@@ -236,7 +236,7 @@ CREATE OR REPLACE FUNCTION timetable.get_running_jobs (BIGINT) RETURNS SETOF rec
 		ORDER BY 1, 2 DESC
 $$ LANGUAGE 'sql';
 
-CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name TEXT, IN parent_task_id BIGINT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name TEXT, IN parent_task_id BIGINT)
 RETURNS BIGINT AS $$
 DECLARE
 	builtin_id BIGINT;
@@ -245,12 +245,14 @@ BEGIN
 	SELECT task_id FROM timetable.base_task WHERE name = task_name INTO builtin_id;
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'Nonexistent builtin task --> %', task_name
-		USING
+		USING 
 			ERRCODE = 'invalid_parameter_value',
       		HINT = 'Please check your user task name parameter';
     END IF;
-    INSERT INTO timetable.task_chain(parent_id, task_id, ignore_error)
-    VALUES (parent_task_id, builtin_id, FALSE)
+    INSERT INTO timetable.task_chain 
+        (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+    VALUES 
+        (DEFAULT, parent_task_id, builtin_id, NULL, NULL, FALSE)
     RETURNING chain_id INTO result_id;
 	RETURN result_id;
 END
