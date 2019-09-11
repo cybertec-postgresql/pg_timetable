@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -22,6 +23,9 @@ type ChainElementExecution struct {
 	DatabaseConnection sql.NullString `db:"database_connection"`
 	ConnectString      sql.NullString `db:"connect_string"`
 }
+
+// RemoteDb is the global database object
+var RemoteDb *sqlx.DB
 
 func (chainElem ChainElementExecution) String() string {
 	data, _ := json.Marshal(chainElem)
@@ -150,4 +154,49 @@ INSERT INTO timetable.run_status
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
 	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+}
+
+//GetRemoteDBTransaction create a remote db connection and returns transaction object
+func GetRemoteDBTransaction(connectionString string) *sqlx.Tx {
+	RemoteDb = sqlx.MustConnect("postgres", connectionString)
+	LogToDB("LOG", "Remote Connection established...")
+	return RemoteDb.MustBegin()
+}
+
+//GetConnectionString of database_connection
+func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
+	rows := ConfigDb.QueryRow("SELECT connect_string FROM  timetable.database_connection WHERE database_connection = $1", databaseConnection)
+	err := rows.Scan(&connectionString)
+	if err != nil {
+		LogToDB("ERROR", "Issue while fetching connection string:", err)
+	}
+	return connectionString
+}
+
+// FinalizeRemoteDBConnection closes session
+func FinalizeRemoteDBConnection() {
+	LogToDB("LOG", "Closing remote session")
+	if err := RemoteDb.Close(); err != nil {
+		log.Fatalln("Cannot close database connection:", err)
+	}
+	RemoteDb = nil
+}
+
+// SetRole - set the current user identifier of the current session
+func SetRole(tx *sqlx.Tx, runUID sql.NullString) {
+	LogToDB("LOG", "Setting Role to ", runUID.String)
+	_, err := tx.Exec(fmt.Sprintf("SET ROLE %v", runUID.String))
+	if err != nil {
+		LogToDB("ERROR", "Error in Setting role", err)
+	}
+}
+
+//ResetRole - RESET forms reset the current user identifier to be the current session user identifier
+func ResetRole(tx *sqlx.Tx) {
+	LogToDB("LOG", "Resetting Role")
+	const sqlResetRole = `RESET ROLE`
+	_, err := tx.Exec(sqlResetRole)
+	if err != nil {
+		LogToDB("ERROR", "Error in ReSetting role", err)
+	}
 }

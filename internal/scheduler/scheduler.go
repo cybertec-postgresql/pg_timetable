@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -11,6 +12,7 @@ import (
 )
 
 const workersNumber = 16
+
 /* the main loop period. Should be 60 (sec) for release configuration. Now is 10 (sec) for debug purposes */
 const refetchTimeout = 10
 
@@ -123,6 +125,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var paramValues []string
 	var err error
 	var retCode int
+	var execTx *sqlx.Tx
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %s", chainElemExec))
 
@@ -132,7 +135,24 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 
 	switch chainElemExec.Kind {
 	case "SQL":
-		err = pgengine.ExecuteSQLCommand(tx, chainElemExec.Script, paramValues)
+		execTx = tx
+		//Connect to Remote DB
+		if chainElemExec.DatabaseConnection.Valid {
+			var connectionString string
+			connectionString = pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
+			if strings.TrimSpace(connectionString) != "" {
+				execTx = pgengine.GetRemoteDBTransaction(connectionString)
+				defer pgengine.FinalizeRemoteDBConnection()
+			}
+		}
+
+		// Set Role
+		if chainElemExec.RunUID.Valid {
+			pgengine.SetRole(execTx, chainElemExec.RunUID)
+		}
+
+		err = pgengine.ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
+
 	case "SHELL":
 		err, retCode = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
@@ -148,5 +168,16 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	}
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
+
+	//Reset The Role
+	if chainElemExec.RunUID.Valid {
+		pgengine.ResetRole(execTx)
+	}
+
+	// Commit changes on remote server
+	if chainElemExec.DatabaseConnection.Valid {
+		pgengine.MustCommitTransaction(execTx)
+	}
+
 	return 0
 }
