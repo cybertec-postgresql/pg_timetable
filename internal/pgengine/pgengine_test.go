@@ -29,7 +29,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 }
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
-var setupTestRemoteDBFunc = func() *sqlx.Tx {
+var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
 	return pgengine.GetRemoteDBTransaction("host=localhost port=5432 sslmode=disable dbname=timetable user=scheduler password=somestrong")
 }
 
@@ -178,13 +178,13 @@ func TestBuiltInTasks(t *testing.T) {
 }
 
 func TestGetRemoteDBTransaction(t *testing.T) {
-	tx := setupTestRemoteDBFunc()
+	remoteDb, tx := setupTestRemoteDBFunc()
 
-	require.NotNil(t, pgengine.RemoteDb, "ConfigDB should be initialized")
+	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
 	t.Run("Check connection closing", func(t *testing.T) {
-		pgengine.FinalizeRemoteDBConnection()
-		assert.Nil(t, pgengine.RemoteDb, "Connection isn't closed properly")
+		pgengine.FinalizeRemoteDBConnection(remoteDb)
+		assert.NotNil(t, remoteDb, "Connection isn't closed properly")
 	})
 
 	t.Run("Check set role function", func(t *testing.T) {

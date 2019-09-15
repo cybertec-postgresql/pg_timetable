@@ -24,9 +24,6 @@ type ChainElementExecution struct {
 	ConnectString      sql.NullString `db:"connect_string"`
 }
 
-// RemoteDb is the global database object
-var RemoteDb *sqlx.DB
-
 func (chainElem ChainElementExecution) String() string {
 	data, _ := json.Marshal(chainElem)
 	return string(data)
@@ -156,13 +153,6 @@ VALUES
 	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
 }
 
-//GetRemoteDBTransaction create a remote db connection and returns transaction object
-func GetRemoteDBTransaction(connectionString string) *sqlx.Tx {
-	RemoteDb = sqlx.MustConnect("postgres", connectionString)
-	LogToDB("LOG", "Remote Connection established...")
-	return RemoteDb.MustBegin()
-}
-
 //GetConnectionString of database_connection
 func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
 	rows := ConfigDb.QueryRow("SELECT connect_string FROM  timetable.database_connection WHERE database_connection = $1", databaseConnection)
@@ -173,13 +163,24 @@ func GetConnectionString(databaseConnection sql.NullString) (connectionString st
 	return connectionString
 }
 
+//GetRemoteDBTransaction create a remote db connection and returns transaction object
+func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
+	remoteDb, err := sqlx.Connect("postgres", connectionString)
+	if err != nil {
+		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v\n", connectionString))
+		return nil, nil
+	}
+	LogToDB("LOG", "Remote Connection established...")
+	return remoteDb, remoteDb.MustBegin()
+}
+
 // FinalizeRemoteDBConnection closes session
-func FinalizeRemoteDBConnection() {
+func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
 	LogToDB("LOG", "Closing remote session")
-	if err := RemoteDb.Close(); err != nil {
+	if err := remoteDb.Close(); err != nil {
 		log.Fatalln("Cannot close database connection:", err)
 	}
-	RemoteDb = nil
+	remoteDb = nil
 }
 
 // SetRole - set the current user identifier of the current session

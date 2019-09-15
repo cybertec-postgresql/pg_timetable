@@ -133,6 +133,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var err error
 	var retCode int
 	var execTx *sqlx.Tx
+	var remoteDb *sqlx.DB
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %s", chainElemExec))
 
@@ -147,10 +148,18 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		if chainElemExec.DatabaseConnection.Valid {
 			var connectionString string
 			connectionString = pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
-			if strings.TrimSpace(connectionString) != "" {
-				execTx = pgengine.GetRemoteDBTransaction(connectionString)
-				defer pgengine.FinalizeRemoteDBConnection()
+			//connection string is empty then don't proceed
+			if strings.TrimSpace(connectionString) == "" {
+				pgengine.LogToDB("ERROR", fmt.Sprintf("Connection string is blank"))
+				return -1
 			}
+			remoteDb, execTx = pgengine.GetRemoteDBTransaction(connectionString)
+			//don't proceed when remote db connection not established
+			if execTx == nil {
+				pgengine.LogToDB("ERROR", fmt.Sprintf("Couldn't connect to remote database"))
+				return -1
+			}
+			defer pgengine.FinalizeRemoteDBConnection(remoteDb)
 		}
 
 		// Set Role
