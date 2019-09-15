@@ -178,6 +178,9 @@ func TestBuiltInTasks(t *testing.T) {
 }
 
 func TestGetRemoteDBTransaction(t *testing.T) {
+	teardownTestCase := setupTestCase(t)
+	defer teardownTestCase(t)
+
 	remoteDb, tx := setupTestRemoteDBFunc()
 
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
