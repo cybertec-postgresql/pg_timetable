@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -178,7 +177,7 @@ func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
 func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
 	LogToDB("LOG", "Closing remote session")
 	if err := remoteDb.Close(); err != nil {
-		log.Fatalln("Cannot close database connection:", err)
+		LogToDB("PANIC", "Cannot close database connection:", err)
 	}
 	remoteDb = nil
 }
