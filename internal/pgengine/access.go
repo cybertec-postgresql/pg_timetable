@@ -38,6 +38,7 @@ func LogToDB(level string, msg ...interface{}) {
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func FixSchedulerCrash() {
+	defer SoftPanic("Issue in FixSchedulerCrash ")
 	ConfigDb.MustExec(`
 INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
   SELECT 'DEAD', now(), now(), start_status FROM (
@@ -67,6 +68,7 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
+	defer SoftPanic("Issue while deleting from chain_execution_config ")
 	res := tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
 		chainConfigID)
 	rowsDeleted, err := res.RowsAffected()
@@ -75,9 +77,18 @@ func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
 
 // LogChainElementExecution will log current chain element execution status including retcode
 func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int) {
+	defer SoftPanic("Issue while inserting in chain_log ")
 	ConfigDb.MustExec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
 		"kind, last_run, finished, returncode, pid) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, now(), clock_timestamp(), $7, txid_current())",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
 		chainElemExec.Script, chainElemExec.Kind, retCode)
+}
+
+// SoftPanic will gracefully exit incase of panic
+func SoftPanic(panicMessage string) {
+	if recoveryMessage := recover(); recoveryMessage != nil {
+		LogToDB("ERROR", panicMessage, recoveryMessage)
+		os.Exit(1)
+	}
 }

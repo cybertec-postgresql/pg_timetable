@@ -27,6 +27,7 @@ func PrefixSchemaFiles(prefix string) {
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
+	defer SoftPanic("Opening of database connection failed ")
 	ConfigDb = sqlx.MustConnect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
 		host, port, dbname, sslmode, user, password))
 
@@ -47,6 +48,7 @@ func CreateConfigDBSchema(schemafile string) {
 	if err != nil {
 		panic(err)
 	}
+	defer SoftPanic("Issue while deleting from chain_execution_config ")
 	ConfigDb.MustExec(string(b))
 	LogToDB("LOG", fmt.Sprintf("Schema file executed: %s", schemafile))
 }

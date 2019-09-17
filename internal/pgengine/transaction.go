@@ -149,5 +149,6 @@ INSERT INTO timetable.run_status
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
+	defer SoftPanic("Update Chain Status failed ")
 	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
 }
