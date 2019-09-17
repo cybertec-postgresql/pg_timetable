@@ -4,6 +4,16 @@ DECLARE
 	v_chain_id bigint;
 	v_chain_config_id bigint;
 BEGIN
+<<<<<<< HEAD
+=======
+	-- Get the base task id
+	SELECT task_id INTO v_task_id FROM timetable.base_task WHERE name = 'SendMail';
+	
+	-- Create the chain
+	INSERT INTO timetable.task_chain(task_id)
+	VALUES (v_task_id)
+	RETURNING chain_id INTO v_chain_id;
+>>>>>>> Update samples/Mail.sql
 
 	-- Get the chain id
 	v_chain_id := timetable.insert_base_task('SendMail', NULL);
