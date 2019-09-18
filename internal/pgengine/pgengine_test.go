@@ -112,9 +112,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		setupTestDBFunc()
 	})
 
-	t.Run("Check soft panic", func(t *testing.T) {
-		assert.NotPanics(t, func() { pgengine.SoftPanic("Panicking!!") }, "The code did not panic")
-	})
 }
 
 func TestSchedulerFunctions(t *testing.T) {

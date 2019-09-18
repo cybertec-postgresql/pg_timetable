@@ -33,12 +33,11 @@ func StartTransaction() *sqlx.Tx {
 	return ConfigDb.MustBegin()
 }
 
-// MustCommitTransaction commits transaction and log panic in the case of error
+// MustCommitTransaction commits transaction and log error in the case of error
 func MustCommitTransaction(tx *sqlx.Tx) {
-	defer SoftPanic("Commit Transaction failed ")
 	err := tx.Commit()
 	if err != nil {
-		LogToDB("PANIC", "Application cannot commit after job finished: ", err)
+		LogToDB("ERROR", "Application cannot commit after job finished: ", err)
 	}
 }
 
@@ -75,7 +74,7 @@ WITH RECURSIVE x
 	err := tx.Select(chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB("PANIC", "Recursive queries to fetch task chain failed: ", err)
+		LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
 		return false
 	}
 	return true
@@ -91,7 +90,7 @@ WHERE chain_execution_config = $1
 ORDER BY order_id ASC`
 	err := tx.Select(paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
-		LogToDB("PANIC", "cannot fetch parameters values for chain: ", err)
+		LogToDB("ERROR", "cannot fetch parameters values for chain: ", err)
 		return false
 	}
 	return true
@@ -145,13 +144,18 @@ RETURNING run_status`
 
 // UpdateChainRunStatus inserts status information about running chain elements
 func UpdateChainRunStatus(tx *sqlx.Tx, chainElemExec *ChainElementExecution, runStatusID int, status string) {
+
 	const sqlInsertFinishStatus = `
 INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
-	defer SoftPanic("Update Chain Status failed ")
-	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+	var err error
+
+	_, err = tx.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+	if err != nil {
+		LogToDB("ERROR", "Update Chain Status failed: ", err)
+	}
 }
 
 //GetConnectionString of database_connection
@@ -179,7 +183,7 @@ func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
 func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
 	LogToDB("LOG", "Closing remote session")
 	if err := remoteDb.Close(); err != nil {
-		LogToDB("PANIC", "Cannot close database connection:", err)
+		LogToDB("ERROR", "Cannot close database connection:", err)
 	}
 	remoteDb = nil
 }
