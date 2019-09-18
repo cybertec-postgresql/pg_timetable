@@ -85,10 +85,9 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 		chainElemExec.Script, chainElemExec.Kind, retCode)
 }
 
-// SoftPanic will gracefully exit incase of panic
+// SoftPanic will recover from panic
 func SoftPanic(panicMessage string) {
 	if recoveryMessage := recover(); recoveryMessage != nil {
 		LogToDB("ERROR", panicMessage, recoveryMessage)
-		os.Exit(1)
 	}
 }

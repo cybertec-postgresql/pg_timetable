@@ -48,7 +48,7 @@ func CreateConfigDBSchema(schemafile string) {
 	if err != nil {
 		panic(err)
 	}
-	defer SoftPanic("Issue while deleting from chain_execution_config ")
+	defer SoftPanic("Issue while creating Config Db Schema ")
 	ConfigDb.MustExec(string(b))
 	LogToDB("LOG", fmt.Sprintf("Schema file executed: %s", schemafile))
 }

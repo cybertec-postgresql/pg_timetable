@@ -35,6 +35,7 @@ func StartTransaction() *sqlx.Tx {
 
 // MustCommitTransaction commits transaction and log panic in the case of error
 func MustCommitTransaction(tx *sqlx.Tx) {
+	defer SoftPanic("Commit Transaction failed ")
 	err := tx.Commit()
 	if err != nil {
 		LogToDB("PANIC", "Application cannot commit after job finished: ", err)
