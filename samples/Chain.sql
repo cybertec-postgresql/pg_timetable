@@ -1,6 +1,6 @@
 DO $$
 
-    --In order to create chain of tasks, We will create few base tasks and 
+    -- In order to create chain of tasks, We will create few base tasks and 
     -- each task_id will be associated with a chain_id.
     -- There will be only one HEAD chain (parent_id = null).
     -- chain_id of HEAD chain will be parent_id of other chains.
