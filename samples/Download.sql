@@ -7,7 +7,7 @@ DECLARE
 BEGIN
 	
 	-- Get the base task id
-	Select task_id INTO v_task_id from timetable.base_task where name='Download';
+	SELECT task_id INTO v_task_id FROM timetable.base_task WHERE name = 'Download';
 	
 	-- Create the chain
 	INSERT INTO timetable.task_chain(task_id)

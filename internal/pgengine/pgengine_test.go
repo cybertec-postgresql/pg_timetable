@@ -111,6 +111,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		// reinit connection to execute teardown actions
 		setupTestDBFunc()
 	})
+
 }
 
 func TestSchedulerFunctions(t *testing.T) {

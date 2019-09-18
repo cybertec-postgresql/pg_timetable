@@ -38,14 +38,17 @@ func LogToDB(level string, msg ...interface{}) {
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func FixSchedulerCrash() {
-	ConfigDb.MustExec(`
-INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
-  SELECT 'DEAD', now(), now(), start_status FROM (
-   SELECT   start_status
-     FROM   timetable.run_status
-     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
-     GROUP BY 1
-     HAVING count(*) < 2 ) AS abc`)
+	_, err := ConfigDb.Exec(`
+		INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
+		  SELECT 'DEAD', now(), now(), start_status FROM (
+		   SELECT   start_status
+		     FROM   timetable.run_status
+		     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+		     GROUP BY 1
+		     HAVING count(*) < 2 ) AS abc`)
+	if err != nil {
+		LogToDB("ERROR", "Error occured during reverting from the scheduler crash: ", err)
+	}
 }
 
 // CanProceedChainExecution checks if particular chain can be exeuted in parallel
@@ -60,24 +63,29 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		LogToDB("PANIC", "application cannot read information about concurrent running jobs: ", err)
+		LogToDB("ERROR", "application cannot read information about concurrent running jobs: ", err)
 		return false
 	}
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
-	res := tx.MustExec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ",
-		chainConfigID)
+	res, err := tx.Exec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
+	if err != nil {
+		LogToDB("ERROR", "Error occured during deleting self destructive chains: ", err)
+	}
 	rowsDeleted, err := res.RowsAffected()
 	return err == nil && rowsDeleted == 1
 }
 
 // LogChainElementExecution will log current chain element execution status including retcode
 func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int) {
-	ConfigDb.MustExec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+	_, err := ConfigDb.Exec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
 		"kind, last_run, finished, returncode, pid) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, now(), clock_timestamp(), $7, txid_current())",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
 		chainElemExec.Script, chainElemExec.Kind, retCode)
+	if err != nil {
+		LogToDB("ERROR", "Error occured during logging current chain element execution status including retcode: ", err)
+	}
 }

@@ -6,7 +6,7 @@ DECLARE
 	v_chain_config_id bigint;
 BEGIN
 	-- Get the base task id
-	Select task_id INTO v_task_id from timetable.base_task where name='Log';
+	SELECT task_id INTO v_task_id FROM timetable.base_task WHERE name = 'Log';
 	
 	-- Create the chain
 	INSERT INTO timetable.task_chain(task_id)
