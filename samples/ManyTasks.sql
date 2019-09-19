@@ -1,6 +1,6 @@
 WITH
    hello_task(id) AS (
-        insert into base_task (name, kind, script)
+        insert into timetable.base_task (name, kind, script)
             select 'HelloWorld'||i, 'SHELL', 'echo'
             from generate_series(1,500) i
             returning task_id
