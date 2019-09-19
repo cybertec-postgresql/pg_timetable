@@ -45,8 +45,12 @@ func Run() {
 		go chainWorker(chains)
 	}
 
+	/* set maximum connection to workersNumber + 1 for system calls */
+	pgengine.ConfigDb.SetMaxOpenConns(workersNumber + 1)
+
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash()
+
 	/* loop forever or until we ask it to stop */
 	for {
 
