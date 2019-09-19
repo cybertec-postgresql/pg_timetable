@@ -35,7 +35,7 @@ BEGIN
 
 	-- Create the parameters for the chain configuration
 
-		--"workersnum":   Workerrs nummber - If the requested number of workers is less than one, a worker will be created
+		--"workersnum":   Workers nummber - If the requested number of workers is less than one, a worker will be created
 		--                for every request. 
 		-- "fileurls":    Provide urls from where you wanna download files, User can mention n number of 
 		--                comma separated urls 
