@@ -150,8 +150,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		execTx = tx
 		//Connect to Remote DB
 		if chainElemExec.DatabaseConnection.Valid {
-			var connectionString string
-			connectionString = pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
+			connectionString := pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
 			//connection string is empty then don't proceed
 			if strings.TrimSpace(connectionString) == "" {
 				pgengine.LogToDB("ERROR", fmt.Sprintf("Connection string is blank"))
