@@ -20,7 +20,7 @@ func LogToDB(level string, msg ...interface{}) {
 	if !VerboseLogLevel {
 		switch level {
 		case
-			"DEBUG", "NOTICE", "LOG":
+			"DEBUG", "NOTICE":
 			return
 		}
 	}
