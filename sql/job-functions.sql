@@ -141,6 +141,7 @@ $BODY$
 DECLARE
     v_task_id bigint;
     v_chain_id bigint;
+    v_chain_name text;
 
     c_matrix refcursor;
     r_matrix record;
@@ -297,11 +298,15 @@ BEGIN
         EXIT WHEN NOT FOUND;
         RAISE NOTICE 'min: %, hour: %, day: %, month: %',r_matrix.min, r_matrix.hour, r_matrix.day, r_matrix.month;
 
+        v_chain_name := 'chain_'||v_chain_id||'_'||COALESCE (r_matrix.min, -1)||COALESCE (r_matrix.hour, -1)||COALESCE (r_matrix.day, -1)||COALESCE (r_matrix.month, -1)||COALESCE (r_matrix.dow, -1);
+        RAISE NOTICE 'chain_name: %',v_chain_name;
+
+
         INSERT INTO timetable.chain_execution_config VALUES
         (
             DEFAULT, -- chain_execution_config,
             v_chain_id, -- chain_id,
-            'chain_', -- chain_name,
+            v_chain_name, -- chain_name,
             r_matrix.min, -- run_at_minute,
             r_matrix.hour, -- run_at_hour,
             r_matrix.day, -- run_at_day,

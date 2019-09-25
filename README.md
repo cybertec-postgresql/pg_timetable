@@ -200,34 +200,60 @@ In most cases, they have to be brought to live by passing parameters to the exec
 
 A variety of examples can be found in the `/samples` directory.
 
-## 4. Database logging and transactions
+### 3.4 Examle functions
+Create a Job with the `timetable.job_add` function.
+
+| Parameter                   | Type    | Definition                                       | Default |
+| :----------------------- | :------ | :----------------------------------------------- |:---------|
+| `task_name`     | text  | The name of the Task ||
+| `task_function` | text  | The function wich will be executed. ||
+| `task_type`     | text  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
+| `by_cron`       | text  | Time Schedule in Cron Syntax                      ||
+| `by_minute`     | text  | This specifies the minutes on which the job is to run |ALL|
+| `by_hour`       | text  | This specifies the hours on which the job is to run |ALL|
+| `by_day`        | text  | This specifies the days on which the job is to run. |ALL|
+| `by_month`      | text  | This specifies the month on which the job is to run |ALL|
+| `by_day_of_week`| text  | This specifies the day of week (0,7 is sunday)  on which the job is to run |ALL|
+| `max_instances` | integer | The amount of instances that this chain may have running at the same time. |NULL|
+| `live`          | boolean | Control if the chain may be executed once it reaches its schedule. |FALSE|
+| `self_destruct` | boolean | Self destruct the chain. |FALSE|
+
+If the parameter `by_cron` is used all other `by_*` (`by_minute`,`by_hour`,`by_day`,`by_month`,`by_day_of_week`) will be ignored.
+
+### 4 Usage
+
+```select timetable.job_add('MyJob','Select public.my_func()','SQL','0 1 1 * *');```
+
+Run "MyJob"
+
+## 5. Database logging and transactions
 
 The entire activity of **pg_timetable** is logged in database tables (`timetable.log` and `timetable.execution_log`). Since there is no need to parse files when accessing log data, the representation through an UI can be easily achieved.
 
 Furthermore, this behavior allows a remote host to access the log in a straightforward manner, simplifying large and/or distributed applications.
 >Note: Logs are written in a separate transaction, in case the chain fails.
 
-## 5. Runtime information
+## 6. Runtime information
 
 In order to examine the activity of **pg_timetable**, the table `timetable.run_status` can be queried. It contains information about active jobs and their current parameters.
 
-## 6. Schema diagram
+## 7. Schema diagram
 
 ![Schema diagram](sql/timetable_schema.png?raw=true "Schema diagram")
 
-## 7. Contributing
+## 8. Contributing
 
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a pull request.
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
 
-## 8. Support
+## 9. Support
 
 For professional support, please contact [Cybertec][cybertec].
 
 [cybertec]: https://www.cybertec-postgresql.com/
 
 
-## 9. Authors
+## 10. Authors
 
 [Pavlo Golub](https://github.com/pashagolub) and [Hans-Jürgen Schönig](https://github.com/postgresql007).
