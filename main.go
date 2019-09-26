@@ -41,6 +41,11 @@ func main() {
 	}
 	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
+	pgengine.Host = cmdOpts.Host
+	pgengine.Port = cmdOpts.Port
+	pgengine.DbName = cmdOpts.Dbname
+	pgengine.User = cmdOpts.User
+	pgengine.Password = cmdOpts.Password
 	if cmdOpts.Verbose {
 		fmt.Printf("%+v\n", cmdOpts)
 	}

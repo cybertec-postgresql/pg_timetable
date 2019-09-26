@@ -112,6 +112,11 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		setupTestDBFunc()
 	})
 
+	t.Run("Check Reconnecting Database", func(t *testing.T) {
+		var reconnected bool
+		assert.NotPanics(t, func() { reconnected = pgengine.ReconnectDbAndFixLeftOvers() }, "Does not panics")
+		assert.False(t, reconnected, "Should be false in connected database")
+	})
 }
 
 func TestSchedulerFunctions(t *testing.T) {
@@ -177,7 +182,6 @@ func TestBuiltInTasks(t *testing.T) {
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
 }
-
 func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)

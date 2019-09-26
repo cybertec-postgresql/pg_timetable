@@ -4,13 +4,32 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // postgresql driver blank import
 )
 
+// wait for 5 sec before reconnecting to DB
+const waitTime = 5
+
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
+
+// Host is used to reconnect to data base
+var Host string
+
+// Port is used to reconnect to data base
+var Port string
+
+// DbName is used to reconnect to data base
+var DbName string
+
+// User is used to reconnect to data base
+var User string
+
+// Password is used to Reconnect Data base
+var Password string
 
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
@@ -58,4 +77,30 @@ func FinalizeConfigDBConnection() {
 		log.Fatalln("Cannot close database connection:", err)
 	}
 	ConfigDb = nil
+}
+
+//ReconnectDbAndFixLeftOvers try to reconnect to database forever after each 5 seconds
+func ReconnectDbAndFixLeftOvers() bool {
+	//Ping the remote server to make sure it's alive. Non-nil return value means that there is no active connection.
+	connectionError := ConfigDb.Ping()
+	if connectionError == nil {
+		return false
+	}
+	//In case of DB Outage, Keep trying reconnecting after each 5 second till connection established
+	sslMode := "disable"
+	for connectionError != nil {
+		log.Println("Connection to Postgres was lost. Waiting for 5s ...")
+		time.Sleep(waitTime * time.Second)
+		log.Println("Reconnecting...")
+		ConfigDb, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
+			Host, Port, DbName, sslMode, User, Password))
+		if err == nil {
+			if connectionError = ConfigDb.Ping(); connectionError == nil {
+				LogToDB("LOG", "Connection established...")
+				/* cleanup potential database leftovers */
+				FixSchedulerCrash()
+			}
+		}
+	}
+	return true
 }

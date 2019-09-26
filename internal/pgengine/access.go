@@ -25,8 +25,18 @@ func LogToDB(level string, msg ...interface{}) {
 		}
 	}
 	if ConfigDb != nil {
-		ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
+		_, err := ConfigDb.Exec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
 			os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+		if err != nil {
+			// If there is DB outage, Reconnect and write log which was missed
+			for ReconnectDbAndFixLeftOvers() {
+				_, err := ConfigDb.Exec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
+					os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+				if err == nil {
+					break
+				}
+			}
+		}
 	}
 	s := fmt.Sprintf("[%v | %s | %-6s]:\t %s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level, fmt.Sprint(msg...))
 	fmt.Println(s)
