@@ -202,7 +202,7 @@ CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 				tmp_chain_id := tmp_parent_id;
 			END LOOP;
 			
-			SELECT chain_head_id INTO tmp_chain_head_id FROM timetable.task_chain_head
+			SELECT parent_id INTO tmp_chain_head_id FROM timetable.task_chain
 				WHERE chain_id = tmp_chain_id;
 				
 			--raise notice 'PERFORM task_chain_delete(%,%)', tmp_chain_head_id, orig_chain_id;
@@ -217,6 +217,71 @@ $$ LANGUAGE 'plpgsql';
 CREATE TRIGGER trig_task_chain_fixer
         BEFORE DELETE ON timetable.base_task
         FOR EACH ROW EXECUTE PROCEDURE timetable.trig_chain_fixer();
+
+CREATE OR REPLACE FUNCTION timetable.task_chain_delete(config_ bigint, chain_id_ bigint) RETURNS boolean AS $$
+DECLARE
+		chain_id_1st_   bigint;
+		id_in_chain	 bool;
+		chain_id_curs   bigint;
+		chain_id_before bigint;
+		chain_id_after  bigint;
+		curs1 refcursor;
+BEGIN
+		SELECT chain_id INTO chain_id_1st_ FROM timetable.chain_execution_config WHERE chain_execution_config = config_;
+		-- No such chain_execution_config
+		IF NOT FOUND THEN
+				RAISE NOTICE 'No such chain_execution_config';
+				RETURN false;
+		END IF;
+		-- This head is not connected to a chain
+		IF chain_id_1st_ IS NULL THEN
+				RAISE NOTICE 'This head is not connected to a chain';
+				RETURN false;
+		END IF;
+
+		OPEN curs1 FOR WITH RECURSIVE x (chain_id) AS (
+				SELECT chain_id FROM timetable.task_chain
+				WHERE chain_id = chain_id_1st_ AND parent_id IS NULL
+				UNION ALL
+				SELECT timetable.task_chain.chain_id FROM timetable.task_chain, x
+				WHERE timetable.task_chain.parent_id = x.chain_id
+		) SELECT chain_id FROM x;
+
+		id_in_chain = false;
+		chain_id_curs = NULL;
+		chain_id_before = NULL;
+		chain_id_after = NULL;
+		LOOP
+				FETCH curs1 INTO chain_id_curs;
+				IF id_in_chain = false AND chain_id_curs <> chain_id_ THEN
+						chain_id_before = chain_id_curs;
+				END IF;
+				IF chain_id_curs = chain_id_ THEN
+						id_in_chain = true;
+				END IF;
+				EXIT WHEN id_in_chain OR NOT FOUND;
+		END LOOP;
+
+		IF id_in_chain THEN
+				FETCH curs1 INTO chain_id_after;
+		ELSE
+				CLOSE curs1;
+				RAISE NOTICE 'This chain_id is not part of chain pointed by the chain_execution_config';
+				RETURN false;
+		END IF;
+
+		CLOSE curs1;
+
+		IF chain_id_before IS NULL THEN
+			UPDATE timetable.chain_execution_config SET chain_id = chain_id_after WHERE chain_execution_config = config_;
+		END IF;
+		UPDATE timetable.task_chain SET parent_id = NULL WHERE chain_id = chain_id_;
+		UPDATE timetable.task_chain SET parent_id = chain_id_before WHERE chain_id = chain_id_after;
+		DELETE FROM timetable.task_chain WHERE chain_id = chain_id_;
+
+		RETURN true;
+END
+$$ LANGUAGE plpgsql;
 
 
 -- see which jobs are running
