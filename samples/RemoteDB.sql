@@ -8,27 +8,32 @@ DECLARE
 BEGIN
 
     -- In order to implement remote SQL execution, we will create a table(One time) on Remote machine
-    CREATE TABLE testremote.remote_log (
+    CREATE TABLE timetable.remote_log (
         remote_log BIGSERIAL,
         remote_event TEXT,
         timestmp TIMESTAMPTZ,
-        PRIMARY KEY (remote_log))
+        PRIMARY KEY (remote_log));
 
     --Add a Task
     INSERT INTO timetable.base_task
     VALUES (DEFAULT, -- task_id
         'insert in remote log task', -- name
         DEFAULT, -- 'SQL' :: timetable.task_kind
-        'INSERT INTO testremote.remote_log (remote_event, timestmp) VALUES ($1, CURRENT_TIMESTAMP);' -- task script
+        'INSERT INTO timetable.remote_log (remote_event, timestmp) VALUES ($1, CURRENT_TIMESTAMP);' -- task script
     )
     RETURNING
         task_id INTO v_task_id;
 
 	--remote DB details
-    INSERT INTO timetable.database_connection (database_connection, connect_string, COMMENT)
+    INSERT INTO timetable.database_connection (database_connection, connect_string, comment)
     VALUES (DEFAULT,
-        'host=localhost port=5433 dbname=testremote sslmode = disable user=user1 password = pwd',
-        'Server 10')
+            format('host=%s port=%s dbname=%I user=%I password=strongone', 
+                    inet_server_addr(), 
+                    inet_server_port(),
+                    current_database(),
+                    session_user
+                    ),
+            current_database() || '@' || inet_server_addr())
     RETURNING
         database_connection INTO v_database_connection;
 

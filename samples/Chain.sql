@@ -20,7 +20,7 @@ BEGIN
         EVENT TEXT,
         time TIMESTAMPTZ,
         PRIMARY KEY (chain_log)
-    )
+    );
 
 
     --Add a Task
