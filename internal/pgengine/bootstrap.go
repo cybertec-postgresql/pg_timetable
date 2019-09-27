@@ -74,33 +74,25 @@ func CreateConfigDBSchema(schemafile string) {
 func FinalizeConfigDBConnection() {
 	LogToDB("LOG", "Closing session")
 	if err := ConfigDb.Close(); err != nil {
-		log.Fatalln("Cannot close database connection:", err)
+		log.Println("Error occured during connection closing: ", err)
 	}
 	ConfigDb = nil
 }
 
-//ReconnectDbAndFixLeftOvers try to reconnect to database forever after each 5 seconds
-func ReconnectDbAndFixLeftOvers() bool {
-	//Ping the remote server to make sure it's alive. Non-nil return value means that there is no active connection.
-	connectionError := ConfigDb.Ping()
-	if connectionError == nil {
-		return false
-	}
-	//In case of DB Outage, Keep trying reconnecting after each 5 second till connection established
+//ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
+func ReconnectDbAndFixLeftovers() {
+	var err error
 	sslMode := "disable"
-	for connectionError != nil {
-		log.Println("Connection to Postgres was lost. Waiting for 5s ...")
+	for {
+		fmt.Printf(getLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
 		time.Sleep(waitTime * time.Second)
-		log.Println("Reconnecting...")
-		ConfigDb, err := sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
+		fmt.Printf(getLogPrefix("REPAIR"), "Reconnecting...\n")
+		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
 			Host, Port, DbName, sslMode, User, Password))
 		if err == nil {
-			if connectionError = ConfigDb.Ping(); connectionError == nil {
-				LogToDB("LOG", "Connection established...")
-				/* cleanup potential database leftovers */
-				FixSchedulerCrash()
-			}
+			LogToDB("LOG", "Connection reestablished...")
+			FixSchedulerCrash()
+			break
 		}
 	}
-	return true
 }
