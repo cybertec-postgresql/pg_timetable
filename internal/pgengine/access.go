@@ -15,8 +15,13 @@ var VerboseLogLevel = true
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
+func getLogPrefix(level string) string {
+	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
+}
+
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(level string, msg ...interface{}) {
+	const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 	if !VerboseLogLevel {
 		switch level {
 		case
@@ -24,12 +29,17 @@ func LogToDB(level string, msg ...interface{}) {
 			return
 		}
 	}
-	if ConfigDb != nil {
-		ConfigDb.MustExec(`INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`,
-			os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-	}
-	s := fmt.Sprintf("[%v | %s | %-6s]:\t %s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level, fmt.Sprint(msg...))
+	s := fmt.Sprintf(getLogPrefix(level), fmt.Sprint(msg...))
 	fmt.Println(s)
+	if ConfigDb != nil {
+		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+		for err != nil && ConfigDb.Ping() != nil {
+			// If there is DB outage, reconnect and write missing log
+			ReconnectDbAndFixLeftovers()
+			_, err = ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+			level = "ERROR" //we don't want panic in case of disconnect
+		}
+	}
 	if level == "PANIC" {
 		panic(s)
 	}

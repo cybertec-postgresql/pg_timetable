@@ -4,13 +4,32 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // postgresql driver blank import
 )
 
+// wait for 5 sec before reconnecting to DB
+const waitTime = 5
+
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
+
+// Host is used to reconnect to data base
+var Host string
+
+// Port is used to reconnect to data base
+var Port string
+
+// DbName is used to reconnect to data base
+var DbName string
+
+// User is used to reconnect to data base
+var User string
+
+// Password is used to Reconnect Data base
+var Password string
 
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
@@ -55,7 +74,25 @@ func CreateConfigDBSchema(schemafile string) {
 func FinalizeConfigDBConnection() {
 	LogToDB("LOG", "Closing session")
 	if err := ConfigDb.Close(); err != nil {
-		log.Fatalln("Cannot close database connection:", err)
+		log.Println("Error occured during connection closing: ", err)
 	}
 	ConfigDb = nil
+}
+
+//ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
+func ReconnectDbAndFixLeftovers() {
+	var err error
+	sslMode := "disable"
+	for {
+		fmt.Printf(getLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
+		time.Sleep(waitTime * time.Second)
+		fmt.Printf(getLogPrefix("REPAIR"), "Reconnecting...\n")
+		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
+			Host, Port, DbName, sslMode, User, Password))
+		if err == nil {
+			LogToDB("LOG", "Connection reestablished...")
+			FixSchedulerCrash()
+			break
+		}
+	}
 }

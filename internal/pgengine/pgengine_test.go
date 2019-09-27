@@ -14,6 +14,12 @@ import (
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
+	pgengine.Host = "localhost"
+	pgengine.Port = "5432"
+	pgengine.DbName = "timetable"
+	pgengine.User = "scheduler"
+	pgengine.Password = "somestrong"
+	pgengine.ClientName = "go-test"
 	pgengine.InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
 		"somestrong", "disable", pgengine.SQLSchemaFiles)
 }
@@ -112,6 +118,9 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		setupTestDBFunc()
 	})
 
+	t.Run("Check Reconnecting Database", func(t *testing.T) {
+		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
+	})
 }
 
 func TestSchedulerFunctions(t *testing.T) {
@@ -177,7 +186,6 @@ func TestBuiltInTasks(t *testing.T) {
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
 }
-
 func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
