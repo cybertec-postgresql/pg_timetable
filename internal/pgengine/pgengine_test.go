@@ -113,9 +113,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		var reconnected bool
-		assert.NotPanics(t, func() { reconnected = pgengine.ReconnectDbAndFixLeftOvers() }, "Does not panics")
-		assert.False(t, reconnected, "Should be false in connected database")
+		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
 	})
 }
 
