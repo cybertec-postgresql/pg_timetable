@@ -66,8 +66,7 @@ func Run() {
 		headChains := []Chain{}
 		err := pgengine.ConfigDb.Select(&headChains, query)
 		if err != nil {
-			pgengine.LogToDB("PANIC", "could not query pending tasks:", err)
-			return
+			pgengine.LogToDB("PANIC", "could not query pending tasks: ", err)
 		}
 		headChainsCount := len(headChains)
 		pgengine.LogToDB("DEBUG", "number of chain head tuples: ", headChainsCount)

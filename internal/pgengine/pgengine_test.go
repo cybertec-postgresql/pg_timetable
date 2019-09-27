@@ -14,6 +14,12 @@ import (
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
+	pgengine.Host = "localhost"
+	pgengine.Port = "5432"
+	pgengine.DbName = "timetable"
+	pgengine.User = "scheduler"
+	pgengine.Password = "somestrong"
+	pgengine.ClientName = "go-test"
 	pgengine.InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
 		"somestrong", "disable", pgengine.SQLSchemaFiles)
 }
@@ -113,9 +119,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		var reconnected bool
-		assert.NotPanics(t, func() { reconnected = pgengine.ReconnectDbAndFixLeftOvers() }, "Does not panics")
-		assert.False(t, reconnected, "Should be false in connected database")
+		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
 	})
 }
 
