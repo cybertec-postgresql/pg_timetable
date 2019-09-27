@@ -220,40 +220,40 @@ Create a Job with the `timetable.job_add` function.
 
 If the parameter `by_cron` is used all other `by_*` (`by_minute`,`by_hour`,`by_day`,`by_month`,`by_day_of_week`) will be ignored.
 
-### 4 Usage
+#### 3.4.1 Usage
 
 ```select timetable.job_add('MyJob','Select public.my_func()','SQL','0 1 1 * *');```
 
 Run "MyJob"
 
-## 5. Database logging and transactions
+## 4. Database logging and transactions
 
 The entire activity of **pg_timetable** is logged in database tables (`timetable.log` and `timetable.execution_log`). Since there is no need to parse files when accessing log data, the representation through an UI can be easily achieved.
 
 Furthermore, this behavior allows a remote host to access the log in a straightforward manner, simplifying large and/or distributed applications.
 >Note: Logs are written in a separate transaction, in case the chain fails.
 
-## 6. Runtime information
+## 5. Runtime information
 
 In order to examine the activity of **pg_timetable**, the table `timetable.run_status` can be queried. It contains information about active jobs and their current parameters.
 
-## 7. Schema diagram
+## 6. Schema diagram
 
 ![Schema diagram](sql/timetable_schema.png?raw=true "Schema diagram")
 
-## 8. Contributing
+## 7. Contributing
 
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a pull request.
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
 
-## 9. Support
+## 8. Support
 
 For professional support, please contact [Cybertec][cybertec].
 
 [cybertec]: https://www.cybertec-postgresql.com/
 
 
-## 10. Authors
+## 9. Authors
 
 [Pavlo Golub](https://github.com/pashagolub) and [Hans-Jürgen Schönig](https://github.com/postgresql007).
