@@ -35,7 +35,7 @@ var Password string
 var ClientName string
 
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
-var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql"}
+var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql", "job-functions.sql"}
 
 //PrefixSchemaFiles adds specific path for bootstrap SQL schema files
 func PrefixSchemaFiles(prefix string) {
