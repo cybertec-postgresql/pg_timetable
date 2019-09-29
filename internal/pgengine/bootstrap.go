@@ -34,6 +34,10 @@ var Password string
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
 
+// SSLMode parameter determines whether or with what priority a secure SSL TCP/IP connection will
+// be negotiated with the server
+var SSLMode string
+
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
 var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql", "job-functions.sql"}
 
@@ -82,13 +86,12 @@ func FinalizeConfigDBConnection() {
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
 func ReconnectDbAndFixLeftovers() {
 	var err error
-	sslMode := "disable"
 	for {
 		fmt.Printf(getLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
 		time.Sleep(waitTime * time.Second)
 		fmt.Printf(getLogPrefix("REPAIR"), "Reconnecting...\n")
 		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
-			Host, Port, DbName, sslMode, User, Password))
+			Host, Port, DbName, SSLMode, User, Password))
 		if err == nil {
 			LogToDB("LOG", "Connection reestablished...")
 			FixSchedulerCrash()
