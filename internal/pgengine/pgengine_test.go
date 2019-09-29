@@ -174,6 +174,19 @@ func TestSchedulerFunctions(t *testing.T) {
 		pgengine.MustCommitTransaction(tx)
 	})
 
+	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
+		tx := pgengine.StartTransaction()
+		assert.Error(t, pgengine.ExecuteSQLCommand(tx, "", nil), "Should error for empty script")
+		assert.Error(t, pgengine.ExecuteSQLCommand(tx, " 	", nil), "Should error for whitespace only script")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", nil), "Simple query with nil as parameters argument")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", []string{}), "Simple query with empty slice as parameters argument")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1", []string{"[42]"}), "Simple query with non empty parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1", []string{"[42]", `["hey"]`}), "Simple query with doubled parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1, $2", []string{`[42, "hey"]`}), "Simple query with two parameters")
+
+		pgengine.MustCommitTransaction(tx)
+	})
+
 }
 
 func TestBuiltInTasks(t *testing.T) {
