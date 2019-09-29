@@ -100,14 +100,13 @@ ORDER BY order_id ASC`
 // ExecuteSQLCommand executes chain script with parameters inside transaction
 func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 	var err error
-	var res sql.Result
 	var params []interface{}
 
 	if strings.TrimSpace(script) == "" {
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		res, err = tx.Exec(script)
+		_, err = tx.Exec(script)
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
@@ -115,16 +114,11 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 					return err
 				}
 				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("\nWith parameters: %+v", params))
-				res, err = tx.Exec(script, params...)
+				_, err = tx.Exec(script, params...)
 			}
 		}
 	}
-	if err != nil {
-		return err
-	}
-	cnt, _ := res.RowsAffected()
-	LogToDB("LOG", "Successfully executed command: ", script, "\nAffected: ", cnt)
-	return nil
+	return err
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
