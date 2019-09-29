@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -102,7 +103,7 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 	var res sql.Result
 	var params []interface{}
 
-	if script == "" {
+	if strings.TrimSpace(script) == "" {
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
