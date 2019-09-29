@@ -18,6 +18,7 @@ import (
  */
 
 type cmdOptions struct {
+	ClientName string `short:"c" long:"name" description:"Unique name for application instance"`
 	Verbose    bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
 	Host       string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
 	Port       string `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
@@ -25,7 +26,7 @@ type cmdOptions struct {
 	User       string `short:"u" long:"user" description:"PG config DB user" default:"scheduler" env:"PGTT_PGUSER"`
 	File       string `short:"f" long:"file" description:"Config file only mode"`
 	Password   string `long:"password" description:"PG config DB password" env:"PGCB_PGPASSWORD"`
-	ClientName string `short:"c" long:"name" description:"Unique name for application instance"`
+	SSLMode    string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
 }
 
 var cmdOpts cmdOptions
@@ -46,12 +47,13 @@ func main() {
 	pgengine.DbName = cmdOpts.Dbname
 	pgengine.User = cmdOpts.User
 	pgengine.Password = cmdOpts.Password
+	pgengine.SSLMode = cmdOpts.SSLMode
 	if cmdOpts.Verbose {
 		fmt.Printf("%+v\n", cmdOpts)
 	}
 	pgengine.PrefixSchemaFiles("sql/")
 	pgengine.InitAndTestConfigDBConnection(cmdOpts.Host, cmdOpts.Port,
-		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, "disable", pgengine.SQLSchemaFiles)
+		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, cmdOpts.SSLMode, pgengine.SQLSchemaFiles)
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v", cmdOpts))
 	defer pgengine.FinalizeConfigDBConnection()
 	scheduler.Run()
