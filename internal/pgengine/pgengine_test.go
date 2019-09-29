@@ -191,6 +191,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	defer teardownTestCase(t)
 
 	remoteDb, tx := setupTestRemoteDBFunc()
+	defer pgengine.FinalizeRemoteDBConnection(remoteDb)
 
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
