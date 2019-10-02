@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -15,7 +17,8 @@ var VerboseLogLevel = true
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
-func getLogPrefix(level string) string {
+//GetLogPrefix perform formatted logging
+func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
 }
 
@@ -29,7 +32,7 @@ func LogToDB(level string, msg ...interface{}) {
 			return
 		}
 	}
-	s := fmt.Sprintf(getLogPrefix(level), fmt.Sprint(msg...))
+	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
 	fmt.Println(s)
 	if ConfigDb != nil {
 		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
@@ -98,4 +101,48 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 	if err != nil {
 		LogToDB("ERROR", "Error occured during logging current chain element execution status including retcode: ", err)
 	}
+}
+
+//AddWorkerDetail Add worker to worker_status table when a worker starts
+func AddWorkerDetail() {
+	_, err := ConfigDb.Exec("Insert INTO timetable.worker_status (worker_name, client_name, start_time, pid) "+
+		" VALUES($1, $2, now(), $3)",
+		Host+"_"+Port, ClientName, os.Getpid())
+	if err != nil {
+		LogToDB("ERROR", "Error occured during adding worker detail: ", err)
+	}
+}
+
+//RemoveWorkerDetail when a worker stopped or ended
+func RemoveWorkerDetail() {
+	_, err := ConfigDb.Exec("DELETE FROM timetable.worker_status WHERE worker_name = $1  AND client_name = $2 AND pid = $3",
+		Host+"_"+Port, ClientName, os.Getpid())
+	if err != nil {
+		LogToDB("ERROR", "Error occured during removing worker: ", err)
+	}
+}
+
+//IsWorkerRunning return true if already a worker is running
+func IsWorkerRunning() bool {
+	var exists bool
+	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM timetable.worker_status WHERE worker_name = $1  AND client_name = $2)",
+		Host+"_"+Port, ClientName)
+	if err != nil || !exists {
+		return false
+	}
+	return true
+}
+
+// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
+// program if it receives an interrupt from the OS. We then handle this by calling
+// our clean up procedure and exiting the program.
+func SetupCloseHandler() {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		LogToDB("LOG", "Ctrl+C pressed at terminal")
+		FinalizeConfigDBConnection()
+		os.Exit(0)
+	}()
 }

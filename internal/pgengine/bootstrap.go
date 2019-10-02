@@ -77,6 +77,8 @@ func CreateConfigDBSchema(schemafile string) {
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	LogToDB("LOG", "Closing session")
+	//Remove worker detail
+	RemoveWorkerDetail()
 	if err := ConfigDb.Close(); err != nil {
 		log.Println("Error occured during connection closing: ", err)
 	}
@@ -87,9 +89,9 @@ func FinalizeConfigDBConnection() {
 func ReconnectDbAndFixLeftovers() {
 	var err error
 	for {
-		fmt.Printf(getLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
+		fmt.Printf(GetLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
 		time.Sleep(waitTime * time.Second)
-		fmt.Printf(getLogPrefix("REPAIR"), "Reconnecting...\n")
+		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
 		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
 			Host, Port, DbName, SSLMode, User, Password))
 		if err == nil {

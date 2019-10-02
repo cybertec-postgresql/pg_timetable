@@ -22,6 +22,7 @@ LANGUAGE 'plpgsql';
 -- Paramerters detail for timetable.job_add()
 -- task_name: The name of the Task
 -- task_function: The function wich will be executed.
+-- client_name:name of worker under which this task will execute
 -- task_type: Type of the function SQL,SHELL and BUILTIN
 -- by_cron: Time Schedule in Cron Syntax
 -- by_minute: This specifies the minutes on which the job is to run
@@ -46,6 +47,7 @@ LANGUAGE 'plpgsql';
 SELECT
 timetable.job_add ('cron_Job run after 40th minutes after 2 hour on 27th of every month ',
     'SELECT timetable.insert_dummy_log()',
+    'worker001',
     'SQL',
     '40 */2 27 * *',
     '',

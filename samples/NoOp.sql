@@ -12,5 +12,6 @@ INSERT INTO timetable.chain_execution_config VALUES
     TRUE, -- live, 
     FALSE, -- self_destruct,
 	FALSE, -- exclusive_execution, 
-    NULL -- excluded_execution_configs
+    NULL, -- excluded_execution_configs
+    'worker001' -- worker under which this task to be run
 );

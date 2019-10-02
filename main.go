@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
@@ -40,6 +41,10 @@ func main() {
 		parser.WriteHelp(os.Stdout)
 		return
 	}
+	if strings.TrimSpace(cmdOpts.ClientName) == "" {
+		fmt.Printf(pgengine.GetLogPrefix("VALIDATE"), "Worker is manadtory, Please enter a worker.\n")
+		return
+	}
 	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
 	pgengine.Host = cmdOpts.Host
@@ -56,6 +61,16 @@ func main() {
 		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, cmdOpts.SSLMode, pgengine.SQLSchemaFiles)
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v", cmdOpts))
 	defer pgengine.FinalizeConfigDBConnection()
+
+	// Setup our Ctrl+C handler
+	pgengine.SetupCloseHandler()
+
+	/*Only one worker can run with a client name */
+	if running := pgengine.IsWorkerRunning(); running == true {
+		fmt.Printf(pgengine.GetLogPrefix("VALIDATE"), fmt.Sprintf("%s is already running, You can not run duplicate worker.\n", cmdOpts.ClientName))
+		return
+	}
+	pgengine.AddWorkerDetail()
 	scheduler.Run()
 	return
 }

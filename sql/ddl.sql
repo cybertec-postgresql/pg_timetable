@@ -59,6 +59,7 @@ CREATE TABLE timetable.task_chain (
 -- "max_instances" is the number of instances this chain can run in parallel
 -- "live" is the indication that the chain is finalized, the system can run it
 -- "self_destruct" is the indication that this chain will delete itself after run
+-- "client_name" is the indication that this chain will run only under this tag
 CREATE TABLE timetable.chain_execution_config (
     chain_execution_config		BIGSERIAL	PRIMARY KEY,
     chain_id        			BIGINT 		REFERENCES timetable.task_chain(chain_id)
@@ -74,7 +75,8 @@ CREATE TABLE timetable.chain_execution_config (
     live						BOOLEAN		DEFAULT false,
     self_destruct				BOOLEAN		DEFAULT false,
 	exclusive_execution			BOOLEAN		DEFAULT false,
-	excluded_execution_configs	INTEGER[]
+	excluded_execution_configs	INTEGER[],
+	client_name					TEXT	    NOT NULL
 );
 
 
@@ -133,7 +135,14 @@ CREATE TABLE timetable.run_status (
 	PRIMARY KEY (run_status)
 );
 
-
+-- running worker detail
+CREATE TABLE timetable.worker_status (
+	Worker_name				    TEXT,
+	client_name 				TEXT,
+	start_time 					TIMESTAMPTZ,
+	pid             		    BIGINT,
+	PRIMARY KEY (Worker_name, client_name)
+);
 
 -----------------------------------------------------------------
 
