@@ -201,7 +201,8 @@ In most cases, they have to be brought to live by passing parameters to the exec
 A variety of examples can be found in the `/samples` directory.
 
 ### 3.4 Examle functions
-Create a Job with the `timetable.job_add` function.
+Create a Job with the `timetable.job_add` function. With this function you can
+add a new Job with a specific time (`by_minute`,`by_hour`,`by_day`,`by_month`,`by_day_of_week`) as comma separated text list to run or with a in a cron-syntax.
 
 | Parameter                   | Type    | Definition                                       | Default |
 | :----------------------- | :------ | :----------------------------------------------- |:---------|
@@ -222,9 +223,48 @@ If the parameter `by_cron` is used all other `by_*` (`by_minute`,`by_hour`,`by_d
 
 #### 3.4.1 Usage
 
-```select timetable.job_add('MyJob','Select public.my_func()','SQL','0 1 1 * *');```
+##### 3.4.1.1 With Cron-Style
+Run "MyJob" at 00:05 in August.
+```SELECT timetable.job_add('MyJob','Select public.my_func()','SQL','5 0 * 8 *');```
 
-Run "MyJob"
+Run "MyJob" at minute 23 past every 2nd hour from 0 through 20.
+```SELECT timetable.job_add('MyJob','Select public.my_func()','SQL','23 0-20/2 * * *');```
+
+##### 3.4.1.2 With specific time
+
+Run "SQL" at 01:00 on first day of Month
+```
+    SELECT timetable.job_add ('At minute 0 and 1st hour on first day of Month',
+    'SELECT timetable.insert_dummy_log()',
+    'SQL',
+    null,
+    '0',
+    '1',
+    '1',
+    null,
+    null,
+    '1',
+    TRUE,
+    FALSE);
+```
+ 
+Run "SQL" at 01:00 and 02:00 on every Monday´s
+
+ ```
+    SELECT timetable.job_add ('at 01:00 and 02:00 on every Monday´s',
+    'SELECT timetable.insert_dummy_log()',
+    'SQL',
+    null,
+    '0',
+    null,
+    '1,2',
+    null,
+    '1',
+    '1',
+    TRUE,
+    FALSE);
+```  
+    
 
 ## 4. Database logging and transactions
 
