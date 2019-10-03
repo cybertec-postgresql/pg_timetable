@@ -188,12 +188,12 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
 
 	//Reset The Role
-	if chainElemExec.RunUID.Valid {
+	if chainElemExec.RunUID.Valid && chainElemExec.Kind == "SQL" {
 		pgengine.ResetRole(execTx)
 	}
 
 	// Commit changes on remote server
-	if chainElemExec.DatabaseConnection.Valid {
+	if chainElemExec.DatabaseConnection.Valid  && chainElemExec.Kind == "SQL"{
 		pgengine.MustCommitTransaction(execTx)
 	}
 
