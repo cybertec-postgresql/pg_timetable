@@ -50,8 +50,11 @@ func PrefixSchemaFiles(prefix string) {
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
-	ConfigDb = sqlx.MustConnect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
-		host, port, dbname, sslmode, user, password))
+	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+		host, port, dbname, sslmode, user, password)
+	ConfigDb = sqlx.MustConnect("postgres", connstr)
+	LogToDB("DEBUG", "Connection string: ", connstr)
+	// ConfigDb.MustExec("SET application_name TO pg_timetable")
 
 	var exists bool
 	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
