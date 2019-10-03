@@ -216,12 +216,15 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 
 	t.Run("Check set role function", func(t *testing.T) {
 		var runUID sql.NullString
+		runUID.String = pgengine.User
 		assert.NotPanics(t, func() { pgengine.SetRole(tx, runUID) }, "Set Role failed")
 	})
 
 	t.Run("Check reset role function", func(t *testing.T) {
 		assert.NotPanics(t, func() { pgengine.ResetRole(tx) }, "Reset Role failed")
 	})
+
+	pgengine.MustCommitTransaction(tx)
 }
 
 func init() {
