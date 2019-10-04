@@ -32,7 +32,7 @@ type cmdOptions struct {
 var cmdOpts cmdOptions
 
 func main() {
-	parser := flags.NewParser(&cmdOpts, flags.Default)
+	parser := flags.NewParser(&cmdOpts, flags.PrintErrors|flags.PassDoubleDash)
 	if _, err := parser.Parse(); err != nil {
 		panic(err)
 	}
