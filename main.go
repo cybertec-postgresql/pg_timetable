@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
@@ -39,10 +38,6 @@ func main() {
 			parser.WriteHelp(os.Stdout)
 			os.Exit(2)
 		}
-	}
-	if strings.TrimSpace(cmdOpts.ClientName) == "" {
-		fmt.Printf(pgengine.GetLogPrefix("VALIDATE"), "Worker is manadtory, Please enter a worker.\n")
-		return
 	}
 	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
