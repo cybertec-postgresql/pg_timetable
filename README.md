@@ -38,25 +38,32 @@ It is completely database driven and provides a couple of advanced concepts.
 ## 2. Installation
 
 There are currently two options on how you can install and run pg_timetable.
-> Please, if you feel the need for a .deb or .rpm Package, please let us know by submitting an Issue, or - which we would really appreciate! - by creating a pull request that does said things.
+> If you feel the need for a .deb or .rpm package, please let us know by submitting an issue, or - which we would really appreciate! - creating a pull request that does said things.
 
 ### 2.1 Container installation
 
-> To use Docker, you can simply replace all `podman` below with `docker`
+> When using Docker, simply replace all `podman` occurrences with `docker`.
 
-1. get the Dockerfile
+1. Get the Dockerfile:
+
 ```sh
 wget -O pg_timetable.Dockerfile https://raw.githubusercontent.com/cybertec-postgresql/pg_timetable/master/Dockerfile
 ```
-1. Build the Docker image:
+
+2. Build the Docker image:
+
 ```sh
 podman build -f pg_timetable.Dockerfile -t pg_timetable:latest
 ```
-2. Run the image
+
+3. Run the image:
+
 ```sh
 podman run --rm pg_timetable:latest
 ```
-3. To pass additional commands to pg_timetable, such as where your database is located, simply attach the flags to the `podman run` (or `docker run` command, e.g. :
+
+4. To pass additional arguments to pg_timetable, such as where your database is located, simply attach the flags to the `podman run`, like so:
+
 ```sh
 podman run --rm pg_timetable:latest -h 10.0.0.3 -p 54321
 ```
