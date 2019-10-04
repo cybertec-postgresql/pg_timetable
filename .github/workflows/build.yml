@@ -35,3 +35,13 @@ jobs:
       run: |
         export GOPATH=/home/runner/work/pg_timetable/go
         go build -v .
+
+    - name: Vet
+      run: |
+        export GOPATH=/home/runner/work/pg_timetable/go
+        go vet ./...
+
+    - name: Lint
+      run: |
+        export GOPATH=/home/runner/work/pg_timetable/go
+        golint ./...        
