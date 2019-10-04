@@ -54,7 +54,6 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode s
 		host, port, dbname, sslmode, user, password)
 	ConfigDb = sqlx.MustConnect("postgres", connstr)
 	LogToDB("DEBUG", "Connection string: ", connstr)
-	// ConfigDb.MustExec("SET application_name TO pg_timetable")
 
 	var exists bool
 	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
