@@ -18,7 +18,7 @@ import (
  */
 
 type cmdOptions struct {
-	ClientName string `short:"c" long:"name" description:"Unique name for application instance"`
+	ClientName string `short:"c" long:"name" description:"Unique name for application instance" required:"True"`
 	Verbose    bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
 	Host       string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
 	Port       string `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
@@ -33,10 +33,6 @@ var cmdOpts cmdOptions
 
 func main() {
 	parser := flags.NewParser(&cmdOpts, flags.PrintErrors|flags.PassDoubleDash)
-	if len(os.Args) < 2 {
-		parser.WriteHelp(os.Stdout)
-		os.Exit(2)
-	}
 	if _, err := parser.Parse(); err != nil {
 		if !flags.WroteHelp(err) {
 			parser.WriteHelp(os.Stdout)
