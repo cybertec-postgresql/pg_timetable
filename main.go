@@ -18,13 +18,13 @@ import (
  */
 
 type cmdOptions struct {
-	ClientName string `short:"c" long:"name" description:"Unique name for application instance"`
+	ClientName string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True"`
 	Verbose    bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
 	Host       string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
 	Port       string `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
 	Dbname     string `short:"d" long:"dbname" description:"PG config DB dbname" default:"timetable" env:"PGTT_PGDATABASE"`
 	User       string `short:"u" long:"user" description:"PG config DB user" default:"scheduler" env:"PGTT_PGUSER"`
-	File       string `short:"f" long:"file" description:"Config file only mode"`
+	File       string `short:"f" long:"file" description:"Config file only mode" hidden:"TODO"`
 	Password   string `long:"password" description:"PG config DB password" env:"PGCB_PGPASSWORD"`
 	SSLMode    string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
 }
@@ -32,13 +32,12 @@ type cmdOptions struct {
 var cmdOpts cmdOptions
 
 func main() {
-	parser := flags.NewParser(&cmdOpts, flags.Default)
+	parser := flags.NewParser(&cmdOpts, flags.PrintErrors)
 	if _, err := parser.Parse(); err != nil {
-		panic(err)
-	}
-	if len(os.Args) < 2 {
-		parser.WriteHelp(os.Stdout)
-		return
+		if !flags.WroteHelp(err) {
+			parser.WriteHelp(os.Stdout)
+			os.Exit(2)
+		}
 	}
 	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
@@ -48,9 +47,6 @@ func main() {
 	pgengine.User = cmdOpts.User
 	pgengine.Password = cmdOpts.Password
 	pgengine.SSLMode = cmdOpts.SSLMode
-	if cmdOpts.Verbose {
-		fmt.Printf("%+v\n", cmdOpts)
-	}
 	pgengine.PrefixSchemaFiles("sql/")
 	pgengine.InitAndTestConfigDBConnection(cmdOpts.Host, cmdOpts.Port,
 		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, cmdOpts.SSLMode, pgengine.SQLSchemaFiles)
