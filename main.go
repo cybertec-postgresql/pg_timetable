@@ -51,9 +51,6 @@ func main() {
 	pgengine.User = cmdOpts.User
 	pgengine.Password = cmdOpts.Password
 	pgengine.SSLMode = cmdOpts.SSLMode
-	if cmdOpts.Verbose {
-		fmt.Printf("%+v\n", cmdOpts)
-	}
 	pgengine.PrefixSchemaFiles("sql/")
 	pgengine.InitAndTestConfigDBConnection(cmdOpts.Host, cmdOpts.Port,
 		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, cmdOpts.SSLMode, pgengine.SQLSchemaFiles)
