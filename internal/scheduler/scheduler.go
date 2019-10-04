@@ -171,6 +171,16 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 
 		err = pgengine.ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
 
+		//Reset The Role
+		if chainElemExec.RunUID.Valid {
+			pgengine.ResetRole(execTx)
+		}
+
+		// Commit changes on remote server
+		if chainElemExec.DatabaseConnection.Valid {
+			pgengine.MustCommitTransaction(execTx)
+		}
+
 	case "SHELL":
 		err, retCode = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
@@ -186,16 +196,6 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	}
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
-
-	//Reset The Role
-	if chainElemExec.RunUID.Valid {
-		pgengine.ResetRole(execTx)
-	}
-
-	// Commit changes on remote server
-	if chainElemExec.DatabaseConnection.Valid {
-		pgengine.MustCommitTransaction(execTx)
-	}
 
 	return 0
 }
