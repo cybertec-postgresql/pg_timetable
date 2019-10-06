@@ -23,6 +23,7 @@ jobs:
       run: |
         export GOPATH=/home/runner/work/pg_timetable/go
         go get -v -t -d ./...
+        go get -u golang.org/x/lint/golint
         echo
         echo "-- Environment variables ----------------------------------------------"
         env
