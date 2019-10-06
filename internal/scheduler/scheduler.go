@@ -182,7 +182,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		}
 
 	case "SHELL":
-		err, retCode = executeShellCommand(chainElemExec.Script, paramValues)
+		retCode, err = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
 	}
