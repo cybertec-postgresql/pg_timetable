@@ -22,9 +22,9 @@ func (c realCommander) CombinedOutput(command string, args ...string) ([]byte, e
 var cmd commander
 
 // ExecuteTask executes built-in task depending on task name and returns err result
-func executeShellCommand(command string, paramValues []string) (error, int){
+func executeShellCommand(command string, paramValues []string) (int, error) {
 	if strings.TrimSpace(command) == "" {
-		return errors.New("Shell command cannot be empty"), -1
+		return -1, errors.New("Shell command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		paramValues = []string{""}
@@ -33,7 +33,7 @@ func executeShellCommand(command string, paramValues []string) (error, int){
 		params := []string{}
 		if val > "" {
 			if err := json.Unmarshal([]byte(val), &params); err != nil {
-				return err, -1
+				return -1, err
 			}
 		}
 		out, err := cmd.CombinedOutput(command, params...) // #nosec
@@ -42,13 +42,13 @@ func executeShellCommand(command string, paramValues []string) (error, int){
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {
 				exitCode := exitError.ProcessState.ExitCode()
-				pgengine.LogToDB("DEBUG", "Return value of the shell command:\n", command, params, "\n", exitCode )
-				return exitError, exitCode
+				pgengine.LogToDB("DEBUG", "Return value of the shell command:\n", command, params, "\n", exitCode)
+				return exitCode, exitError
 			}
-			return err, -1
+			return -1, err
 		}
 	}
-	return nil, 0
+	return 0, nil
 }
 
 func init() {
