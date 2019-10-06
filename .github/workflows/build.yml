@@ -41,5 +41,5 @@ jobs:
     - name: Lint
       run: |
         export GOPATH=/home/runner/work/pg_timetable/go
-        GOBIN=$PWD/bin go install golang.org/x/lint/golint
+        GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
         ./bin/golint ./...
