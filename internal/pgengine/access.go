@@ -107,7 +107,7 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func TryLockClientName() (res bool) {
 	adler32Int := adler32.Checksum([]byte(ClientName))
-	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for %s with hash %d", ClientName, adler32Int))
+	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash %d", ClientName, adler32Int))
 	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1)", adler32Int)
 	if err != nil {
 		LogToDB("ERROR", "Error occured during client name locking: ", err)
