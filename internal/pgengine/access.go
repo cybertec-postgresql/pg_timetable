@@ -18,6 +18,9 @@ var VerboseLogLevel = true
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
+// AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
+const AppID = 0x204F04EE
+
 //GetLogPrefix perform formatted logging
 func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
@@ -107,8 +110,8 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func TryLockClientName() (res bool) {
 	adler32Int := adler32.Checksum([]byte(ClientName))
-	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash %d", ClientName, adler32Int))
-	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1)", adler32Int)
+	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
+	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
 	if err != nil {
 		LogToDB("ERROR", "Error occured during client name locking: ", err)
 	}
