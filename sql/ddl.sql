@@ -135,15 +135,6 @@ CREATE TABLE timetable.run_status (
 	PRIMARY KEY (run_status)
 );
 
--- running worker detail
-CREATE TABLE timetable.worker_status (
-	Worker_name				    TEXT,
-	client_name 				TEXT,
-	start_time 					TIMESTAMPTZ,
-	pid             		    BIGINT,
-	PRIMARY KEY (Worker_name, client_name)
-);
-
 -----------------------------------------------------------------
 
 -- this stored procedure will tell us which scripts chains

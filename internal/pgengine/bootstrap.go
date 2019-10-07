@@ -79,9 +79,11 @@ func CreateConfigDBSchema(schemafile string) {
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	LogToDB("LOG", "Closing session")
-	//Remove worker detail
-	RemoveWorkerDetail()
-	if err := ConfigDb.Close(); err != nil {
+	_, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
+	if err != nil {
+		log.Println("Error occured during locks releasing: ", err)
+	}
+	if err = ConfigDb.Close(); err != nil {
 		log.Println("Error occured during connection closing: ", err)
 	}
 	ConfigDb = nil

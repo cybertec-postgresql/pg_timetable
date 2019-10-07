@@ -36,6 +36,11 @@ func (chain Chain) String() string {
 
 //Run executes jobs
 func Run() {
+	for !pgengine.TryLockClientName() {
+		pgengine.LogToDB("ERROR", "Another client is already connected to server with name: ", pgengine.ClientName)
+		time.Sleep(refetchTimeout * time.Second)
+	}
+
 	var query string
 
 	// create channel for passing chains to workers

@@ -60,7 +60,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		var oid int
 		tableNames := []string{"database_connection", "base_task", "task_chain",
 			"chain_execution_config", "chain_execution_parameters",
-			"log", "execution_log", "run_status", "worker_status"}
+			"log", "execution_log", "run_status"}
 		for _, tableName := range tableNames {
 			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName))
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", tableName))
@@ -123,16 +123,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
 	})
 
-	t.Run("Check Add Worker Detail", func(t *testing.T) {
-		assert.NotPanics(t, pgengine.AddWorkerDetail, "Should no error in clean database")
-	})
-
-	t.Run("Remove Worker Detail", func(t *testing.T) {
-		assert.NotPanics(t, pgengine.RemoveWorkerDetail, "Should not delete in clean database")
-	})
-
-	t.Run("Check Get Worker details", func(t *testing.T) {
-		assert.Equal(t,false, pgengine.IsWorkerRunning(), "Should no error in clean database")
+	t.Run("Check TryLockClientName()", func(t *testing.T) {
+		assert.Equal(t, true, pgengine.TryLockClientName(), "Should succeed for clean database")
 	})
 
 	t.Run("Check SetupCloseHandler function", func(t *testing.T) {

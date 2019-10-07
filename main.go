@@ -56,12 +56,6 @@ func main() {
 	// Setup our Ctrl+C handler
 	pgengine.SetupCloseHandler()
 
-	/*Only one worker can run with a client name */
-	if running := pgengine.IsWorkerRunning(); running == true {
-		fmt.Printf(pgengine.GetLogPrefix("VALIDATE"), fmt.Sprintf("%s is already running, You can not run duplicate worker.\n", cmdOpts.ClientName))
-		return
-	}
-	pgengine.AddWorkerDetail()
 	scheduler.Run()
 	return
 }

@@ -3,6 +3,7 @@ package pgengine
 import (
 	"database/sql"
 	"fmt"
+	"hash/adler32"
 	"os"
 	"os/signal"
 	"syscall"
@@ -103,34 +104,15 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 	}
 }
 
-//AddWorkerDetail Add worker to worker_status table when a worker starts
-func AddWorkerDetail() {
-	_, err := ConfigDb.Exec("Insert INTO timetable.worker_status (worker_name, client_name, start_time, pid) "+
-		" VALUES($1, $2, now(), $3)",
-		Host+"_"+Port, ClientName, os.Getpid())
+// TryLockClientName obtains lock on the server to prevent another client with the same name
+func TryLockClientName() (res bool) {
+	adler32Int := adler32.Checksum([]byte(ClientName))
+	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for %s with hash %d", ClientName, adler32Int))
+	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1)", adler32Int)
 	if err != nil {
-		LogToDB("ERROR", "Error occured during adding worker detail: ", err)
+		LogToDB("ERROR", "Error occured during client name locking: ", err)
 	}
-}
-
-//RemoveWorkerDetail when a worker stopped or ended
-func RemoveWorkerDetail() {
-	_, err := ConfigDb.Exec("DELETE FROM timetable.worker_status WHERE worker_name = $1  AND client_name = $2 AND pid = $3",
-		Host+"_"+Port, ClientName, os.Getpid())
-	if err != nil {
-		LogToDB("ERROR", "Error occured during removing worker: ", err)
-	}
-}
-
-//IsWorkerRunning return true if already a worker is running
-func IsWorkerRunning() bool {
-	var exists bool
-	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM timetable.worker_status WHERE worker_name = $1  AND client_name = $2)",
-		Host+"_"+Port, ClientName)
-	if err != nil || !exists {
-		return false
-	}
-	return true
+	return
 }
 
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
