@@ -76,7 +76,7 @@ CREATE TABLE timetable.chain_execution_config (
     self_destruct				BOOLEAN		DEFAULT false,
 	exclusive_execution			BOOLEAN		DEFAULT false,
 	excluded_execution_configs	INTEGER[],
-	client_name					TEXT	    NOT NULL
+	client_name					TEXT
 );
 
 
