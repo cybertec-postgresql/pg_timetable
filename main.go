@@ -52,6 +52,10 @@ func main() {
 		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, cmdOpts.SSLMode, pgengine.SQLSchemaFiles)
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v", cmdOpts))
 	defer pgengine.FinalizeConfigDBConnection()
+
+	// Setup our Ctrl+C handler
+	pgengine.SetupCloseHandler()
+
 	scheduler.Run()
 	return
 }

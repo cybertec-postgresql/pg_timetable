@@ -17,12 +17,12 @@ BEGIN
 	RETURNING chain_id INTO v_chain_id;
 
 	-- Create the chain execution configuration
-	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, live)
-	VALUES (v_chain_id, 'psql chain', TRUE)
+	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, live, client_name)
+	VALUES (v_chain_id, 'psql chain', TRUE, 'worker001')
 	RETURNING chain_execution_config INTO v_chain_config_id;
 
 	-- Create the parameters for the chain configuration
-	INSERT INTO timetable.chain_execution_paramaters (
+	INSERT INTO timetable.chain_execution_parameters (
 		chain_execution_config,
 		chain_id,
 		order_id,

@@ -122,6 +122,14 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
 		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
 	})
+
+	t.Run("Check TryLockClientName()", func(t *testing.T) {
+		assert.Equal(t, true, pgengine.TryLockClientName(), "Should succeed for clean database")
+	})
+
+	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
+		assert.NotPanics(t, pgengine.SetupCloseHandler, "Setup Close handler failed")
+	})
 }
 
 func TestSchedulerFunctions(t *testing.T) {

@@ -3,7 +3,10 @@ package pgengine
 import (
 	"database/sql"
 	"fmt"
+	"hash/adler32"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -15,7 +18,11 @@ var VerboseLogLevel = true
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
-func getLogPrefix(level string) string {
+// AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
+const AppID = 0x204F04EE
+
+//GetLogPrefix perform formatted logging
+func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
 }
 
@@ -29,7 +36,7 @@ func LogToDB(level string, msg ...interface{}) {
 			return
 		}
 	}
-	s := fmt.Sprintf(getLogPrefix(level), fmt.Sprint(msg...))
+	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
 	fmt.Println(s)
 	if ConfigDb != nil {
 		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
@@ -98,4 +105,29 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 	if err != nil {
 		LogToDB("ERROR", "Error occured during logging current chain element execution status including retcode: ", err)
 	}
+}
+
+// TryLockClientName obtains lock on the server to prevent another client with the same name
+func TryLockClientName() (res bool) {
+	adler32Int := adler32.Checksum([]byte(ClientName))
+	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
+	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
+	if err != nil {
+		LogToDB("ERROR", "Error occured during client name locking: ", err)
+	}
+	return
+}
+
+// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
+// program if it receives an interrupt from the OS. We then handle this by calling
+// our clean up procedure and exiting the program.
+func SetupCloseHandler() {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		LogToDB("LOG", "Ctrl+C pressed at terminal")
+		FinalizeConfigDBConnection()
+		os.Exit(0)
+	}()
 }

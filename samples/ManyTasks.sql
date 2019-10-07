@@ -28,7 +28,8 @@ WITH
               live,
               self_destruct,
               exclusive_execution,
-              excluded_execution_configs
+              excluded_execution_configs,
+              client_name
             )
             select
               chain_id, -- chain_id,
@@ -42,7 +43,8 @@ WITH
               TRUE, -- live,
               FALSE, -- self_destruct,
               FALSE, -- exclusive_execution,
-              NULL -- excluded_execution_configs
+              NULL, -- excluded_execution_configs
+              'worker001' -- worker under which this task to be run
               FROM chain_insert
             RETURNING  chain_execution_config, chain_id
     )
