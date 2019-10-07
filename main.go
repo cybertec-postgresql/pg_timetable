@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
@@ -27,33 +29,48 @@ type cmdOptions struct {
 	File       string `short:"f" long:"file" description:"Config file only mode"`
 	Password   string `long:"password" description:"PG config DB password" env:"PGCB_PGPASSWORD"`
 	SSLMode    string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
+	PgURL      string `long:"pgurl" description:"PG Connection URL" `
 }
 
 var cmdOpts cmdOptions
 
 func main() {
-	parser := flags.NewParser(&cmdOpts, flags.Default)
+	parser := flags.NewParser(&cmdOpts, flags.PrintErrors)
 	if _, err := parser.Parse(); err != nil {
-		panic(err)
+		if !flags.WroteHelp(err) {
+			parser.WriteHelp(os.Stdout)
+			os.Exit(2)
+		}
 	}
-	if len(os.Args) < 2 {
-		parser.WriteHelp(os.Stdout)
-		return
+	if strings.TrimSpace(cmdOpts.PgURL) != "" {
+		cmdURL, err := url.Parse(cmdOpts.PgURL)
+		if err != nil {
+			return
+		}
+		pgengine.ParseCurl(cmdURL)
 	}
 	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
-	pgengine.Host = cmdOpts.Host
-	pgengine.Port = cmdOpts.Port
-	pgengine.DbName = cmdOpts.Dbname
-	pgengine.User = cmdOpts.User
-	pgengine.Password = cmdOpts.Password
-	pgengine.SSLMode = cmdOpts.SSLMode
-	if cmdOpts.Verbose {
-		fmt.Printf("%+v\n", cmdOpts)
+	if strings.TrimSpace(pgengine.Host) == "" {
+		pgengine.Host = cmdOpts.Host
 	}
+	if strings.TrimSpace(pgengine.Port) == "" {
+		pgengine.Port = cmdOpts.Port
+	}
+	if strings.TrimSpace(pgengine.DbName) == "" {
+		pgengine.DbName = cmdOpts.Dbname
+	}
+	if strings.TrimSpace(pgengine.User) == "" {
+		pgengine.User = cmdOpts.User
+	}
+	if strings.TrimSpace(pgengine.Password) == "" {
+		pgengine.Password = cmdOpts.Password
+	}
+
+	pgengine.SSLMode = cmdOpts.SSLMode
 	pgengine.PrefixSchemaFiles("sql/")
-	pgengine.InitAndTestConfigDBConnection(cmdOpts.Host, cmdOpts.Port,
-		cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password, cmdOpts.SSLMode, pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection(pgengine.Host, pgengine.Port,
+		pgengine.DbName, pgengine.User, pgengine.Password, pgengine.SSLMode, pgengine.SQLSchemaFiles)
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting new session with options: %+v", cmdOpts))
 	defer pgengine.FinalizeConfigDBConnection()
 	scheduler.Run()

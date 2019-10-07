@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -97,5 +100,15 @@ func ReconnectDbAndFixLeftovers() {
 			FixSchedulerCrash()
 			break
 		}
+	}
+}
+
+//ParseCurl parses URL structure into respective global variables
+func ParseCurl(cmdURL *url.URL) {
+	Host, Port, _ = net.SplitHostPort(cmdURL.Host)
+	User = cmdURL.User.Username()
+	Password, _ = cmdURL.User.Password()
+	if strings.TrimSpace(cmdURL.Path) != "" {
+		DbName = cmdURL.Path[1:]
 	}
 }
