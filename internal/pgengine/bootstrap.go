@@ -53,8 +53,10 @@ func PrefixSchemaFiles(prefix string) {
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
-	ConfigDb = sqlx.MustConnect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
-		host, port, dbname, sslmode, user, password))
+	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+		host, port, dbname, sslmode, user, password)
+	ConfigDb = sqlx.MustConnect("postgres", connstr)
+	LogToDB("DEBUG", "Connection string: ", connstr)
 
 	var exists bool
 	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
@@ -80,7 +82,11 @@ func CreateConfigDBSchema(schemafile string) {
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	LogToDB("LOG", "Closing session")
-	if err := ConfigDb.Close(); err != nil {
+	_, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
+	if err != nil {
+		log.Println("Error occured during locks releasing: ", err)
+	}
+	if err = ConfigDb.Close(); err != nil {
 		log.Println("Error occured during connection closing: ", err)
 	}
 	ConfigDb = nil
@@ -90,9 +96,9 @@ func FinalizeConfigDBConnection() {
 func ReconnectDbAndFixLeftovers() {
 	var err error
 	for {
-		fmt.Printf(getLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
+		fmt.Printf(GetLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
 		time.Sleep(waitTime * time.Second)
-		fmt.Printf(getLogPrefix("REPAIR"), "Reconnecting...\n")
+		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
 		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
 			Host, Port, DbName, SSLMode, User, Password))
 		if err == nil {

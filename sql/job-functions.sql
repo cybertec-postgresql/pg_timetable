@@ -126,6 +126,7 @@ $BODY$
 CREATE OR REPLACE FUNCTION timetable.job_add(
     task_name text,
     task_function text,
+    client_name text,
     task_type timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
     by_cron text DEFAULT NULL::text,
     by_minute text DEFAULT NULL::text,
@@ -316,7 +317,8 @@ BEGIN
             live, -- live,
             self_destruct, -- self_destruct,
             FALSE, -- exclusive_execution,
-            NULL -- excluded_execution_configs
+            NULL, -- excluded_execution_configs
+            client_name -- worker under which this task to be run
         );
     END LOOP;
     CLOSE c_matrix;

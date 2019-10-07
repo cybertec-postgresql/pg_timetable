@@ -124,9 +124,12 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
 	})
 
-	t.Run("Check Parsing of DB URL", func(t *testing.T) {
-		var cmdURL url.URL
-		assert.NotPanics(t, func() { pgengine.ParseCurl(&cmdURL) }, "Parsing of DB URL failed")
+	t.Run("Check TryLockClientName()", func(t *testing.T) {
+		assert.Equal(t, true, pgengine.TryLockClientName(), "Should succeed for clean database")
+	})
+
+	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
+		assert.NotPanics(t, pgengine.SetupCloseHandler, "Setup Close handler failed")
 	})
 }
 
