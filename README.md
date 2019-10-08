@@ -124,7 +124,7 @@ A new base task can be created by inserting a new entry into `timetable.base_tas
 | :------- | :-------------------- | :---------------------------------------------------------------------- |
 | `name`   | `text`                | The name of the base task.                                              |
 | `kind`   | `timetable.task_kind` | The type of the base task. Can be `SQL`(default), `SHELL` or `BUILTIN`. |
-| `script` | `text`                | TODO                                                                    |
+| `script` | `text`                | Contains either a SQL script or a command string which will be executed.|
 
 ### 3.2. Task chain
 
@@ -142,8 +142,8 @@ Through chains, **pg_timetable** creates the ability to span transactions over m
 
 | Column                | Type      | Definition                                                                        |
 | :-------------------- | :-------- | :-------------------------------------------------------------------------------- |
-| `parent_id`           | `bigint`  | TODO                                                                              |
-| `task_id`             | `bigint`  | The ID of the ***base task***.                                                    |
+| `parent_id`           | `bigint`  | The ID of the previous base task in the chain.  Set this to `NULL` if it is the first base task in the chain.|
+| `task_id`             | `bigint`  | The ID of the **base task**.                                                      |
 | `run_uid`             | `text`    | The role as which the chain should be executed as.                                |
 | `database_connection` | `integer` | The ID of the `timetable.database_connection` that should be used.                |
 | `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `true`). |
@@ -208,12 +208,17 @@ Once a chain has been created, it has to be scheduled. For this, **pg_timetable*
     <tr>
         <td><code>exclusive_execution</code></td>
 	<td><code>boolean</code></td>
-	<td>TODO</td>
+	<td>Specifies whether the chain should be executed exclusively while all other chains are paused.</td>
     </tr>
     <tr>
         <td><code>excluded_execution_configs</code></td>
 	<td><code>integer[]</code></td>
 	<td>TODO</td>
+    </tr>
+    <tr>
+        <td><code>client_name</code></td>
+        <td><code>text</code></td>
+        <td>Specifies which client should execute the chain. Set this to `NULL` to allow any client.</td>
     </tr>
 </table>​
 
