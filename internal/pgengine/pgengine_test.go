@@ -12,6 +12,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
+	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
 	"github.com/stretchr/testify/assert"
@@ -110,6 +111,13 @@ func TestMain(m *testing.M) {
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
+	pgengine.Host = "localhost"
+	pgengine.Port = "5432"
+	pgengine.DbName = "timetable"
+	pgengine.User = "scheduler"
+	pgengine.Password = "somestrong"
+	pgengine.ClientName = "go-test"
+	pgengine.SSLMode = "disable"
 	pgengine.InitAndTestConfigDBConnection(pgURL.Host, "5432", "timetable", "scheduler",
 		"scheduler", "disable", pgengine.SQLSchemaFiles)
 }
@@ -122,6 +130,11 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
 	}
+}
+
+// setupTestRenoteDBFunc used to connect to remote postgreSQL database
+var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
+	return pgengine.GetRemoteDBTransaction("host=localhost port=5432 sslmode=disable dbname=timetable user=scheduler password=somestrong")
 }
 
 func TestBootstrapSQLFileExists(t *testing.T) {
@@ -202,6 +215,18 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		// reinit connection to execute teardown actions
 		setupTestDBFunc()
 	})
+
+	t.Run("Check Reconnecting Database", func(t *testing.T) {
+		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
+	})
+
+	t.Run("Check TryLockClientName()", func(t *testing.T) {
+		assert.Equal(t, true, pgengine.TryLockClientName(), "Should succeed for clean database")
+	})
+
+	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
+		assert.NotPanics(t, pgengine.SetupCloseHandler, "Setup Close handler failed")
+	})
 }
 
 func TestSchedulerFunctions(t *testing.T) {
@@ -248,6 +273,26 @@ func TestSchedulerFunctions(t *testing.T) {
 		pgengine.MustCommitTransaction(tx)
 	})
 
+	t.Run("Check Remote DB Connection string", func(t *testing.T) {
+		var databaseConnection sql.NullString
+		tx := pgengine.StartTransaction()
+		assert.NotNil(t, pgengine.GetConnectionString(databaseConnection), "Should no error in clean database")
+		pgengine.MustCommitTransaction(tx)
+	})
+
+	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
+		tx := pgengine.StartTransaction()
+		assert.Error(t, pgengine.ExecuteSQLCommand(tx, "", nil), "Should error for empty script")
+		assert.Error(t, pgengine.ExecuteSQLCommand(tx, " 	", nil), "Should error for whitespace only script")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", nil), "Simple query with nil as parameters argument")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", []string{}), "Simple query with empty slice as parameters argument")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1", []string{"[42]"}), "Simple query with non empty parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1", []string{"[42]", `["hey"]`}), "Simple query with doubled parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1, $2", []string{`[42, "hey"]`}), "Simple query with two parameters")
+
+		pgengine.MustCommitTransaction(tx)
+	})
+
 }
 
 func TestBuiltInTasks(t *testing.T) {
@@ -259,6 +304,32 @@ func TestBuiltInTasks(t *testing.T) {
 		assert.NoError(t, err, "Query for built-in tasks existance failed")
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
+}
+func TestGetRemoteDBTransaction(t *testing.T) {
+	teardownTestCase := setupTestCase(t)
+	defer teardownTestCase(t)
+
+	remoteDb, tx := setupTestRemoteDBFunc()
+	defer pgengine.FinalizeRemoteDBConnection(remoteDb)
+
+	require.NotNil(t, remoteDb, "remoteDB should be initialized")
+
+	t.Run("Check connection closing", func(t *testing.T) {
+		pgengine.FinalizeRemoteDBConnection(remoteDb)
+		assert.NotNil(t, remoteDb, "Connection isn't closed properly")
+	})
+
+	t.Run("Check set role function", func(t *testing.T) {
+		var runUID sql.NullString
+		runUID.String = pgengine.User
+		assert.NotPanics(t, func() { pgengine.SetRole(tx, runUID) }, "Set Role failed")
+	})
+
+	t.Run("Check reset role function", func(t *testing.T) {
+		assert.NotPanics(t, func() { pgengine.ResetRole(tx) }, "Reset Role failed")
+	})
+
+	pgengine.MustCommitTransaction(tx)
 }
 
 func init() {

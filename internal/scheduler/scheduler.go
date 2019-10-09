@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -11,7 +12,12 @@ import (
 )
 
 const workersNumber = 16
-const refetchTimeout = 10
+
+/* the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes */
+const refetchTimeout = 60
+
+/* if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes */
+const maxChainsThreshold = workersNumber * refetchTimeout
 
 // Chain structure used to represent tasks chains
 type Chain struct {
@@ -30,7 +36,10 @@ func (chain Chain) String() string {
 
 //Run executes jobs
 func Run() {
-	var query string
+	for !pgengine.TryLockClientName() {
+		pgengine.LogToDB("ERROR", "Another client is already connected to server with name: ", pgengine.ClientName)
+		time.Sleep(refetchTimeout * time.Second)
+	}
 
 	// create channel for passing chains to workers
 	chains := make(chan Chain)
@@ -39,31 +48,38 @@ func Run() {
 		go chainWorker(chains)
 	}
 
+	/* set maximum connection to workersNumber + 1 for system calls */
+	pgengine.ConfigDb.SetMaxOpenConns(workersNumber + 1)
+
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash()
+
 	/* loop forever or until we ask it to stop */
 	for {
-
 		/* ask the database which chains it has to perform */
-		pgengine.LogToDB("LOG", "checking for task chains ...")
+		pgengine.LogToDB("LOG", "Checking for task chains...")
 
-		query = " SELECT chain_execution_config, chain_id, chain_name, " +
+		query := " SELECT chain_execution_config, chain_id, chain_name, " +
 			" self_destruct, exclusive_execution, " +
 			" COALESCE(max_instances, 16) as max_instances" +
 			" FROM   timetable.chain_execution_config " +
-			" WHERE live AND timetable.check_task(chain_execution_config)"
+			" WHERE live AND (client_name = $1 or client_name IS NULL) " +
+			" AND timetable.check_task(chain_execution_config)"
 
 		headChains := []Chain{}
-		err := pgengine.ConfigDb.Select(&headChains, query)
+		err := pgengine.ConfigDb.Select(&headChains, query, pgengine.ClientName)
 		if err != nil {
-			pgengine.LogToDB("LOG", "could not query pending tasks:", err)
-			return
+			pgengine.LogToDB("PANIC", "Could not query pending tasks: ", err)
 		}
-		pgengine.LogToDB("DEBUG", "number of chain head tuples: ", len(headChains))
+		headChainsCount := len(headChains)
+		pgengine.LogToDB("DEBUG", "Number of chain head tuples: ", headChainsCount)
 
 		/* now we can loop through so chains */
 		for _, headChain := range headChains {
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("putting head chain %s to the execution channel", headChain))
+			if headChainsCount > maxChainsThreshold {
+				time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
+			}
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
 			chains <- headChain
 		}
 
@@ -74,9 +90,9 @@ func Run() {
 
 func chainWorker(chains <-chan Chain) {
 	for chain := range chains {
-		pgengine.LogToDB("LOG", fmt.Sprintf("calling process chain for %s", chain))
+		pgengine.LogToDB("LOG", fmt.Sprintf("Calling process chain for %s", chain))
 		for !pgengine.CanProceedChainExecution(chain.ChainExecutionConfigID, chain.MaxInstances) {
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("cannot proceed with chain %s. Sleeping...", chain))
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
 			time.Sleep(3 * time.Second)
 		}
 		tx := pgengine.StartTransaction()
@@ -92,7 +108,7 @@ func chainWorker(chains <-chan Chain) {
 func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
 
-	pgengine.LogToDB("LOG", "executing chain with id: ", chainID)
+	pgengine.LogToDB("LOG", "Executing chain with id: ", chainID)
 	runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
 
 	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
@@ -107,7 +123,7 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 		pgengine.LogChainElementExecution(&chainElemExec, retCode)
 		if retCode < 0 {
 			pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_FAILED")
-			pgengine.LogToDB("ERROR", fmt.Sprintf("chain execution failed: %s", chainElemExec))
+			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain execution failed: %s", chainElemExec))
 			return
 		}
 		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_DONE")
@@ -122,8 +138,10 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var paramValues []string
 	var err error
 	var retCode int
+	var execTx *sqlx.Tx
+	var remoteDb *sqlx.DB
 
-	pgengine.LogToDB("LOG", fmt.Sprintf("executing task: %s", chainElemExec))
+	pgengine.LogToDB("LOG", fmt.Sprintf("Executing task: %s", chainElemExec))
 
 	if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
 		return -1
@@ -131,22 +149,56 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 
 	switch chainElemExec.Kind {
 	case "SQL":
-		err = pgengine.ExecuteSQLCommand(tx, chainElemExec.Script, paramValues)
+		execTx = tx
+		//Connect to Remote DB
+		if chainElemExec.DatabaseConnection.Valid {
+			connectionString := pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
+			//connection string is empty then don't proceed
+			if strings.TrimSpace(connectionString) == "" {
+				pgengine.LogToDB("ERROR", fmt.Sprintf("Connection string is blank"))
+				return -1
+			}
+			remoteDb, execTx = pgengine.GetRemoteDBTransaction(connectionString)
+			//don't proceed when remote db connection not established
+			if execTx == nil {
+				pgengine.LogToDB("ERROR", fmt.Sprintf("Couldn't connect to remote database"))
+				return -1
+			}
+			defer pgengine.FinalizeRemoteDBConnection(remoteDb)
+		}
+
+		// Set Role
+		if chainElemExec.RunUID.Valid {
+			pgengine.SetRole(execTx, chainElemExec.RunUID)
+		}
+
+		err = pgengine.ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
+
+		//Reset The Role
+		if chainElemExec.RunUID.Valid {
+			pgengine.ResetRole(execTx)
+		}
+
+		// Commit changes on remote server
+		if chainElemExec.DatabaseConnection.Valid {
+			pgengine.MustCommitTransaction(execTx)
+		}
+
 	case "SHELL":
-		err, retCode = executeShellCommand(chainElemExec.Script, paramValues)
+		retCode, err = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
 	}
 
 	if err != nil {
-		pgengine.LogToDB("ERROR", fmt.Sprintf("task execution failed: %s\n; Error: %s", chainElemExec, err))
+		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s\n; Error: %s", chainElemExec, err))
 		if retCode != 0 {
 			return retCode
-		}else{
-			return -1
 		}
+		return -1
 	}
 
-	pgengine.LogToDB("LOG", fmt.Sprintf("task executed successfully: %s", chainElemExec))
+	pgengine.LogToDB("LOG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
+
 	return 0
 }

@@ -1,12 +1,18 @@
 WITH 
-noop(id) AS (
-    SELECT task_id FROM timetable.base_task WHERE name = 'Sleep'
+sql_task(id) AS (
+    INSERT INTO timetable.base_task VALUES (
+		DEFAULT, 						-- task_id
+		'notify channel with payload',	-- name
+		DEFAULT, 						-- 'SQL' :: timetable.task_kind
+		'SELECT pg_notify($1, $2)'		-- task script
+	)
+	RETURNING task_id
 ),
 chain_insert(chain_id) AS (
     INSERT INTO timetable.task_chain 
         (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
     VALUES 
-        (DEFAULT, NULL, (SELECT id FROM noop), NULL, NULL, TRUE)
+        (DEFAULT, NULL, (SELECT id FROM sql_task), NULL, NULL, TRUE)
     RETURNING chain_id
 ),
 chain_config(id) as (
@@ -14,7 +20,7 @@ chain_config(id) as (
     (
         DEFAULT, -- chain_execution_config, 
         (SELECT chain_id FROM chain_insert), -- chain_id, 
-        'sleep every minute', -- chain_name, 
+        'notify every minute', -- chain_name, 
         NULL, -- run_at_minute, 
         NULL, -- run_at_hour, 
         NULL, -- run_at_day, 
@@ -35,4 +41,4 @@ VALUES (
     (SELECT id FROM chain_config),
     (SELECT chain_id FROM chain_insert),
     1,
-    '5' :: jsonb)
+    '[ "TT_CHANNEL", "Ahoi from SQL base task" ]' :: jsonb) 

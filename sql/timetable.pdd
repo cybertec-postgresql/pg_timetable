@@ -2,12 +2,12 @@
 
 <DBMODEL Version="1.92" TYPE="PostgreSQL">
 
-<MODELSETTINGS MDDVERSION="1.14.0 (build 1162)" ModelProject="pg_timetable" ModelName="timetable schema" ModelCompany="Cybertec Sch\00F6nig \+ Sch\00F6nig GmbH" ModelAuthor="Pavlo Golub and Hans-J\00FCrgen Sch\00F6nig" ModelCopyright="https://www.cybertec-postgresql.com/" ModelVersion="c711d140703e76cedcdf5318307fe0874c43da75" ModelVersionAI="0" ModelSaveScriptsWithVersion="0" ModelCreated="2019-02-20 15:21:46" ModelUpdated="2019-02-20 15:31:23" Description="" Annotation="" ZoomFac="100.00" XPos="0" YPos="0" PrintLink="" GenSettings="object GenSettings1: TGenSettings\n  TextCharCase = tccMixed\n  ModelCheck = True\n  DropIfExists = True\n  NotValidConstraints = False\n  ConcurrentlyIndexes = False\n  ISQL = False\n  ExecuteAfterGeneration = True\n  DBOptions = [dbgoCreate, dbgoBeginScript, dbgoEndScript]\n  ViewOptions = [viewgoCreate, viewgoCreateRule]\n  SPOptions = [spgoCreate]\n  TableOptions = [tblgoCreate, tblgoBeginScript, tblgoEndScript, tblgoComment, tblgoCreatePK, tblgoCreateFK, tblgoCreateIndex, tblgoCreateRule, tblgoCreateTrigger, tblgoCreateCHECK, tblgoFieldDefault]\n  OwnerOptions = [owngoSchema, owngoTable, owngoView, owngoSP, owngoSequence, owngoUDT]\n  ACLOptions = [aclgoSchema, aclgoTable, aclgoView, aclgoSP, aclgoSequence]\n  ModifyOptions = [mgoKeepTbls, mgoBackupTbls, mgoTraceRenaming]\n  RoleCreate = True\n  RoleWhenCreate = rocrInScript\n  SQLTypeNames = False\nend\n" DisplaySettings="object DisplaySettings1: TDisplaySettings\n  ObjectsDisplay = [edoColumns, edoInhColumns, edoIndices, edoConstraints, edoTriggers, edoRules, edoColTypes, edoDomains, edoColIndexUsage, edoColNull, edoFKs, edoComments, rdoJoin, spdoParameters, spdoLanguage, spdoResult, spdoComments, spdoParamTypes, spdoParamKind, vdoAttributes, vdoTargets, vdoRules]\n  Color = clWhite\n  ShowIcons = True\n  SnapGrid = True\n  DisplaySnap = True\n  SnapSize = 10\n  ShowPages = True\n  EntityFillColor = clWhite\n  EntityLineColor = clNavy\n  EntityFontColor = clBlack\n  SPFillColor = clCream\n  SPLineColor = clNavy\n  SPFontColor = clBlack\n  ViewFillColor = clMoneyGreen\n  ViewLineColor = clNavy\n  ViewFontColor = clBlack\n  RefNotation = 0\n  RefColor = clNavy\n  RefLabelColor = clWhite\n  RefLabelFontColor = clBlack\n  MinimapShapesStyle = mmssFillAndBorder\n  MinimapVisibleAreaStyle = mmvasBitmapShading\n  MinimapBackColor = clWhite\nend\n" DefaultDelete="3" DefaultUpdate="3" DefaultDataType="23" DefaultSchemaID="0" NamePatterns="Table=Table_,View=View_,SP=Procedure_,Reference=Ref_%FROMTABLE%_to_%TOTABLE%,FKColumn=%TOTABLE%_%TOCOLUMN%" QueryDelimiter=";" DBQuoteCharacter="\A" EncloseNames="1" PKColumnsFirst="0" HPageCount="5" VPageCount="5" />
+<MODELSETTINGS MDDVERSION="1.14.0 (build 1162)" ModelProject="pg_timetable" ModelName="timetable schema" ModelCompany="Cybertec Sch\00F6nig \+ Sch\00F6nig GmbH" ModelAuthor="Pavlo Golub and Hans-J\00FCrgen Sch\00F6nig" ModelCopyright="https://www.cybertec-postgresql.com/" ModelVersion="8cab928a027531c5b5b06f65adc3e6d1d6446289" ModelVersionAI="0" ModelSaveScriptsWithVersion="0" ModelCreated="2019-09-27 17:00:34" ModelUpdated="2019-09-27 17:09:49" Description="" Annotation="" ZoomFac="102.00" XPos="0" YPos="0" PrintLink="" GenSettings="object GenSettings1: TGenSettings\n  TextCharCase = tccMixed\n  ModelCheck = True\n  DropIfExists = True\n  NotValidConstraints = False\n  ConcurrentlyIndexes = False\n  ISQL = False\n  ExecuteAfterGeneration = True\n  DBOptions = [dbgoCreate, dbgoBeginScript, dbgoEndScript]\n  ViewOptions = [viewgoCreate, viewgoCreateRule]\n  SPOptions = [spgoCreate]\n  TableOptions = [tblgoCreate, tblgoBeginScript, tblgoEndScript, tblgoComment, tblgoCreatePK, tblgoCreateFK, tblgoCreateIndex, tblgoCreateRule, tblgoCreateTrigger, tblgoCreateCHECK, tblgoFieldDefault]\n  OwnerOptions = [owngoSchema, owngoTable, owngoView, owngoSP, owngoSequence, owngoUDT]\n  ACLOptions = [aclgoSchema, aclgoTable, aclgoView, aclgoSP, aclgoSequence]\n  ModifyOptions = [mgoKeepTbls, mgoBackupTbls, mgoTraceRenaming]\n  RoleCreate = True\n  RoleWhenCreate = rocrInScript\n  SQLTypeNames = False\nend\n" DisplaySettings="object DisplaySettings1: TDisplaySettings\n  ObjectsDisplay = [edoColumns, edoInhColumns, edoIndices, edoConstraints, edoTriggers, edoRules, edoColTypes, edoDomains, edoColIndexUsage, edoColNull, edoFKs, edoComments, rdoJoin, spdoParameters, spdoLanguage, spdoResult, spdoComments, spdoParamTypes, spdoParamKind, vdoAttributes, vdoTargets, vdoRules]\n  Color = clWhite\n  ShowIcons = True\n  SnapGrid = True\n  DisplaySnap = True\n  SnapSize = 10\n  ShowPages = True\n  EntityFillColor = clWhite\n  EntityLineColor = clNavy\n  EntityFontColor = clBlack\n  SPFillColor = clCream\n  SPLineColor = clNavy\n  SPFontColor = clBlack\n  ViewFillColor = clMoneyGreen\n  ViewLineColor = clNavy\n  ViewFontColor = clBlack\n  RefNotation = 0\n  RefColor = clNavy\n  RefLabelColor = clWhite\n  RefLabelFontColor = clBlack\n  MinimapShapesStyle = mmssFillAndBorder\n  MinimapVisibleAreaStyle = mmvasBitmapShading\n  MinimapBackColor = clWhite\nend\n" DefaultDelete="3" DefaultUpdate="3" DefaultDataType="23" DefaultSchemaID="0" NamePatterns="Table=Table_,View=View_,SP=Procedure_,Reference=Ref_%FROMTABLE%_to_%TOTABLE%,FKColumn=%TOTABLE%_%TOCOLUMN%" QueryDelimiter=";" DBQuoteCharacter="\A" EncloseNames="1" PKColumnsFirst="0" HPageCount="5" VPageCount="5" />
 
 <DATABASE Name="Database_1" CharacterSet="" Collate="" CType="" Tablespace="" Owner="" Template="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="0" />
 
 <STAMPS>
-<STAMP ID="75368" ModelName="ModelProps_01" XPos="1100" YPos="780" BackColor="11200750" LineColor="0" />
+<STAMP ID="75368" ModelName="ModelProps_01" XPos="20" YPos="150" BackColor="11200750" LineColor="0" />
 
 </STAMPS>
 
@@ -27,7 +27,7 @@
 
 <SCHEMAS>
 <SCHEMA ID="0" Name="public" Owner="" Generate="0" Comments="" System="1" ACL=""></SCHEMA>
-<SCHEMA ID="32769" Name="timetable" Owner="postgres" Generate="0" Comments="" System="0" ACL=""></SCHEMA>
+<SCHEMA ID="241360" Name="timetable" Owner="postgres" Generate="0" Comments="" System="0" ACL=""></SCHEMA>
 </SCHEMAS>
 
 <SEQUENCES>
@@ -37,35 +37,35 @@
 </DOMAINS>
 
 <COMPOSITES>
-<COMPOSITE ID="75345" Name="base_task" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32783">
+<COMPOSITE ID="241515" Name="base_task" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241381">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75346" Name="chain_execution_config" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32826">
+<COMPOSITE ID="241516" Name="chain_execution_config" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241425">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75347" Name="chain_execution_parameters" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32845">
+<COMPOSITE ID="241517" Name="chain_execution_parameters" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241444">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75348" Name="database_connection" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32772">
+<COMPOSITE ID="241518" Name="database_connection" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241363">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75349" Name="execution_log" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32864">
+<COMPOSITE ID="241519" Name="execution_log" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241489">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75350" Name="log" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="75357">
+<COMPOSITE ID="241520" Name="log" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241479">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75351" Name="run_status" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32883">
+<COMPOSITE ID="241521" Name="run_status" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241507">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
-<COMPOSITE ID="75352" Name="task_chain" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="32797">
+<COMPOSITE ID="241522" Name="task_chain" SchemaName="timetable" OwnerName="" Comments="" MasterTableOID="241396">
 	<COLUMNS>
 	</COLUMNS>
 </COMPOSITE>
@@ -75,7 +75,10 @@
 </SCALARS>
 
 <ENUMS>
-<ENUM ID="75344" Name="log_type" SchemaName="timetable" Values="DEBUG,NOTICE,LOG,ERROR,PANIC" Comments="" OwnerName="postgres"></ENUM>
+<ENUM ID="75344" Name="log_type" SchemaName="public" Values="DEBUG,NOTICE,LOG,ERROR,PANIC" Comments="" OwnerName="postgres"></ENUM>
+<ENUM ID="241373" Name="task_kind" SchemaName="timetable" Values="SQL,SHELL,BUILTIN" Comments="" OwnerName="postgres"></ENUM>
+<ENUM ID="241464" Name="log_type" SchemaName="timetable" Values="DEBUG,NOTICE,LOG,ERROR,PANIC,USER" Comments="" OwnerName="postgres"></ENUM>
+<ENUM ID="241497" Name="execution_status" SchemaName="timetable" Values="STARTED,CHAIN_FAILED,CHAIN_DONE,DEAD" Comments="" OwnerName="postgres"></ENUM>
 </ENUMS>
 
 <TABLESPACES>
@@ -83,85 +86,88 @@
 
 <METADATA>
 <ENTITIES>
-<ENTITY ID="32783" Name="base_task" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="200" YPos="250" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241381" Name="base_task" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="410" YPos="170" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="52" Name="task_id" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="53" Name="name" Pos="2" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="54" Name="script" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="55" Name="is_sql" Pos="4" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="true" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="56" Name="num_params" Pos="5" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241586" Name="task_id" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241587" Name="name" Pos="2" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241588" Name="kind" Pos="3" Datatype="241373" Type="timetable.task_kind" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="\aSQL\a::timetable.task_kind" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241589" Name="script" Pos="4" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<REFERENCES_BEGIN>
-		<REFERENCE_BEGIN ID="32814" />
+		<REFERENCE_BEGIN ID="241413" />
 	</REFERENCES_BEGIN>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="32792" Name="base_task_pkey" Kind="2" Expression="" ReferenceIndex="32791" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="52"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241386" Name="base_task_check" Kind="0" Expression="CASE\n    WHEN kind \k\g \aBUILTIN\a::timetable.task_kind THEN script IS NOT NULL\n    ELSE true\nEND" ReferenceIndex="0" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241588,241589"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
-		<CONSTRAINT ID="32794" Name="base_task_name_key" Kind="1" Expression="" ReferenceIndex="32793" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="53"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241391" Name="base_task_pkey" Kind="2" Expression="" ReferenceIndex="241390" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241586"></CONSTRAINTCOLUMNS>
+			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
+		</CONSTRAINT>
+		<CONSTRAINT ID="241393" Name="base_task_name_key" Kind="1" Expression="" ReferenceIndex="241392" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241587"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="32791" Name="base_task_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32792" StorageParams="" Comments="">
+		<INDEX ID="241390" Name="base_task_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241391" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="task_id"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
 		</INDEX>
-		<INDEX ID="32793" Name="base_task_name_key" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32794" StorageParams="" Comments="">
+		<INDEX ID="241392" Name="base_task_name_key" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241393" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="name"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
 		</INDEX>
 	</INDEXES>
 	<TRIGGERS>
-		<TRIGGER ID="32892" Name="trig_task_chain_fixer" TriggerTime="BEFORE" TriggerEvent="DELETE" Generate="1" TriggerProc="\Atimetable\A.\Atrig_chain_fixer\A" TriggerForEachRow="1" TriggerWhen="" Comments="">
+		<TRIGGER ID="241516" Name="trig_task_chain_fixer" TriggerTime="BEFORE" TriggerEvent="DELETE" Generate="1" TriggerProc="\Atimetable\A.\Atrig_chain_fixer\A" TriggerForEachRow="1" TriggerWhen="" Comments="">
 			<TRIGGERCOLUMNS COMMATEXT=""></TRIGGERCOLUMNS>
 		</TRIGGER>
 	</TRIGGERS>
 </ENTITY>
 
-<ENTITY ID="32826" Name="chain_execution_config" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="620" YPos="630" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241425" Name="chain_execution_config" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="420" YPos="590" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="57" Name="chain_execution_config" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="58" Name="chain_id" Pos="2" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="59" Name="chain_name" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="60" Name="run_at_minute" Pos="4" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="61" Name="run_at_hour" Pos="5" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="62" Name="run_at_day" Pos="6" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="63" Name="run_at_month" Pos="7" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="64" Name="run_at_day_of_week" Pos="8" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="65" Name="max_instances" Pos="9" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="66" Name="live" Pos="10" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="67" Name="self_destruct" Pos="11" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="68" Name="exclusive_execution" Pos="12" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="69" Name="excluded_execution_configs" Pos="13" Datatype="1007" Type="int4[]" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241590" Name="chain_execution_config" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241591" Name="chain_id" Pos="2" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241592" Name="chain_name" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241593" Name="run_at_minute" Pos="4" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241594" Name="run_at_hour" Pos="5" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241595" Name="run_at_day" Pos="6" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241596" Name="run_at_month" Pos="7" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241597" Name="run_at_day_of_week" Pos="8" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241598" Name="max_instances" Pos="9" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241599" Name="live" Pos="10" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241600" Name="self_destruct" Pos="11" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241601" Name="exclusive_execution" Pos="12" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241602" Name="excluded_execution_configs" Pos="13" Datatype="1007" Type="int4[]" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<REFERENCES_BEGIN>
-		<REFERENCE_BEGIN ID="32854" />
+		<REFERENCE_BEGIN ID="241453" />
 	</REFERENCES_BEGIN>
 	<REFERENCES_END>
-		<REFERENCE_END ID="32840" />
+		<REFERENCE_END ID="241439" />
 	</REFERENCES_END>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="32837" Name="chain_execution_config_pkey" Kind="2" Expression="" ReferenceIndex="32836" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="57"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241436" Name="chain_execution_config_pkey" Kind="2" Expression="" ReferenceIndex="241435" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241590"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
-		<CONSTRAINT ID="32839" Name="chain_execution_config_chain_name_key" Kind="1" Expression="" ReferenceIndex="32838" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="59"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241438" Name="chain_execution_config_chain_name_key" Kind="1" Expression="" ReferenceIndex="241437" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241592"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="32836" Name="chain_execution_config_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32837" StorageParams="" Comments="">
+		<INDEX ID="241435" Name="chain_execution_config_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241436" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="chain_execution_config"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
 		</INDEX>
-		<INDEX ID="32838" Name="chain_execution_config_chain_name_key" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32839" StorageParams="" Comments="">
+		<INDEX ID="241437" Name="chain_execution_config_chain_name_key" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241438" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="chain_name"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
@@ -169,29 +175,29 @@
 	</INDEXES>
 </ENTITY>
 
-<ENTITY ID="32845" Name="chain_execution_parameters" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="1130" YPos="360" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241444" Name="chain_execution_parameters" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="920" YPos="630" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="70" Name="chain_execution_config" Pos="1" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="1" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="71" Name="chain_id" Pos="2" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="1" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="72" Name="order_id" Pos="3" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="73" Name="value" Pos="4" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241603" Name="chain_execution_config" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="1" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241604" Name="chain_id" Pos="2" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="1" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241605" Name="order_id" Pos="3" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241606" Name="value" Pos="4" Datatype="3802" Type="jsonb" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<REFERENCES_END>
-		<REFERENCE_END ID="32854" />
-		<REFERENCE_END ID="32859" />
+		<REFERENCE_END ID="241453" />
+		<REFERENCE_END ID="241458" />
 	</REFERENCES_END>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="32848" Name="chain_execution_parameters_order_id_check" Kind="0" Expression="order_id \g 0" ReferenceIndex="0" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="72"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241447" Name="chain_execution_parameters_order_id_check" Kind="0" Expression="order_id \g 0" ReferenceIndex="0" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241605"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
-		<CONSTRAINT ID="32853" Name="chain_execution_parameters_pkey" Kind="2" Expression="" ReferenceIndex="32852" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="70,71,72"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241452" Name="chain_execution_parameters_pkey" Kind="2" Expression="" ReferenceIndex="241451" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241603,241604,241605"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="32852" Name="chain_execution_parameters_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32853" StorageParams="" Comments="">
+		<INDEX ID="241451" Name="chain_execution_parameters_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241452" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="chain_execution_config,chain_id,order_id"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
@@ -199,23 +205,23 @@
 	</INDEXES>
 </ENTITY>
 
-<ENTITY ID="32772" Name="database_connection" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="1130" YPos="140" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241363" Name="database_connection" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="960" YPos="230" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="74" Name="database_connection" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="75" Name="connect_string" Pos="2" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="76" Name="comment" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241607" Name="database_connection" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241608" Name="connect_string" Pos="2" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241609" Name="comment" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<REFERENCES_BEGIN>
-		<REFERENCE_BEGIN ID="32819" />
+		<REFERENCE_BEGIN ID="241418" />
 	</REFERENCES_BEGIN>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="32780" Name="database_connection_pkey" Kind="2" Expression="" ReferenceIndex="32779" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="74"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241371" Name="database_connection_pkey" Kind="2" Expression="" ReferenceIndex="241370" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241607"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="32779" Name="database_connection_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32780" StorageParams="" Comments="">
+		<INDEX ID="241370" Name="database_connection_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241371" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="database_connection"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
@@ -223,38 +229,38 @@
 	</INDEXES>
 </ENTITY>
 
-<ENTITY ID="32864" Name="execution_log" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="200" YPos="520" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="9419919" LineColor="2763429" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241489" Name="execution_log" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="20" YPos="470" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="9419919" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="77" Name="chain_execution_config" Pos="1" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="78" Name="chain_id" Pos="2" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="79" Name="task_id" Pos="3" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="80" Name="name" Pos="4" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="81" Name="script" Pos="5" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="82" Name="is_sql" Pos="6" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="83" Name="last_run" Pos="7" Datatype="1114" Type="timestamp" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="now()" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="84" Name="finished" Pos="8" Datatype="1114" Type="timestamp" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="85" Name="returncode" Pos="9" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="86" Name="pid" Pos="10" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241610" Name="chain_execution_config" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241611" Name="chain_id" Pos="2" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241612" Name="task_id" Pos="3" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241613" Name="name" Pos="4" Datatype="25" Type="text" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241614" Name="script" Pos="5" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241615" Name="kind" Pos="6" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241616" Name="last_run" Pos="7" Datatype="1184" Type="timestamp with time zone" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="now()" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241617" Name="finished" Pos="8" Datatype="1184" Type="timestamp with time zone" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241618" Name="returncode" Pos="9" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241619" Name="pid" Pos="10" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 </ENTITY>
 
-<ENTITY ID="75357" Name="log" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="200" YPos="790" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="9419919" LineColor="14822282" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241479" Name="log" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="20" YPos="310" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="9419919" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="87" Name="id" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="88" Name="ts" Pos="2" Datatype="1184" Type="timestamp with time zone" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="now()" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="89" Name="client_name" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="90" Name="pid" Pos="4" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="91" Name="log_level" Pos="5" Datatype="75344" Type="timetable.log_type" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="92" Name="message" Pos="6" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241620" Name="id" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241621" Name="ts" Pos="2" Datatype="1184" Type="timestamp with time zone" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="now()" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241622" Name="client_name" Pos="3" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241623" Name="pid" Pos="4" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241624" Name="log_level" Pos="5" Datatype="241464" Type="timetable.log_type" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241625" Name="message" Pos="6" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="75366" Name="log_pkey" Kind="2" Expression="" ReferenceIndex="75365" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="87"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241488" Name="log_pkey" Kind="2" Expression="" ReferenceIndex="241487" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241620"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="75365" Name="log_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="75366" StorageParams="" Comments="">
+		<INDEX ID="241487" Name="log_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241488" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="id"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
@@ -262,25 +268,25 @@
 	</INDEXES>
 </ENTITY>
 
-<ENTITY ID="32883" Name="run_status" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="1130" YPos="510" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="13495295" LineColor="0" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241507" Name="run_status" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="20" YPos="710" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="9419919" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="93" Name="run_status" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="94" Name="start_status" Pos="2" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="95" Name="execution_status" Pos="3" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="96" Name="chain_id" Pos="4" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="97" Name="current_execution_element" Pos="5" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="98" Name="started" Pos="6" Datatype="1114" Type="timestamp" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="99" Name="last_status_update" Pos="7" Datatype="1114" Type="timestamp" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="clock_timestamp()" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="100" Name="chain_execution_config" Pos="8" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241626" Name="run_status" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241627" Name="start_status" Pos="2" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241628" Name="execution_status" Pos="3" Datatype="241497" Type="timetable.execution_status" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241629" Name="chain_id" Pos="4" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241630" Name="current_execution_element" Pos="5" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241631" Name="started" Pos="6" Datatype="1184" Type="timestamp with time zone" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241632" Name="last_status_update" Pos="7" Datatype="1184" Type="timestamp with time zone" Width="-1" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="clock_timestamp()" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241633" Name="chain_execution_config" Pos="8" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="32889" Name="run_status_pkey" Kind="2" Expression="" ReferenceIndex="32888" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="93"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241513" Name="run_status_pkey" Kind="2" Expression="" ReferenceIndex="241512" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241626"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="32888" Name="run_status_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32889" StorageParams="" Comments="">
+		<INDEX ID="241512" Name="run_status_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241513" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="run_status"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
@@ -288,42 +294,42 @@
 	</INDEXES>
 </ENTITY>
 
-<ENTITY ID="32797" Name="task_chain" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="630" YPos="240" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
+<ENTITY ID="241396" Name="task_chain" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" TablespaceID="0" XPos="660" YPos="400" Temporary="0" Unlogged="0" OnCommit="" Inherits="" FillColor="16777215" LineColor="8388608" FontColor="0" CharacterSet="" Collate="" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Generate="1" ACL="" StorageParams="OIDS=False\n" >
 	<COLUMNS>
-		<COLUMN ID="101" Name="chain_id" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="102" Name="parent_id" Pos="2" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="103" Name="task_id" Pos="3" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="104" Name="run_uid" Pos="4" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="105" Name="database_connection" Pos="5" Datatype="23" Type="int4" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
-		<COLUMN ID="106" Name="ignore_error" Pos="6" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241634" Name="chain_id" Pos="1" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="1" Collation="" PrimaryKey="1" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241635" Name="parent_id" Pos="2" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241636" Name="task_id" Pos="3" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="1" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241637" Name="run_uid" Pos="4" Datatype="25" Type="text" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241638" Name="database_connection" Pos="5" Datatype="20" Type="int8" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="1" DefaultValue="" QuoteDefault="0" Comments=""></COLUMN>
+		<COLUMN ID="241639" Name="ignore_error" Pos="6" Datatype="16" Type="bool" Width="0" Prec="0" NotNull="0" AutoInc="0" Collation="" PrimaryKey="0" IsFKey="0" DefaultValue="false" QuoteDefault="0" Comments=""></COLUMN>
 	</COLUMNS>
 	<REFERENCES_BEGIN>
-		<REFERENCE_BEGIN ID="32840" />
-		<REFERENCE_BEGIN ID="32859" />
-		<REFERENCE_BEGIN ID="32809" />
+		<REFERENCE_BEGIN ID="241439" />
+		<REFERENCE_BEGIN ID="241458" />
+		<REFERENCE_BEGIN ID="241408" />
 	</REFERENCES_BEGIN>
 	<REFERENCES_END>
-		<REFERENCE_END ID="32809" />
-		<REFERENCE_END ID="32814" />
-		<REFERENCE_END ID="32819" />
+		<REFERENCE_END ID="241408" />
+		<REFERENCE_END ID="241413" />
+		<REFERENCE_END ID="241418" />
 	</REFERENCES_END>
 	<CONSTRAINTS>
-		<CONSTRAINT ID="32806" Name="task_chain_pkey" Kind="2" Expression="" ReferenceIndex="32805" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="101"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241405" Name="task_chain_pkey" Kind="2" Expression="" ReferenceIndex="241404" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241634"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
-		<CONSTRAINT ID="32808" Name="task_chain_parent_id_key" Kind="1" Expression="" ReferenceIndex="32807" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
-			<CONSTRAINTCOLUMNS COMMATEXT="102"></CONSTRAINTCOLUMNS>
+		<CONSTRAINT ID="241407" Name="task_chain_parent_id_key" Kind="1" Expression="" ReferenceIndex="241406" FillFactor="" Comments="" TablespaceID="0" Deferrable="0" Method="0">
+			<CONSTRAINTCOLUMNS COMMATEXT="241635"></CONSTRAINTCOLUMNS>
 			<CONSTRAINTOPERATORS COMMATEXT=""></CONSTRAINTOPERATORS>
 		</CONSTRAINT>
 	</CONSTRAINTS>
 	<INDEXES>
-		<INDEX ID="32805" Name="task_chain_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32806" StorageParams="" Comments="">
+		<INDEX ID="241404" Name="task_chain_pkey" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241405" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="chain_id"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
 		</INDEX>
-		<INDEX ID="32807" Name="task_chain_parent_id_key" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="32808" StorageParams="" Comments="">
+		<INDEX ID="241406" Name="task_chain_parent_id_key" Unique="1" Method="1" Predicate="" TablespaceID="0" ReferenceConstraint="241407" StorageParams="" Comments="">
 			<INDEXCOLUMNS COMMATEXT="parent_id"></INDEXCOLUMNS>
 			<INDEXSORTS COMMATEXT=""></INDEXSORTS>
 			<INDEXNULLS COMMATEXT=""></INDEXNULLS>
@@ -334,27 +340,27 @@
 </ENTITIES>
 
 <REFERENCES>
-<REFERENCE ID="32840" Name="chain_execution_config_chain_id_fkey" SOURCE="32797" DESTINATION="32826" FKIDS="101=58\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
+<REFERENCE ID="241439" Name="chain_execution_config_chain_id_fkey" SOURCE="241396" DESTINATION="241425" FKIDS="241634=241591\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
 	<USERPOINTS>
 	</USERPOINTS>
 </REFERENCE>
-<REFERENCE ID="32854" Name="chain_execution_parameters_chain_execution_config_fkey" SOURCE="32826" DESTINATION="32845" FKIDS="57=70\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
+<REFERENCE ID="241453" Name="chain_execution_parameters_chain_execution_config_fkey" SOURCE="241425" DESTINATION="241444" FKIDS="241590=241603\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="1" ManualEndTailPosition="1" StartTailShapeSideScale="0.853711790393013" StartOrientation="2" EndTailShapeSideScale="0.354691075514874" EndOrientation="4" />
 	<USERPOINTS>
 	</USERPOINTS>
 </REFERENCE>
-<REFERENCE ID="32859" Name="chain_execution_parameters_chain_id_fkey" SOURCE="32797" DESTINATION="32845" FKIDS="101=71\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
+<REFERENCE ID="241458" Name="chain_execution_parameters_chain_id_fkey" SOURCE="241396" DESTINATION="241444" FKIDS="241634=241604\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
 	<USERPOINTS>
 	</USERPOINTS>
 </REFERENCE>
-<REFERENCE ID="32809" Name="task_chain_parent_id_fkey" SOURCE="32797" DESTINATION="32797" FKIDS="101=102\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
+<REFERENCE ID="241408" Name="task_chain_parent_id_fkey" SOURCE="241396" DESTINATION="241396" FKIDS="241634=241635\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
 	<USERPOINTS>
 	</USERPOINTS>
 </REFERENCE>
-<REFERENCE ID="32814" Name="task_chain_task_id_fkey" SOURCE="32783" DESTINATION="32797" FKIDS="52=103\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
+<REFERENCE ID="241413" Name="task_chain_task_id_fkey" SOURCE="241381" DESTINATION="241396" FKIDS="241586=241636\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
 	<USERPOINTS>
 	</USERPOINTS>
 </REFERENCE>
-<REFERENCE ID="32819" Name="task_chain_database_connection_fkey" SOURCE="32772" DESTINATION="32797" FKIDS="74=105\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
+<REFERENCE ID="241418" Name="task_chain_database_connection_fkey" SOURCE="241363" DESTINATION="241396" FKIDS="241607=241638\n" Direction="0" RefColor="8388608" RefLabelColor="16777215" RefLabelFontColor="0" OnDelete="1" OnUpdate="1" Deferrable="0" MatchType="0" Comments="" Description="" Annotation="" Generate="1" FKConstraint_ID="0" LabelPointNumber="2" LabelPosition="0.5" ManualStartTailPosition="0" ManualEndTailPosition="0" />
 	<USERPOINTS>
 	</USERPOINTS>
 </REFERENCE>
@@ -364,22 +370,8 @@
 </NOTES>
 
 <STOREDPROCES>
-<STOREDPROC ID="32891" Name="trig_chain_fixer" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" XPos="200" YPos="430" LineColor="8388608" BackColor="15793151" FontColor="0" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Secure="0" SFBody="\n\0009DECLARE\n\0009\0009tmp_parent_id INTEGER;\n\0009\0009tmp_chain_id INTEGER;\n\0009\0009orig_chain_id INTEGER;\n\0009\0009tmp_chain_head_id INTEGER;\n\0009\0009i INTEGER;\n\0009BEGIN\n\0009\0009--raise notice \aFixing chain for deletion of base_task#%\a, OLD.task_id;\n\n\0009\0009FOR orig_chain_id IN\n\0009\0009\0009SELECT chain_id FROM timetable.task_chain WHERE task_id = OLD.task_id\n\0009\0009LOOP\n\n\0009\0009\0009--raise notice \achain_id#%\a, orig_chain_id;\0009\n\0009\0009\0009tmp_chain_id := orig_chain_id;\n\0009\0009\0009i := 0;\n\0009\0009\0009LOOP\n\0009\0009\0009\0009i := i + 1;\n\0009\0009\0009\0009SELECT parent_id INTO tmp_parent_id FROM timetable.task_chain\n\0009\0009\0009\0009\0009WHERE chain_id = tmp_chain_id;\n\0009\0009\0009\0009EXIT WHEN tmp_parent_id IS NULL;\n\0009\0009\0009\0009IF i \g 100 THEN\n\0009\0009\0009\0009\0009RAISE EXCEPTION \aInfinite loop at timetable.task_chain.chain_id=%\a, tmp_chain_id;\n\0009\0009\0009\0009\0009RETURN NULL;\n\0009\0009\0009\0009END IF;\n\0009\0009\0009\0009tmp_chain_id := tmp_parent_id;\n\0009\0009\0009END LOOP;\n\0009\0009\0009\n\0009\0009\0009SELECT chain_head_id INTO tmp_chain_head_id FROM timetable.task_chain_head\n\0009\0009\0009\0009WHERE chain_id = tmp_chain_id;\n\0009\0009\0009\0009\n\0009\0009\0009--raise notice \aPERFORM task_chain_delete(%,%)\a, tmp_chain_head_id, orig_chain_id;\n\0009\0009\0009PERFORM timetable.task_chain_delete(tmp_chain_head_id, orig_chain_id);\n\n\0009\0009END LOOP;\n\0009\0009\n\0009\0009RETURN OLD;\n\0009END;\n" BodyBrackets="$BODY$" Language="plpgsql" ReturnSet="0" Returns="trigger" ReturnsOID="2279" ObjectFile="" LinkSymbol="" Generate="1" Strict="0" Window="0" LeakProof="0" EvaluationType="2" ResultRows="0" ExecutionCost="100" ParallelType="0" >
+<STOREDPROC ID="241515" Name="trig_chain_fixer" SchemaOID="241360" SchemaName="timetable" OwnerID="10" OwnerName="postgres" XPos="410" YPos="350" LineColor="8388608" BackColor="15793151" FontColor="0" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Secure="0" SFBody="\n\0009DECLARE\n\0009\0009tmp_parent_id BIGINT;\n\0009\0009tmp_chain_id BIGINT;\n\0009\0009orig_chain_id BIGINT;\n\0009\0009tmp_chain_head_id BIGINT;\n\0009\0009i BIGINT;\n\0009BEGIN\n\0009\0009--raise notice \aFixing chain for deletion of base_task#%\a, OLD.task_id;\n\n\0009\0009FOR orig_chain_id IN\n\0009\0009\0009SELECT chain_id FROM timetable.task_chain WHERE task_id = OLD.task_id\n\0009\0009LOOP\n\n\0009\0009\0009--raise notice \achain_id#%\a, orig_chain_id;\0009\n\0009\0009\0009tmp_chain_id := orig_chain_id;\n\0009\0009\0009i := 0;\n\0009\0009\0009LOOP\n\0009\0009\0009\0009i := i + 1;\n\0009\0009\0009\0009SELECT parent_id INTO tmp_parent_id FROM timetable.task_chain\n\0009\0009\0009\0009\0009WHERE chain_id = tmp_chain_id;\n\0009\0009\0009\0009EXIT WHEN tmp_parent_id IS NULL;\n\0009\0009\0009\0009IF i \g 100 THEN\n\0009\0009\0009\0009\0009RAISE EXCEPTION \aInfinite loop at timetable.task_chain.chain_id=%\a, tmp_chain_id;\n\0009\0009\0009\0009\0009RETURN NULL;\n\0009\0009\0009\0009END IF;\n\0009\0009\0009\0009tmp_chain_id := tmp_parent_id;\n\0009\0009\0009END LOOP;\n\0009\0009\0009\n\0009\0009\0009SELECT parent_id INTO tmp_chain_head_id FROM timetable.task_chain\n\0009\0009\0009\0009WHERE chain_id = tmp_chain_id;\n\0009\0009\0009\0009\n\0009\0009\0009--raise notice \aPERFORM task_chain_delete(%,%)\a, tmp_chain_head_id, orig_chain_id;\n\0009\0009\0009PERFORM timetable.task_chain_delete(tmp_chain_head_id, orig_chain_id);\n\n\0009\0009END LOOP;\n\0009\0009\n\0009\0009RETURN OLD;\n\0009END;\n" BodyBrackets="$BODY$" Language="plpgsql" ReturnSet="0" Returns="trigger" ReturnsOID="2279" ObjectFile="" LinkSymbol="" Generate="1" Strict="0" Window="0" LeakProof="0" EvaluationType="2" ResultRows="0" ExecutionCost="100" ParallelType="0" >
 <PARAMETERS>
-</PARAMETERS>
-</STOREDPROC>
-
-<STOREDPROC ID="32890" Name="check_task" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" XPos="450" YPos="140" LineColor="8388608" BackColor="15793151" FontColor="0" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Secure="0" SFBody="\nDECLARE\0009\n\0009v_chain_exec_conf\0009ALIAS FOR $1;\n\n\0009v_record\0009\0009record;\n\0009v_return\0009\0009boolean;\nBEGIN\n\0009SELECT * \0009\n\0009\0009FROM \0009timetable.chain_execution_config \n\0009\0009WHERE \0009chain_execution_config = v_chain_exec_conf\n\0009\0009INTO v_record;\n\n\0009IF NOT FOUND\n\0009THEN\n\0009\0009RETURN FALSE;\n\0009END IF;\n\0009\n\0009-- ALL NULLS means task executed every minute\n\0009RETURN  COALESCE(v_record.run_at_month, v_record.run_at_day_of_week, v_record.run_at_day,\n\0009\0009\0009v_record.run_at_hour,v_record.run_at_minute) IS NULL\n\0009\0009OR \n\0009\0009\0009COALESCE(v_record.run_at_month = date_part(\amonth\a, now()), TRUE)\n\0009\0009AND COALESCE(v_record.run_at_day_of_week = date_part(\adow\a, now()), TRUE)\n\0009\0009AND COALESCE(v_record.run_at_day = date_part(\aday\a, now()), TRUE)\n\0009\0009AND COALESCE(v_record.run_at_hour = date_part(\ahour\a, now()), TRUE)\n\0009\0009AND COALESCE(v_record.run_at_minute = date_part(\aminute\a, now()), TRUE);\nEND;\n" BodyBrackets="$BODY$" Language="plpgsql" ReturnSet="0" Returns="bool" ReturnsOID="16" ObjectFile="" LinkSymbol="" Generate="1" Strict="0" Window="0" LeakProof="0" EvaluationType="2" ResultRows="0" ExecutionCost="100" ParallelType="0" >
-<PARAMETERS>
-<PARAMETER ID="107" Name="" Pos="1" ParamType="0" Datatype="23" Type="int4" Default="" >
-</PARAMETER>
-</PARAMETERS>
-</STOREDPROC>
-
-<STOREDPROC ID="32893" Name="get_running_jobs" SchemaOID="32769" SchemaName="timetable" OwnerID="10" OwnerName="postgres" XPos="200" YPos="140" LineColor="8388608" BackColor="15793151" FontColor="0" Comments="" Description="" Annotation="" BeginScript="" EndScript="" Secure="0" SFBody="\n\0009SELECT  chain_execution_config, start_status\n\0009\0009FROM\0009timetable.run_status\n\0009\0009WHERE \0009start_status IN ( SELECT   start_status\n\0009\0009\0009\0009FROM\0009timetable.run_status\n\0009\0009\0009\0009WHERE\0009execution_status IN (\aSTARTED\a, \aCHAIN_FAILED\a,\n\0009\0009\0009\0009\0009\0009     \aCHAIN_DONE\a, \aDEAD\a)\n\0009\0009\0009\0009\0009AND (chain_execution_config = $1 OR chain_execution_config = 0)\n\0009\0009\0009\0009GROUP BY 1\n\0009\0009\0009\0009HAVING count(*) \k 2 \n\0009\0009\0009\0009ORDER BY 1)\n\0009\0009\0009AND chain_execution_config = $1 \n\0009\0009GROUP BY 1, 2\n\0009\0009ORDER BY 1, 2 DESC\n" BodyBrackets="$BODY$" Language="sql" ReturnSet="1" Returns="record" ReturnsOID="2249" ObjectFile="" LinkSymbol="" Generate="1" Strict="0" Window="0" LeakProof="0" EvaluationType="2" ResultRows="1000" ExecutionCost="100" ParallelType="0" >
-<PARAMETERS>
-<PARAMETER ID="108" Name="" Pos="1" ParamType="0" Datatype="23" Type="int4" Default="" >
-</PARAMETER>
 </PARAMETERS>
 </STOREDPROC>
 

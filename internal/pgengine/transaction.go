@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/guregu/null.v3"
 )
 
 // ChainElementExecution structure describes each chain execution process
@@ -33,11 +34,11 @@ func StartTransaction() *sqlx.Tx {
 	return ConfigDb.MustBegin()
 }
 
-// MustCommitTransaction commits transaction and log panic in the case of error
+// MustCommitTransaction commits transaction and log error in the case of error
 func MustCommitTransaction(tx *sqlx.Tx) {
 	err := tx.Commit()
 	if err != nil {
-		LogToDB("PANIC", "Application cannot commit after job finished: ", err)
+		LogToDB("ERROR", "Application cannot commit after job finished: ", err)
 	}
 }
 
@@ -74,7 +75,7 @@ WITH RECURSIVE x
 	err := tx.Select(chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB("PANIC", "Recursive queries to fetch task chain failed: ", err)
+		LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
 		return false
 	}
 	return true
@@ -90,7 +91,7 @@ WHERE chain_execution_config = $1
 ORDER BY order_id ASC`
 	err := tx.Select(paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
-		LogToDB("PANIC", "cannot fetch parameters values for chain: ", err)
+		LogToDB("ERROR", "cannot fetch parameters values for chain: ", err)
 		return false
 	}
 	return true
@@ -99,30 +100,25 @@ ORDER BY order_id ASC`
 // ExecuteSQLCommand executes chain script with parameters inside transaction
 func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 	var err error
-	var res sql.Result
-	params := []null.String{}
+	var params []interface{}
 
-	if script == "" {
+	if strings.TrimSpace(script) == "" {
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		res, err = tx.Exec(script)
+		_, err = tx.Exec(script)
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
 				if err := json.Unmarshal([]byte(val), &params); err != nil {
 					return err
 				}
+				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("\nWith parameters: %+v", params))
+				_, err = tx.Exec(script, params...)
 			}
 		}
-		res, err = tx.Exec(script, params)
 	}
-	if err != nil {
-		return err
-	}
-	cnt, _ := res.RowsAffected()
-	LogToDB("LOG", "Result of the command:\n", script, params, "\nAffected: ", cnt)
-	return nil
+	return err
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
@@ -143,10 +139,65 @@ RETURNING run_status`
 
 // UpdateChainRunStatus inserts status information about running chain elements
 func UpdateChainRunStatus(tx *sqlx.Tx, chainElemExec *ChainElementExecution, runStatusID int, status string) {
+
 	const sqlInsertFinishStatus = `
 INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5)`
-	tx.MustExec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+	var err error
+
+	_, err = tx.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+	if err != nil {
+		LogToDB("ERROR", "Update Chain Status failed: ", err)
+	}
+}
+
+//GetConnectionString of database_connection
+func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
+	rows := ConfigDb.QueryRow("SELECT connect_string FROM  timetable.database_connection WHERE database_connection = $1", databaseConnection)
+	err := rows.Scan(&connectionString)
+	if err != nil {
+		LogToDB("ERROR", "Issue while fetching connection string:", err)
+	}
+	return connectionString
+}
+
+//GetRemoteDBTransaction create a remote db connection and returns transaction object
+func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
+	remoteDb, err := sqlx.Connect("postgres", connectionString)
+	if err != nil {
+		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v\n", connectionString))
+		return nil, nil
+	}
+	LogToDB("LOG", "Remote Connection established...")
+	return remoteDb, remoteDb.MustBegin()
+}
+
+// FinalizeRemoteDBConnection closes session
+func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
+	LogToDB("LOG", "Closing remote session")
+	if err := remoteDb.Close(); err != nil {
+		LogToDB("ERROR", "Cannot close database connection:", err)
+	}
+	remoteDb = nil
+}
+
+// SetRole - set the current user identifier of the current session
+func SetRole(tx *sqlx.Tx, runUID sql.NullString) {
+	LogToDB("LOG", "Setting Role to ", runUID.String)
+	_, err := tx.Exec(fmt.Sprintf("SET ROLE %v", runUID.String))
+	if err != nil {
+		LogToDB("ERROR", "Error in Setting role", err)
+	}
+}
+
+//ResetRole - RESET forms reset the current user identifier to be the current session user identifier
+func ResetRole(tx *sqlx.Tx) {
+	LogToDB("LOG", "Resetting Role")
+	const sqlResetRole = `RESET ROLE`
+	_, err := tx.Exec(sqlResetRole)
+	if err != nil {
+		LogToDB("ERROR", "Error in ReSetting role", err)
+	}
 }
