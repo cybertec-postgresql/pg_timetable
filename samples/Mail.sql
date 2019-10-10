@@ -8,8 +8,8 @@ BEGIN
 	-- Get the chain id
 	v_chain_id := timetable.insert_base_task('SendMail', NULL);
 
-	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, max_instances, live, client_name)
-		VALUES (v_chain_id, 'Send Mail', 1, TRUE, 'worker001')
+	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, max_instances, live)
+		VALUES (v_chain_id, 'Send Mail', 1, TRUE)
 	RETURNING
 		chain_execution_config INTO v_chain_config_id;
 

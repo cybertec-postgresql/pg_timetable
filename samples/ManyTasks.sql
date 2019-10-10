@@ -27,11 +27,9 @@ WITH
               max_instances,
               live,
               self_destruct,
-              exclusive_execution,
-              excluded_execution_configs,
-              client_name
+              exclusive_execution
             )
-            select
+            SELECT
               chain_id, -- chain_id,
               'print hello via echo from ' || chain_id , -- chain_name,
               NULL, -- run_at_minute,
@@ -42,10 +40,8 @@ WITH
               1, -- max_instances,
               TRUE, -- live,
               FALSE, -- self_destruct,
-              FALSE, -- exclusive_execution,
-              NULL, -- excluded_execution_configs
-              'worker001' -- worker under which this task to be run
-              FROM chain_insert
+              FALSE -- exclusive_execution,
+            FROM chain_insert
             RETURNING  chain_execution_config, chain_id
     )
 
