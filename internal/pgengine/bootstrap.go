@@ -13,6 +13,9 @@ import (
 // wait for 5 sec before reconnecting to DB
 const waitTime = 5
 
+// maximum wait time before reconnect attempts
+const maxWaitTime = waitTime * 16
+
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
 
@@ -50,20 +53,30 @@ func PrefixSchemaFiles(prefix string) {
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
+	var wt int = waitTime
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		host, port, dbname, sslmode, user, password)
-	ConfigDb = sqlx.MustConnect("postgres", connstr)
 	LogToDB("DEBUG", "Connection string: ", connstr)
+	ConfigDb, err := sqlx.Connect("postgres", connstr)
+	for err != nil {
+		fmt.Printf(GetLogPrefix("ERROR")+"\n", err)
+		fmt.Printf(GetLogPrefix("LOG"), fmt.Sprintf("Reconnecting in %d sec...\n", wt))
+		time.Sleep(time.Duration(wt) * time.Second)
+		ConfigDb, err = sqlx.Connect("postgres", connstr)
+		if wt < maxWaitTime {
+			wt = wt * 2
+		}
+	}
+	LogToDB("LOG", "Connection established...")
 
 	var exists bool
-	err := ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
+	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for _, schemafile := range schemafiles {
 			CreateConfigDBSchema(schemafile)
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
-	LogToDB("LOG", "Connection established...")
 }
 
 // CreateConfigDBSchema executes SQL script from file
