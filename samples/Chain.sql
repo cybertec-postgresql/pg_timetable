@@ -78,8 +78,7 @@ BEGIN
         TRUE, -- live, 
         FALSE, -- self_destruct,
         FALSE, -- exclusive_execution, 
-        NULL, -- excluded_execution_configs
-        'worker001' -- worker under which this task to be run
+        NULL -- excluded_execution_configs
         )
     RETURNING  chain_execution_config INTO v_chain_config_id;
 

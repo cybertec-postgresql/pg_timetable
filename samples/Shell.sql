@@ -8,7 +8,7 @@ BEGIN
 
 	-- Create the base task
 	INSERT INTO timetable.base_task(name, kind, script)
-	VALUES ('psql', 'SHELL'::timetable.task_kind, '/usr/bin/psql')
+	VALUES ('psql', 'SHELL'::timetable.task_kind, 'psql')
 	RETURNING task_id INTO v_task_id;
 
 	-- Create the chain
@@ -17,8 +17,8 @@ BEGIN
 	RETURNING chain_id INTO v_chain_id;
 
 	-- Create the chain execution configuration
-	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, live, client_name)
-	VALUES (v_chain_id, 'psql chain', TRUE, 'worker001')
+	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, live)
+	VALUES (v_chain_id, 'psql chain', TRUE)
 	RETURNING chain_execution_config INTO v_chain_config_id;
 
 	-- Create the parameters for the chain configuration
@@ -31,8 +31,8 @@ BEGIN
 		v_chain_config_id, v_chain_id, 1, '[
 			"-h", "localhost",
 			"-p", "5432",
-			"-d", "database",
-			"-U", "anon",
+			"-d", "template1",
+			"-U", "postgres",
 			"-c", "SELECT now();"
 		]'::jsonb
 	);

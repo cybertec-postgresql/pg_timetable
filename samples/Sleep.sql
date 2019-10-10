@@ -23,9 +23,7 @@ chain_config(id) as (
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,
-        FALSE, -- exclusive_execution, 
-        NULL, -- excluded_execution_configs
-        'worker001' -- worker under which this task to be run
+        FALSE -- exclusive_execution, 
     )
     RETURNING  chain_execution_config
 )
