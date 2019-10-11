@@ -135,42 +135,6 @@ CREATE TABLE timetable.run_status (
 	PRIMARY KEY (run_status)
 );
 
------------------------------------------------------------------
-
--- this stored procedure will tell us which scripts chains
--- have to be executed
--- $1: chain execution config id
-CREATE OR REPLACE FUNCTION timetable.check_task(BIGINT) RETURNS BOOLEAN AS
-$$
-DECLARE	
-	v_chain_exec_conf	ALIAS FOR $1;
-
-	v_record		record;
-	v_return		BOOLEAN;
-BEGIN
-	SELECT * 	
-		FROM 	timetable.chain_execution_config 
-		WHERE 	chain_execution_config = v_chain_exec_conf
-		INTO v_record;
-
-	IF NOT FOUND
-	THEN
-		RETURN FALSE;
-	END IF;
-	
-	-- ALL NULLS means task executed every minute
-	RETURN  COALESCE(v_record.run_at_month, v_record.run_at_day_of_week, v_record.run_at_day,
-			v_record.run_at_hour,v_record.run_at_minute) IS NULL
-		OR 
-			COALESCE(v_record.run_at_month = date_part('month', now()), TRUE)
-		AND COALESCE(v_record.run_at_day_of_week = date_part('dow', now()), TRUE)
-		AND COALESCE(v_record.run_at_day = date_part('day', now()), TRUE)
-		AND COALESCE(v_record.run_at_hour = date_part('hour', now()), TRUE)
-		AND COALESCE(v_record.run_at_minute = date_part('minute', now()), TRUE);
-END;
-$$ LANGUAGE 'plpgsql';
-
-
 DROP TRIGGER IF EXISTS trig_task_chain_fixer ON timetable.base_task;
 
 CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
@@ -282,43 +246,3 @@ BEGIN
 		RETURN true;
 END
 $$ LANGUAGE plpgsql;
-
-
--- see which jobs are running
-CREATE OR REPLACE FUNCTION timetable.get_running_jobs (BIGINT) RETURNS SETOF record AS $$
-	SELECT  chain_execution_config, start_status
-		FROM	timetable.run_status
-		WHERE 	start_status IN ( SELECT   start_status
-				FROM	timetable.run_status
-				WHERE	execution_status IN ('STARTED', 'CHAIN_FAILED',
-						     'CHAIN_DONE', 'DEAD')
-					AND (chain_execution_config = $1 OR chain_execution_config = 0)
-				GROUP BY 1
-				HAVING count(*) < 2 
-				ORDER BY 1)
-			AND chain_execution_config = $1 
-		GROUP BY 1, 2
-		ORDER BY 1, 2 DESC
-$$ LANGUAGE 'sql';
-
-CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name TEXT, IN parent_task_id BIGINT)
-RETURNS BIGINT AS $$
-DECLARE
-	builtin_id BIGINT;
-	result_id BIGINT;
-BEGIN
-	SELECT task_id FROM timetable.base_task WHERE name = task_name INTO builtin_id;
-	IF NOT FOUND THEN
-		RAISE EXCEPTION 'Nonexistent builtin task --> %', task_name
-		USING 
-			ERRCODE = 'invalid_parameter_value',
-      		HINT = 'Please check your user task name parameter';
-    END IF;
-    INSERT INTO timetable.task_chain 
-        (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES 
-        (DEFAULT, parent_task_id, builtin_id, NULL, NULL, FALSE)
-    RETURNING chain_id INTO result_id;
-	RETURN result_id;
-END
-$$ LANGUAGE 'plpgsql';
