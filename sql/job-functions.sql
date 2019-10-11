@@ -299,27 +299,26 @@ BEGIN
         EXIT WHEN NOT FOUND;
         RAISE NOTICE 'min: %, hour: %, day: %, month: %',r_matrix.min, r_matrix.hour, r_matrix.day, r_matrix.month;
 
-        v_chain_name := 'chain_'||v_chain_id||'_'||COALESCE (r_matrix.min, -1)||COALESCE (r_matrix.hour, -1)||COALESCE (r_matrix.day, -1)||COALESCE (r_matrix.month, -1)||COALESCE (r_matrix.dow, -1);
-        RAISE NOTICE 'chain_name: %',v_chain_name;
+       v_chain_name := 'chain_'||v_chain_id||'_'||LPAD(COALESCE(r_matrix.min, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.hour, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.day, -1)::text, 2, '0')||LPAD(COALESCE (r_matrix.month, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.dow, -1)::text, 2, '0');
+       RAISE NOTICE 'chain_name: %',v_chain_name;
 
 
-        INSERT INTO timetable.chain_execution_config VALUES
-        (
-            DEFAULT, -- chain_execution_config,
-            v_chain_id, -- chain_id,
-            v_chain_name, -- chain_name,
-            r_matrix.min, -- run_at_minute,
-            r_matrix.hour, -- run_at_hour,
-            r_matrix.day, -- run_at_day,
-            r_matrix.month, -- run_at_month,
-            r_matrix.dow, -- run_at_day_of_week,
-            max_instances, -- max_instances,
-            live, -- live,
-            self_destruct, -- self_destruct,
-            FALSE, -- exclusive_execution,
-            NULL, -- excluded_execution_configs
-            client_name -- worker under which this task to be run
-        );
+       INSERT INTO timetable.chain_execution_config VALUES
+       (
+           DEFAULT, -- chain_execution_config,
+           v_chain_id, -- chain_id,
+           v_chain_name, -- chain_name,
+           r_matrix.min, -- run_at_minute,
+           r_matrix.hour, -- run_at_hour,
+           r_matrix.day, -- run_at_day,
+           r_matrix.month, -- run_at_month,
+           r_matrix.dow, -- run_at_day_of_week,
+           max_instances, -- max_instances,
+           live, -- live,
+           self_destruct, -- self_destruct,
+           FALSE, -- exclusive_execution,
+           NULL -- excluded_execution_configs
+       );
     END LOOP;
     CLOSE c_matrix;
 
