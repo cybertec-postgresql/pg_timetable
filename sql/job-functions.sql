@@ -73,8 +73,8 @@ BEGIN
                 a_split := regexp_split_to_array(tmp_item, '/');
                 counter := a_split[1]::int;
                 WHILE counter+a_split[2]::int <= 59 LOOP
-                    counter := counter + a_split[2]::int ;
                     a_res := array_append(a_res, counter);
+                    counter := counter + a_split[2]::int ;
                 END LOOP ;
 
                 --Heavy sh*t, combinated special chars
@@ -83,8 +83,8 @@ BEGIN
                 a_split := regexp_split_to_array(tmp_item, '/');
                 counter_range := regexp_split_to_array(a_split[1], '-');
                 WHILE counter_range[1]::int+a_split[2]::int <= counter_range[2]::int LOOP
-                    counter_range[1] := counter_range[1] + a_split[2]::int ;
                     a_res := array_append(a_res, counter_range[1]);
+                    counter_range[1] := counter_range[1] + a_split[2]::int ;
                 END LOOP;
 
                 -- '*' any value and '/' step values
