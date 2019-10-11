@@ -202,6 +202,7 @@ func TestBuiltInTasks(t *testing.T) {
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
 }
+
 func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)

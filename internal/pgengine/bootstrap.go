@@ -74,6 +74,7 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode s
 	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for _, schemafile := range schemafiles {
+			fmt.Printf(GetLogPrefix("LOG"), "Executing script: "+schemafile+"\n")
 			CreateConfigDBSchema(schemafile)
 		}
 		LogToDB("LOG", "Configuration schema created...")
