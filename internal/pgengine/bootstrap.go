@@ -54,10 +54,11 @@ func PrefixSchemaFiles(prefix string) {
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
 	var wt int = waitTime
+	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		host, port, dbname, sslmode, user, password)
 	LogToDB("DEBUG", "Connection string: ", connstr)
-	ConfigDb, err := sqlx.Connect("postgres", connstr)
+	ConfigDb, err = sqlx.Connect("postgres", connstr)
 	for err != nil {
 		fmt.Printf(GetLogPrefix("ERROR")+"\n", err)
 		fmt.Printf(GetLogPrefix("LOG"), fmt.Sprintf("Reconnecting in %d sec...\n", wt))
