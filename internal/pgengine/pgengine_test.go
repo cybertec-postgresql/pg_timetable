@@ -88,15 +88,9 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		for _, pgengine.VerboseLogLevel = range []bool{true, false} {
 			pgengine.ConfigDb.MustExec("TRUNCATE timetable.log")
 			for _, logLevel := range logLevels {
-				if logLevel == "PANIC" {
-					assert.Panics(t, func() {
-						pgengine.LogToDB(logLevel, logLevel)
-					}, "LogToDB did not panic")
-				} else {
-					assert.NotPanics(t, func() {
-						pgengine.LogToDB(logLevel, logLevel)
-					}, "LogToDB panicked")
-				}
+				assert.NotPanics(t, func() {
+					pgengine.LogToDB(logLevel, logLevel)
+				}, "LogToDB panicked")
 
 				if !pgengine.VerboseLogLevel {
 					switch logLevel {
