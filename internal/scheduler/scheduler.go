@@ -13,8 +13,8 @@ import (
 
 const workersNumber = 16
 
-/* the main loop period. Should be 60 (sec) for release configuration. Now is 10 (sec) for debug purposes */
-const refetchTimeout = 10
+/* the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes */
+const refetchTimeout = 60
 
 /* if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes */
 const maxChainsThreshold = workersNumber * refetchTimeout
@@ -69,20 +69,20 @@ func Run() {
 		headChains := []Chain{}
 		err := pgengine.ConfigDb.Select(&headChains, query, pgengine.ClientName)
 		if err != nil {
-			pgengine.LogToDB("PANIC", "Could not query pending tasks: ", err)
-		}
-		headChainsCount := len(headChains)
-		pgengine.LogToDB("DEBUG", "Number of chain head tuples: ", headChainsCount)
+			pgengine.LogToDB("ERROR", "Could not query pending tasks: ", err)
+		} else {
+			headChainsCount := len(headChains)
+			pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
 
-		/* now we can loop through so chains */
-		for _, headChain := range headChains {
-			if headChainsCount > maxChainsThreshold {
-				time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
+			/* now we can loop through so chains */
+			for _, headChain := range headChains {
+				if headChainsCount > maxChainsThreshold {
+					time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
+				}
+				pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+				chains <- headChain
 			}
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
-			chains <- headChain
 		}
-
 		/* wait for the next full minute to show up */
 		time.Sleep(refetchTimeout * time.Second)
 	}

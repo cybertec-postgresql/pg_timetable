@@ -47,9 +47,6 @@ func LogToDB(level string, msg ...interface{}) {
 			level = "ERROR" //we don't want panic in case of disconnect
 		}
 	}
-	if level == "PANIC" {
-		panic(s)
-	}
 }
 
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"

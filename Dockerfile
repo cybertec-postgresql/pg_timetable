@@ -1,5 +1,4 @@
 FROM golang:latest
-RUN git config --global url."https://{github-user-token-here}:@github.com/".insteadOf "https://github.com/"
 RUN go get github.com/cybertec-postgresql/pg_timetable/
 WORKDIR /go/src/github.com/cybertec-postgresql/pg_timetable/
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo
