@@ -3,7 +3,6 @@ package pgengine_test
 import (
 	"database/sql"
 	"fmt"
-	"net/url"
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -22,8 +21,7 @@ var setupTestDBFunc = func() {
 	pgengine.Password = "somestrong"
 	pgengine.ClientName = "go-test"
 	pgengine.SSLMode = "disable"
-	pgengine.InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-		"somestrong", "disable", pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
@@ -122,11 +120,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
 		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
-	})
-
-	t.Run("Check Parsing of DB URL", func(t *testing.T) {
-		var cmdURL url.URL
-		assert.NotPanics(t, func() { pgengine.ParseCurl(&cmdURL) }, "Parsing of DB URL failed")
 	})
 
 	t.Run("Check TryLockClientName()", func(t *testing.T) {

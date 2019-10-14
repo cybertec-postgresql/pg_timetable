@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net"
-	"net/url"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -52,9 +49,9 @@ func PrefixSchemaFiles(prefix string) {
 }
 
 // InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode string, schemafiles []string) {
+func InitAndTestConfigDBConnection(schemafiles []string) {
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
-		host, port, dbname, sslmode, user, password)
+		Host, Port, DbName, SSLMode, User, Password)
 	ConfigDb = sqlx.MustConnect("postgres", connstr)
 	LogToDB("DEBUG", "Connection string: ", connstr)
 
@@ -106,15 +103,5 @@ func ReconnectDbAndFixLeftovers() {
 			FixSchedulerCrash()
 			break
 		}
-	}
-}
-
-//ParseCurl parses URL structure into respective global variables
-func ParseCurl(cmdURL *url.URL) {
-	Host, Port, _ = net.SplitHostPort(cmdURL.Host)
-	User = cmdURL.User.Username()
-	Password, _ = cmdURL.User.Password()
-	if strings.TrimSpace(cmdURL.Path) != "" {
-		DbName = cmdURL.Path[1:]
 	}
 }
