@@ -191,7 +191,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	}
 
 	if err != nil {
-		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s\n; Error: %s", chainElemExec, err))
+		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
 		if retCode != 0 {
 			return retCode
 		}

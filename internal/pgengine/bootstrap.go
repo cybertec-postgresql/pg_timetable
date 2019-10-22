@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -60,8 +61,8 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode s
 	LogToDB("DEBUG", "Connection string: ", connstr)
 	ConfigDb, err = sqlx.Connect("postgres", connstr)
 	for err != nil {
-		fmt.Printf(GetLogPrefix("ERROR")+"\n", err)
-		fmt.Printf(GetLogPrefix("LOG"), fmt.Sprintf("Reconnecting in %d sec...\n", wt))
+		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
+		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
 		time.Sleep(time.Duration(wt) * time.Second)
 		ConfigDb, err = sqlx.Connect("postgres", connstr)
 		if wt < maxWaitTime {
@@ -74,21 +75,28 @@ func InitAndTestConfigDBConnection(host, port, dbname, user, password, sslmode s
 	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for _, schemafile := range schemafiles {
-			fmt.Printf(GetLogPrefix("LOG"), "Executing script: "+schemafile+"\n")
-			CreateConfigDBSchema(schemafile)
+			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+schemafile)
+			if err = CreateConfigDBSchema(schemafile); err != nil {
+				fmt.Printf(GetLogPrefixLn("PANIC"), err)
+				fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
+				_, err = ConfigDb.Exec("DROP SCHEMA IF EXISTS timetable CASCADE")
+				os.Exit(2)
+			} else {
+				LogToDB("LOG", "Schema file executed: "+schemafile)
+			}
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
 }
 
 // CreateConfigDBSchema executes SQL script from file
-func CreateConfigDBSchema(schemafile string) {
+func CreateConfigDBSchema(schemafile string) (err error) {
 	b, err := ioutil.ReadFile(schemafile) // nolint: gosec
 	if err != nil {
-		panic(err)
+		return
 	}
-	ConfigDb.MustExec(string(b))
-	LogToDB("LOG", fmt.Sprintf("Schema file executed: %s", schemafile))
+	_, err = ConfigDb.Exec(string(b))
+	return
 }
 
 // FinalizeConfigDBConnection closes session
@@ -108,7 +116,7 @@ func FinalizeConfigDBConnection() {
 func ReconnectDbAndFixLeftovers() {
 	var err error
 	for {
-		fmt.Printf(GetLogPrefix("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...\n", waitTime))
+		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
 		time.Sleep(waitTime * time.Second)
 		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
 		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",

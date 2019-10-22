@@ -26,6 +26,10 @@ func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
 }
 
+func GetLogPrefixLn(level string) string {
+	return GetLogPrefix(level) + "\n"
+}
+
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(level string, msg ...interface{}) {
 	const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
