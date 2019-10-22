@@ -108,7 +108,7 @@ func chainWorker(chains <-chan Chain) {
 func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
 
-	pgengine.LogToDB("LOG", "Executing chain with id: ", chainID)
+	pgengine.LogToDB("LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
 	runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
 
 	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
@@ -121,13 +121,14 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "STARTED")
 		retCode := executeСhainElement(tx, &chainElemExec)
 		pgengine.LogChainElementExecution(&chainElemExec, retCode)
-		if retCode < 0 {
+		if retCode < 0 && !chainElemExec.IgnoreError {
+			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
 			pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_FAILED")
-			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain execution failed: %s", chainElemExec))
 			return
 		}
 		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_DONE")
 	}
+	pgengine.LogToDB("LOG", fmt.Sprintf("Chain ID: %d executed successfully", chainID))
 	pgengine.UpdateChainRunStatus(tx,
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
