@@ -21,11 +21,12 @@ const InvalidOid = 0
 // AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
 const AppID = 0x204F04EE
 
-//GetLogPrefix perform formatted logging
+// GetLogPrefix perform formatted logging
 func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
 }
 
+// GetLogPrefixLn perform formatted logging with new line at the end
 func GetLogPrefixLn(level string) string {
 	return GetLogPrefix(level) + "\n"
 }
