@@ -47,7 +47,7 @@ func TestBootstrapSQLFileExists(t *testing.T) {
 }
 
 func TestCreateConfigDBSchemaWithoutFile(t *testing.T) {
-	assert.Panics(t, func() { pgengine.CreateConfigDBSchema("wrong path") }, "Should panic with nonexistent file")
+	assert.Error(t, pgengine.CreateConfigDBSchema("wrong path"), "Should error with nonexistent file")
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {

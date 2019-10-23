@@ -28,13 +28,13 @@ BEGIN
 		order_id,
 		value
 	) VALUES (
-		v_chain_config_id, v_chain_id, 1, '[
-			"-h", "localhost",
-			"-p", "5432",
-			"-d", "template1",
-			"-U", "postgres",
+		v_chain_config_id, v_chain_id, 1, ('[
+			"-h", "' || host(inet_server_addr()) || '",
+			"-p", "' || inet_server_port() || '",
+			"-d", "' || current_database() || '",
+			"-U", "' || current_user || '",
 			"-c", "SELECT now();"
-		]'::jsonb
+		]')::jsonb
 	);
 END $$
 LANGUAGE 'plpgsql';

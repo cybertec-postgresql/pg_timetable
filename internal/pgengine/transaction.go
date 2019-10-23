@@ -167,7 +167,7 @@ func GetConnectionString(databaseConnection sql.NullString) (connectionString st
 func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
 	remoteDb, err := sqlx.Connect("postgres", connectionString)
 	if err != nil {
-		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v\n", connectionString))
+		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v", connectionString))
 		return nil, nil
 	}
 	LogToDB("LOG", "Remote Connection established...")
