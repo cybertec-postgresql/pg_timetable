@@ -90,7 +90,7 @@ func Run() {
 
 func chainWorker(chains <-chan Chain) {
 	for chain := range chains {
-		pgengine.LogToDB("LOG", fmt.Sprintf("Calling process chain for %s", chain))
+		pgengine.LogToDB("DEBUG", fmt.Sprintf("Calling process chain for %s", chain))
 		for !pgengine.CanProceedChainExecution(chain.ChainExecutionConfigID, chain.MaxInstances) {
 			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
 			time.Sleep(3 * time.Second)
@@ -142,7 +142,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var execTx *sqlx.Tx
 	var remoteDb *sqlx.DB
 
-	pgengine.LogToDB("LOG", fmt.Sprintf("Executing task: %s", chainElemExec))
+	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing task: %s", chainElemExec))
 
 	if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
 		return -1
@@ -199,7 +199,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		return -1
 	}
 
-	pgengine.LogToDB("LOG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
+	pgengine.LogToDB("DEBUG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
 
 	return 0
 }

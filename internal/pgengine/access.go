@@ -73,7 +73,7 @@ func FixSchedulerCrash() {
 func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
-	LogToDB("DEBUG", fmt.Sprintf("checking if can proceed with chaing config id: %d", chainConfigID))
+	LogToDB("DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
 	err := ConfigDb.Get(&procCount, sqlProcCount, chainConfigID)
 	switch {
 	case err == sql.ErrNoRows:
@@ -81,7 +81,7 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		LogToDB("ERROR", "application cannot read information about concurrent running jobs: ", err)
+		LogToDB("ERROR", "Cannot read information about concurrent running jobs: ", err)
 		return false
 	}
 }

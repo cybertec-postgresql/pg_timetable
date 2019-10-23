@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -37,12 +38,13 @@ func executeShellCommand(command string, paramValues []string) (int, error) {
 			}
 		}
 		out, err := cmd.CombinedOutput(command, params...) // #nosec
-		pgengine.LogToDB("LOG", "Output of the shell command for command:\n", command, params, "\n", string(out))
+		cmdLine := fmt.Sprintf("%s %v:\n", command, params)
+		pgengine.LogToDB("DEBUG", "Output for command ", cmdLine, string(out))
 		if err != nil {
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {
 				exitCode := exitError.ProcessState.ExitCode()
-				pgengine.LogToDB("DEBUG", "Return value of the shell command:\n", command, params, "\n", exitCode)
+				pgengine.LogToDB("DEBUG", "Return value of the command ", cmdLine, exitCode)
 				return exitCode, exitError
 			}
 			return -1, err
