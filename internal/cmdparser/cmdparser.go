@@ -74,7 +74,7 @@ func (c *cmdOptions) ParseCurl(cmdURL *url.URL) error {
 	return nil
 }
 
-func IsPostgresURI(s string) bool {
+func isPostgresURI(s string) bool {
 	return strings.HasPrefix(s, "postgres://") || strings.HasPrefix(s, "postgresql://")
 }
 
@@ -100,7 +100,7 @@ func Parse() error {
 
 	}
 	//connection string in dbname
-	if IsPostgresURI(cmdOpts.Dbname) && cmdOpts.PostgresURL.pgurl == nil {
+	if isPostgresURI(cmdOpts.Dbname) && cmdOpts.PostgresURL.pgurl == nil {
 		cmdOpts.PostgresURL.pgurl, err = url.Parse(cmdOpts.Dbname)
 		if err != nil {
 			return err
