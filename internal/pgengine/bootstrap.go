@@ -56,7 +56,7 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 	var wt int = waitTime
 	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
-		Host, Port, DbName, SSLMode, User, Password)
+		Host, Port, DbName, SSLMode, User)
 	LogToDB("DEBUG", "Connection string: ", connstr)
 	ConfigDb, err = sqlx.Connect("postgres", connstr)
 	for err != nil {
