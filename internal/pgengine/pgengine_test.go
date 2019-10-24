@@ -21,8 +21,7 @@ var setupTestDBFunc = func() {
 	pgengine.Password = "somestrong"
 	pgengine.ClientName = "go-test"
 	pgengine.SSLMode = "disable"
-	pgengine.InitAndTestConfigDBConnection("localhost", "5432", "timetable", "scheduler",
-		"somestrong", "disable", pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
