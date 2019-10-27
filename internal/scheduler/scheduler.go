@@ -121,7 +121,7 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "STARTED")
 		retCode := executeСhainElement(tx, &chainElemExec)
 		pgengine.LogChainElementExecution(&chainElemExec, retCode)
-		if retCode < 0 && !chainElemExec.IgnoreError {
+		if retCode != 0 && !chainElemExec.IgnoreError {
 			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
 			pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_FAILED")
 			return
