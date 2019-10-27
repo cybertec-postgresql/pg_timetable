@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 )
 
 var pgURL *url.URL
+var runDocker string
 
 func TestMain(m *testing.M) {
 	pgengine.LogToDB("LOG", "Starting TestMain...")
@@ -28,6 +28,12 @@ func TestMain(m *testing.M) {
 		os.Exit(code)
 	}()
 
+	runDocker = os.Getenv("RUN_DOCKER")
+
+	code = m.Run()
+}
+
+func getPostgresImgaeAndRun() {
 	pgURL = &url.URL{
 		Scheme: "postgres",
 		User:   url.UserPassword("scheduler", "scheduler"),
@@ -55,7 +61,7 @@ func TestMain(m *testing.M) {
 
 	resource, err := pool.RunWithOptions(&runOpts)
 	if err != nil {
-		pgengine.LogToDB("PANIC", "Could start postgres container")
+		pgengine.LogToDB("PANIC", "Could not start postgres container")
 	}
 	defer func() {
 		err = pool.Purge(resource)
@@ -67,10 +73,9 @@ func TestMain(m *testing.M) {
 	pgURL.Host = resource.Container.NetworkSettings.IPAddress
 
 	// Docker layer network is different on Mac
-	if runtime.GOOS == "darwin" {
-		pgURL.Host = net.JoinHostPort(resource.GetBoundIP("5432/tcp"), resource.GetPort("5432/tcp"))
-	}
-
+	//if runtime.GOOS == "darwin" {
+	pgURL.Host = net.JoinHostPort(resource.GetBoundIP("5432/tcp"), resource.GetPort("5432/tcp"))
+	//}
 	logWaiter, err := pool.Client.AttachToContainerNonBlocking(docker.AttachToContainerOptions{
 		Container: resource.Container.ID,
 		// OutputStream: log.Writer(),
@@ -103,10 +108,8 @@ func TestMain(m *testing.M) {
 		return db.Ping()
 	})
 	if err != nil {
-		pgengine.LogToDB("PANIC", "Could not connect to postgres server")
+		pgengine.LogToDB("PANIC", "Could not connect to postgres server", err)
 	}
-
-	code = m.Run()
 }
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
@@ -118,14 +121,19 @@ var setupTestDBFunc = func() {
 	pgengine.Password = "somestrong"
 	pgengine.ClientName = "go-test"
 	pgengine.SSLMode = "disable"
-	pgengine.InitAndTestConfigDBConnection(pgURL.Host, "5432", "timetable", "scheduler",
-		"scheduler", "disable", pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection(pgengine.Host, pgengine.Port, pgengine.DbName, pgengine.User,
+		pgengine.Password, pgengine.SSLMode, pgengine.SQLSchemaFiles)
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	pgengine.ClientName = "pgengine_unit_test"
 	t.Log("Setup test case")
-	setupTestDBFunc()
+	//if runDocker == "TRUE" {
+	getPostgresImgaeAndRun()
+	///} else {
+	//setupTestDBFunc()
+	//}
+
 	return func(t *testing.T) {
 		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
@@ -144,7 +152,7 @@ func TestBootstrapSQLFileExists(t *testing.T) {
 }
 
 func TestCreateConfigDBSchemaWithoutFile(t *testing.T) {
-	assert.Panics(t, func() { pgengine.CreateConfigDBSchema("wrong path") }, "Should panic with nonexistent file")
+	assert.Error(t, pgengine.CreateConfigDBSchema("wrong path"), "Should error with nonexistent file")
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
@@ -185,15 +193,9 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		for _, pgengine.VerboseLogLevel = range []bool{true, false} {
 			pgengine.ConfigDb.MustExec("TRUNCATE timetable.log")
 			for _, logLevel := range logLevels {
-				if logLevel == "PANIC" {
-					assert.Panics(t, func() {
-						pgengine.LogToDB(logLevel, logLevel)
-					}, "LogToDB did not panic")
-				} else {
-					assert.NotPanics(t, func() {
-						pgengine.LogToDB(logLevel, logLevel)
-					}, "LogToDB panicked")
-				}
+				assert.NotPanics(t, func() {
+					pgengine.LogToDB(logLevel, logLevel)
+				}, "LogToDB panicked")
 
 				if !pgengine.VerboseLogLevel {
 					switch logLevel {
@@ -305,6 +307,7 @@ func TestBuiltInTasks(t *testing.T) {
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
 }
+
 func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)

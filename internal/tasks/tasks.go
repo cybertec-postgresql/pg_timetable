@@ -18,7 +18,7 @@ var Tasks = map[string](func(string) error){
 
 // ExecuteTask executes built-in task depending on task name and returns err result
 func ExecuteTask(name string, paramValues []string) error {
-	pgengine.LogToDB("DEBUG", fmt.Sprintf("executing builtin task %s with parameters %v", name, paramValues))
+	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
 	if len(paramValues) == 0 {
 		paramValues = append(paramValues, "")
 	}

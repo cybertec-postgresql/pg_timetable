@@ -21,9 +21,14 @@ const InvalidOid = 0
 // AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
 const AppID = 0x204F04EE
 
-//GetLogPrefix perform formatted logging
+// GetLogPrefix perform formatted logging
 func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-01 15:04:05.000"), ClientName, level)
+}
+
+// GetLogPrefixLn perform formatted logging with new line at the end
+func GetLogPrefixLn(level string) string {
+	return GetLogPrefix(level) + "\n"
 }
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
@@ -47,9 +52,6 @@ func LogToDB(level string, msg ...interface{}) {
 			level = "ERROR" //we don't want panic in case of disconnect
 		}
 	}
-	if level == "PANIC" {
-		panic(s)
-	}
 }
 
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
@@ -72,7 +74,7 @@ func FixSchedulerCrash() {
 func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
-	LogToDB("DEBUG", fmt.Sprintf("checking if can proceed with chaing config id: %d", chainConfigID))
+	LogToDB("DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
 	err := ConfigDb.Get(&procCount, sqlProcCount, chainConfigID)
 	switch {
 	case err == sql.ErrNoRows:
@@ -80,7 +82,7 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		LogToDB("ERROR", "application cannot read information about concurrent running jobs: ", err)
+		LogToDB("ERROR", "Cannot read information about concurrent running jobs: ", err)
 		return false
 	}
 }
