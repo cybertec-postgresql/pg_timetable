@@ -3,31 +3,131 @@ package pgengine_test
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
 	"testing"
+	"time"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/ory/dockertest"
+	"github.com/ory/dockertest/docker"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
-	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+var pgURL *url.URL
+
+// setup environment variable runDocker to true to run testcases using postgres docker images
+var runDocker bool
+
+func TestMain(m *testing.M) {
+	pgengine.LogToDB("LOG", "Starting TestMain...")
+
+	runDocker, _ = strconv.ParseBool(os.Getenv("RUN_DOCKER"))
+	//Create Docker image and run postgres docker image
+	if runDocker {
+		pgengine.LogToDB("LOG", "Running in docker mode...")
+
+		pool, err := dockertest.NewPool("")
+		if err != nil {
+			panic("Could not connect to docker")
+		}
+		pgengine.LogToDB("LOG", "Connetion to docker established...")
+
+		runOpts := dockertest.RunOptions{
+			Repository: "postgres",
+			Tag:        "latest",
+			Env: []string{
+				"POSTGRES_USER=" + pgengine.User,
+				"POSTGRES_PASSWORD=" + pgengine.Password,
+				"POSTGRES_DB=" + pgengine.DbName,
+			},
+		}
+		
+		resource, err := pool.RunWithOptions(&runOpts)
+		if err != nil {
+			panic("Could start postgres container")
+		}
+		pgengine.LogToDB("LOG", "Postgres container is running...")
+		
+		defer func() {
+			err = pool.Purge(resource)
+			if err != nil {
+				panic("Could not purge resource")
+			}
+		}()
+
+		pgengine.Host = resource.Container.NetworkSettings.IPAddress
+
+		logWaiter, err := pool.Client.AttachToContainerNonBlocking(docker.AttachToContainerOptions{
+			Container: resource.Container.ID,
+			// OutputStream: log.Writer(),
+			// ErrorStream:  log.Writer(),
+			Stderr: true,
+			Stdout: true,
+			Stream: true,
+		})
+		if err != nil {
+			panic("Could not connect to postgres container log output")
+		}
+
+		defer func() {
+			err = logWaiter.Close()
+			if err != nil {
+				pgengine.LogToDB("ERROR", "Could not close container log")
+			}
+			err = logWaiter.Wait()
+			if err != nil {
+				pgengine.LogToDB("ERROR", "Could not wait for container log to close")
+			}
+		}()
+
+		pool.MaxWait = 10 * time.Second
+		err = pool.Retry(func() error {
+			db, err := sqlx.Open("postgres", fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+			if err != nil {
+				return err
+			}
+			return db.Ping()
+		})
+		if err != nil {
+			panic("Could not connect to postgres server")
+		}
+		pgengine.LogToDB("LOG", "Connetion to postgres established at ", 
+				fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+	}
+	os.Exit(m.Run())
+}
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	pgengine.Host = "localhost"
-	pgengine.Port = "5432"
-	pgengine.DbName = "timetable"
-	pgengine.User = "scheduler"
-	pgengine.Password = "somestrong"
-	pgengine.ClientName = "go-test"
-	pgengine.SSLMode = "disable"
+	pgengine.LogToDB("LOG", "Trying to connect postgres container at ", 
+				fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	pgengine.ClientName = "pgengine_unit_test"
+	pgengine.VerboseLogLevel = testing.Verbose()
 	t.Log("Setup test case")
-	setupTestDBFunc()
+	timeout := time.After(5 * time.Second)
+	done := make(chan bool)
+	go func() {
+		setupTestDBFunc()
+		done <- true
+	}()
+	select {
+	case <-timeout:
+		t.Fatal(fmt.Sprintf("Cannot connect and initialize test database in time"))
+	case <-done:
+	}
 	return func(t *testing.T) {
 		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
@@ -36,7 +136,9 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
 var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
-	return pgengine.GetRemoteDBTransaction("host=localhost port=5432 sslmode=disable dbname=timetable user=scheduler password=somestrong")
+	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+		pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password)
+	return pgengine.GetRemoteDBTransaction(connstr)
 }
 
 func TestBootstrapSQLFileExists(t *testing.T) {

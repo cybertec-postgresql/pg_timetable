@@ -21,26 +21,26 @@ const maxWaitTime = waitTime * 16
 var ConfigDb *sqlx.DB
 
 // Host is used to reconnect to data base
-var Host string
+var Host string = "localhost"
 
 // Port is used to reconnect to data base
-var Port string
+var Port string = "5432"
 
 // DbName is used to reconnect to data base
-var DbName string
+var DbName string = "timetable"
 
 // User is used to reconnect to data base
-var User string
+var User string = "scheduler"
 
 // Password is used to Reconnect Data base
-var Password string
+var Password string = "somestrong"
 
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
 
 // SSLMode parameter determines whether or with what priority a secure SSL TCP/IP connection will
 // be negotiated with the server
-var SSLMode string
+var SSLMode string = "disable"
 
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
 var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql", "job-functions.sql"}
@@ -56,8 +56,8 @@ func PrefixSchemaFiles(prefix string) {
 func InitAndTestConfigDBConnection(schemafiles []string) {
 	var wt int = waitTime
 	var err error
-	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
-		Host, Port, DbName, SSLMode, User)
+	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+		Host, Port, DbName, SSLMode, User, Password)
 	LogToDB("DEBUG", "Connection string: ", connstr)
 	ConfigDb, err = sqlx.Connect("postgres", connstr)
 	for err != nil {
