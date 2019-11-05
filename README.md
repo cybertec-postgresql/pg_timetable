@@ -93,6 +93,11 @@ $ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
 $ go get github.com/stretchr/testify/
 $ go test ./...
 ```
+Alternatively, run tests using postgres docker image:
+```sh
+set environment variable RUN_DOCKER=true
+$ go test ./...
+```
 
 
 ## 3. Features and advanced functionality
