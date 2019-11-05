@@ -119,13 +119,6 @@ func TestMain(m *testing.M) {
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	pgengine.Host = "localhost"
-	pgengine.Port = "5432"
-	pgengine.DbName = "timetable"
-	pgengine.User = "scheduler"
-	pgengine.Password = "somestrong"
-	pgengine.ClientName = "go-test"
-	pgengine.SSLMode = "disable"
 	if runDocker {
 		pgengine.Host = pgURL.Hostname()
 		pgengine.Port = pgURL.Port()
@@ -138,7 +131,17 @@ var setupTestDBFunc = func() {
 func setupTestCase(t *testing.T) func(t *testing.T) {
 	pgengine.ClientName = "pgengine_unit_test"
 	t.Log("Setup test case")
-	setupTestDBFunc()
+	timeout := time.After(3 * time.Second)
+	done := make(chan bool)
+	go func() {
+		setupTestDBFunc()
+		done <- true
+	}()
+	select {
+	case <-timeout:
+		t.Fatal(fmt.Sprintf("Cannot connect and initialize test database in time"))
+	case <-done:
+	}
 	return func(t *testing.T) {
 		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
 		t.Log("Test schema dropped")
