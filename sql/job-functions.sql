@@ -108,18 +108,8 @@ BEGIN
             USING HINT = 'Allowed values are "minute, day, hour, month, day_of_month"!';
     END IF;
 
-    ----CRON-Style
-    -- * * * * * command to execute
-    -- ┬ ┬ ┬ ┬ ┬
-    -- │ │ │ │ │
-    -- │ │ │ │ └──── day of the week (0 - 7) (Sunday to Saturday)(0 and 7 is Sunday);
-    -- │ │ │ └────── month (1 - 12)
-    -- │ │ └──────── day of the month (1 - 31)
-    -- │ └────────── hour (0 - 23)
-    -- └──────────── minute (0 - 59)
 
     a_element := regexp_split_to_array(element, '\s+');
-    --CASE WHEN a_element[1] ~ '^[0-9]+$' THEN a_element[1]::int[] ELSE NULL END;
     a_tmp := string_to_array(a_element[i_index],',');
 
     FOREACH  tmp_item IN ARRAY a_tmp
