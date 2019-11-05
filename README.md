@@ -95,8 +95,7 @@ $ go test ./...
 ```
 Alternatively, run tests using postgres docker image:
 ```sh
-set environment variable RUN_DOCKER=true
-$ go test ./...
+$ RUN_DOCKER=true go test ./...
 ```
 
 
