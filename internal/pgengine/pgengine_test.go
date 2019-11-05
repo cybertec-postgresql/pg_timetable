@@ -3,10 +3,8 @@ package pgengine_test
 import (
 	"database/sql"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
-	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -32,35 +30,30 @@ func TestMain(m *testing.M) {
 	runDocker, _ = strconv.ParseBool(os.Getenv("RUN_DOCKER"))
 	//Create Docker image and run postgres docker image
 	if runDocker {
-		pgURL = &url.URL{
-			Scheme: "postgres",
-			User:   url.UserPassword("scheduler", "scheduler"),
-			Path:   "timetable",
-		}
-		q := pgURL.Query()
-		q.Add("sslmode", "disable")
-		pgURL.RawQuery = q.Encode()
+		pgengine.LogToDB("LOG", "Running in docker mode...")
 
 		pool, err := dockertest.NewPool("")
 		if err != nil {
 			panic("Could not connect to docker")
 		}
+		pgengine.LogToDB("LOG", "Connetion to docker established...")
 
-		pw, _ := pgURL.User.Password()
 		runOpts := dockertest.RunOptions{
 			Repository: "postgres",
 			Tag:        "latest",
 			Env: []string{
-				"POSTGRES_USER=" + pgURL.User.Username(),
-				"POSTGRES_PASSWORD=" + pw,
-				"POSTGRES_DB=" + pgURL.Path,
+				"POSTGRES_USER=" + pgengine.User,
+				"POSTGRES_PASSWORD=" + pgengine.Password,
+				"POSTGRES_DB=" + pgengine.DbName,
 			},
 		}
-
+		
 		resource, err := pool.RunWithOptions(&runOpts)
 		if err != nil {
 			panic("Could start postgres container")
 		}
+		pgengine.LogToDB("LOG", "Postgres container is running...")
+		
 		defer func() {
 			err = pool.Purge(resource)
 			if err != nil {
@@ -68,12 +61,7 @@ func TestMain(m *testing.M) {
 			}
 		}()
 
-		pgURL.Host = resource.Container.NetworkSettings.IPAddress
-
-		// Docker layer network is different on Mac
-		if runtime.GOOS == "darwin" {
-			pgURL.Host = net.JoinHostPort(resource.GetBoundIP("5432/tcp"), resource.GetPort("5432/tcp"))
-		}
+		pgengine.Host = resource.Container.NetworkSettings.IPAddress
 
 		logWaiter, err := pool.Client.AttachToContainerNonBlocking(docker.AttachToContainerOptions{
 			Container: resource.Container.ID,
@@ -100,7 +88,8 @@ func TestMain(m *testing.M) {
 
 		pool.MaxWait = 10 * time.Second
 		err = pool.Retry(func() error {
-			db, err := sqlx.Open("postgres", pgURL.String())
+			db, err := sqlx.Open("postgres", fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 			if err != nil {
 				return err
 			}
@@ -109,18 +98,18 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic("Could not connect to postgres server")
 		}
+		pgengine.LogToDB("LOG", "Connetion to postgres established at ", 
+				fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 	}
 	os.Exit(m.Run())
 }
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	if runDocker {
-		pgengine.Host = pgURL.Hostname()
-		pgengine.Port = pgURL.Port()
-		pgengine.User = pgURL.User.Username()
-		pgengine.Password, _ = pgURL.User.Password()
-	}
+	pgengine.LogToDB("LOG", "Trying to connect postgres container at ", 
+				fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
 }
 
@@ -128,7 +117,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	pgengine.ClientName = "pgengine_unit_test"
 	pgengine.VerboseLogLevel = testing.Verbose()
 	t.Log("Setup test case")
-	timeout := time.After(3 * time.Second)
+	timeout := time.After(5 * time.Second)
 	done := make(chan bool)
 	go func() {
 		setupTestDBFunc()
