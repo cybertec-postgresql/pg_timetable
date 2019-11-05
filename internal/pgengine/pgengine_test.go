@@ -28,10 +28,6 @@ var runDocker bool
 
 func TestMain(m *testing.M) {
 	pgengine.LogToDB("LOG", "Starting TestMain...")
-	code := 0
-	defer func() {
-		os.Exit(code)
-	}()
 
 	runDocker, _ = strconv.ParseBool(os.Getenv("RUN_DOCKER"))
 	//Create Docker image and run postgres docker image
@@ -47,7 +43,7 @@ func TestMain(m *testing.M) {
 
 		pool, err := dockertest.NewPool("")
 		if err != nil {
-			pgengine.LogToDB("PANIC", "Could not connect to docker")
+			panic("Could not connect to docker")
 		}
 
 		pw, _ := pgURL.User.Password()
@@ -63,12 +59,12 @@ func TestMain(m *testing.M) {
 
 		resource, err := pool.RunWithOptions(&runOpts)
 		if err != nil {
-			pgengine.LogToDB("PANIC", "Could start postgres container")
+			panic("Could start postgres container")
 		}
 		defer func() {
 			err = pool.Purge(resource)
 			if err != nil {
-				pgengine.LogToDB("PANIC", "Could not purge resource")
+				panic("Could not purge resource")
 			}
 		}()
 
@@ -88,7 +84,7 @@ func TestMain(m *testing.M) {
 			Stream: true,
 		})
 		if err != nil {
-			pgengine.LogToDB("PANIC", "Could not connect to postgres container log output")
+			panic("Could not connect to postgres container log output")
 		}
 
 		defer func() {
@@ -111,10 +107,10 @@ func TestMain(m *testing.M) {
 			return db.Ping()
 		})
 		if err != nil {
-			pgengine.LogToDB("PANIC", "Could not connect to postgres server")
+			panic("Could not connect to postgres server")
 		}
 	}
-	code = m.Run()
+	os.Exit(m.Run())
 }
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
