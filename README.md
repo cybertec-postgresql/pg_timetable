@@ -269,10 +269,10 @@ If the parameter `by_cron` is used all other `by_*` (`by_minute`,`by_hour`,`by_d
 
 ##### 3.4.1.1 With Cron-Style
 Run "MyJob" at 00:05 in August.
-```SELECT timetable.job_add('MyJob','Select public.my_func()','SQL','5 0 * 8 *');```
+```SELECT timetable.job_add('MyJob','Select public.my_func()','MyClientName','SQL','5 0 * 8 *');```
 
 Run "MyJob" at minute 23 past every 2nd hour from 0 through 20.
-```SELECT timetable.job_add('MyJob','Select public.my_func()','SQL','23 0-20/2 * * *');```
+```SELECT timetable.job_add('MyJob','Select public.my_func()','MyClientName','SQL','23 0-20/2 * * *');```
 
 ##### 3.4.1.2 With specific time
 
@@ -280,6 +280,7 @@ Run "SQL" at 01:00 on first day of Month
 ```
     SELECT timetable.job_add ('At minute 0 and 1st hour on first day of Month',
     'SELECT timetable.insert_dummy_log()',
+    'MyClientName',
     'SQL',
     null,
     '0',
@@ -297,6 +298,7 @@ Run "SQL" at 01:00 and 02:00 on every Monday´s
  ```
     SELECT timetable.job_add ('at 01:00 and 02:00 on every Monday´s',
     'SELECT timetable.insert_dummy_log()',
+    'MyClientName',
     'SQL',
     null,
     '0',
