@@ -23,6 +23,9 @@ Create chain ececution config on page http://127.0.0.1:5000/chain_execution_conf
 
 On page http://127.0.0.1:5000/chain_execution_config/ you can see the config and you will see the links to edit it.
 
+Some TODO:
+ * On chain parameters page, if you want to add a string as a parameter you need to quote it, if you need to add an integer keep it unquoted.
+
 
 
 
