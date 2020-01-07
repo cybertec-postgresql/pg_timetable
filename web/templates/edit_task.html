@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block body %}
+                <form action = "." method = "post">
+                   <p><label for="task_name">Task name: </label><input type="text" id="task_name" name="task_name" value="{{ obj.task_name }}"/></p>
+		   <p><label for="task_function">Task function: </label><textarea id="task_function" name="task_function" rows="4" cols="50">{{ obj.task_function }}</textarea></p>
+		   <p><label for="task_kind">Task kind: </label><select id="task_kind" name="task_kind">
+			   {% for o in ["SQL", "SHELL", "BUILTIN"] %}
+			   <option {% if obj.task_kind == o %}selected {% endif %}value="{{ o }}">{{ o }}</option>
+			   {% endfor %}
+		   </select></p>
+                   <p><input type="submit" value="submit" /></p>
+                </form>
+{% endblock %}

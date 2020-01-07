@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block body %}
+{% for obj in list %}
+<div>
+	<p><a href="/chain_execution_config/{{ obj.chain_execution_config }}/">View</a> <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a></p>
+	<p>chain_name: <span>{{ obj.chain_name }}</span></p>
+</div>
+{% endfor %}
+<p><a href="/chain_execution_config/add/">add</a></p>
+{% endblock %}

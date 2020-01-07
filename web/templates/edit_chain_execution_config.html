@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block body %}
+<div>
+        <form action = "." method = "post">
+           <p><label for="chain_id">Chain id: </label><select id="chain_id" name="chain_id">
+                   {% for c in chains %}
+                   <option {% if obj.chain_id == c.chain_id %}selected {% endif %}value="{{ c.chain_id }}">{{ c.chain_id }}</option>
+                   {% endfor %}
+           </select></p>
+	   <p><label for="chain_name">Chain name: </label><input type="text" id="chain_name" name="chain_name" value="{{ obj.chain_name if obj.chain_name is not none }}"/></p>
+	   <p><label for="client_name">Client name: </label><input type="text" id="client_name" name="client_name" value="{{ obj.client_name if obj.client_name is not none }}"/></p>
+           <p><label for="run_at_minute">By minute: </label><input type="text" id="run_at_minute" name="run_at_minute" value="{{ obj.run_at_minute if obj.run_at_minute is not none }}"/></p>
+           <p><label for="run_at_hour">By hour: </label><input type="text" id="run_at_hour" name="run_at_hour" value="{{ obj.run_at_hour if obj.run_at_hour is not none }}"/></p>
+           <p><label for="run_at_day">By day: </label><input type="text" id="run_at_day" name="run_at_day" value="{{ obj.run_at_day if obj.run_at_day is not none }}"/></p>
+           <p><label for="run_at_month">By month: </label><input type="text" id="run_at_month" name="run_at_month" value="{{ obj.run_at_month if obj.run_at_month is not none }}"/></p>
+           <p><label for="run_at_day_of_week">By day of week: </label><input type="text" id="run_at_day_of_week" name="run_at_day_of_week" value="{{ obj.run_at_day_of_week if obj.run_at_day_of_week is not none }}"/></p>
+           <p><label for="max_instances">max instances: </label><input type="number" min="0" id="max_instances" name="max_instances" value="{{ obj.max_instances if obj.max_instances is not none }}"/></p>
+	   <p><label for="live">live: </label><input type="checkbox" id="live" {% if obj.live %}checked {% endif %}name="live"/></p>
+           <p><label for="self_destruct">self destruct: </label><input type="checkbox" id="self_destruct" {% if obj.self_destruct %}checked {% endif %}name="self_destruct"/></p>
+           <p><label for="exclusive_execution">exclusive execution: </label><input type="checkbox" id="exclusive_execution" {% if obj.exclusive_execution %}checked {% endif %}name="exclusive_execution"/></p>
+	   <p><label for="excluded_execution_configs">excluded_execution_configs: </label><input type="text" id="excluded_execution_configs" name="excluded_execution_configs" value="{{ obj.excluded_execution_configs if obj.excluded_execution_configs is not none }}"/></p>
+           <p><input type="submit" value="submit" /></p>
+        </form>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body %}
+<div>
+	<p><a href="/chain_execution_config/{{ obj.chain_execution_config }}/">View</a> <a href="/chain_execution_config/{{ obj.chain_execution_config }}/edit/">Edit</a> <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a></p>
+	<p>chain_name: <span>{{ obj.chain_name }}</span></p>
+	<p>chain_id: <span>{{ obj.chain_id }}</span></p>
+	<p>client_name: <span>{{ obj.client_name }}</span></p>
+	<p>By minute: <span>{{ obj.run_at_minute if obj.run_at_minute is not none else '*' }}</span></p>
+	<p>By hour: <span>{{ obj.run_at_hour if obj.run_at_hour is not none  else '*' }}</span></p>
+	<p>By day: <span>{{ obj.run_at_day if obj.run_at_day is not none  else '*' }}</span></p>
+	<p>By month: <span>{{ obj.run_at_month if obj.run_at_month is not none  else '*' }}</span></p>
+	<p>By day of week: <span>{{ obj.run_at_day_of_week if obj.run_at_day_of_week is not none  else '*' }}</span></p>
+	<p>max instances: <span>{{ obj.max_instances if obj.max_instances is not none }}</span></p>
+	<p>live: <span>{{ obj.live }}</span></p>
+	<p>self destruct: <span>{{ obj.self_destruct }}</s</p>
+	<p>exclusive execution: <span>{{ obj.exclusive_execution }}</span></p>
+	<p>excluded_execution_configs: <span>{{ obj.excluded_execution_configs if obj.excluded_execution_configs is not none }}</span></p>
+	{% with %}
+	{% set chain_execution_config = obj.chain_execution_config %}
+	{% set obj = obj.chain %}
+        {% include 'view_chain_tpl.html' %}
+	{% endwith %}
+</div>
+{% endblock %}

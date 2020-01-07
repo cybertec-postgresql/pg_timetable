@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+<div>
+   <p><a href="/task/{{ obj.task_id }}/edit/">Edit</a></p>
+   <p>Task name: <span>{{ obj.task_name }}</p>
+   <p>Task function: <span>{{ obj.task_function }}</span></p>
+   <p>Task kind: <span>{{ obj.task_kind }}</span></p>
+</div>
+{% endblock %}

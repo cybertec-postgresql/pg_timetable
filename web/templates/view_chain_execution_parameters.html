@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block body %}
+<div>
+	<p><a href="/chain_execution_parameters/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/{{ obj.order_id }}/">View</a> <a href="/chain_execution_parameters/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/{{ obj.order_id }}/edit/">Edit</a></p>
+	<p>chain_execution_config: <span>{{ obj.chain_execution_config }}</span></p>
+	<p>chain_id: <span>{{ obj.chain_id }}</span></p>
+	<p>order_id: <span>{{ obj.order_id }}</span></p>
+	<p>value: <span>{{ obj.value }}</span></p>
+</div>
+{% endblock %}
