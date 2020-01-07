@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block body %}
 <div>
-	<p><a href="/chain_execution_config/{{ obj.chain_execution_config }}/">View</a> <a href="/chain_execution_config/{{ obj.chain_execution_config }}/edit/">Edit</a> <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a></p>
+	<p><a href="/chain_execution_config/{{ obj.chain_execution_config }}/edit/">Edit</a> <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a></p>
 	<p>chain_name: <span>{{ obj.chain_name }}</span></p>
 	<p>chain_id: <span>{{ obj.chain_id }}</span></p>
 	<p>client_name: <span>{{ obj.client_name }}</span></p>

@@ -1,1 +1,2 @@
 Flask==1.1.1
+psycopg2-binary==2.8.4

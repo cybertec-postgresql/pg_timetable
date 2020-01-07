@@ -3,6 +3,7 @@
 <div>
         <form action = "." method = "post">
            <p><label for="chain_id">Chain id: </label><select id="chain_id" name="chain_id">
+                   <option value="">Add new chain</option>
                    {% for c in chains %}
                    <option {% if obj.chain_id == c.chain_id %}selected {% endif %}value="{{ c.chain_id }}">{{ c.chain_id }}</option>
                    {% endfor %}

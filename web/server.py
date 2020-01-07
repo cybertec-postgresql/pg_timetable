@@ -470,6 +470,8 @@ def add_chain_to_parent(parent_id):
         run_uid = validate_string(request.form.get('run_uid'))
         database_connection = validate_string(request.form.get('database_connection'))
         ignore_error = validate_bool(request.form.get('ignore_error'))
+        if parent_id == 0:
+            parent_id = None
         Chain(None, task_id, parent_id, run_uid, database_connection, ignore_error).save()
         return redirect(f"/chain_execution_config/", code=302)
 

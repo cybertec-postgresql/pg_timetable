@@ -24,6 +24,10 @@
 	{% endwith %}
 </div>
 {% else %}
+{% if old_obj %}
 	<p><a href="/chain/{{ old_obj.chain_id }}/delete/">Delete last chain</a></p>
 	<p><a href="/chain/{{ old_obj.chain_id }}/add/">Add new chain</a></p>
+{% else %}
+	<p><a href="/chain/0/add/">Add new chain</a></p>
+{% endif %}
 {% endif %}
