@@ -1,7 +1,7 @@
 {% if obj.chain_id %}
 <div>
 	<hr />
-	<p>chain id: <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/">{{ obj.chain_id }}</a> <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/">Edit</a></p>
+	<p>chain id: <span>{{obj.chain_id }}</span> <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/">Edit</a></p>
 	<p>task id: <a href="/task/{{ obj.task.task_id }}/">{{ obj.task.task_id }}. {{ obj.task.task_name }}</a>{# <a href="/task/{{ obj.task.task_id }}/edit/">Edit</a></p> #}
 	{# <p>parent id: {{ obj.parent_id  if obj.parent_id is not none }}</p> #}
         <p>run uid: {{ obj.run_uid if obj.run_uid is not none}}</p>
@@ -13,7 +13,7 @@
 	{% set ns = namespace (max_order = 0) %}
 	{% for p in obj.parameters %}
 	{% set ns.max_order = ([ns.max_order, p.order_id]|sort)[-1] %}
-	<p><a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/">{{ p.value }}</a> <a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/edit/">Edit</a> <a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/delete/">Delete</a></p>
+	<p><a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/">{{ p.value }}</a></p>
 	{% endfor %}
 	<p><a href="/chain_execution_parameters/{{ chain_execution_config }}/{{ obj.chain_id }}/{{ ns.max_order + 1 }}/add/">Add new parameter</a></p>
 	{% endwith %}

@@ -165,7 +165,7 @@ class Model(object):
         for row in records:
             result.append(
                 {
-                    "chain_execution_config": self.chain_execution_config,
+                    "chain_execution_config": self.chain_execution_config if hasattr(self, "chain_execution_config") else None,
                     "chain_id": row[0],
                     "run_uid": row[2],
                     "database_connection": row[3],
@@ -417,7 +417,7 @@ def add_chain_execution_configs():
         exclusive_execution = validate_bool(request.form.get('exclusive_execution'))
         excluded_execution_configs = validate_string(request.form.get('excluded_execution_configs'))
         client_name = validate_string(request.form.get('client_name'))
-        db = Model(None, chain_id=chain_id, chain_name=chain_name, run_at_minute=run_at_minute, run_at_hour=run_at_hour, run_at_day=run_at_day, run_at_month=run_at_month, run_at_day_of_week=run_at_day_of_week, max_instances=max_instances, live=live, self_destruct=self_destruct, exclusive_execution=exclusive_execution, excluded_execution_configs=excluded_execution_configs, client_name=client_name, task_id=task_id)
+        db = Model(chain_execution_config=None, chain_id=chain_id, chain_name=chain_name, run_at_minute=run_at_minute, run_at_hour=run_at_hour, run_at_day=run_at_day, run_at_month=run_at_month, run_at_day_of_week=run_at_day_of_week, max_instances=max_instances, live=live, self_destruct=self_destruct, exclusive_execution=exclusive_execution, excluded_execution_configs=excluded_execution_configs, client_name=client_name, task_id=task_id)
         db.save_chain_config()
         return redirect(f"/chain_execution_config/", code=302)
 
