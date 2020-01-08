@@ -26,23 +26,18 @@ app = Flask(__name__, static_url_path='/static')
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
 class Model(object):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.conn = psycopg2.connect(
             "dbname={dbname} user={user} password={password} host={host}".format(
                 dbname=ENV.dbname, user=ENV.user, password=ENV.password, host=ENV.host
             )
         )
         self.cur = self.conn.cursor()
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 class Task(Model):
-    def __init__(self, task_id=None, task_name=None, task_function=None, task_kind='SQL'):
-        self.task_id=task_id
-        self.task_name=task_name
-        self.task_function=task_function
-        self.task_kind=task_kind
-        super().__init__()
-
 
     def get_all(self):
         self.cur.execute("SELECT task_id, name, kind, script FROM timetable.base_task")
@@ -83,13 +78,6 @@ class Task(Model):
         self.conn.commit()
 
 class ChainExecutionParameters(Model):
-    def __init__(self, chain_execution_config=None, chain_id=None, order_id=None, value=None):
-        self.chain_execution_config = chain_execution_config
-        self.chain_id = chain_id
-        self.order_id = order_id
-        self.value = value
-        super().__init__()
-
 
     def get_all(self):
         self.cur.execute(
@@ -137,24 +125,11 @@ class ChainExecutionParameters(Model):
 
 
 class ChainExecutionConfig(Model):
-    def __init__(self, chain_execution_config=None, chain_id=None, chain_name=None, run_at_minute=None, run_at_hour=None, run_at_day=None, run_at_month=None, run_at_day_of_week=None, max_instances=None, live=None, self_destruct=None, exclusive_execution=None, excluded_execution_configs=None, client_name=None, task_id=None):
-        self.chain_execution_config = chain_execution_config
-        self.chain_id = chain_id
-        self.chain_name = chain_name
-        self.run_at_minute = run_at_minute
-        self.run_at_hour = run_at_hour
-        self.run_at_day = run_at_day
-        self.run_at_month = run_at_month
-        self.run_at_day_of_week = run_at_day_of_week
-        self.max_instances = max_instances
-        self.live = live
-        self.self_destruct = self_destruct
-        self.exclusive_execution = exclusive_execution
-        self.excluded_execution_configs = excluded_execution_configs
-        self.client_name = client_name
-        self.task_id = task_id
+
+    def __init__(self, **kwargs):
         self.parents_done = []
-        super().__init__()
+        super().__init__(**kwargs)
+        print(dir(self))
 
 
     def get_all(self):
@@ -296,15 +271,9 @@ class ChainExecutionConfig(Model):
         return result
 
 class Chain(Model):
-    def __init__(self, chain_id=None, task_id=None, parent_id=None, run_uid=None, database_connection=None, ignore_error=None):
-        self.chain_id=chain_id
-        self.task_id=task_id
-        self.parent_id=parent_id
-        self.run_uid=run_uid
-        self.database_connection=database_connection
-        self.ignore_error=ignore_error
+    def __init__(self, **kwargs):
         self.parents_done = []
-        super().__init__()
+        super().__init__(**kwargs)
 
 
     def get_all(self, only_base=True):
@@ -318,14 +287,27 @@ class Chain(Model):
             result.append(
                 {
                     "chain_id": row[0],
-                    "task_id": row[1],
                     "run_uid": row[2],
                     "database_connection": row[3],
                     "ignore_error": row[4],
+                    "task": self.get_task(task_id=row[1])
                 }
             )
 
         return result
+
+    def get_task(self, task_id):
+        self.cur.execute(
+            "SELECT name, kind, script FROM timetable.base_task where task_id = %s", (task_id,))
+        records = self.cur.fetchall()
+        row = records[0]
+        result = {"task_id": task_id,
+                  "task_name": row[0],
+                  "task_kind": row[1] or "",
+                  "task_function": row[2]
+                }
+        return result
+
 
     def notparents(self):
         self.cur.execute("select a.chain_id, a.parent_id, a.task_id, a.run_uid, a.database_connection, a.ignore_error FROM timetable.task_chain a left outer join timetable.task_chain b on a.chain_id = b.parent_id where b.parent_id is null")
@@ -336,10 +318,10 @@ class Chain(Model):
                 {
                     "chain_id": row[0],
                     "parent_id": row[1],
-                    "task_id": row[2],
                     "run_uid": row[3],
                     "database_connection": row[4],
                     "ignore_error": row[5],
+                    "task": self.get_task(task_id=row[2])
                 }
             )
 
@@ -355,11 +337,11 @@ class Chain(Model):
         result = {
                 "chain_id": row[0],
                 "parent_id": row[1],
-                "task_id": row[2],
                 "run_uid": row[3],
                 "database_connection": row[4],
                 "ignore_error": row[5],
-                "next": self.get_by_parent(parent_id=row[0])
+                "next": self.get_by_parent(parent_id=row[0]),
+                "task": self.get_task(task_id=row[2])
                 }
         return result
 
@@ -376,11 +358,11 @@ class Chain(Model):
         result = {
                 "chain_id": row[0],
                 "parent_id": row[1],
-                "task_id": row[2],
                 "run_uid": row[3],
                 "database_connection": row[4],
                 "ignore_error": row[5],
-                "next": self.get_by_parent(parent_id=row[0])
+                "next": self.get_by_parent(parent_id=row[0]),
+                "task": self.get_task(task_id=row[2])
                 }
         return result
 
@@ -475,13 +457,13 @@ def edit_chain(chain_id):
         run_uid = validate_string(request.form.get('run_uid'))
         database_connection = validate_string(request.form.get('database_connection'))
         ignore_error = validate_bool(request.form.get('ignore_error'))
-        Chain(chain_id, task_id, parent_id, run_uid, database_connection, ignore_error).save()
+        Chain(chain_id=chain_id, task_id=task_id, parent_id=parent_id, run_uid=run_uid, database_connection=database_connection, ignore_error=ignore_error).save()
         return redirect(f"/chain_execution_config/", code=302)
 
 @app.route('/chain/<int:parent_id>/add/', methods=["GET", "POST"])
 def add_chain_to_parent(parent_id):
     if request.method == 'GET':
-        return render_template("edit_chain.html", obj=Chain(None, parent_id), tasks=Task().get_all())
+        return render_template("edit_chain.html", obj=Chain(chain_id=None, parent_id=parent_id), tasks=Task().get_all())
     else:
         task_id = validate_string(request.form.get('task_id'))
         run_uid = validate_string(request.form.get('run_uid'))
@@ -489,7 +471,7 @@ def add_chain_to_parent(parent_id):
         ignore_error = validate_bool(request.form.get('ignore_error'))
         if parent_id == 0:
             parent_id = None
-        Chain(None, task_id, parent_id, run_uid, database_connection, ignore_error).save()
+        Chain(chain_id=None, task_id=task_id, parent_id=parent_id, run_uid=run_uid, database_connection=database_connection, ignore_error=ignore_error).save()
         return redirect(f"/chain_execution_config/", code=302)
 
 @app.route('/chain/<int:chain_id>/delete/', methods=["GET", "POST"])
@@ -520,7 +502,7 @@ def add_chain_execution_configs():
         exclusive_execution = validate_bool(request.form.get('exclusive_execution'))
         excluded_execution_configs = validate_string(request.form.get('excluded_execution_configs'))
         client_name = validate_string(request.form.get('client_name'))
-        ChainExecutionConfig(None, chain_id, chain_name, run_at_minute, run_at_hour, run_at_day, run_at_month, run_at_day_of_week, max_instances, live, self_destruct, exclusive_execution, excluded_execution_configs, client_name, task_id).save()
+        ChainExecutionConfig(None, chain_id=chain_id, chain_name=chain_name, run_at_minute=run_at_minute, run_at_hour=run_at_hour, run_at_day=run_at_day, run_at_month=run_at_month, run_at_day_of_week=run_at_day_of_week, max_instances=max_instances, live=live, self_destruct=self_destruct, exclusive_execution=exclusive_execution, excluded_execution_configs=excluded_execution_configs, client_name=client_name, task_id=task_id).save()
         return redirect(f"/chain_execution_config/", code=302)
 
 @app.route('/chain_execution_config/')
@@ -529,12 +511,12 @@ def list_chain_execution_configs():
 
 @app.route('/chain_execution_config/<int:id>/')
 def view_chain_execution_configs(id):
-    return render_template("view_chain_execution_config.html", obj=ChainExecutionConfig(id).get_by_id(id))
+    return render_template("view_chain_execution_config.html", obj=ChainExecutionConfig(chain_execution_config=id).get_by_id(id))
 
 @app.route('/chain_execution_config/<int:id>/edit/', methods=["GET", "POST"])
 def edit_chain_execution_configs(id):
     if request.method == 'GET':
-        return render_template("edit_chain_execution_config.html", obj=ChainExecutionConfig().get_by_id(id), chains=Chain().get_all())
+        return render_template("edit_chain_execution_config.html", obj=ChainExecutionConfig(chain_execution_config=id).get_by_id(id), chains=Chain().get_all())
     else:
         chain_id = validate_string(request.form.get('chain_id'))
         chain_name = validate_string(request.form.get('chain_name'))
@@ -549,19 +531,28 @@ def edit_chain_execution_configs(id):
         exclusive_execution = validate_bool(request.form.get('exclusive_execution'))
         excluded_execution_configs = validate_string(request.form.get('excluded_execution_configs'))
         client_name = validate_string(request.form.get('client_name'))
-        ChainExecutionConfig(id, chain_id, chain_name, run_at_minute, run_at_hour, run_at_day, run_at_month, run_at_day_of_week, max_instances, live, self_destruct, exclusive_execution, excluded_execution_configs, client_name).save()
+        ChainExecutionConfig(chain_execution_config=id, chain_id=chain_id, chain_name=chain_name, run_at_minute=run_at_minute, run_at_hour=run_at_hour, run_at_day=run_at_day, run_at_month=run_at_month, run_at_day_of_week=run_at_day_of_week, max_instances=max_instances, live=live, self_destruct=self_destruct, exclusive_execution=exclusive_execution, excluded_execution_configs=excluded_execution_configs, client_name=client_name).save()
         return redirect(f"/chain_execution_config/{id}/", code=302)
 
 
 @app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/add/', methods=["GET", "POST"])
 def create_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     if request.method == 'GET':
-        return render_template("edit_chain_execution_parameters.html", obj=ChainExecutionParameters(chain_execution_config, chain_id, order_id))
+        return render_template("edit_chain_execution_parameters.html", obj=ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order_id))
     else:
         order = validate_string(request.form.get('order_id'))
         value = validate_string(request.form.get('value'))
-        ChainExecutionParameters(chain_execution_config, chain_id, order, value).save()
+        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order=order, value=value).save()
         return redirect(f"/chain_execution_parameters/{chain_execution_config}/{chain_id}/{order}/", code=302)
+
+
+@app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/delete/', methods=["GET", "POST"])
+def delete_chain_execution_parameters(chain_execution_config, chain_id, order_id):
+    if request.method == 'GET':
+        return render_template("delete.html", obj=ChainExecutionParameters().get_by_id(chain_execution_config, chain_id, order_id))
+    else:
+        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order_id).delete()
+        return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
 
 @app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/')
 def view_chain_execution_parameters(chain_execution_config, chain_id, order_id):
@@ -574,7 +565,7 @@ def edit_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     else:
         order = validate_string(request.form.get('order_id'))
         value = validate_string(request.form.get('value'))
-        ChainExecutionParameters(chain_execution_config, chain_id, order, value).save()
+        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order=order, value=value).save()
         return redirect(f"/chain_execution_parameters/{chain_execution_config}/{chain_id}/{order}/", code=302)
 
 @app.route('/execution_log/<int:id>/')
