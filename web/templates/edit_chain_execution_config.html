@@ -8,6 +8,11 @@
                    <option {% if obj.chain_id == c.chain_id %}selected {% endif %}value="{{ c.chain_id }}">{{ c.chain_id }}</option>
                    {% endfor %}
            </select></p>
+           <p><label for="task_id">task id: </label><select id="task_id" name="task_id">
+                   {% for t in tasks %}
+		   <option {% if obj.task_id == t.task_id %}selected {% endif %}value="{{ t.task_id }}">{{ t.task_id }}. {{ t.task_name }}</option>
+                   {% endfor %}
+           </select></p>
 	   <p><label for="chain_name">Chain name: </label><input type="text" id="chain_name" name="chain_name" value="{{ obj.chain_name if obj.chain_name is not none }}"/></p>
 	   <p><label for="client_name">Client name: </label><input type="text" id="client_name" name="client_name" value="{{ obj.client_name if obj.client_name is not none }}"/></p>
            <p><label for="run_at_minute">By minute: </label><input type="text" id="run_at_minute" name="run_at_minute" value="{{ obj.run_at_minute if obj.run_at_minute is not none }}"/></p>
