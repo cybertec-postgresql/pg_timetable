@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/jackc/pgx/v4/stdlib" // postgresql driver blank import
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // postgresql driver blank import
 )
 
 // wait for 5 sec before reconnecting to DB
@@ -59,12 +59,12 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
 		Host, Port, DbName, SSLMode, User)
 	LogToDB("DEBUG", "Connection string: ", connstr)
-	ConfigDb, err = sqlx.Connect("postgres", connstr)
+	ConfigDb, err = sqlx.Connect("pgx", connstr)
 	for err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
 		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
 		time.Sleep(time.Duration(wt) * time.Second)
-		ConfigDb, err = sqlx.Connect("postgres", connstr)
+		ConfigDb, err = sqlx.Connect("pgx", connstr)
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
@@ -119,7 +119,7 @@ func ReconnectDbAndFixLeftovers() {
 		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
 		time.Sleep(waitTime * time.Second)
 		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
-		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
+		ConfigDb, err = sqlx.Connect("pgx", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
 			Host, Port, DbName, SSLMode, User, Password))
 		if err == nil {
 			LogToDB("LOG", "Connection reestablished...")
