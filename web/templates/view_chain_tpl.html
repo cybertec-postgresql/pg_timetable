@@ -13,7 +13,7 @@
 	{% set ns = namespace (max_order = 0) %}
 	{% for p in obj.parameters %}
 	{% set ns.max_order = ([ns.max_order, p.order_id]|sort)[-1] %}
-	<p><a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/">{{ p.value }}</a></p>
+	<p><a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/">{{ p.value|string|truncate(100)}}</a></p>
 	{% endfor %}
 	<p><a href="/chain_execution_parameters/{{ chain_execution_config }}/{{ obj.chain_id }}/{{ ns.max_order + 1 }}/add/">Add new parameter</a></p>
 	{% endwith %}
