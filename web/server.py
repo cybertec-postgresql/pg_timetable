@@ -392,7 +392,7 @@ def delete_chain(chain_id, chain_execution_config):
         db = Model(chain_id=chain_id, chain_execution_config=chain_execution_config)
         return render_template("delete.html", obj=db.get_chain_by_id(chain_id))
     else:
-        db = Model(chain_id)
+        db = Model(chain_id=chain_id)
         db.delete_chain()
         return redirect(f"/chain_execution_config/", code=302)
 
