@@ -542,7 +542,7 @@ def create_chain_execution_parameters(chain_execution_config, chain_id, order_id
     else:
         order = validate_string(request.form.get('order_id'))
         value = validate_string(request.form.get('value'))
-        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order=order, value=value).save()
+        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order, value=value).save()
         return redirect(f"/chain_execution_parameters/{chain_execution_config}/{chain_id}/{order}/", code=302)
 
 
@@ -565,7 +565,7 @@ def edit_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     else:
         order = validate_string(request.form.get('order_id'))
         value = validate_string(request.form.get('value'))
-        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order=order, value=value).save()
+        ChainExecutionParameters(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order, value=value).save()
         return redirect(f"/chain_execution_parameters/{chain_execution_config}/{chain_id}/{order}/", code=302)
 
 @app.route('/execution_log/<int:id>/')
