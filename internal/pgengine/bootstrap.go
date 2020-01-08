@@ -7,7 +7,9 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/jackc/pgx/v4/stdlib" // postgresql driver blank import
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -58,6 +60,16 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
 		Host, Port, DbName, SSLMode, User)
+
+	connConfig, err := pgx.ParseConfig(connstr)
+
+	connConfig.OnNotice = func(con *pgconn.PgConn, notice *pgconn.Notice) {
+		LogToDB("USER", notice)
+	}
+
+	connstr = stdlib.RegisterConnConfig(connConfig)
+	defer stdlib.UnregisterConnConfig(connstr)
+
 	LogToDB("DEBUG", "Connection string: ", connstr)
 	ConfigDb, err = sqlx.Connect("pgx", connstr)
 	for err != nil {
