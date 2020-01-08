@@ -5,7 +5,7 @@
 CREATE TABLE timetable.dummy_log (
     log_ID BIGSERIAL,
     event_name TEXT,
-    timestmp TIMESTAMPTZ,
+    timestmp TIMESTAMPTZ DEFAULT TRANSACTION_TIMESTAMP(),
     PRIMARY KEY (log_ID));
 
 -- Paramerters detail for timetable.job_add()
@@ -33,17 +33,17 @@ CREATE TABLE timetable.dummy_log (
 -- │ └────────── hour (0 - 23)
 -- └──────────── minute (0 - 59)
 
-SELECT
-timetable.job_add ('cron_Job run after 40th minutes after 2 hour on 27th of every month ',
-    $$INSERT INTO timetable.dummy_log (event_name, timestmp) VALUES ('Cron test', TRANSACTION_TIMESTAMP())$$,
-    NULL, -- any worker may execute
-    'SQL',
-    '40 */2 27 * *',
-    '',
-    '',
-    '',
-    '',
-    '',
-    1,
-    TRUE,
-    FALSE);
+SELECT timetable.job_add (
+    task_name      => 'cron_Job run after 40th minutes after 2 hour on 27th of every month ',
+    task_function  => $$INSERT INTO timetable.dummy_log (event_name) VALUES ('Cron test')$$,
+    client_name    => NULL, -- any worker may execute
+    task_type      => 'SQL',
+    by_cron        => '40 */2 27 * *',
+    by_minute      => NULL,
+    by_hour        => NULL,
+    by_day         => NULL,
+    by_month       => NULL,
+    by_day_of_week => NULL,
+    max_instances  => 1,
+    live           => TRUE,
+    self_destruct  => FALSE);
