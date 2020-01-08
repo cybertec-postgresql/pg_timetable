@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import escape, request, redirect, render_template
+from wtforms import Form, BooleanField, SelectField, StringField, PasswordField, validators, IntegerField
 import os
 import json
 import datetime
@@ -24,6 +25,12 @@ ENV = build_env(
 
 app = Flask(__name__, static_url_path='/static')
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
+
+class ChainForm(Form):
+    task_id = SelectField("Task id", coerce=int)
+    run_uid = StringField("Run uid")
+    database_connection = StringField("Database connection", filters=[lambda i: i or None])
+    ignore_error = BooleanField("Ignore error")
 
 class Model(object):
     def __init__(self, **kwargs):
@@ -201,7 +208,7 @@ class Model(object):
             )
         else:
             self.cur.execute(
-                "UPDATE timetable.task_chain set parent_id = %s, task_id = %s, run_uid = %s, database_connection = %s, ignore_error = %s where chain_id = %s", (self.parent_id, self.task_id, self.run_uid, self.database_connection, self.ignore_error, self.chain_id,))
+                "UPDATE timetable.task_chain set task_id = %s, run_uid = %s, database_connection = %s, ignore_error = %s where chain_id = %s", (self.task_id, self.run_uid, self.database_connection, self.ignore_error, self.chain_id,))
         self.conn.commit()
 
     def delete_chain(self):
@@ -357,34 +364,31 @@ def view_chain(chain_id, chain_execution_config):
 
 @app.route('/chain/<int:chain_execution_config>/<int:chain_id>/edit/', methods=["GET", "POST"])
 def edit_chain(chain_id, chain_execution_config):
-    if request.method == 'GET':
-        db = Model(chain_id=chain_id, chain_execution_config=chain_execution_config)
-        return render_template("edit_chain.html", obj=db.get_chain_by_id(chain_id), chains=db.chains_notparents(), tasks=db.get_all_tasks())
-    else:
-        task_id = validate_string(request.form.get('task_id'))
-        parent_id = validate_string(request.form.get('parent_id'))
-        run_uid = validate_string(request.form.get('run_uid'))
-        database_connection = validate_string(request.form.get('database_connection'))
-        ignore_error = validate_bool(request.form.get('ignore_error'))
-        db = Model(chain_id=chain_id, task_id=task_id, parent_id=parent_id, run_uid=run_uid, database_connection=database_connection, ignore_error=ignore_error)
+    db = Model(chain_id=chain_id, chain_execution_config=chain_execution_config)
+    form = ChainForm(request.form)
+    form.task_id.choices = [(t["task_id"], f't["task_id"]. t["task_name"]') for t in db.get_all_tasks()]
+    if request.method == 'POST' and form.validate():
+        db = Model(chain_id=chain_id, task_id=form.task_id.data, run_uid=form.run_uid.data, database_connection=form.database_connection.data, ignore_error=form.ignore_error.data)
         db.save_chain()
         return redirect(f"/chain_execution_config/", code=302)
+    return render_template("edit_chain.html", obj=db.get_chain_by_id(chain_id), chains=db.chains_notparents(), tasks=db.get_all_tasks(), form=form)
 
 @app.route('/chain/<int:chain_execution_config>/<int:parent_id>/add/', methods=["GET", "POST"])
 def add_chain_to_parent(parent_id, chain_execution_config):
-    if request.method == 'GET':
-        db = Model(parent_id=parent_id, chain_execution_config=chain_execution_config)
-        return render_template("edit_chain.html", obj=dict(chain_id=None, parent_id=parent_id), tasks=db.get_all_tasks())
-    else:
-        task_id = validate_string(request.form.get('task_id'))
-        run_uid = validate_string(request.form.get('run_uid'))
-        database_connection = validate_string(request.form.get('database_connection'))
-        ignore_error = validate_bool(request.form.get('ignore_error'))
-        if parent_id == 0:
-            parent_id = None
-        db = Model(chain_id=None, task_id=task_id, parent_id=parent_id, run_uid=run_uid, database_connection=database_connection, ignore_error=ignore_error)
+    if parent_id == 0:
+        parent_id = None
+    db = Model(parent_id=parent_id, chain_execution_config=chain_execution_config)
+    form = ChainForm(request.form)
+    form.task_id.choices = [(t["task_id"], f't["task_id"]. t["task_name"]') for t in db.get_all_tasks()]
+    if request.method == 'POST' and form.validate():
+        db.chain_id=None
+        db.task_id=form.task_id.data
+        db.run_uid=form.run_uid.data
+        db.database_connection=form.database_connection.data
+        db.ignore_error=form.ignore_error.data
         db.save_chain()
         return redirect(f"/chain_execution_config/", code=302)
+    return render_template("edit_chain.html", obj=db.get_chain_by_parent(parent_id), chains=db.chains_notparents(), tasks=db.get_all_tasks(), form=form)
 
 @app.route('/chain/<int:chain_execution_config>/<int:chain_id>/delete/', methods=["GET", "POST"])
 def delete_chain(chain_id, chain_execution_config):
