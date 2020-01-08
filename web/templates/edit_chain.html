@@ -3,7 +3,7 @@
                 <form action = "." method = "post">
                    <p><label for="task_id">task id: </label><select id="task_id" name="task_id">
                            {% for t in tasks %}
-			   <option {% if obj.task_id == t.task_id %}selected {% endif %}value="{{ t.task_id }}">{{ t.task_id }}. {{ t.task_name }}</option>
+			   <option {% if obj.task and obj.task.task_id == t.task_id %}selected {% endif %}value="{{ t.task_id }}">{{ t.task_id }}. {{ t.task_name }}</option>
                            {% endfor %}
                    </select></p>
 		   <p><label for="run_uid">run uid: </label><input type="text" id="run_uid" name="run_uid" value="{{ obj.run_uid if obj.run_uid is not none}}"/></p>
