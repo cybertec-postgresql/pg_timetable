@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block body %}
 <div>
+	{% from "_formhelpers.html" import render_field %}
         <form action = "." method = "post">
-           <p><label for="order_id">order id: </label><input type="number" min="1" id="order_id" name="order_id" value="{{ obj.order_id if obj.order_id is not none }}"/></p>
-	   <p><label for="value">value: </label><input type="text" id="value" name="value" value="{{ obj.value if obj.value is not none }}"/></p>
-           <p><input type="submit" value="submit" /></p>
-        </form>
+	   <dl>
+           {{ render_field(form.order_id) }}
+           {{ render_field(form.value) }}
+	   </dl>
+	   <input type="submit" value="submit" />
+	</form>
 </div>
 {% endblock %}
