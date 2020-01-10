@@ -96,6 +96,14 @@ class Model(object):
         result = Object(task_id=task_id, task_name=row[0], task_kind=row[1] or "", task_function=row[2])
         return result
 
+    def get_task_by_name(self, task_name):
+        self.cur.execute(
+            "SELECT task_id, name, kind, script FROM timetable.base_task where name = %s", (task_name,))
+        records = self.cur.fetchall()
+        row = records[0]
+        result = Object(task_id=row[0], task_name=row[1], task_kind=row[2], task_function=row[3])
+        return result
+
 
     def save_task(self):
         if self.task_id is None:
@@ -245,6 +253,17 @@ class Model(object):
         result = Object(chain_execution_config=row[0], chain_id=row[1], chain_name=row[2], run_at_minute=row[3], run_at_hour=row[4], run_at_day=row[5], run_at_month=row[6], run_at_day_of_week=row[7], max_instances=row[8], live=row[9], self_destruct=row[10], exclusive_execution=row[11], excluded_execution_configs=row[12], client_name=row[13], chain=self.get_chain_by_id(row[1]))
         return result
 
+    def get_chain_config_by_name(self, name):
+        self.cur.execute(
+            "SELECT chain_execution_config, chain_id, chain_name, run_at_minute, run_at_hour, run_at_day, run_at_month, run_at_day_of_week, max_instances, live, self_destruct, exclusive_execution, excluded_execution_configs, client_name FROM timetable.chain_execution_config where chain_name = %s", (name,)
+        )
+        records = self.cur.fetchall()
+        if len(records) == 0:
+            return None
+        row = records[0]
+        result = Object(chain_execution_config=row[0], chain_id=row[1], chain_name=row[2], run_at_minute=row[3], run_at_hour=row[4], run_at_day=row[5], run_at_month=row[6], run_at_day_of_week=row[7], max_instances=row[8], live=row[9], self_destruct=row[10], exclusive_execution=row[11], excluded_execution_configs=row[12], client_name=row[13])
+        return result
+
 def empty_or_integer(i):
     if isinstance(i, int) or i is None:
         return i
@@ -260,13 +279,19 @@ class MyBooleanField(BooleanField):
 class ChainForm(Form):
     task_id = SelectField("Task id", coerce=empty_or_integer, choices=[(t.task_id, f'{t.task_id}. {t.task_name}') for t in Model().get_all_tasks()])
     run_uid = StringField("Run uid")
-    database_connection = StringField("Database connection", filters=[lambda i: i or None])
+    database_connection = StringField("Database connection", filters=[empty_or_integer])
     ignore_error = MyBooleanField("Ignore error")
 
 class TaskForm(Form):
+    task_id = IntegerField("Task id")
     task_name = StringField("Task name")
     task_function = TextAreaField("Task function")
     task_kind = SelectField("Task kind", choices=[(x,x) for x in ["SQL", "SHELL", "BUILTIN"]])
+
+    def validate_task_name(form, field):
+        t = Model().get_task_by_name(field.data)
+        if hasattr(t, "task_id") and t.task_id != form.task_id.data:
+            raise ValidationError("Task name must be unique!")
 
 class ChainExecutionParametersForm(Form):
     order_id = IntegerField("Order id")
@@ -291,6 +316,10 @@ class ChainExecutionConfigForm(Form):
     def validate_chain_name(form, field):
         if field.data is None:
             raise ValidationError("Chain name must be set!")
+        else:
+            c = Model().get_chain_config_by_name(field.data)
+            if hasattr(c, "chain_id") and c.chain_id != form.chain_id.data:
+                raise ValidationError("Chain name must be unique!")
 
 @app.route('/')
 def index():
