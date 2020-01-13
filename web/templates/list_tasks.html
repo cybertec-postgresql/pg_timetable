@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+{% for obj in list %}
+<div>
+	<p><a href="/task/{{ obj.task_id }}/">{{ obj.task_id}}. {{ obj.task_name }} ({{ obj.task_kind }})</a></p>
+</div>
+{% endfor %}
+<p><a href="/tasks/add/">add</a></p>
+{% endblock %}

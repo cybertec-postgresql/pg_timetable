@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import escape, request, redirect, render_template
+from flask import escape, request, redirect, render_template, abort
 from wtforms import Form, BooleanField, SelectField, StringField, TextAreaField, validators, IntegerField, ValidationError
 from wtforms.widgets.html5 import NumberInput
 import os
@@ -92,6 +92,8 @@ class Model(object):
         self.cur.execute(
             "SELECT name, kind, script FROM timetable.base_task where task_id = %s", (task_id,))
         records = self.cur.fetchall()
+        if len(records) == 0:
+            return None
         row = records[0]
         result = Object(task_id=task_id, task_name=row[0], task_kind=row[1] or "", task_function=row[2])
         return result
@@ -119,7 +121,7 @@ class Model(object):
         self.cur.execute("SELECT chain_id, parent_id, task_id, run_uid, database_connection, ignore_error FROM timetable.task_chain where chain_id = %s", (chain_id,))
         records = self.cur.fetchall()
         if len(records) == 0:
-            return {}
+            return None
         row = records[0]
         result = Object(chain_execution_config=self.chain_execution_config, chain_id=row[0], task_id=row[2], parent_id=row[1], run_uid=row[3], database_connection=row[4], ignore_error=row[5], next=self.get_chain_by_parent(parent_id=row[0]), parameters=self.get_chain_parameters(chain_id=row[0]), task=self.get_task_by_id(task_id=row[2]))
         return result
@@ -128,11 +130,11 @@ class Model(object):
         if parent_id not in self.parents_done:
             self.parents_done.append(parent_id)
         else:
-            return {}
+            return None
         self.cur.execute("SELECT chain_id, parent_id, task_id, run_uid, database_connection, ignore_error FROM timetable.task_chain where parent_id = %s", (parent_id,))
         records = self.cur.fetchall()
         if len(records) == 0:
-            return {}
+            return None
         row = records[0]
         result = Object(chain_execution_config= self.chain_execution_config, chain_id=row[0], parent_id=row[1], run_uid=row[3], database_connection=row[4], ignore_error=row[5], next=self.get_chain_by_parent(parent_id=row[0]), parameters=self.get_chain_parameters(chain_id=row[0]), task=self.get_task_by_id(task_id=row[2]))
         return result
@@ -156,7 +158,7 @@ class Model(object):
         )
         records = self.cur.fetchall()
         if len(records) == 0:
-            return {}
+            return None
         row = records[0]
         result = Object(chain_execution_config=row[0], chain_id=row[1], order_id=row[2], value=json.dumps(row[3]))
         return result
@@ -211,9 +213,6 @@ class Model(object):
     def get_execution_logs(self, chain_execution_config):
         self.cur.execute("SELECT chain_execution_config, chain_id, task_id, name, script,  kind, last_run, finished, returncode, pid FROM timetable.execution_log where chain_execution_config = %s", (chain_execution_config,))
         records = self.cur.fetchall()
-        if len(records) == 0:
-            return {}
-        row = records[0]
         result = []
         for row in records:
             result.append(Object(chain_execution_config=row[0], chain_id=row[1], task_id=row[2], name=row[3], script=row[4], kind=row[5], last_run=row[6], finished=row[7], returncode=row[8], pid=row[9]))
@@ -248,7 +247,7 @@ class Model(object):
         )
         records = self.cur.fetchall()
         if len(records) == 0:
-            return {}
+            return None
         row = records[0]
         result = Object(chain_execution_config=row[0], chain_id=row[1], chain_name=row[2], run_at_minute=row[3], run_at_hour=row[4], run_at_day=row[5], run_at_month=row[6], run_at_day_of_week=row[7], max_instances=row[8], live=row[9], self_destruct=row[10], exclusive_execution=row[11], excluded_execution_configs=row[12], client_name=row[13], chain=self.get_chain_by_id(row[1]))
         return result
@@ -334,15 +333,25 @@ def add_base_task():
         return redirect(f"/chain_execution_config/", code=302)
     return render_template("edit_task.html", form=form)
 
+@app.route('/tasks/')
+def list_tasks():
+    db = Model()
+    return render_template("list_tasks.html", list=db.get_all_tasks())
+
 @app.route('/task/<int:task_id>/')
 def view_task(task_id):
     db = Model()
-    return render_template("view_task.html", obj=db.get_task_by_id(task_id))
+    obj = db.get_task_by_id(task_id)
+    if obj is None:
+        abort(404)
+    return render_template("view_task.html", obj=obj)
 
 @app.route('/task/<int:task_id>/edit/', methods=["GET", "POST"])
 def edit_task(task_id):
     db = Model(task_id=task_id)
     obj = db.get_task_by_id(task_id)
+    if obj is None:
+        abort(404)
     form = TaskForm(request.form, obj=obj)
     if request.method == 'POST' and form.validate():
         db.update(task_name=form.task_name.data, task_function=form.task_function.data, task_kind=form.task_kind.data)
@@ -353,12 +362,15 @@ def edit_task(task_id):
 @app.route('/chain/<int:chain_execution_config>/<int:chain_id>/')
 def view_chain(chain_id, chain_execution_config):
     db = Model(chain_id=chain_id, chain_execution_config=chain_execution_config)
-    return render_template("view_chain.html", obj=db.get_chain_by_id(chain_id))
+    obj = db.get_chain_by_id(chain_id)
+    if obj is None:
+        abort(404)
+    return render_template("view_chain.html", obj=obj)
 
 @app.route('/chain/<int:chain_execution_config>/<int:chain_id>/edit/', methods=["GET", "POST"])
 def edit_chain(chain_id, chain_execution_config):
     db = Model(chain_id=chain_id, chain_execution_config=chain_execution_config)
-    obj=db.get_chain_by_id(chain_id)
+    obj = db.get_chain_by_id(chain_id)
     form = ChainForm(request.form, obj=obj)
     form.task_id.choices = [(t.task_id, f'{t.task_id}. {t.task_name}') for t in db.get_all_tasks()]
     if request.method == 'POST' and form.validate():
@@ -372,7 +384,7 @@ def add_chain_to_parent(parent_id, chain_execution_config):
     if parent_id == 0:
         parent_id = None
     db = Model(parent_id=parent_id, chain_execution_config=chain_execution_config, chain_id=None)
-    obj=db.get_chain_by_parent(parent_id)
+    obj = db.get_chain_by_parent(parent_id)
     form = ChainForm(request.form, obj=obj)
     form.task_id.choices = [(t.task_id, f'{t.task_id}. {t.task_name}') for t in db.get_all_tasks()]
     if request.method == 'POST' and form.validate():
@@ -385,7 +397,10 @@ def add_chain_to_parent(parent_id, chain_execution_config):
 def delete_chain(chain_id, chain_execution_config):
     if request.method == 'GET':
         db = Model(chain_id=chain_id, chain_execution_config=chain_execution_config)
-        return render_template("delete.html", obj=db.get_chain_by_id(chain_id))
+        obj = db.get_chain_by_id(chain_id)
+        if obj is None:
+            abort(404)
+        return render_template("delete.html", obj=obj)
     else:
         db = Model(chain_id=chain_id)
         db.delete_chain()
@@ -412,12 +427,15 @@ def list_chain_execution_configs():
 @app.route('/chain_execution_config/<int:id>/')
 def view_chain_execution_configs(id):
     db = Model(chain_execution_config=id)
-    return render_template("view_chain_execution_config.html", obj=db.get_chain_config_by_id(id))
+    obj = db.get_chain_config_by_id(id)
+    if obj is None:
+        abort(404)
+    return render_template("view_chain_execution_config.html", obj=obj)
 
 @app.route('/chain_execution_config/<int:id>/edit/', methods=["GET", "POST"])
 def edit_chain_execution_configs(id):
     db = Model(chain_execution_config=id)
-    obj=db.get_chain_config_by_id(id)
+    obj = db.get_chain_config_by_id(id)
     form = ChainExecutionConfigForm(request.form, obj=obj)
     form.task_id.choices = [(None, "")]
     if request.method == 'POST' and form.validate():
@@ -429,7 +447,7 @@ def edit_chain_execution_configs(id):
 
 @app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/add/', methods=["GET", "POST"])
 def create_chain_execution_parameters(chain_execution_config, chain_id, order_id):
-    obj=Object(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order_id)
+    obj = Object(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order_id)
     form = ChainExecutionParametersForm(request.form, obj=obj)
     if request.method == 'POST' and form.validate():
         db = Model(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=form.order_id.data, value=json.dumps(form.value.data))
@@ -441,7 +459,10 @@ def create_chain_execution_parameters(chain_execution_config, chain_id, order_id
 def delete_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     if request.method == 'GET':
         db = Model()
-        return render_template("delete.html", obj=db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id))
+        obj = db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id)
+        if obj is None:
+            abort(404)
+        return render_template("delete.html", obj=obj)
     else:
         db = Model(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order_id)
         db.delete_chain_parameter()
@@ -450,12 +471,15 @@ def delete_chain_execution_parameters(chain_execution_config, chain_id, order_id
 @app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/')
 def view_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     db = Model()
-    return render_template("view_chain_execution_parameters.html", obj=db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id))
+    obj = db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id)
+    if obj is None:
+        abort(404)
+    return render_template("view_chain_execution_parameters.html", obj=obj)
 
 @app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/edit/', methods=["GET", "POST"])
 def edit_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     db = Model(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=order_id)
-    obj=db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id)
+    obj = db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id)
     form = ChainExecutionParametersForm(request.form, obj=obj)
     if request.method == 'POST' and form.validate():
         db.update(order_id=form.order_id.data, value=json.dumps(form.value.data)) 
@@ -468,3 +492,6 @@ def view_execution_logs(id):
     db = Model()
     return render_template("view_execution_logs.html", list=db.get_execution_logs(id))
 
+@app.errorhandler(404)
+def page_not_found(error):
+   return render_template('404.html', error=error), 404
