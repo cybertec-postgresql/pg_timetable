@@ -1,34 +1,69 @@
 {% if obj.chain_id %}
-<div>
-	<hr />
-	<p>chain id: <span>{{obj.chain_id }}</span> <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/">Edit</a></p>
-	<p>task id: <a href="/task/{{ obj.task.task_id }}/">{{ obj.task.task_id }}. {{ obj.task.task_name }}</a>{# <a href="/task/{{ obj.task.task_id }}/edit/">Edit</a></p> #}
-	{# <p>parent id: {{ obj.parent_id  if obj.parent_id is not none }}</p> #}
-        <p>run uid: {{ obj.run_uid if obj.run_uid is not none}}</p>
-        <p>database connection: {{ obj.database_connection if obj.database_connection is not none }}</p>
-	<p>ignore error: {{ obj.ignore_error }}</p>
-	<div>
-	Parameters: 
-	{% with %}
-	{% set ns = namespace (max_order = 0) %}
-	{% for p in obj.parameters %}
-	{% set ns.max_order = ([ns.max_order, p.order_id]|sort)[-1] %}
-	<p><a href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/">{{ p.value|string|truncate(100)}}</a></p>
-	{% endfor %}
-	<p><a href="/chain_execution_parameters/{{ chain_execution_config }}/{{ obj.chain_id }}/{{ ns.max_order + 1 }}/add/">Add new parameter</a></p>
-	{% endwith %}
-	</div>
-	{% with %}
-	{% set old_obj = obj %}
-	{% set obj = obj.next %}
-	{% include 'view_chain_tpl.html' %}
-	{% endwith %}
+<div class="task">
+  <div class="actions">
+    <div>
+      <span class="badge">ID {{obj.chain_id }}</span>
+      <a class="badge" href="/task/{{ obj.task.task_id }}/"
+        >Type
+        <code>
+          {{ obj.task.task_name }}
+        </code>
+      </a>
+    </div>
+    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/"
+      >Edit</a
+    >
+  </div>
+  <div class="body">
+    <p title="In which user context this task should be run">
+      {% if obj.database_connection is not none %} run uid: {{ obj.run_uid }} {%
+      else %} No UID set {% endif %}
+    </p>
+    <p title="Which database connection should be used">
+      {% if obj.database_connection is not none %} database connection: {{
+      obj.database_connection }} {% else %} No special database connection {%
+      endif %}
+    </p>
+    <p>
+      {% if obj.ignore_error %} Ignores errors {% else %} Stops on error {%
+      endif %}
+    </p>
+    <div>
+      Parameters:
+      <div class="parameter">
+        {% with %} {% set ns = namespace (max_order = 0) %} {% for p in
+        obj.parameters %} {% set ns.max_order = ([ns.max_order,
+        p.order_id]|sort)[-1] %}
+        <a
+          class="badge"
+          href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/"
+          ><code>
+            {{ p.value|string|truncate(100)}}
+          </code>
+        </a>
+        {% endfor %}
+        <a
+          class="parameter-add"
+          href="/chain_execution_parameters/{{ chain_execution_config }}/{{ obj.chain_id }}/{{ ns.max_order + 1 }}/add/"
+          >+</a
+        >
+      </div>
+    </div>
+    {% endwith %}
+  </div>
 </div>
+{% with %} {% set old_obj = obj %} {% set obj = obj.next %} {% include
+'view_chain_tpl.html' %} {% endwith %} {% else %} {% if old_obj %}
+<p>
+  <a href="/chain/{{ chain_execution_config }}/{{ old_obj.chain_id }}/delete/"
+    >Delete last chain</a
+  >
+</p>
+<p>
+  <a href="/chain/{{ chain_execution_config }}/{{ old_obj.chain_id }}/add/"
+    >Add new chain</a
+  >
+</p>
 {% else %}
-{% if old_obj %}
-	<p><a href="/chain/{{ chain_execution_config }}/{{ old_obj.chain_id }}/delete/">Delete last chain</a></p>
-	<p><a href="/chain/{{ chain_execution_config }}/{{ old_obj.chain_id }}/add/">Add new chain</a></p>
-{% else %}
-	<p><a href="/chain/{{ chain_execution_config }}/0/add/">Add new chain</a></p>
-{% endif %}
-{% endif %}
+<p><a href="/chain/{{ chain_execution_config }}/0/add/">Add new chain</a></p>
+{% endif %} {% endif %}

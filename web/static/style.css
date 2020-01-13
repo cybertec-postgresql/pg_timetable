@@ -1,23 +1,167 @@
+:root {
+  --color-light: #4ec1ec;
+  --color-black: #41404a;
+}
+
 body {
   font-family: "Montserrat";
-  color: #41404a;
+  margin: 0;
+  color: var(--color-black);
 }
-nav a {
-  text-decoration: none;
-  padding: 10px 10px 10px 10px;
-  border: solid #41404a 1px;
+.content {
+  margin: 8px;
 }
-nav a:hover {
-  border-color: #4ec1ec;
+
+code {
+  font-size: 1rem;
 }
+
 a {
-  color: #11163d;
+  text-decoration: none;
+  padding: 8px;
+  border: solid 1px;
+  border-color: currentColor;
+  display: inline-block;
+}
+
+a {
+  color: var(--color-black);
 }
 a:hover {
-  color: #4ec1ec;
+  color: var(--color-light);
 }
+
+.badge {
+  border: 1px solid;
+  border-radius: 4px;
+  border-color: currentColor;
+  padding: 4px;
+}
+
+.button {
+  border: 1px solid;
+  border-color: currentColor;
+  color: var(--color-dark);
+}
+
+.button:hover {
+  color: var(--color-light);
+}
+
+/*
+ HEADER
+*/
+
+.header {
+  display: flex;
+  padding: 8px;
+  align-items: center;
+  height: 48px;
+}
+
+.header nav {
+  margin-left: 8px;
+}
+
 .logo {
   width: 225px;
   height: 90px;
   background-image: url("/static/cybertec_logo_225x90px.jpg");
+}
+
+/*
+TABLE
+*/
+
+table.table {
+  border: 3px solid var(--color-black);
+  text-align: left;
+  border-collapse: collapse;
+}
+table.table td,
+table.table th {
+  border: 1px solid var(--color-black);
+  padding: 5px 4px;
+}
+table.table tbody td {
+  font-size: 13px;
+}
+table.table thead {
+  background: var(--color-light);
+  background: -moz-linear-gradient(
+    top,
+    var(--color-light) 0%,
+    var(--color-light) 66%,
+    var(--color-light) 100%
+  );
+  background: -webkit-linear-gradient(
+    top,
+    var(--color-light) 0%,
+    var(--color-light) 66%,
+    var(--color-light) 100%
+  );
+  background: linear-gradient(
+    to bottom,
+    var(--color-light) 0%,
+    var(--color-light) 66%,
+    var(--color-light) 100%
+  );
+  border-bottom: 3px solid var(--color-black);
+}
+table.table thead th {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--color-black);
+  text-align: left;
+}
+table.table tfoot {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--color-black);
+  border-top: 3px solid var(--color-black);
+}
+table.table tfoot td {
+  font-size: 14px;
+}
+
+/*
+task
+*/
+
+.task-chain {
+  display: flex;
+  gap: 4px;
+}
+
+.task {
+  width: 25%;
+  outline: 1px solid;
+  padding: 8px;
+}
+
+.task .actions {
+  padding: 4px;
+  border-bottom: var(--color-black) 2px solid;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task .body {
+}
+
+.task .body .parameters {
+  display: flex;
+  gap: 2px;
+}
+
+.task .body .parameters > * {
+}
+
+.task .body .parameter-add {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }

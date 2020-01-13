@@ -1,11 +1,24 @@
-{% extends "base.html" %}
-{% block body %}
-{% for obj in list %}
+{% extends "base.html" %} {% block body %} {% for obj in list %}
 <div>
-	<p><a href="/chain_execution_config/{{ obj.chain_execution_config }}/">View</a> <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a></p>
-	<p>{{ obj.chain_execution_config }}. {{ obj.chain_name }} <span>{{ obj.run_at_minute if obj.run_at_minute is not none else '*' }}</span> <span>{{ obj.run_at_hour if obj.run_at_hour is not none  else '*' }}</span> <span>{{ obj.run_at_day if obj.run_at_day is not none  else '*' }}</span> <span>{{ obj.run_at_month if obj.run_at_month is not none  else '*' }}</span> <span>{{ obj.run_at_day_of_week if obj.run_at_day_of_week is not none  else '*' }}</span></p>
-	<p>live: <span>{{ obj.live }}</span></p>
+  <p>
+    <a href="/chain_execution_config/{{ obj.chain_execution_config }}/">View</a>
+    <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a>
+  </p>
+  <p>
+    {{ obj.chain_execution_config }}. {{ obj.chain_name }}
+    <span
+      >{{ obj.run_at_minute if obj.run_at_minute is not none else '*' }}</span
+    >
+    <span>{{ obj.run_at_hour if obj.run_at_hour is not none else '*' }}</span>
+    <span>{{ obj.run_at_day if obj.run_at_day is not none else '*' }}</span>
+    <span>{{ obj.run_at_month if obj.run_at_month is not none else '*' }}</span>
+    <span
+      >{{ obj.run_at_day_of_week if obj.run_at_day_of_week is not none else '*'
+      }}</span
+    >
+  </p>
+  <p>live: <span>{{ obj.live }}</span></p>
 </div>
 {% endfor %}
-<p><a href="/chain_execution_config/add/">add</a></p>
+<a class="button" href="/chain_execution_config/add/">ADD</a>
 {% endblock %}
