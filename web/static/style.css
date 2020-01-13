@@ -1,0 +1,18 @@
+body {
+  font-family: "Montserrat";
+  color: #41404a;
+}
+
+a {
+	color: #11163d;
+}
+
+a:hover {
+	color: #4ec1ec;
+}
+
+.logo {
+	width: 225px;
+	height: 90px;
+	background-image: url("/static/cybertec_logo_225x90px.jpg");
+}
