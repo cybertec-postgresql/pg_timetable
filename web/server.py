@@ -80,7 +80,7 @@ class Model(object):
             setattr(self, key, value)
 
     def get_all_tasks(self):
-        self.cur.execute("SELECT task_id, name, kind, script FROM timetable.base_task")
+        self.cur.execute("SELECT task_id, name, kind, script FROM timetable.base_task order by task_id")
         records = self.cur.fetchall()
         result = []
         for row in records:
@@ -102,6 +102,8 @@ class Model(object):
         self.cur.execute(
             "SELECT task_id, name, kind, script FROM timetable.base_task where name = %s", (task_name,))
         records = self.cur.fetchall()
+        if len(records) == 0:
+            return None
         row = records[0]
         result = Object(task_id=row[0], task_name=row[1], task_kind=row[2], task_function=row[3])
         return result
@@ -288,8 +290,10 @@ class TaskForm(Form):
     task_kind = SelectField("Task kind", choices=[(x,x) for x in ["SQL", "SHELL", "BUILTIN"]])
 
     def validate_task_name(form, field):
+        if field.data is None or field.data == '':
+            raise ValidationError("Task name must be set!")
         t = Model().get_task_by_name(field.data)
-        if hasattr(t, "task_id") and t.task_id != form.task_id.data:
+        if t and hasattr(t, "task_id") and t.task_id != form.task_id.data:
             raise ValidationError("Task name must be unique!")
 
 class ChainExecutionParametersForm(Form):
@@ -315,10 +319,9 @@ class ChainExecutionConfigForm(Form):
     def validate_chain_name(form, field):
         if field.data is None:
             raise ValidationError("Chain name must be set!")
-        else:
-            c = Model().get_chain_config_by_name(field.data)
-            if hasattr(c, "chain_id") and c.chain_id != form.chain_id.data:
-                raise ValidationError("Chain name must be unique!")
+        c = Model().get_chain_config_by_name(field.data)
+        if hasattr(c, "chain_id") and c.chain_id != form.chain_id.data:
+            raise ValidationError("Chain name must be unique!")
 
 @app.route('/')
 def index():
