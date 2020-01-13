@@ -13,7 +13,7 @@ define required variables
 
 and start the service
 
-    flusk run
+    flask run
 
 Open http://127.0.0.1:5000 in your favorite browser.
 
