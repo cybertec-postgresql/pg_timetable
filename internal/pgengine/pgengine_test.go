@@ -47,13 +47,13 @@ func TestMain(m *testing.M) {
 				"POSTGRES_DB=" + pgengine.DbName,
 			},
 		}
-		
+
 		resource, err := pool.RunWithOptions(&runOpts)
 		if err != nil {
 			panic("Could start postgres container")
 		}
 		pgengine.LogToDB("LOG", "Postgres container is running...")
-		
+
 		defer func() {
 			err = pool.Purge(resource)
 			if err != nil {
@@ -89,7 +89,7 @@ func TestMain(m *testing.M) {
 		pool.MaxWait = 10 * time.Second
 		err = pool.Retry(func() error {
 			db, err := sqlx.Open("postgres", fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+				pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 			if err != nil {
 				return err
 			}
@@ -98,18 +98,18 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic("Could not connect to postgres server")
 		}
-		pgengine.LogToDB("LOG", "Connetion to postgres established at ", 
-				fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+		pgengine.LogToDB("LOG", "Connetion to postgres established at ",
+			fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+				pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 	}
 	os.Exit(m.Run())
 }
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	pgengine.LogToDB("LOG", "Trying to connect postgres container at ", 
-				fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-					pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+	pgengine.LogToDB("LOG", "Trying to connect postgres container at ",
+		fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+			pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
 	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
 }
 
@@ -240,9 +240,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check DeleteChainConfig funtion", func(t *testing.T) {
-		tx := pgengine.StartTransaction()
-		assert.Equal(t, false, pgengine.DeleteChainConfig(tx, 0), "Should not delete in clean database")
-		pgengine.MustCommitTransaction(tx)
+		assert.Equal(t, false, pgengine.DeleteChainConfig(0), "Should not delete in clean database")
 	})
 
 	t.Run("Check GetChainElements funtion", func(t *testing.T) {
