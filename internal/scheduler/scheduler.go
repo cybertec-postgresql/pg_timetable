@@ -95,18 +95,20 @@ func chainWorker(chains <-chan Chain) {
 			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
 			time.Sleep(3 * time.Second)
 		}
-		tx := pgengine.StartTransaction()
-		executeChain(tx, chain.ChainExecutionConfigID, chain.ChainID)
+
+		executeChain(chain.ChainExecutionConfigID, chain.ChainID)
 		if chain.SelfDestruct {
-			pgengine.DeleteChainConfig(tx, chain.ChainExecutionConfigID)
+			pgengine.DeleteChainConfig(chain.ChainExecutionConfigID)
 		}
-		pgengine.MustCommitTransaction(tx)
+
 	}
 }
 
 /* execute a chain of tasks */
-func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
+func executeChain(chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
+
+	tx := pgengine.StartTransaction()
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
 	runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
@@ -118,21 +120,23 @@ func executeChain(tx *sqlx.Tx, chainConfigID int, chainID int) {
 	/* now we can loop through every element of the task chain */
 	for _, chainElemExec := range ChainElements {
 		chainElemExec.ChainConfig = chainConfigID
-		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "STARTED")
+		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "STARTED")
 		retCode := executeСhainElement(tx, &chainElemExec)
 		pgengine.LogChainElementExecution(&chainElemExec, retCode)
 		if retCode != 0 && !chainElemExec.IgnoreError {
 			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
-			pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_FAILED")
+			pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_FAILED")
+			pgengine.MustRollbackTransaction(tx)
 			return
 		}
-		pgengine.UpdateChainRunStatus(tx, &chainElemExec, runStatusID, "CHAIN_DONE")
+		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_DONE")
 	}
 	pgengine.LogToDB("LOG", fmt.Sprintf("Chain ID: %d executed successfully", chainID))
-	pgengine.UpdateChainRunStatus(tx,
+	pgengine.UpdateChainRunStatus(
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
 			ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
+	pgengine.MustCommitTransaction(tx)
 }
 
 func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
