@@ -1,4 +1,4 @@
-name: Go
+name: Build, vet and lint
 on: [push, pull_request]
 jobs:
 
