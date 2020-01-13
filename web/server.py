@@ -84,7 +84,7 @@ class Model(object):
         records = self.cur.fetchall()
         result = []
         for row in records:
-            result.append(Object(task_id=row[0], task_name=row[1], task_kind=row[2] or "", task_function=row[3]))
+            result.append(Object(task_id=row[0], task_name=row[1], task_kind=row[2], task_function=row[3]))
 
         return result
 
@@ -95,7 +95,7 @@ class Model(object):
         if len(records) == 0:
             return None
         row = records[0]
-        result = Object(task_id=task_id, task_name=row[0], task_kind=row[1] or "", task_function=row[2])
+        result = Object(task_id=task_id, task_name=row[0], task_kind=row[1], task_function=row[2])
         return result
 
     def get_task_by_name(self, task_name):
