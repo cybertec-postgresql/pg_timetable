@@ -40,7 +40,7 @@ class Object(object):
 app = Flask(__name__, static_url_path='/static')
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
-class JSONField(StringField):
+class JSONField(TextAreaField):
     def _value(self):
         return json.dumps(self.data) if self.data else ''
 
