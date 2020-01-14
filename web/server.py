@@ -16,10 +16,10 @@ ENV_VAR_PREFIX = "PG_TIMETABLE"
 ENV = build_env(
     ENV_VAR_PREFIX,
     {
-        "DBNAME": Default("postgres"),
+        "DBNAME": Default("timetable"),
         "USER": Default("postgres"),
         "PASSWORD": Default(""),
-        "HOST": Default("db"),
+        "HOST": Default("localhost"),
     },
 )
 
