@@ -1,4 +1,7 @@
 This is a flask application to manage pg_timetable from web inteface.
+
+# Local install
+
 To run it you need to install requirements:
 
     pip install -r requirements.txt
@@ -14,6 +17,11 @@ define required variables
 and start the service
 
     flask run
+
+# Docker install
+
+    podman build . -t pg_timetable_gui:latest
+    podman run --rm -e "PG_TIMETABLE_HOST=127.0.0.1" -e "PG_TIMETABLE_PASSWORD=password" -e --network="host" localhost/pg_timetable_gui:latest
 
 Open http://127.0.0.1:5000 in your favorite browser.
 
