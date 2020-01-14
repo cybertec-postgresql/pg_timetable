@@ -10,9 +10,9 @@
         </code>
       </a>
     </div>
-    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/"
-      >Edit</a
-    >
+    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/">Edit</a>
+    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/delete/">Delete</a>
+    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/add/">Add</a>
   </div>
   <div class="body">
     <p title="In which user context this task should be run">
@@ -52,18 +52,8 @@
     {% endwith %}
   </div>
 </div>
-{% with %} {% set old_obj = obj %} {% set obj = obj.next %} {% include
-'view_chain_tpl.html' %} {% endwith %} {% else %} {% if old_obj %}
-<p>
-  <a href="/chain/{{ chain_execution_config }}/{{ old_obj.chain_id }}/delete/"
-    >Delete last chain</a
-  >
-</p>
-<p>
-  <a href="/chain/{{ chain_execution_config }}/{{ old_obj.chain_id }}/add/"
-    >Add new chain</a
-  >
-</p>
-{% else %}
-<p><a href="/chain/{{ chain_execution_config }}/0/add/">Add new chain</a></p>
-{% endif %} {% endif %}
+{% with %}
+{% set obj = obj.next %}
+{% include 'view_chain_tpl.html' %}
+{% endwith %}
+{% endif %}

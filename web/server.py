@@ -189,17 +189,58 @@ class Model(object):
 
     def save_chain(self):
         if self.chain_id is None:
-            self.cur.execute(
-                "INSERT INTO timetable.task_chain (parent_id, task_id, run_uid, database_connection, ignore_error) VALUES (%s, %s, %s, %s, %s)", (self.parent_id, self.task_id, self.run_uid, self.database_connection, self.ignore_error)
-            )
+            self.cur.execute("SELECT chain_id, parent_id, task_id, run_uid, database_connection, ignore_error FROM timetable.task_chain where parent_id = %s", (self.parent_id,))
+            records = self.cur.fetchall()
+            if len(records) == 0:
+                self.cur.execute(
+                    "INSERT INTO timetable.task_chain (parent_id, task_id, run_uid, database_connection, ignore_error) VALUES (%s, %s, %s, %s, %s)", (self.parent_id, self.task_id, self.run_uid, self.database_connection, self.ignore_error)
+                )
+            else:
+                row = records[0]
+                self.cur.execute(
+                    "UPDATE timetable.task_chain set parent_id = Null where chain_id = %s", (row[0],))
+                self.cur.execute(
+                    "INSERT INTO timetable.task_chain (parent_id, task_id, run_uid, database_connection, ignore_error) VALUES (%s, %s, %s, %s, %s) RETURNING chain_id", (self.parent_id, self.task_id, self.run_uid, self.database_connection, self.ignore_error)
+                )
+                chain_id = self.cur.fetchone()[0]
+                self.cur.execute(
+                    "UPDATE timetable.task_chain set parent_id = %s where chain_id = %s", (chain_id, row[0],))
         else:
             self.cur.execute(
                 "UPDATE timetable.task_chain set task_id = %s, run_uid = %s, database_connection = %s, ignore_error = %s where chain_id = %s", (self.task_id, self.run_uid, self.database_connection, self.ignore_error, self.chain_id,))
         self.conn.commit()
 
     def delete_chain(self):
-        self.cur.execute(
-                "delete from timetable.task_chain where chain_id = %s", (self.chain_id,))
+        self.cur.execute("SELECT chain_id, parent_id, task_id, run_uid, database_connection, ignore_error FROM timetable.task_chain where parent_id = %s", (self.chain_id,))
+        records = self.cur.fetchall()
+        if len(records) == 0:
+            self.cur.execute(
+                    "delete from timetable.task_chain where chain_id = %s", (self.chain_id,))
+        else:
+            row = records[0]
+            self.cur.execute("SELECT parent_id FROM timetable.task_chain where chain_id = %s", (self.chain_id,))
+            parent_id = self.cur.fetchone()[0]
+            if parent_id is not None:
+                self.cur.execute(
+                    "UPDATE timetable.task_chain set parent_id = Null where chain_id = %s", (self.chain_id,))
+                self.cur.execute(
+                    "UPDATE timetable.task_chain set parent_id = %s where chain_id = %s", (parent_id, row[0],))
+                self.cur.execute(
+                        "delete from timetable.task_chain where chain_id = %s", (self.chain_id,))
+            else:
+                self.cur.execute("SELECT chain_id FROM timetable.task_chain where parent_id = %s", (self.chain_id,))
+                records = self.cur.fetchall()
+                if len(records) == 0:
+                    self.cur.execute(
+                        "delete from timetable.task_chain where chain_id = %s", (self.chain_id,))
+                else:
+                    row = records[0]
+                    self.cur.execute(
+                        "UPDATE timetable.chain_execution_config SET chain_id = %s where chain_id = %s", (row[0], self.chain_id))
+                    self.cur.execute(
+                        "UPDATE timetable.task_chain set parent_id = Null where parent_id = %s", (self.chain_id,))
+                    self.cur.execute(
+                        "delete from timetable.task_chain where chain_id = %s", (self.chain_id,))
         self.conn.commit()
 
     def delete_chain_parameter(self):
