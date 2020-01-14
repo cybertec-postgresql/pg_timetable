@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -177,7 +178,17 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 			pgengine.SetRole(execTx, chainElemExec.RunUID)
 		}
 
+		if chainElemExec.IgnoreError {
+			pgengine.LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", chainElemExec.TaskName)
+			execTx.Exec("SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+		}
+
 		err = pgengine.ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
+
+		if err != nil && chainElemExec.IgnoreError {
+			pgengine.LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", chainElemExec.TaskName)
+			execTx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+		}
 
 		//Reset The Role
 		if chainElemExec.RunUID.Valid {

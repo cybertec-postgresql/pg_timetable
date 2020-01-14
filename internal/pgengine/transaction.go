@@ -85,7 +85,7 @@ WITH RECURSIVE x
 	err := tx.Select(chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
+		LogToDB("ERROR", "Recursive queries to fetch chain tasks failed: ", err)
 		return false
 	}
 	return true
