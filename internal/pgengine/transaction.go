@@ -36,9 +36,19 @@ func StartTransaction() *sqlx.Tx {
 
 // MustCommitTransaction commits transaction and log error in the case of error
 func MustCommitTransaction(tx *sqlx.Tx) {
+	LogToDB("DEBUG", "Commit transaction for successful chain execution")
 	err := tx.Commit()
 	if err != nil {
 		LogToDB("ERROR", "Application cannot commit after job finished: ", err)
+	}
+}
+
+// MustRollbackTransaction rollbacks transaction and log error in the case of error
+func MustRollbackTransaction(tx *sqlx.Tx) {
+	LogToDB("DEBUG", "Rollback transaction for failed chain execution")
+	err := tx.Rollback()
+	if err != nil {
+		LogToDB("ERROR", "Application cannot rollback after job failed: ", err)
 	}
 }
 
@@ -75,7 +85,7 @@ WITH RECURSIVE x
 	err := tx.Select(chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB("ERROR", "Recursive queries to fetch task chain failed: ", err)
+		LogToDB("ERROR", "Recursive queries to fetch chain tasks failed: ", err)
 		return false
 	}
 	return true
@@ -135,22 +145,6 @@ RETURNING run_status`
 		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
 	}
 	return id
-}
-
-// UpdateChainRunStatus inserts status information about running chain elements
-func UpdateChainRunStatus(tx *sqlx.Tx, chainElemExec *ChainElementExecution, runStatusID int, status string) {
-
-	const sqlInsertFinishStatus = `
-INSERT INTO timetable.run_status 
-(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
-VALUES 
-($1, $2, $3, clock_timestamp(), now(), $4, $5)`
-	var err error
-
-	_, err = tx.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
-	if err != nil {
-		LogToDB("ERROR", "Update Chain Status failed: ", err)
-	}
 }
 
 //GetConnectionString of database_connection

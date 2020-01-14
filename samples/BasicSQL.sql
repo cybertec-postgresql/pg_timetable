@@ -40,4 +40,4 @@ VALUES (
     (SELECT id FROM chain_config),
     (SELECT chain_id FROM chain_insert),
     1,
-    '[ "TT_CHANNEL", "Ahoi from SQL base task" ]' :: jsonb) 
+    '[ "TT_CHANNEL", "Ahoj from SQL base task" ]' :: jsonb) 

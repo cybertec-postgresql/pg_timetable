@@ -8,8 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // VerboseLogLevel specifies if log messages with level LOG should be logged
@@ -88,8 +86,9 @@ func CanProceedChainExecution(chainConfigID int, maxInstances int) bool {
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
-func DeleteChainConfig(tx *sqlx.Tx, chainConfigID int) bool {
-	res, err := tx.Exec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
+func DeleteChainConfig(chainConfigID int) bool {
+	LogToDB("LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
+	res, err := ConfigDb.Exec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
 	if err != nil {
 		LogToDB("ERROR", "Error occured during deleting self destructive chains: ", err)
 	}
@@ -132,4 +131,20 @@ func SetupCloseHandler() {
 		FinalizeConfigDBConnection()
 		os.Exit(0)
 	}()
+}
+
+// UpdateChainRunStatus inserts status information about running chain elements
+func UpdateChainRunStatus(chainElemExec *ChainElementExecution, runStatusID int, status string) {
+
+	const sqlInsertFinishStatus = `
+INSERT INTO timetable.run_status 
+(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
+VALUES 
+($1, $2, $3, clock_timestamp(), now(), $4, $5)`
+	var err error
+
+	_, err = ConfigDb.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+	if err != nil {
+		LogToDB("ERROR", "Update Chain Status failed: ", err)
+	}
 }
