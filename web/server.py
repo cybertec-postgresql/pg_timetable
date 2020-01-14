@@ -341,15 +341,22 @@ class ChainExecutionParametersForm(Form):
     order_id = IntegerField("Order id")
     value = JSONField("Value")
 
+def run_at_filter(i):
+    if isinstance(i, int) or i is None:
+        return i
+    elif isinstance(i, str) and not len(i) or i == 'None' or i == "*":
+        return None
+    return int(i)
+
 class ChainExecutionConfigForm(Form):
     chain_id = SelectField("Chain id", coerce=empty_or_integer, choices=[(c.chain_id, c.chain_id) for c in Model().get_all_chains()])
     task_id = SelectField("Task id", coerce=empty_or_integer)
     chain_name =  StringField("Chain name", filters=[lambda i: i or None])
-    run_at_minute =  StringField("Run at minute", filters=[lambda i: i or None])
-    run_at_hour =  StringField("Run at hour", filters=[lambda i: i or None])
-    run_at_day =  StringField("Run at day", filters=[lambda i: i or None])
-    run_at_month = StringField("Run at month", filters=[lambda i: i or None])
-    run_at_day_of_week = StringField("Run at day of week", filters=[lambda i: i or None])
+    run_at_minute =  StringField("Run at minute", filters=[run_at_filter])
+    run_at_hour =  StringField("Run at hour", filters=[run_at_filter])
+    run_at_day =  StringField("Run at day", filters=[run_at_filter])
+    run_at_month = StringField("Run at month", filters=[run_at_filter])
+    run_at_day_of_week = StringField("Run at day of week", filters=[run_at_filter])
     max_instances = StringField("max instances", widget=NumberInput(), filters=[lambda i: i or None])
     live = MyBooleanField("live")
     self_destruct = MyBooleanField("self destruct")
@@ -363,6 +370,31 @@ class ChainExecutionConfigForm(Form):
         c = Model().get_chain_config_by_name(field.data)
         if hasattr(c, "chain_id") and c.chain_id != form.chain_id.data:
             raise ValidationError("Chain name must be unique!")
+
+    def validate_run_at_minute(form, field):
+        if field.data is not None:
+            if field.data < 0 or field.data > 59:
+                raise ValidationError("Run at minute must be between 0 and 59 or * if you want to run every minute")
+
+    def validate_run_at_hour(form, field):
+        if field.data is not None:
+            if field.data < 1 or field.data > 31:
+                raise ValidationError("Run at hour must be between 0 and 23 or * if you want to run every hour")
+
+    def validate_run_at_day(form, field):
+        if field.data is not None:
+            if field.data < 1 or field.data > 31:
+                raise ValidationError("Run at day must be between 1 and 31 or * if you want to run every day")
+
+    def validate_run_at_month(form, field):
+        if field.data is not None:
+            if field.data < 1 or field.data > 31:
+                raise ValidationError("Run at month must be between 1 and 12 or * if you want to run every month")
+
+    def validate_run_at_day_of_week(form, field):
+        if field.data is not None:
+            if field.data < 0 or field.data > 7:
+                raise ValidationError("Run at day of week must be between 0 and 7 or * if you want to run every day of week")
 
 @app.route('/')
 def index():
@@ -420,7 +452,7 @@ def edit_chain(chain_id, chain_execution_config):
     if request.method == 'POST' and form.validate():
         db.update(task_id=form.task_id.data, run_uid=form.run_uid.data, database_connection=form.database_connection.data, ignore_error=form.ignore_error.data)
         db.save_chain()
-        return redirect(f"/chain_execution_config/", code=302)
+        return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
     return render_template("edit_chain.html", form=form)
 
 @app.route('/chain/<int:chain_execution_config>/<int:parent_id>/add/', methods=["GET", "POST"])
@@ -434,7 +466,7 @@ def add_chain_to_parent(parent_id, chain_execution_config):
     if request.method == 'POST' and form.validate():
         db.update(task_id=form.task_id.data, run_uid=form.run_uid.data, database_connection=form.database_connection.data, ignore_error=form.ignore_error.data)
         db.save_chain()
-        return redirect(f"/chain_execution_config/", code=302)
+        return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
     return render_template("edit_chain.html", chains=db.chains_notparents(), tasks=db.get_all_tasks(), form=form)
 
 @app.route('/chain/<int:chain_execution_config>/<int:chain_id>/delete/', methods=["GET", "POST"])
@@ -448,7 +480,7 @@ def delete_chain(chain_id, chain_execution_config):
     else:
         db = Model(chain_id=chain_id)
         db.delete_chain()
-        return redirect(f"/chain_execution_config/", code=302)
+        return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
 
 
 @app.route('/chain_execution_config/add/', methods=["GET", "POST"])
@@ -496,7 +528,7 @@ def create_chain_execution_parameters(chain_execution_config, chain_id, order_id
     if request.method == 'POST' and form.validate():
         db = Model(chain_execution_config=chain_execution_config, chain_id=chain_id, order_id=form.order_id.data, value=json.dumps(form.value.data))
         db.save_chain_parameter()
-        return redirect(f"/chain_execution_config/", code=302)
+        return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
     return render_template("edit_chain_execution_parameters.html", form=form)
 
 @app.route('/chain_execution_parameters/<int:chain_execution_config>/<int:chain_id>/<int:order_id>/delete/', methods=["GET", "POST"])
@@ -528,7 +560,7 @@ def edit_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     if request.method == 'POST' and form.validate():
         db.update(order_id=form.order_id.data, value=json.dumps(form.value.data)) 
         db.save_chain_parameter()
-        return redirect(f"/chain_execution_parameters/{chain_execution_config}/{chain_id}/{db.order_id}/", code=302)
+        return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
     return render_template("edit_chain_execution_parameters.html", form=form)
 
 @app.route('/execution_log/<int:id>/')
