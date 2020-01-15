@@ -487,6 +487,7 @@ def edit_chain(chain_id, chain_execution_config):
     obj = db.get_chain_by_id(chain_id)
     form = ChainForm(request.form, obj=obj)
     form.task_id.choices = [(t.task_id, f'{t.task_id}. {t.task_name}') for t in db.get_all_tasks()]
+    form.database_connection.choices = [(d.database_connection, f'{d.database_connection}. {d.comment}') for d in Model().get_all_db_connections()] + [(None, "No special connection string")]
     if request.method == 'POST' and form.validate():
         db.update(task_id=form.task_id.data, run_uid=form.run_uid.data, database_connection=form.database_connection.data, ignore_error=form.ignore_error.data)
         db.save_chain()
@@ -501,6 +502,7 @@ def add_chain_to_parent(parent_id, chain_execution_config):
     obj = db.get_chain_by_parent(parent_id)
     form = ChainForm(request.form, obj=obj)
     form.task_id.choices = [(t.task_id, f'{t.task_id}. {t.task_name}') for t in db.get_all_tasks()]
+    form.database_connection.choices = [(d.database_connection, f'{d.database_connection}. {d.comment}') for d in Model().get_all_db_connections()] + [(None, "No special connection string")]
     if request.method == 'POST' and form.validate():
         db.update(task_id=form.task_id.data, run_uid=form.run_uid.data, database_connection=form.database_connection.data, ignore_error=form.ignore_error.data)
         db.save_chain()
