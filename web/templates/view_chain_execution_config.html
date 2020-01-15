@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 {% block body %}
 <div>
-	<p><a href="/chain_execution_config/{{ obj.chain_execution_config }}/edit/">Edit</a> <a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a></p>
+	<div style="display: flex; gap: 4px;">
+		<h2 style="margin:0;">
+			Chain <span>#{{ obj.chain_id }}</span> <span>{{ "@" + obj.client_name if obj.client_name is not none else "" }}</span>: <span>{{ obj.chain_name }}</span>
+		</h2>
+		{% if obj.live %}
+		<div class="badge ok">LIVE</div>
+		{% else %}
+		<div class="badge error">NOT LIVE</div>
+		{% endif%}
+		<a href="/chain_execution_config/{{ obj.chain_execution_config }}/edit/">Edit</a>
+		<a href="/execution_log/{{ obj.chain_execution_config }}/">Logs</a>
+	</div>
 	<table class="table">
 		<thead>
 			<tr>
@@ -11,54 +22,29 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td>chain_name</td>
-				<td>{{ obj.chain_name }}</td>
-			</tr>
-			<tr>
-				<td>chain_id</td>
-				<td>{{ obj.chain_id }}</td>
-			</tr>
-			<tr>
-				<td>client_name</td>
-				<td>{{ obj.client_name }}</td>
-			</tr>
-			<tr>
-				<td>By minute</td>
-				<td>{{ obj.run_at_minute if obj.run_at_minute is not none else '*' }}</td>
-			</tr>
-			<tr>
-				<td>By hour</td>
-				<td>{{ obj.run_at_hour if obj.run_at_hour is not none  else '*' }}</td>
-			</tr>
-			<tr>
-				<td>By day</td>
-				<td>{{ obj.run_at_day if obj.run_at_day is not none  else '*' }}</td>
-			</tr>
-			<tr>
-				<td>By month</td>
-				<td>{{ obj.run_at_month if obj.run_at_month is not none  else '*' }}</td>
-			</tr>
-			<tr>
-				<td>By day of week</td>
-				<td>{{ obj.run_at_day_of_week if obj.run_at_day_of_week is not none  else '*' }}</td>
+				<td>Schedule (cron)</td>
+				<td>
+					<code>
+						{{ obj.run_at_minute if obj.run_at_minute is not none else '*' }}
+						{{ obj.run_at_hour if obj.run_at_hour is not none else '*' }}
+						{{ obj.run_at_day if obj.run_at_day is not none else '*' }}
+						{{ obj.run_at_month if obj.run_at_month is not none else '*' }}
+						{{ obj.run_at_day_of_week if obj.run_at_day_of_week is not none else '*' }}
+					</code>
+				</td>
 			</tr>
 			<tr>
 				<td>max instances</td>
 				<td>{{ obj.max_instances if obj.max_instances is not none }}</td>
 			</tr>
-			<tr>
-				<td>live</td>
-				<td>{{ obj.live }}</td>
-			</tr>
-			<tr>
 				<td>
-					self destruct
+					self-destructive
 				</td>
-				<td>{{ obj.self_destruct }}</td>
+				<td>{{ '✓' if obj.self_destructive else '✕'}}</td>
 				</p>
 			<tr>
 				<td>exclusive execution</td>
-				<td>{{ obj.exclusive_execution }}</td>
+				<td>{{ '✓' if obj.exclusive_execution else '✕'}}</td>
 			</tr>
 			<tr>
 				<td>excluded_execution_configs</td>
@@ -71,10 +57,10 @@
 		Tasks
 	</h4>
 	<div class="task-chain">
-	{% with %}
-	{% set chain_execution_config = obj.chain_execution_config %}
-	{% set obj = obj.chain %}
-	{% include 'view_chain_tpl.html' %}
+		{% with %}
+		{% set chain_execution_config = obj.chain_execution_config %}
+		{% set obj = obj.chain %}
+		{% include 'view_chain_tpl.html' %}
 		{% endwith %}
 	</div>
 </div>

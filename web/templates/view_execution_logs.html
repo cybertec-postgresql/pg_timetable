@@ -1,6 +1,35 @@
-{% extends "base.html" %}
-{% block body %}
-{% for obj in list %}
-<p>{{ obj }}</p>
-{% endfor %}
-{% endblock %}
+{% extends "base.html" %} {% block body %}
+
+<div class="logs-header">
+
+    <h2>
+      Chain <span>#{{ chain_config.chain_id }}</span>:
+      <span>{{ chain_config.chain_name }}</span>
+    </h2>
+
+    <a href="/chain_execution_config/{{ chain_config.chain_execution_config }}/">
+      View chain
+    </a>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>last run</th>
+        <th>finished at</th>
+        <th>return code</th>
+        <th>pid</th>
+      </tr>
+    </thead>
+    {% for obj in list %}
+    <tr>
+      <td>{{obj.last_run}}</td>
+      <td>{{obj.finished}}</td>
+      <td>{{obj.returncode}}</td>
+      <td>{{obj.pid}}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  {% endblock %}
+</div>

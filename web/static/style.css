@@ -1,51 +1,58 @@
 :root {
   --color-light: #4ec1ec;
-  --color-black: #41404a;
+  --color-dark: #41404a;
+  --color-error: #c50010;
+  --spacing: 4px;
 }
 
 body {
   font-family: "Montserrat";
   margin: 0;
-  color: var(--color-black);
+  color: var(--color-dark);
 }
 .content {
-  margin: 8px;
+  margin: var(--spacing);
 }
 
 code {
   font-size: 1rem;
 }
 
-a {
+a,
+input[type="submit"] {
   text-decoration: none;
-  padding: 8px;
+  padding: var(--spacing);
   border: solid 1px;
   border-color: currentColor;
   display: inline-block;
+  color: var(--color-dark);
 }
 
-a {
-  color: var(--color-black);
-}
-a:hover {
+a:hover,
+input[type="submit"]:hover {
   color: var(--color-light);
 }
 
 .badge {
   border: 1px solid;
-  border-radius: 4px;
+  border-radius: var(--spacing);
   border-color: currentColor;
-  padding: 4px;
+  padding: var(--spacing);
 }
 
 .button {
   border: 1px solid;
   border-color: currentColor;
   color: var(--color-dark);
+  background: #f0f0f0;
 }
 
 .button:hover {
   color: var(--color-light);
+}
+
+.margin-bottom {
+  margin-bottom: 4px;
 }
 
 /*
@@ -64,9 +71,7 @@ a:hover {
 }
 
 .logo {
-  width: 225px;
-  height: 90px;
-  background-image: url("/static/cybertec_logo_225x90px.jpg");
+  height: 100%;
 }
 
 /*
@@ -74,51 +79,31 @@ TABLE
 */
 
 table.table {
-  border: 3px solid var(--color-black);
-  text-align: left;
+  border: 1px solid var(--color-dark);
+  text-align: center;
   border-collapse: collapse;
 }
 table.table td,
 table.table th {
-  border: 1px solid var(--color-black);
-  padding: 5px 4px;
+  border: 1px solid var(--color-dark);
+  padding: var(--spacing) var(--spacing);
 }
-table.table tbody td {
-  font-size: 13px;
-}
+
 table.table thead {
-  background: var(--color-light);
-  background: -moz-linear-gradient(
-    top,
-    var(--color-light) 0%,
-    var(--color-light) 66%,
-    var(--color-light) 100%
-  );
-  background: -webkit-linear-gradient(
-    top,
-    var(--color-light) 0%,
-    var(--color-light) 66%,
-    var(--color-light) 100%
-  );
-  background: linear-gradient(
-    to bottom,
-    var(--color-light) 0%,
-    var(--color-light) 66%,
-    var(--color-light) 100%
-  );
-  border-bottom: 3px solid var(--color-black);
+  color: var(--color-dark);
 }
 table.table thead th {
   font-size: 15px;
   font-weight: bold;
-  color: var(--color-black);
-  text-align: left;
+  color: var(--color-dark);
+  text-align: center;
+  border: 1px solid currentColor;
 }
 table.table tfoot {
   font-size: 14px;
   font-weight: bold;
-  color: var(--color-black);
-  border-top: 3px solid var(--color-black);
+  color: var(--color-dark);
+  border-top: 3px solid var(--color-dark);
 }
 table.table tfoot td {
   font-size: 14px;
@@ -130,18 +115,18 @@ task
 
 .task-chain {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing);
 }
 
 .task {
-  width: 25%;
   outline: 1px solid;
   padding: 8px;
+  max-width: 600px;
 }
 
 .task .actions {
-  padding: 4px;
-  border-bottom: var(--color-black) 2px solid;
+  padding: var(--spacing);
+  border-bottom: var(--color-dark) 2px solid;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -150,18 +135,63 @@ task
 .task .body {
 }
 
-.task .body .parameters {
+.error {
+  color: var(--color-error);
+  border-width: 2px;
+}
+
+.ok {
+  color: var(--color-light);
+}
+
+.task .body .parameter {
   display: flex;
-  gap: 2px;
+  flex-wrap: wrap;
 }
 
-.task .body .parameters > * {
+.task .body .parameter > * {
+  margin: var(--spacing);
 }
 
-.task .body .parameter-add {
+.task .body .parameter-add,
+.task-chain .add-task > a {
   width: 16px;
   height: 16px;
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  background: #f0f0f0;
+}
+
+.task-chain .add-task {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/*
+LIST CHAINS
+*/
+
+.list-chains {
+  display: flex;
+  gap: var(--spacing);
+}
+
+.chain {
+  padding: var(--spacing);
+}
+
+/*
+view logs
+*/
+
+.logs-header {
+  display: flex;
+  gap: var(--spacing);
+  margin: var(--spacing);
+}
+
+.logs-header > * {
+  margin: 0;
 }

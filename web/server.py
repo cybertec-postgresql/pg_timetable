@@ -598,15 +598,15 @@ def edit_chain_execution_parameters(chain_execution_config, chain_id, order_id):
     obj = db.get_chain_parameter_by_id(chain_execution_config, chain_id, order_id)
     form = ChainExecutionParametersForm(request.form, obj=obj)
     if request.method == 'POST' and form.validate():
-        db.update(order_id=form.order_id.data, value=json.dumps(form.value.data)) 
+        db.update(order_id=form.order_id.data, value=json.dumps(form.value.data))
         db.save_chain_parameter()
         return redirect(f"/chain_execution_config/{chain_execution_config}/", code=302)
     return render_template("edit_chain_execution_parameters.html", form=form)
 
 @app.route('/execution_log/<int:id>/')
 def view_execution_logs(id):
-    db = Model()
-    return render_template("view_execution_logs.html", list=db.get_execution_logs(id))
+    db = Model(chain_execution_config=id)
+    return render_template("view_execution_logs.html", list=db.get_execution_logs(id), chain_config=db.get_chain_config_by_id(id))
 
 @app.route('/db_connections/')
 def list_db_connections():

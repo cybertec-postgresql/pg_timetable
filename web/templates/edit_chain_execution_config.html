@@ -1,27 +1,20 @@
-{% extends "base.html" %}
-{% block body %}
+{% extends "base.html" %} {% block body %}
 <div>
-	{% from "_formhelpers.html" import render_field %}
-        <form action = "." method = "post">
-	   <dl>
-           {{ render_field(form.chain_id) }}
-	   {% if form.task_id.choices|length > 0 and not form.task_id.choices.0.0 is none %}
-           {{ render_field(form.task_id) }}
-	   {% endif %}
-           {{ render_field(form.chain_name) }}
-           {{ render_field(form.client_name) }}
-           {{ render_field(form.run_at_minute) }}
-           {{ render_field(form.run_at_hour) }}
-           {{ render_field(form.run_at_day) }}
-           {{ render_field(form.run_at_month) }}
-           {{ render_field(form.run_at_day_of_week) }}
-           {{ render_field(form.max_instances, min=0) }}
-           {{ render_field(form.live) }}
-           {{ render_field(form.self_destruct) }}
-           {{ render_field(form.exclusive_execution) }}
-           {{ render_field(form.excluded_execution_configs) }}
-	   </dl>
-           <input type="submit" value="submit" />
-        </form>
+  {% from "_formhelpers.html" import render_field %}
+  <form action="." method="post">
+    <dl>
+      {% if form.task_id.choices|length > 0 and not form.task_id.choices.0.0 is
+      none %} {{ render_field(form.task_id) }} {% endif %} {{
+      render_field(form.chain_name) }} {{ render_field(form.client_name) }} {{
+      render_field(form.run_at_minute) }} {{ render_field(form.run_at_hour) }}
+      {{ render_field(form.run_at_day) }} {{ render_field(form.run_at_month) }}
+      {{ render_field(form.run_at_day_of_week) }} {{
+      render_field(form.max_instances, min=0) }} {{ render_field(form.live) }}
+      {{ render_field(form.self_destruct) }} {{
+      render_field(form.exclusive_execution) }} {{
+      render_field(form.excluded_execution_configs) }}
+    </dl>
+    <input type="submit" value="submit" />
+  </form>
 </div>
 {% endblock %}

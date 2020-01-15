@@ -10,9 +10,12 @@
         </code>
       </a>
     </div>
-    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/">Edit</a>
-    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/delete/">Delete</a>
-    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/add/">Add</a>
+    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/edit/"
+      >Edit</a
+    >
+    <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/delete/"
+      >Delete</a
+    >
   </div>
   <div class="body">
     <p title="In which user context this task should be run">
@@ -36,7 +39,7 @@
         p.order_id]|sort)[-1] %}
         <a
           class="badge"
-          href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/"
+          href="/chain_execution_parameters/{{ p.chain_execution_config }}/{{ p.chain_id }}/{{ p.order_id }}/edit/"
           ><code>
             {{ p.value|string|truncate(100)}}
           </code>
@@ -52,8 +55,10 @@
     {% endwith %}
   </div>
 </div>
-{% with %}
-{% set obj = obj.next %}
-{% include 'view_chain_tpl.html' %}
-{% endwith %}
-{% endif %}
+<div class="add-task">
+  <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/add/"
+    >+</a
+  >
+</div>
+{% with %} {% set obj = obj.next %} {% include 'view_chain_tpl.html' %} {%
+endwith %} {% endif %}
