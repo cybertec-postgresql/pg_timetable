@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block body %}
+<div>
+   <p><a href="/db_connection/{{ obj.database_connection }}/edit/">Edit</a></p>
+   <p>connect string: <span>{{ obj.connect_string }}</span></p>
+   <p>comment: <span>{{ obj.comment }}</span></p>
+</div>
+{% endblock %}

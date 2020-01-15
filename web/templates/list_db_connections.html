@@ -1,0 +1,14 @@
+{% extends "base.html" %} {% block body %} {% for obj in list %}
+<div>
+  <p>
+    <a href="/db_connection/{{ obj.database_connection }}/">View</a>
+    <a href="/db_connection/{{ obj.database_connection }}/edit/">Edit</a>
+  </p>
+  <p>
+    <span>{{ obj.connect_string }}</span>
+    <span>{{ obj.comment }}</span>
+  </p>
+</div>
+{% endfor %}
+<a class="button" href="/db_connections/add/">ADD</a>
+{% endblock %}

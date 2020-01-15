@@ -119,6 +119,17 @@ class Model(object):
                 "UPDATE timetable.base_task set name = %s, kind = %s, script = %s where task_id = %s", (self.task_name, self.task_kind, self.task_function, self.task_id))
         self.conn.commit()
 
+
+    def save_db_connection(self):
+        if self.database_connection is None:
+            self.cur.execute(
+                "INSERT INTO timetable.database_connection (connect_string, comment) VALUES (%s, %s)", (self.connect_string, self.comment)
+            )
+        else:
+            self.cur.execute(
+                "UPDATE timetable.database_connection set connect_string = %s, comment = %s where database_connection = %s", (self.connect_string, self.comment, self.database_connection))
+        self.conn.commit()
+
     def get_chain_by_id(self, chain_id):
         self.cur.execute("SELECT chain_id, parent_id, task_id, run_uid, database_connection, ignore_error FROM timetable.task_chain where chain_id = %s", (chain_id,))
         records = self.cur.fetchall()
@@ -261,6 +272,28 @@ class Model(object):
             result.append(Object(chain_execution_config=row[0], chain_id=row[1], task_id=row[2], name=row[3], script=row[4], kind=row[5], last_run=row[6], finished=row[7], returncode=row[8], pid=row[9]))
         return result
 
+    def get_all_db_connections(self):
+        self.cur.execute(
+            "SELECT database_connection, connect_string, comment FROM timetable.database_connection order by database_connection"
+        )
+        records = self.cur.fetchall()
+        result = []
+        for row in records:
+            result.append(Object(database_connection=row[0], connect_string=row[1], comment=row[2]))
+        return result
+
+
+    def get_db_connection_by_id(self, database_connection):
+        self.cur.execute(
+            "SELECT database_connection, connect_string, comment FROM timetable.database_connection where database_connection = %s", (database_connection,)
+        )
+        records = self.cur.fetchall()
+        if len(records) == 0:
+            return None
+        row = records[0]
+        return Object(database_connection=row[0], connect_string=row[1], comment=row[2])
+
+
     def get_all_chain_configs(self):
         self.cur.execute(
             "SELECT chain_execution_config, chain_id, chain_name, run_at_minute, run_at_hour, run_at_day, run_at_month, run_at_day_of_week, max_instances, live, self_destruct, exclusive_execution, excluded_execution_configs, client_name FROM timetable.chain_execution_config"
@@ -321,7 +354,7 @@ class MyBooleanField(BooleanField):
 class ChainForm(Form):
     task_id = SelectField("Task id", coerce=empty_or_integer, choices=[(t.task_id, f'{t.task_id}. {t.task_name}') for t in Model().get_all_tasks()])
     run_uid = StringField("Run uid")
-    database_connection = StringField("Database connection", filters=[empty_or_integer])
+    database_connection = SelectField("Database connection", coerce=empty_or_integer, choices=[(d.database_connection, f'{d.database_connection}. {d.comment}') for d in Model().get_all_db_connections()] + [(None, "No special connection string")])
     ignore_error = MyBooleanField("Ignore error")
 
 class TaskForm(Form):
@@ -336,6 +369,11 @@ class TaskForm(Form):
         t = Model().get_task_by_name(field.data)
         if t and hasattr(t, "task_id") and t.task_id != form.task_id.data:
             raise ValidationError("Task name must be unique!")
+
+class DBConnectionForm(Form):
+    database_connection = IntegerField("Database connection")
+    connect_string = StringField("Connection string")
+    comment = TextAreaField("Comment")
 
 class ChainExecutionParametersForm(Form):
     order_id = IntegerField("Order id")
@@ -567,6 +605,41 @@ def edit_chain_execution_parameters(chain_execution_config, chain_id, order_id):
 def view_execution_logs(id):
     db = Model()
     return render_template("view_execution_logs.html", list=db.get_execution_logs(id))
+
+@app.route('/db_connections/')
+def list_db_connections():
+    db = Model()
+    return render_template("list_db_connections.html", list=db.get_all_db_connections())
+
+@app.route('/db_connections/add/', methods=["GET", "POST"])
+def add_db_connection():
+    form = DBConnectionForm(request.form)
+    if request.method == 'POST' and form.validate():
+        db = Model(database_connection=None, connect_string=form.connect_string.data, comment=form.comment.data)
+        db.save_db_connection()
+        return redirect(f"/db_connections/", code=302)
+    return render_template("edit_db_connection.html", form=form)
+
+@app.route('/db_connection/<int:database_connection>/edit/', methods=["GET", "POST"])
+def edit_db_connection(database_connection):
+    db = Model(database_connection=database_connection)
+    obj = db.get_db_connection_by_id(database_connection)
+    if obj is None:
+        abort(404)
+    form = DBConnectionForm(request.form, obj=obj)
+    if request.method == 'POST' and form.validate():
+        db.update(databse_connection=form.database_connection.data, connect_string=form.connect_string.data, comment=form.comment.data)
+        db.save_db_connection()
+        return redirect(f"/db_connection/{database_connection}/", code=302)
+    return render_template("edit_db_connection.html", form=form)
+
+@app.route('/db_connection/<int:database_connection>/')
+def view_db_connection(database_connection):
+    db = Model()
+    obj = db.get_db_connection_by_id(database_connection)
+    if obj is None:
+        abort(404)
+    return render_template("view_db_connection.html", obj=obj)
 
 @app.errorhandler(404)
 def page_not_found(error):
