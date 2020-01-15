@@ -1,21 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>{% block title %}PG_TIMETABLE{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css" />
+    <meta charset="utf-8" />
+      <link rel="apple-touch-icon" sizes="76x76" href="/static/assets/img/apple-icon.png">
+      <link rel="icon" type="image/png" href="/static/assets/img/favicon.png">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>
+      {% block title %}PG_TIMETABLE{% endblock %}
+    </title>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
+    <!--     Fonts and icons     -->
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:400,700|Material+Icons" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+    <!-- CSS Files -->
+    <link href="/static/assets/css/material-dashboard.css?v=2.1.2" rel="stylesheet" />
+    <link href="/static/assets/demo/demo.css?v=1.1.1" rel="stylesheet" />
+     <!-- Specific Page CSS goes HERE  -->
+    {% block stylesheets %}{% endblock stylesheets %}
   </head>
-  <body>
-    <div class="header">
-      <img class="logo" src="/static/cybertec_logo_225x90px.jpg" />
-      <nav>
-        <a href="/chain_execution_config/">Execution configs</a>
-        <a href="/tasks/">Tasks</a>
-        <a href="/db_connections/">DB connections</a>
-      </nav>
-    </div>
 
-    <div class="content">
-      {% block body %} {% endblock %}
+  <body class="">
+  <div class="wrapper ">
+
+    {% include 'base_template/sidebar.html' %}
+
+    <div class="main-panel">
+
+      {% include 'base_template/navigation.html' %}
+
+      <!-- End Navbar -->
+      <div class="content">
+        <div class="container-fluid">
+
+          {% block body %} {% endblock %}
+
+        </div>
+      </div>
+
+      {% include 'base_template/footer.html' %}
+
     </div>
-  </body>
+  </div>
+
+
+
+  {% include 'base_template/scripts.html' %}
+
+  {% include 'base_template/scripts-sidebar.html' %}
+
+  <!-- Specific Page JS goes HERE  -->
+  {% block javascripts %}{% endblock javascripts %}
+
+</body>
 </html>
+

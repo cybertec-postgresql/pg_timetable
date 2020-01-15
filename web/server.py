@@ -426,6 +426,8 @@ class ChainExecutionConfigForm(Form):
 
     def validate_run_at_month(form, field):
         if field.data is not None:
+            if not isinstance(field.data, int) or field.data == '*':
+                raise ValidationError("Months between 1 and 12 or * if you want to run every month")
             if field.data < 1 or field.data > 31:
                 raise ValidationError("Run at month must be between 1 and 12 or * if you want to run every month")
 

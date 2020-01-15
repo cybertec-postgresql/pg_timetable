@@ -1,20 +1,34 @@
 {% extends "base.html" %} {% block body %}
-<div>
-  {% from "_formhelpers.html" import render_field %}
-  <form action="." method="post">
-    <dl>
-      {% if form.task_id.choices|length > 0 and not form.task_id.choices.0.0 is
-      none %} {{ render_field(form.task_id) }} {% endif %} {{
-      render_field(form.chain_name) }} {{ render_field(form.client_name) }} {{
-      render_field(form.run_at_minute) }} {{ render_field(form.run_at_hour) }}
-      {{ render_field(form.run_at_day) }} {{ render_field(form.run_at_month) }}
-      {{ render_field(form.run_at_day_of_week) }} {{
-      render_field(form.max_instances, min=0) }} {{ render_field(form.live) }}
-      {{ render_field(form.self_destruct) }} {{
-      render_field(form.exclusive_execution) }} {{
-      render_field(form.excluded_execution_configs) }}
-    </dl>
-    <input type="submit" value="submit" />
-  </form>
+<div class="row justify-content-md-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-body">
+          {% from "_formhelpers.html" import render_field %}
+          <form action="." method="post">
+            <dl>
+              {% if form.task_id.choices|length > 0 and not form.task_id.choices.0.0 is none %}
+              {{ render_field(form.task_id, class="custom-select") }}
+              {% endif %}
+              {{ render_field(form.chain_name, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.client_name, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.run_at_minute, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.run_at_hour, class="form-control" + (" has-error" if form.errors else ""))}}
+              {{ render_field(form.run_at_day, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.run_at_month, class="form-control" + (" has-error" if form.errors else ""))}}
+              {{ render_field(form.run_at_day_of_week, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.max_instances, min=0, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.live, class="custom-control custom-checkbox" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.self_destruct, class="custom-control custom-checkbox" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.exclusive_execution, class="custom-control custom-checkbox" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.excluded_execution_configs, class="form-control" + (" has-error" if form.errors else "")) }}
+            </dl>
+            <input type="submit" class="btn btn-primary" value="submit" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
