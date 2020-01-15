@@ -133,14 +133,14 @@ A new base task can be created by inserting a new entry into `timetable.base_tas
 ### 3.2. Task chain
 
 The next building block is a ***chain***, which simply represents a list of tasks. An example would be:
-- Start a transaction
+
 - Download files from a server
 - Import files
 - Run aggregations
 - Commit the transaction
 - Remove the files from disk
 
-Through chains, **pg_timetable** creates the ability to span transactions over more than just one task.
+All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback `SHELL` and `BUILTIN` tasks.
 
 <p align="center">Excerpt of <code>timetable.task_chain</code></p>
 
