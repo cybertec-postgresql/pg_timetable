@@ -8,32 +8,34 @@ DECLARE
 BEGIN
 	-- Step 1. Download file from the server
 	-- Create the chain
-	INSERT INTO timetable.task_chain (task_id)
-	    VALUES (timetable.get_task_id ('Download'))
+	INSERT INTO timetable.task_chain (task_id, ignore_error)
+	    VALUES (timetable.get_task_id ('Download'), TRUE)
 	RETURNING
 	    chain_id INTO v_head_id;
 
 	-- Create the chain execution configuration with default values executed every minute
-	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, live)
-	    VALUES (v_head_id, 'Download locations and aggregate', TRUE)
+	INSERT INTO timetable.chain_execution_config 
+		(chain_id, chain_name, live)
+	VALUES 
+		(v_head_id, 'Download locations and aggregate', TRUE)
 	RETURNING
 	    chain_execution_config INTO v_chain_config_id;
 
 	-- Create the parameters for the step 1
 	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-	    VALUES (v_chain_config_id, v_head_id, 1, '
-	    		{
-	    			"workersnum": 1, 
-	 				"fileurls": ["https://www.cybertec-postgresql.com/secret/orte.txt"], 
-	 				"destpath": "."
-	 			}'::jsonb);
+		VALUES (v_chain_config_id, v_head_id, 1, '
+				{
+					"workersnum": 1, 
+					"fileurls": ["https://www.cybertec-postgresql.com/secret/orte.txt"], 
+					"destpath": "."
+				}'::jsonb);
 	
 	RAISE NOTICE 'Step 1 completed. DownloadFile task added';
 
 	-- Step 2. Transform Unicode characters into ASCII
 	-- Create the shell task to call 'uconv -x' and name it 'unaccent'
 	INSERT INTO timetable.base_task(name, kind, script)
-		VALUES ('unaccent', 'SHELL'::timetable.task_kind, 'uconv -x "::Latin; ::Latin-ASCII;"')
+		VALUES ('unaccent', 'SHELL'::timetable.task_kind, 'uconv')
 	RETURNING 
 		task_id INTO v_task_id;
 
@@ -45,10 +47,8 @@ BEGIN
 
 	-- Create the parameters for the 'unaccent' base task. Input and output files in this case
 	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-	    VALUES (v_chain_config_id, v_chain_id, 2, '[
-	 			"<", "orte.txt",
-	 			">", "orte_ansi.txt"
-	 		]'::jsonb);
+	    VALUES (v_chain_config_id, v_chain_id, 2, 
+	    	'["-x", "Latin-ASCII", "-o", "orte_ansi.txt", "orte.txt"]'::jsonb);
 
 	RAISE NOTICE 'Step 2 completed. Unacent task added';
 
@@ -75,6 +75,7 @@ BEGIN
 			"-p", "' || inet_server_port() || '",
 			"-d", "' || current_database() || '",
 			"-U", "' || current_user || '",
+			"-c", "TRUNCATE location", 
 			"-c", "\\copy location FROM orte_ansi.txt"
 		]')::jsonb);
 
