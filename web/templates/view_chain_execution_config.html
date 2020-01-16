@@ -22,6 +22,10 @@
 		</thead>
 		<tbody>
 			<tr>
+				<td>client name</td>
+				<td>{{ obj.client_name if obj.client_name is not none }}</td>
+			</tr>
+			<tr>
 				<td>Schedule (cron)</td>
 				<td>
 					<code>
