@@ -19,9 +19,9 @@ type cmdOptions struct {
 	Dbname      string `short:"d" long:"dbname" description:"PG config DB dbname" default:"timetable" env:"PGTT_PGDATABASE"`
 	User        string `short:"u" long:"user" description:"PG config DB user" default:"scheduler" env:"PGTT_PGUSER"`
 	File        string `short:"f" long:"file" description:"Config file only mode" hidden:"TODO"`
-	Password    string `long:"password" description:"PG config DB password" env:"PGCB_PGPASSWORD"`
+	Password    string `long:"password" description:"PG config DB password" env:"PGTT_PGPASSWORD"`
 	SSLMode     string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
-	PostgresURL DbURL  `long:"pgurl" description:"PG config DB url" env:"POSTGRES_URL"`
+	PostgresURL DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
 }
 
 func (c cmdOptions) String() string {
