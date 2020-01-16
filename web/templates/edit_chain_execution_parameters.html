@@ -1,9 +1,21 @@
 {% extends "base.html" %} {% block body %}
-<div>
-  {% from "_formhelpers.html" import render_field %}
-  <form action="." method="post">
-    {{ render_field(form.value) }}
-    <input type="submit" value="submit" class="" />
-  </form>
+<div class="row justify-content-md-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-body">
+          {% from "_formhelpers.html" import render_field %}
+          <form action="." method="post">
+            <dl>
+              {{ render_field(form.order_id, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.value, class="form-control" + (" is-invalid" if form.errors else "")) }}
+            </dl>
+            <input type="submit" class="btn btn-primary" value="submit" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

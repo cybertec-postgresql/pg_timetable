@@ -1,5 +1,6 @@
 {% if obj.chain_id %}
-<div class="task">
+<div class="card">
+<div class="card-header">
   <div class="actions">
     <div>
       <span class="badge">ID {{obj.chain_id }}</span>
@@ -17,6 +18,7 @@
       >Delete</a
     >
   </div>
+<div class="card-body">
   <div class="body">
     <p title="In which user context this task should be run">
       {% if obj.database_connection is not none %} run uid: {{ obj.run_uid }} {%
@@ -55,7 +57,9 @@
     {% endwith %}
   </div>
 </div>
-<div class="add-task">
+</div>
+</div>
+<div class="card">
   <a href="/chain/{{ obj.chain_execution_config }}/{{ obj.chain_id }}/add/"
     >+</a
   >

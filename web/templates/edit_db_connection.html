@@ -1,11 +1,21 @@
-{% extends "base.html" %}
-{% block body %}
-	{% from "_formhelpers.html" import render_field %}
-        <form action = "." method = "post">
-	   <dl>
-           {{ render_field(form.connect_string) }}
-           {{ render_field(form.comment) }}
-	   </dl>
-	   <input type="submit" value="submit" />
-	</form>
+{% extends "base.html" %} {% block body %}
+<div class="row justify-content-md-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-body">
+          {% from "_formhelpers.html" import render_field %}
+          <form action="." method="post">
+            <dl>
+              {{ render_field(form.connect_string, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.comment, class="form-control" + (" is-invalid" if form.errors else "")) }}
+            </dl>
+            <input type="submit" class="btn btn-primary" value="submit" />
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

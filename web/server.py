@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import escape, request, redirect, render_template, abort
 from wtforms import Form, BooleanField, SelectField, StringField, TextAreaField, validators, IntegerField, ValidationError
+from wtforms.validators import StopValidation
 from wtforms.widgets.html5 import NumberInput
 import os
 import json
@@ -372,19 +373,25 @@ class TaskForm(Form):
 
 class DBConnectionForm(Form):
     database_connection = IntegerField("Database connection")
-    connect_string = StringField("Connection string")
+    connect_string = StringField("Connect string")
     comment = TextAreaField("Comment")
 
 class ChainExecutionParametersForm(Form):
     order_id = IntegerField("Order id")
     value = JSONField("Value")
 
-def run_at_filter(i):
+def run_at_filter(i, raise_error=False):
     if isinstance(i, int) or i is None:
         return i
     elif isinstance(i, str) and not len(i) or i == 'None' or i == "*":
         return None
-    return int(i)
+    if raise_error:
+        return int(i)
+    try:
+        return int(i)
+    except ValueError:
+        return i
+
 
 class ChainExecutionConfigForm(Form):
     chain_id = SelectField("Chain id", coerce=empty_or_integer, choices=[(c.chain_id, c.chain_id) for c in Model().get_all_chains()])
@@ -409,30 +416,40 @@ class ChainExecutionConfigForm(Form):
         if hasattr(c, "chain_id") and c.chain_id != form.chain_id.data:
             raise ValidationError("Chain name must be unique!")
 
+    def validate_run_at(form, field):
+        try:
+            data = run_at_filter(field.data, True)
+        except ValueError:
+            raise StopValidation("Is not a number")
+        field.data = data
+
     def validate_run_at_minute(form, field):
-        if field.data is not None:
+        form.validate_run_at(field)
+        if isinstance(field.data, int):
             if field.data < 0 or field.data > 59:
                 raise ValidationError("Run at minute must be between 0 and 59 or * if you want to run every minute")
 
     def validate_run_at_hour(form, field):
-        if field.data is not None:
+        form.validate_run_at(field)
+        if isinstance(field.data, int):
             if field.data < 1 or field.data > 31:
                 raise ValidationError("Run at hour must be between 0 and 23 or * if you want to run every hour")
 
     def validate_run_at_day(form, field):
-        if field.data is not None:
+        form.validate_run_at(field)
+        if isinstance(field.data, int):
             if field.data < 1 or field.data > 31:
                 raise ValidationError("Run at day must be between 1 and 31 or * if you want to run every day")
 
     def validate_run_at_month(form, field):
-        if field.data is not None:
-            if not isinstance(field.data, int) or field.data == '*':
-                raise ValidationError("Months between 1 and 12 or * if you want to run every month")
+        form.validate_run_at(field)
+        if isinstance(field.data, int):
             if field.data < 1 or field.data > 31:
                 raise ValidationError("Run at month must be between 1 and 12 or * if you want to run every month")
 
     def validate_run_at_day_of_week(form, field):
-        if field.data is not None:
+        form.validate_run_at(field)
+        if isinstance(field.data, int):
             if field.data < 0 or field.data > 7:
                 raise ValidationError("Run at day of week must be between 0 and 7 or * if you want to run every day of week")
 

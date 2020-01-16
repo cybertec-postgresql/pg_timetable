@@ -7,21 +7,22 @@
           {% from "_formhelpers.html" import render_field %}
           <form action="." method="post">
             <dl>
+              {{ render_field(form.chain_id, class="form-control" + (" is-invalid" if form.errors else "")) }}
               {% if form.task_id.choices|length > 0 and not form.task_id.choices.0.0 is none %}
               {{ render_field(form.task_id, class="custom-select") }}
               {% endif %}
-              {{ render_field(form.chain_name, class="form-control" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.client_name, class="form-control" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.run_at_minute, class="form-control" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.run_at_hour, class="form-control" + (" has-error" if form.errors else ""))}}
-              {{ render_field(form.run_at_day, class="form-control" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.run_at_month, class="form-control" + (" has-error" if form.errors else ""))}}
-              {{ render_field(form.run_at_day_of_week, class="form-control" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.max_instances, min=0, class="form-control" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.live, class="custom-control custom-checkbox" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.self_destruct, class="custom-control custom-checkbox" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.exclusive_execution, class="custom-control custom-checkbox" + (" has-error" if form.errors else "")) }}
-              {{ render_field(form.excluded_execution_configs, class="form-control" + (" has-error" if form.errors else "")) }}
+              {{ render_field(form.chain_name, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.client_name, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.run_at_minute, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.run_at_hour, class="form-control" + (" is-invalid" if form.errors else ""))}}
+              {{ render_field(form.run_at_day, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.run_at_month, class="form-control" + (" is-invalid" if form.errors else ""))}}
+              {{ render_field(form.run_at_day_of_week, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.max_instances, min=0, class="form-control" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.live, class="custom-control custom-checkbox" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.self_destruct, class="custom-control custom-checkbox" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.exclusive_execution, class="custom-control custom-checkbox" + (" is-invalid" if form.errors else "")) }}
+              {{ render_field(form.excluded_execution_configs, class="form-control" + (" is-invalid" if form.errors else "")) }}
             </dl>
             <input type="submit" class="btn btn-primary" value="submit" />
           </form>
