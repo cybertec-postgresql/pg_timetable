@@ -1,16 +1,16 @@
 package pgengine
 
 import (
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
 
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
+
+	"github.com/lib/pq"
 )
 
 // wait for 5 sec before reconnecting to DB
@@ -61,22 +61,24 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
 		Host, Port, DbName, SSLMode, User)
 
-	connConfig, err := pgx.ParseConfig(connstr)
-
-	connConfig.OnNotice = func(con *pgconn.PgConn, notice *pgconn.Notice) {
-		LogToDB("USER", notice)
+	// Base connector to wrap
+	base, err := pq.NewConnector(connstr)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	connstr = stdlib.RegisterConnConfig(connConfig)
-	defer stdlib.UnregisterConnConfig(connstr)
+	// Wrap the connector to simply print out the message
+	connector := pq.ConnectorWithNoticeHandler(base, func(notice *pq.Error) {
+		LogToDB("USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
+	})
+	db := sql.OpenDB(connector)
 
 	LogToDB("DEBUG", "Connection string: ", connstr)
-	ConfigDb, err = sqlx.Connect("pgx", connstr)
+	ConfigDb = sqlx.NewDb(db, "postgres")
 	for err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
 		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
 		time.Sleep(time.Duration(wt) * time.Second)
-		ConfigDb, err = sqlx.Connect("pgx", connstr)
+		ConfigDb, err = sqlx.Connect("postgres", connstr)
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
@@ -131,7 +133,7 @@ func ReconnectDbAndFixLeftovers() {
 		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
 		time.Sleep(waitTime * time.Second)
 		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
-		ConfigDb, err = sqlx.Connect("pgx", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
+		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
 			Host, Port, DbName, SSLMode, User, Password))
 		if err == nil {
 			LogToDB("LOG", "Connection reestablished...")
