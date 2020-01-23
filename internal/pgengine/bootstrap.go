@@ -71,18 +71,20 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 		LogToDB("USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
 	})
 	db := sql.OpenDB(connector)
-
 	LogToDB("DEBUG", "Connection string: ", connstr)
-	ConfigDb = sqlx.NewDb(db, "postgres")
+
+	err = db.Ping()
 	for err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
 		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
 		time.Sleep(time.Duration(wt) * time.Second)
-		ConfigDb, err = sqlx.Connect("postgres", connstr)
+		err = db.Ping()
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
 	}
+
+	ConfigDb = sqlx.NewDb(db, "postgres")
 	LogToDB("LOG", "Connection established...")
 
 	var exists bool
