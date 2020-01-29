@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,7 +9,8 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // postgresql driver blank import
+
+	"github.com/lib/pq"
 )
 
 // wait for 5 sec before reconnecting to DB
@@ -56,19 +58,33 @@ func PrefixSchemaFiles(prefix string) {
 func InitAndTestConfigDBConnection(schemafiles []string) {
 	var wt int = waitTime
 	var err error
-	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
-		Host, Port, DbName, SSLMode, User, Password)
+	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
+		Host, Port, DbName, SSLMode, User)
+
+	// Base connector to wrap
+	base, err := pq.NewConnector(connstr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Wrap the connector to simply print out the message
+	connector := pq.ConnectorWithNoticeHandler(base, func(notice *pq.Error) {
+		LogToDB("USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
+	})
+	db := sql.OpenDB(connector)
 	LogToDB("DEBUG", "Connection string: ", connstr)
-	ConfigDb, err = sqlx.Connect("postgres", connstr)
+
+	err = db.Ping()
 	for err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
 		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
 		time.Sleep(time.Duration(wt) * time.Second)
-		ConfigDb, err = sqlx.Connect("postgres", connstr)
+		err = db.Ping()
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
 	}
+
+	ConfigDb = sqlx.NewDb(db, "postgres")
 	LogToDB("LOG", "Connection established...")
 
 	var exists bool
