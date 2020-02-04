@@ -49,11 +49,7 @@ BEGIN
     VALUES (DEFAULT, -- chain_execution_config,
         v_chain_id, -- chain_id,
         'remote db', -- chain_name
-        NULL, -- run_at_minute,
-        NULL, -- run_at_hour,
-        NULL, -- run_at_day,
-        NULL, -- run_at_month,
-        NULL, -- run_at_day_of_week,
+        '* * * * *', -- run_at,
         1, -- max_instances,
         TRUE, -- live,
         FALSE, -- self_destruct,

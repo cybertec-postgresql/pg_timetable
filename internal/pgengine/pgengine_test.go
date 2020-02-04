@@ -175,7 +175,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"validate_json_schema(jsonb, jsonb, jsonb)",
 			"get_running_jobs(bigint)",
 			"trig_chain_fixer()",
-			"check_task(bigint)"}
+			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName))
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", funcName))

@@ -38,41 +38,35 @@ BEGIN
 END
 $$ LANGUAGE 'plpgsql';
 
--- check_task() stored procedure will tell us if chain execution config id have to be executed 
-CREATE OR REPLACE FUNCTION timetable.check_task(BIGINT) RETURNS BOOLEAN AS
+-- is_cron_in_time returns TRUE if timestamp is listed in cron expression
+CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(run_at timetable.cron, ts timestamptz) RETURNS BOOLEAN AS
 $$
 DECLARE 
-    v_chain_exec_conf   ALIAS FOR $1;
-    v_record        record;
-    v_return        BOOLEAN;
+    a_by_minute integer[];
+    a_by_hour integer[];
+    a_by_day integer[];
+    a_by_month integer[];
+    a_by_day_of_week integer[]; 
 BEGIN
-    SELECT *    
-        FROM    timetable.chain_execution_config 
-        WHERE   chain_execution_config = v_chain_exec_conf
-        INTO v_record;
-
-    IF NOT FOUND
+    IF run_at IS NULL
     THEN
-        RETURN FALSE;
+        RETURN TRUE;
     END IF;
-    
-    -- ALL NULLS means task executed every minute
-    RETURN  COALESCE(v_record.run_at_month, v_record.run_at_day_of_week, v_record.run_at_day,
-            v_record.run_at_hour,v_record.run_at_minute) IS NULL
-        OR 
-            COALESCE(v_record.run_at_month = date_part('month', now()), TRUE)
-        AND COALESCE(v_record.run_at_day_of_week = date_part('dow', now()), TRUE)
-        AND COALESCE(v_record.run_at_day = date_part('day', now()), TRUE)
-        AND COALESCE(v_record.run_at_hour = date_part('hour', now()), TRUE)
-        AND COALESCE(v_record.run_at_minute = date_part('minute', now()), TRUE);
+    a_by_minute := timetable.cron_element_to_array(run_at, 'minute');
+    a_by_hour := timetable.cron_element_to_array(run_at, 'hour');
+    a_by_day := timetable.cron_element_to_array(run_at, 'day');
+    a_by_month := timetable.cron_element_to_array(run_at, 'month');
+    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week'); 
+    RETURN  (a_by_month[1]       IS NULL OR date_part('month', ts) = ANY(a_by_month))
+        AND (a_by_day_of_week[1] IS NULL OR date_part('dow', ts) = ANY(a_by_day_of_week))
+        AND (a_by_day[1]         IS NULL OR date_part('day', ts) = ANY(a_by_day))
+        AND (a_by_hour[1]        IS NULL OR date_part('hour', ts) = ANY(a_by_hour))
+        AND (a_by_minute[1]      IS NULL OR date_part('minute', ts) = ANY(a_by_minute));    
 END;
 $$ LANGUAGE 'plpgsql';
 
 -- cron_element_to_array() will return array with minutes, hours, days etc. of execution
-CREATE OR REPLACE FUNCTION timetable.cron_element_to_array(
-    element text,
-    element_type text)
-    RETURNS integer[] AS
+CREATE OR REPLACE FUNCTION timetable.cron_element_to_array(element text, element_type text) RETURNS integer[] AS
 $$
 DECLARE
     a_element text[];

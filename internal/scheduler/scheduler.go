@@ -65,7 +65,7 @@ func Run() {
 			" COALESCE(max_instances, 16) as max_instances" +
 			" FROM   timetable.chain_execution_config " +
 			" WHERE live AND (client_name = $1 or client_name IS NULL) " +
-			" AND timetable.check_task(chain_execution_config)"
+			" AND timetable.is_cron_in_time(run_at, now())"
 
 		headChains := []Chain{}
 		err := pgengine.ConfigDb.Select(&headChains, query, pgengine.ClientName)
