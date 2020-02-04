@@ -183,6 +183,30 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		}
 	})
 
+	t.Run("Check timetable.cron type input", func(t *testing.T) {
+		stmts := []string{
+			//cron
+			"SELECT '0 1 1 * 1' :: timetable.cron",
+			"SELECT '0 1 1 * 1,2' :: timetable.cron",
+			"SELECT '0 1 1 * 1,2,3' :: timetable.cron",
+			"SELECT '0 1 * * 1/4' :: timetable.cron",
+			"SELECT '0 * * 0 1-4' :: timetable.cron",
+			"SELECT '0 * * * 2/4' :: timetable.cron",
+			"SELECT '* * * * *' :: timetable.cron",
+			"SELECT '*/2 */2 * * *' :: timetable.cron",
+			// predefined
+			"SELECT '@annually' :: timetable.cron",
+			"SELECT '@yearly' :: timetable.cron",
+			"SELECT '@monthly' :: timetable.cron",
+			"SELECT '@weekly' :: timetable.cron",
+			"SELECT '@every 1 sec' ::  timetable.cron",
+			"SELECT '@after 1 sec' ::  timetable.cron"}
+		for _, stmt := range stmts {
+			_, err := pgengine.ConfigDb.Exec(stmt)
+			assert.NoError(t, err, fmt.Sprintf("Wrong input cron format: %s", stmt))
+		}
+	})
+
 	t.Run("Check log facility", func(t *testing.T) {
 		var count int
 		logLevels := []string{"DEBUG", "NOTICE", "LOG", "ERROR", "PANIC"}

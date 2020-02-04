@@ -60,17 +60,20 @@ CREATE TABLE timetable.task_chain (
 -- "live" is the indication that the chain is finalized, the system can run it
 -- "self_destruct" is the indication that this chain will delete itself after run
 -- "client_name" is the indication that this chain will run only under this tag
+CREATE DOMAIN timetable.cron AS TEXT CHECK(
+	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
+	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
+	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
+);
+
+
 CREATE TABLE timetable.chain_execution_config (
     chain_execution_config		BIGSERIAL	PRIMARY KEY,
     chain_id        			BIGINT 		REFERENCES timetable.task_chain(chain_id)
                                             ON UPDATE CASCADE
 											ON DELETE CASCADE,
     chain_name      			TEXT		NOT NULL UNIQUE,
-    run_at_minute				INTEGER,
-    run_at_hour					INTEGER,
-    run_at_day					INTEGER,
-    run_at_month				INTEGER,
-    run_at_day_of_week			INTEGER,
+    run_at						timetable.cron,
     max_instances				INTEGER,
     live						BOOLEAN		DEFAULT false,
     self_destruct				BOOLEAN		DEFAULT false,
