@@ -135,8 +135,6 @@ CREATE TABLE timetable.run_status (
 	PRIMARY KEY (run_status)
 );
 
-DROP TRIGGER IF EXISTS trig_task_chain_fixer ON timetable.base_task;
-
 CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 	DECLARE
 		tmp_parent_id BIGINT;
