@@ -25,34 +25,34 @@ func TestShellCommand(t *testing.T) {
 	var err error
 	var retCode int
 
-	retCode, err = executeShellCommand("", []string{""})
-	assert.EqualError(t, err, "Shell command cannot be empty", "Empty command should fail")
+	retCode, _, err = executeShellCommand("", []string{""})
+	assert.EqualError(t, err, "Shell command cannot be empty", "Empty command should out, fail")
 
-	retCode, err = executeShellCommand("ping0", nil)
-	assert.NoError(t, err, "Command with nil param is OK")
+	retCode, _, err = executeShellCommand("ping0", nil)
+	assert.NoError(t, err, "Command with nil param is out, OK")
 
-	retCode, err = executeShellCommand("ping1", []string{})
+	retCode, _, err = executeShellCommand("ping1", []string{})
 	assert.NoError(t, err, "Command with empty array param is OK")
 
-	retCode, err = executeShellCommand("ping2", []string{""})
+	retCode, _, err = executeShellCommand("ping2", []string{""})
 	assert.NoError(t, err, "Command with empty string param is OK")
 
-	retCode, err = executeShellCommand("ping3", []string{"[]"})
+	retCode, _, err = executeShellCommand("ping3", []string{"[]"})
 	assert.NoError(t, err, "Command with empty json array param is OK")
 
-	retCode, err = executeShellCommand("ping3", []string{"[null]"})
+	retCode, _, err = executeShellCommand("ping3", []string{"[null]"})
 	assert.NoError(t, err, "Command with nil array param is OK")
 
-	retCode, err = executeShellCommand("ping4", []string{`["localhost"]`})
+	retCode, _, err = executeShellCommand("ping4", []string{`["localhost"]`})
 	assert.NoError(t, err, "Command with one param is OK")
 
-	retCode, err = executeShellCommand("ping5", []string{`["localhost", "-4"]`})
+	retCode, _, err = executeShellCommand("ping5", []string{`["localhost", "-4"]`})
 	assert.NoError(t, err, "Command with many params is OK")
 
-	retCode, err = executeShellCommand("pong", nil)
+	retCode, _, err = executeShellCommand("pong", nil)
 	assert.IsType(t, (*exec.Error)(nil), err, "Uknown command should produce error")
 
-	retCode, err = executeShellCommand("ping5", []string{`{"param1": "localhost"}`})
+	retCode, _, err = executeShellCommand("ping5", []string{`{"param1": "localhost"}`})
 	assert.IsType(t, (*json.UnmarshalTypeError)(nil), err, "Command should fail with mailformed json parameter")
 	assert.NotEqual(t, 0, retCode, "return code should indicate failure.")
 
