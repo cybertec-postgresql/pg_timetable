@@ -71,6 +71,11 @@ func (c *cmdOptions) ParseCurl(cmdURL *url.URL) error {
 	if strings.TrimSpace(cmdURL.Path) != "" {
 		c.Dbname = cmdURL.Path[1:]
 	}
+
+	a, _ := url.ParseQuery(cmdURL.RawQuery)
+	if len(a["sslmode"]) > 0 {
+	        c.SSLMode = a["sslmode"][0]
+	}
 	return nil
 }
 
