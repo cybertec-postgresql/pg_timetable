@@ -10,7 +10,7 @@ const defaultTableName = "migrations"
 
 // Migrator is the migrator implementation
 type Migrator struct {
-	tableName  string
+	TableName  string
 	migrations []interface{}
 	onNotice   func(string)
 }
@@ -21,7 +21,7 @@ type Option func(*Migrator)
 // TableName creates an option to allow overriding the default table name
 func TableName(tableName string) Option {
 	return func(m *Migrator) {
-		m.tableName = tableName
+		m.TableName = tableName
 	}
 }
 
@@ -42,7 +42,7 @@ func Migrations(migrations ...interface{}) Option {
 // New creates a new migrator instance
 func New(opts ...Option) (*Migrator, error) {
 	m := &Migrator{
-		tableName: defaultTableName,
+		TableName: defaultTableName,
 		onNotice: func(msg string) {
 			fmt.Println(msg)
 		},
@@ -76,13 +76,13 @@ func (m *Migrator) Migrate(db *sql.DB) error {
 			version TEXT	 NOT NULL,
 			PRIMARY KEY (id)
 		);
-	`, m.tableName))
+	`, m.TableName))
 	if err != nil {
 		return err
 	}
 
 	// count applied migrations
-	count, err := countApplied(db, m.tableName)
+	count, err := countApplied(db, m.TableName)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (m *Migrator) Migrate(db *sql.DB) error {
 
 	// plan migrations
 	for idx, migration := range m.migrations[count:len(m.migrations)] {
-		insertVersion := fmt.Sprintf("INSERT INTO %s (id, version) VALUES (%d, '%s')", m.tableName, idx+count, migration.(fmt.Stringer).String())
+		insertVersion := fmt.Sprintf("INSERT INTO %s (id, version) VALUES (%d, '%s')", m.TableName, idx+count, migration.(fmt.Stringer).String())
 		switch mm := migration.(type) {
 		case *Migration:
 			if err := migrate(db, insertVersion, mm, m.onNotice); err != nil {
@@ -111,7 +111,7 @@ func (m *Migrator) Migrate(db *sql.DB) error {
 
 // Pending returns all pending (not yet applied) migrations
 func (m *Migrator) Pending(db *sql.DB) ([]interface{}, error) {
-	count, err := countApplied(db, m.tableName)
+	count, err := countApplied(db, m.TableName)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (m *Migrator) Pending(db *sql.DB) ([]interface{}, error) {
 
 // NeedUpgrade returns True if database need to be updated with migrations
 func (m *Migrator) NeedUpgrade(db *sql.DB) (bool, error) {
-	exists, err := tableExists(db, m.tableName)
+	exists, err := tableExists(db, m.TableName)
 	if !exists {
 		return true, err
 	}

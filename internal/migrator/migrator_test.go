@@ -1,20 +1,17 @@
-// +build integration
-
-package migrator
+package migrator_test
 
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
-	_ "github.com/go-sql-driver/mysql" // mysql driver
-	_ "github.com/lib/pq"              // postgres driver
+	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
 var migrations = []interface{}{
-	&Migration{
+	&migrator.Migration{
 		Name: "Using tx, encapsulate two queries",
 		Func: func(tx *sql.Tx) error {
 			if _, err := tx.Exec("CREATE TABLE foo (id INT PRIMARY KEY)"); err != nil {
@@ -26,7 +23,7 @@ var migrations = []interface{}{
 			return nil
 		},
 	},
-	&MigrationNoTx{
+	&migrator.MigrationNoTx{
 		Name: "Using db, execute one query",
 		Func: func(db *sql.DB) error {
 			if _, err := db.Exec("INSERT INTO foo (id) VALUES (2)"); err != nil {
@@ -35,14 +32,10 @@ var migrations = []interface{}{
 			return nil
 		},
 	},
-	&Migration{
-		Name: "Using tx, one embedded query",
+	&migrator.Migration{
+		Name: "Using tx, encapsulate two queries",
 		Func: func(tx *sql.Tx) error {
-			query, err := _escFSString(false, "/testdata/0_bar.sql")
-			if err != nil {
-				return err
-			}
-			if _, err := tx.Exec(query); err != nil {
+			if _, err := tx.Exec("CREATE TABLE bar (id INT PRIMARY KEY)"); err != nil {
 				return err
 			}
 			return nil
@@ -50,25 +43,23 @@ var migrations = []interface{}{
 	},
 }
 
-func migrateTest(driverName, url string) error {
-	migrator, err := New(Migrations(migrations...))
+func migrateTest() error {
+	migrator, err := migrator.New(migrator.Migrations(migrations...))
 	if err != nil {
 		return err
 	}
 
 	// Migrate up
-	db, err := sql.Open(driverName, url)
-	if err != nil {
-		return err
-	}
-	if err := migrator.Migrate(db); err != nil {
+	pgengine.InitAndTestConfigDBConnection([]string{})
+	pgengine.ConfigDb.MustExec("DROP TABLE IF EXISTS foo, bar, baz")
+	if err := migrator.Migrate(pgengine.ConfigDb.DB); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func mustMigrator(migrator *Migrator, err error) *Migrator {
+func mustMigrator(migrator *migrator.Migrator, err error) *migrator.Migrator {
 	if err != nil {
 		panic(err)
 	}
@@ -76,32 +67,13 @@ func mustMigrator(migrator *Migrator, err error) *Migrator {
 }
 
 func TestPostgres(t *testing.T) {
-	if err := migrateTest("postgres", os.Getenv("POSTGRES_URL")); err != nil {
+	if err := migrateTest(); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestMySQL(t *testing.T) {
-	if err := migrateTest("mysql", os.Getenv("MYSQL_URL")); err != nil {
-		t.Fatal(err)
-	}
-}
-func TestMigrationNumber(t *testing.T) {
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	count, err := countApplied(db, defaultTableName)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 3 {
-		t.Fatal("db applied migration number should be 3")
 	}
 }
 
 func TestDatabaseNotFound(t *testing.T) {
-	migrator, err := New(Migrations(&Migration{}))
+	migrator, err := migrator.New(migrator.Migrations(&migrator.Migration{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,23 +84,17 @@ func TestDatabaseNotFound(t *testing.T) {
 }
 
 func TestBadMigrations(t *testing.T) {
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", defaultTableName))
-	if err != nil {
-		t.Fatal(err)
-	}
+	pgengine.InitAndTestConfigDBConnection([]string{})
+	db := pgengine.ConfigDb.DB
 
 	var migrators = []struct {
 		name  string
-		input *Migrator
+		input *migrator.Migrator
 		want  error
 	}{
 		{
 			name: "bad tx migration",
-			input: mustMigrator(New(Migrations(&Migration{
+			input: mustMigrator(migrator.New(migrator.Migrations(&migrator.Migration{
 				Name: "bad tx migration",
 				Func: func(tx *sql.Tx) error {
 					if _, err := tx.Exec("FAIL FAST"); err != nil {
@@ -140,7 +106,7 @@ func TestBadMigrations(t *testing.T) {
 		},
 		{
 			name: "bad db migration",
-			input: mustMigrator(New(Migrations(&MigrationNoTx{
+			input: mustMigrator(migrator.New(migrator.Migrations(&migrator.MigrationNoTx{
 				Name: "bad db migration",
 				Func: func(db *sql.DB) error {
 					if _, err := db.Exec("FAIL FAST"); err != nil {
@@ -153,6 +119,10 @@ func TestBadMigrations(t *testing.T) {
 	}
 
 	for _, tt := range migrators {
+		_, err := db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tt.input.TableName))
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.input.Migrate(db)
 			if err != nil && !strings.Contains(err.Error(), "pq: syntax error") {
@@ -162,37 +132,11 @@ func TestBadMigrations(t *testing.T) {
 	}
 }
 
-func TestBadMigrate(t *testing.T) {
-	db, err := sql.Open("mysql", os.Getenv("MYSQL_URL"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := migrate(db, "BAD INSERT VERSION", &Migration{Name: "bad insert version", Func: func(tx *sql.Tx) error {
-		return nil
-	}}); err == nil {
-		t.Fatal("BAD INSERT VERSION should fail!")
-	}
-}
-
-func TestBadMigrateNoTx(t *testing.T) {
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := migrateNoTx(db, "BAD INSERT VERSION", &MigrationNoTx{Name: "bad migrate no tx", Func: func(db *sql.DB) error {
-		return nil
-	}}); err == nil {
-		t.Fatal("BAD INSERT VERSION should fail!")
-	}
-}
-
 func TestBadMigrationNumber(t *testing.T) {
-	db, err := sql.Open("mysql", os.Getenv("MYSQL_URL"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	migrator := mustMigrator(New(Migrations(
-		&Migration{
+	pgengine.InitAndTestConfigDBConnection([]string{})
+	db := pgengine.ConfigDb.DB
+	migrator := mustMigrator(migrator.New(migrator.Migrations(
+		&migrator.Migration{
 			Name: "bad migration number",
 			Func: func(tx *sql.Tx) error {
 				if _, err := tx.Exec("CREATE TABLE bar (id INT PRIMARY KEY)"); err != nil {
@@ -208,12 +152,10 @@ func TestBadMigrationNumber(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
-	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	migrator := mustMigrator(New(Migrations(
-		&Migration{
+	pgengine.InitAndTestConfigDBConnection([]string{})
+	db := pgengine.ConfigDb.DB
+	migrator := mustMigrator(migrator.New(migrator.Migrations(
+		&migrator.Migration{
 			Name: "Using tx, create baz table",
 			Func: func(tx *sql.Tx) error {
 				if _, err := tx.Exec("CREATE TABLE baz (id INT PRIMARY KEY)"); err != nil {
