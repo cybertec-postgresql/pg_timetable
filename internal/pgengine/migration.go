@@ -9,7 +9,8 @@ import (
 
 var m *migrator.Migrator
 
-func migrateDb(db *sql.DB) {
+// MigrateDb upgrades database with all migrations
+func MigrateDb() {
 	LogToDB("LOG", "Upgrading database...")
 	if err := m.Migrate(ConfigDb.DB); err != nil {
 		LogToDB("PANIC", err)
@@ -17,7 +18,8 @@ func migrateDb(db *sql.DB) {
 	}
 }
 
-func checkNeedMigrateDb(db *sql.DB) {
+// CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
+func CheckNeedMigrateDb() {
 	LogToDB("DEBUG", "Check need of upgrading database...")
 	upgrade, err := m.NeedUpgrade(ConfigDb.DB)
 	if upgrade {

@@ -106,11 +106,6 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
-	if Upgrade {
-		migrateDb(db)
-	} else {
-		checkNeedMigrateDb(db)
-	}
 }
 
 // CreateConfigDBSchema executes SQL script from file

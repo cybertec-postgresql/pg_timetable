@@ -22,6 +22,11 @@ func main() {
 	}
 	pgengine.PrefixSchemaFiles("sql/")
 	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
+	if pgengine.Upgrade {
+		pgengine.MigrateDb()
+	} else {
+		pgengine.CheckNeedMigrateDb()
+	}
 	defer pgengine.FinalizeConfigDBConnection()
 	pgengine.SetupCloseHandler()
 	scheduler.Run()
