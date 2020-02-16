@@ -120,29 +120,31 @@ func (m *Migrator) Pending(db *sql.DB) ([]interface{}, error) {
 
 // NeedUpgrade returns True if database need to be updated with migrations
 func (m *Migrator) NeedUpgrade(db *sql.DB) (bool, error) {
+	exists, err := tableExists(db, m.tableName)
+	if !exists {
+		return true, err
+	}
 	mm, err := m.Pending(db)
-	return err != nil && len(mm) > 0, err
+	return len(mm) > 0, err
 }
 
 func countApplied(db *sql.DB, tableName string) (int, error) {
 	// count applied migrations
 	var count int
-	rows, err := db.Query(fmt.Sprintf("SELECT count(*) FROM %s", tableName))
+	err := db.QueryRow(fmt.Sprintf("SELECT count(*) FROM %s", tableName)).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
-	for rows.Next() {
-		if err := rows.Scan(&count); err != nil {
-			return 0, err
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return 0, err
-	}
 	return count, nil
+}
+
+func tableExists(db *sql.DB, tableName string) (bool, error) {
+	var exists bool
+	err := db.QueryRow("SELECT to_regclass($1) IS NOT NULL", tableName).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 // Migration represents a single migration
@@ -180,7 +182,7 @@ func migrate(db *sql.DB, insertVersion string, migration *Migration, notice func
 		}
 		err = tx.Commit()
 	}()
-	notice(fmt.Sprintf("applying migration named '%s'...", migration.Name))
+	notice(fmt.Sprintf("Applying migration named '%s'...", migration.Name))
 	if err = migration.Func(tx); err != nil {
 		return fmt.Errorf("Error executing golang migration: %s", err)
 	}

@@ -10,7 +10,7 @@ import (
 var m *migrator.Migrator
 
 func migrateDb(db *sql.DB) {
-	LogToDB("DEBUG", "Upgrading database...")
+	LogToDB("LOG", "Upgrading database...")
 	if err := m.Migrate(ConfigDb.DB); err != nil {
 		LogToDB("PANIC", err)
 		os.Exit(3)
@@ -20,12 +20,12 @@ func migrateDb(db *sql.DB) {
 func checkNeedMigrateDb(db *sql.DB) {
 	LogToDB("DEBUG", "Check need of upgrading database...")
 	upgrade, err := m.NeedUpgrade(ConfigDb.DB)
+	if upgrade {
+		LogToDB("PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
+		defer os.Exit(3)
+	}
 	if err != nil {
 		LogToDB("PANIC", err)
-		os.Exit(3)
-	}
-	if upgrade {
-		LogToDB("ERROR", "You need to upgrade your database before proceeding, use --upgrade option")
 		os.Exit(3)
 	}
 }

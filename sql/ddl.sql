@@ -1,5 +1,16 @@
 CREATE SCHEMA timetable;
 
+-- define migrations you need to apply
+-- every change to this file should populate this table.
+-- Version value should contain issue number zero padded followed by
+-- short description of the issue\feature\bug implemented\resolved
+CREATE TABLE timetable.migrations(
+	id INT8 NOT NULL,
+	version TEXT NOT NULL,
+	PRIMARY KEY (id)
+);
+INSERT INTO timetable.migrations (id, version) VALUES ('0', '0051 Implement upgrade machinery');
+
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
 	database_connection BIGSERIAL,
