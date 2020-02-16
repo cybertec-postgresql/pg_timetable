@@ -44,6 +44,9 @@ var ClientName string
 // be negotiated with the server
 var SSLMode string = "disable"
 
+// Upgrade parameter specifies if database should be upgraded to latest version
+var Upgrade bool
+
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
 var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql", "job-functions.sql"}
 
@@ -102,6 +105,11 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 			}
 		}
 		LogToDB("LOG", "Configuration schema created...")
+	}
+	if Upgrade {
+		migrateDb(db)
+	} else {
+		checkNeedMigrateDb(db)
 	}
 }
 
