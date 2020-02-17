@@ -47,6 +47,10 @@ func init() {
 					return nil
 				},
 			},
+			&migrator.Migration{
+				Name: "0070 Interval scheduling and cron only syntax",
+				Func: migration70,
+			},
 		),
 	)
 	if err != nil {
@@ -68,19 +72,46 @@ ALTER TABLE timetable.chain_execution_config
 	ADD COLUMN run_at timetable.cron;
 
 UPDATE timetable.chain_execution_config 
-	SET run_at = 
-		COALESCE(by_minute, '*') ||
-		COALESCE(by_hour, '*') ||
-		COALESCE(by_day, '*') ||
-		COALESCE(by_month, '*') ||
-		COALESCE(by_day_of_week, '*');
+	SET run_at = format('%s %s %s %s %s', 
+		COALESCE(run_at_minute :: TEXT, '*'),
+		COALESCE(run_at_hour :: TEXT, '*'),
+		COALESCE(run_at_day :: TEXT, '*'),
+		COALESCE(run_at_month :: TEXT, '*'),
+		COALESCE(run_at_day_of_week :: TEXT, '*')
+	);
 
 ALTER TABLE timetable.chain_execution_config
-	DROP COLUMN by_minute,
-	DROP COLUMN by_hour,
-	DROP COLUMN by_day,
-	DROP COLUMN by_month,
-	DROP COLUMN by_day_of_week;
+	DROP COLUMN run_at_minute,
+	DROP COLUMN run_at_hour,
+	DROP COLUMN run_at_day,
+	DROP COLUMN run_at_month,
+	DROP COLUMN run_at_day_of_week;
+
+CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(run_at timetable.cron, ts timestamptz) RETURNS BOOLEAN AS
+$$
+DECLARE 
+    a_by_minute integer[];
+    a_by_hour integer[];
+    a_by_day integer[];
+    a_by_month integer[];
+    a_by_day_of_week integer[]; 
+BEGIN
+    IF run_at IS NULL
+    THEN
+        RETURN TRUE;
+    END IF;
+    a_by_minute := timetable.cron_element_to_array(run_at, 'minute');
+    a_by_hour := timetable.cron_element_to_array(run_at, 'hour');
+    a_by_day := timetable.cron_element_to_array(run_at, 'day');
+    a_by_month := timetable.cron_element_to_array(run_at, 'month');
+    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week'); 
+    RETURN  (a_by_month[1]       IS NULL OR date_part('month', ts) = ANY(a_by_month))
+        AND (a_by_day_of_week[1] IS NULL OR date_part('dow', ts) = ANY(a_by_day_of_week))
+        AND (a_by_day[1]         IS NULL OR date_part('day', ts) = ANY(a_by_day))
+        AND (a_by_hour[1]        IS NULL OR date_part('hour', ts) = ANY(a_by_hour))
+        AND (a_by_minute[1]      IS NULL OR date_part('minute', ts) = ANY(a_by_minute));    
+END;
+$$ LANGUAGE 'plpgsql';
 	`); err != nil {
 		return err
 	}
