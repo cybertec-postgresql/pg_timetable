@@ -123,7 +123,6 @@ func executeChain(chainConfigID int, chainID int) {
 		chainElemExec.ChainConfig = chainConfigID
 		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "STARTED")
 		retCode := executeСhainElement(tx, &chainElemExec)
-		pgengine.LogChainElementExecution(&chainElemExec, retCode)
 		if retCode != 0 && !chainElemExec.IgnoreError {
 			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
 			pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_FAILED")
@@ -152,7 +151,7 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
 		return -1
 	}
-
+	chainElemExec.StartedAt = time.Now()
 	switch chainElemExec.Kind {
 	case "SQL":
 		execTx = tx
@@ -201,10 +200,13 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		}
 
 	case "SHELL":
-		retCode, err = executeShellCommand(chainElemExec.Script, paramValues)
+		retCode, _, err = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
 	}
+
+	chainElemExec.Duration = time.Since(chainElemExec.StartedAt).Microseconds()
+	pgengine.LogChainElementExecution(chainElemExec, retCode) //TODO: Add output logging
 
 	if err != nil {
 		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))

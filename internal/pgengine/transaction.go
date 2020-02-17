@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -22,6 +23,8 @@ type ChainElementExecution struct {
 	IgnoreError        bool           `db:"ignore_error"`
 	DatabaseConnection sql.NullString `db:"database_connection"`
 	ConnectString      sql.NullString `db:"connect_string"`
+	StartedAt          time.Time
+	Duration           int64 // in microseconds
 }
 
 func (chainElem ChainElementExecution) String() string {

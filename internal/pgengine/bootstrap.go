@@ -44,6 +44,9 @@ var ClientName string
 // be negotiated with the server
 var SSLMode string = "disable"
 
+// Upgrade parameter specifies if database should be upgraded to latest version
+var Upgrade bool
+
 // SQLSchemaFiles contains the names of the files should be executed during bootstrap
 var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql", "job-functions.sql"}
 
@@ -58,8 +61,8 @@ func PrefixSchemaFiles(prefix string) {
 func InitAndTestConfigDBConnection(schemafiles []string) {
 	var wt int = waitTime
 	var err error
-	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s'",
-		Host, Port, DbName, SSLMode, User)
+	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+		Host, Port, DbName, SSLMode, User, Password)
 
 	// Base connector to wrap
 	base, err := pq.NewConnector(connstr)
