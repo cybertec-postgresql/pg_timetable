@@ -53,3 +53,36 @@ func init() {
 		LogToDB("ERROR", err)
 	}
 }
+
+// below this line should appear migration funtions only
+
+func migration70(tx *sql.Tx) error {
+	if _, err := tx.Exec(`
+CREATE DOMAIN timetable.cron AS TEXT CHECK(
+	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
+	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
+	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
+);
+
+ALTER TABLE timetable.chain_execution_config
+	ADD COLUMN run_at timetable.cron;
+
+UPDATE timetable.chain_execution_config 
+	SET run_at = 
+		COALESCE(by_minute, '*') ||
+		COALESCE(by_hour, '*') ||
+		COALESCE(by_day, '*') ||
+		COALESCE(by_month, '*') ||
+		COALESCE(by_day_of_week, '*');
+
+ALTER TABLE timetable.chain_execution_config
+	DROP COLUMN by_minute,
+	DROP COLUMN by_hour,
+	DROP COLUMN by_day,
+	DROP COLUMN by_month,
+	DROP COLUMN by_day_of_week;
+	`); err != nil {
+		return err
+	}
+	return nil
+}

@@ -9,7 +9,12 @@ CREATE TABLE timetable.migrations(
 	version TEXT NOT NULL,
 	PRIMARY KEY (id)
 );
-INSERT INTO timetable.migrations (id, version) VALUES ('0', '0051 Implement upgrade machinery');
+
+INSERT INTO 
+	timetable.migrations (id, version) 
+VALUES 
+	(0, '0051 Implement upgrade machinery'),
+	(1, '0070 Interval scheduling and cron only syntax');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
