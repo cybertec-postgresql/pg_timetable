@@ -21,11 +21,15 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
     - name: Get dependencies
-      run: go mod download
+      run: |
+        go mod download
+        go get -u golang.org/x/lint/golint
     - name: Build & Test
       run: |
         go build -v .
-        go test ./...
+        go vet ./...
+        golint ./...
+        # go test ./...
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
       with:
