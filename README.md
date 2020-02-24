@@ -325,7 +325,7 @@ In order to examine the activity of **pg_timetable**, the table `timetable.run_s
 
 ## 6. Schema diagram
 
-![Schema diagram](sql/timetable_schema.png?raw=true "Schema diagram")
+![Schema diagram](timetable_schema.png?raw=true "Schema diagram")
 
 ## 7. Contributing
 
