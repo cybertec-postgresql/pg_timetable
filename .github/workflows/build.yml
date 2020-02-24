@@ -27,14 +27,12 @@ jobs:
       run: |
         go build -v .
         go vet ./...
-        golint ./...
         # go test ./...
     - name: Lint on linux
       if: startsWith(matrix.os,'ubuntu')
       run: |
         GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
         ./bin/golint ./...
-
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
       with:
