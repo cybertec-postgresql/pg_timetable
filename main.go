@@ -20,8 +20,7 @@ func main() {
 	if cmdparser.Parse() != nil {
 		os.Exit(2)
 	}
-	pgengine.PrefixSchemaFiles("sql/")
-	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection()
 	defer pgengine.FinalizeConfigDBConnection()
 	pgengine.SetupCloseHandler()
 	scheduler.Run()
