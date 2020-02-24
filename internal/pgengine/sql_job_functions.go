@@ -1,4 +1,6 @@
--- get_running_jobs() returns jobs are running for particular chain_execution_config
+package pgengine
+
+const sqlJobFunctions = `-- get_running_jobs() returns jobs are running for particular chain_execution_config
 CREATE OR REPLACE FUNCTION timetable.get_running_jobs(BIGINT) 
 RETURNS SETOF record AS $$
     SELECT  chain_execution_config, start_status
@@ -333,3 +335,4 @@ BEGIN
 
 END;
 $$ LANGUAGE 'plpgsql';
+`

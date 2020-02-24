@@ -3,7 +3,6 @@ package pgengine
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -44,18 +43,11 @@ var ClientName string
 // be negotiated with the server
 var SSLMode string = "disable"
 
-// SQLSchemaFiles contains the names of the files should be executed during bootstrap
-var SQLSchemaFiles = []string{"ddl.sql", "json-schema.sql", "tasks.sql", "job-functions.sql"}
-
-//PrefixSchemaFiles adds specific path for bootstrap SQL schema files
-func PrefixSchemaFiles(prefix string) {
-	for i := 0; i < len(SQLSchemaFiles); i++ {
-		SQLSchemaFiles[i] = prefix + SQLSchemaFiles[i]
-	}
-}
+var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
+var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection(schemafiles []string) {
+func InitAndTestConfigDBConnection() {
 	var wt int = waitTime
 	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
@@ -90,29 +82,20 @@ func InitAndTestConfigDBConnection(schemafiles []string) {
 	var exists bool
 	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
-		for _, schemafile := range schemafiles {
-			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+schemafile)
-			if err = CreateConfigDBSchema(schemafile); err != nil {
+		for i, sql := range sqls {
+			sqlName := sqlNames[i]
+			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
+			if _, err = ConfigDb.Exec(sql); err != nil {
 				fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
 				_, err = ConfigDb.Exec("DROP SCHEMA IF EXISTS timetable CASCADE")
 				os.Exit(2)
 			} else {
-				LogToDB("LOG", "Schema file executed: "+schemafile)
+				LogToDB("LOG", "Schema file executed: "+sqlName)
 			}
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
-}
-
-// CreateConfigDBSchema executes SQL script from file
-func CreateConfigDBSchema(schemafile string) (err error) {
-	b, err := ioutil.ReadFile(schemafile) // nolint: gosec
-	if err != nil {
-		return
-	}
-	_, err = ConfigDb.Exec(string(b))
-	return
 }
 
 // FinalizeConfigDBConnection closes session

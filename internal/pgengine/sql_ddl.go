@@ -1,4 +1,6 @@
-CREATE SCHEMA timetable;
+package pgengine
+
+const sqlDDL = `CREATE SCHEMA timetable;
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
@@ -243,4 +245,4 @@ BEGIN
 
 		RETURN true;
 END
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;`
