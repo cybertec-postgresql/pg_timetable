@@ -1,45 +1,39 @@
-name: Build, vet and lint
-on: [push, pull_request]
+name: Go Build & Test
+on: 
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
 jobs:
-
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: Build & Test
     steps:
-
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
         go-version: 1.13
       id: go
-
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v1
-      with:
-        path: go/src/github.com/cybertec-postgresql/pg_timetable
-        fetch-depth: 1
-
+      uses: actions/checkout@v2
     - name: Get dependencies
       run: |
-        export GOPATH=/home/runner/work/pg_timetable/go
-        go get -v -t -d ./...
-        echo
-        echo "-- Environment variables ----------------------------------------------"
-        env
-        echo "-----------------------------------------------------------------------"
-
-    - name: Build
+        go mod download
+    - name: Build & Test
       run: |
-        export GOPATH=/home/runner/work/pg_timetable/go
         go build -v .
-
-    - name: Vet
-      run: |
-        export GOPATH=/home/runner/work/pg_timetable/go
         go vet ./...
-
-    - name: Lint
+        # go test ./...
+    - name: Lint on linux
+      if: startsWith(matrix.os,'ubuntu')
       run: |
-        export GOPATH=/home/runner/work/pg_timetable/go
         GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
         ./bin/golint ./...
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@master
+      with:
+        args: release --snapshot --skip-publish --rm-dist
