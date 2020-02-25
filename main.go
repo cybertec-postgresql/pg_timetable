@@ -21,6 +21,11 @@ func main() {
 		os.Exit(2)
 	}
 	pgengine.InitAndTestConfigDBConnection()
+	if pgengine.Upgrade {
+		pgengine.MigrateDb()
+	} else {
+		pgengine.CheckNeedMigrateDb()
+	}
 	defer pgengine.FinalizeConfigDBConnection()
 	pgengine.SetupCloseHandler()
 	scheduler.Run()

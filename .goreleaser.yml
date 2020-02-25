@@ -10,7 +10,8 @@ builds:
     - darwin
     - windows
 archives:
-- name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+- name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  wrap_in_directory: true
   replacements:
     darwin: Darwin
     linux: Linux

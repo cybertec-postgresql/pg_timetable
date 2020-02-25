@@ -22,6 +22,7 @@ type cmdOptions struct {
 	Password    string `long:"password" description:"PG config DB password" env:"PGTT_PGPASSWORD"`
 	SSLMode     string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
 	PostgresURL DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
+	Upgrade     bool   `long:"upgrade" description:"Upgrade database to the latest version"`
 }
 
 func (c cmdOptions) String() string {
@@ -74,7 +75,7 @@ func (c *cmdOptions) ParseCurl(cmdURL *url.URL) error {
 
 	a, _ := url.ParseQuery(cmdURL.RawQuery)
 	if len(a["sslmode"]) > 0 {
-	        c.SSLMode = a["sslmode"][0]
+		c.SSLMode = a["sslmode"][0]
 	}
 	return nil
 }
@@ -124,6 +125,7 @@ func Parse() error {
 	pgengine.User = cmdOpts.User
 	pgengine.Password = cmdOpts.Password
 	pgengine.SSLMode = cmdOpts.SSLMode
+	pgengine.Upgrade = cmdOpts.Upgrade
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", cmdOpts))
 	return nil
 }
