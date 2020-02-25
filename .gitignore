@@ -15,5 +15,8 @@ pg_timetable
 # Visual Studio Code internal folder
 .vscode
 
+# Packages ouput folder
+dist
+
 # delve debugger file
 debug
