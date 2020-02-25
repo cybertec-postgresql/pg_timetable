@@ -80,7 +80,7 @@ CREATE TABLE timetable.task_chain (
 -- "client_name" is the indication that this chain will run only under this tag
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
 	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
-	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
+	OR VALUE = '@reboot'
 	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
 );
 
@@ -99,7 +99,6 @@ CREATE TABLE timetable.chain_execution_config (
 	excluded_execution_configs	INTEGER[],
 	client_name					TEXT
 );
-
 
 -- parameter passing for config
 CREATE TABLE timetable.chain_execution_parameters(
