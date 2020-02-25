@@ -110,7 +110,7 @@ var setupTestDBFunc = func() {
 	pgengine.LogToDB("LOG", "Trying to connect postgres container at ",
 		fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 			pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
-	pgengine.InitAndTestConfigDBConnection(pgengine.SQLSchemaFiles)
+	pgengine.InitAndTestConfigDBConnection()
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
@@ -139,16 +139,6 @@ var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
 	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 		pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password)
 	return pgengine.GetRemoteDBTransaction(connstr)
-}
-
-func TestBootstrapSQLFileExists(t *testing.T) {
-	for _, f := range pgengine.SQLSchemaFiles {
-		assert.FileExists(t, f, "Bootstrap file doesn't exist")
-	}
-}
-
-func TestCreateConfigDBSchemaWithoutFile(t *testing.T) {
-	assert.Error(t, pgengine.CreateConfigDBSchema("wrong path"), "Should error with nonexistent file")
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
@@ -327,8 +317,4 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	})
 
 	pgengine.MustCommitTransaction(tx)
-}
-
-func init() {
-	pgengine.PrefixSchemaFiles("../../sql/")
 }

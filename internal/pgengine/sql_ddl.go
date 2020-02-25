@@ -1,4 +1,6 @@
-CREATE SCHEMA timetable;
+package pgengine
+
+const sqlDDL = `CREATE SCHEMA timetable;
 
 -- define migrations you need to apply
 -- every change to this file should populate this table.
@@ -254,4 +256,4 @@ BEGIN
 
 		RETURN true;
 END
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;`
