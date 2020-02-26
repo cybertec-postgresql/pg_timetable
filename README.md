@@ -191,8 +191,7 @@ In most cases, they have to be brought to live by passing parameters to the exec
 A variety of examples can be found in the `/samples` directory.
 
 ### 3.4 Example functions
-Create a Job with the `timetable.job_add` function. With this function you can
-add a new Job with a specific time (`by_minute`,`by_hour`,`by_day`,`by_month`,`by_day_of_week`) as comma separated text list to run or with a in a cron-syntax.
+Create a Job with the `timetable.job_add` function. With this function you can add a new one step chain with a cron-syntax.
 
 | Parameter                   | Type    | Definition                                       | Default |
 | :----------------------- | :------ | :----------------------------------------------- |:---------|
