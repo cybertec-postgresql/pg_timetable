@@ -182,33 +182,33 @@ CREATE OR REPLACE FUNCTION timetable.job_add(
     max_instances    INTEGER DEFAULT NULL,
     live             BOOLEAN DEFAULT false,
     self_destruct    BOOLEAN DEFAULT false
-) RETURNS TEXT AS
-$$
-DECLARE
-    v_task_id bigint;
-    v_chain_id bigint;
-BEGIN
-    --Create task
-    INSERT INTO timetable.base_task 
-    VALUES (DEFAULT, task_name, task_type, task_function)
-    RETURNING task_id INTO v_task_id;
-
-    --Create chain
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES (DEFAULT, NULL, v_task_id, NULL, NULL, TRUE)
-    RETURNING chain_id INTO v_chain_id;
-
-    INSERT INTO timetable.chain_execution_config VALUES
-    (
-       DEFAULT, -- chain_execution_config,
-       v_chain_id, -- chain_id,
-       'chain_' || v_chain_id, -- chain_name,
-       max_instances, -- max_instances,
-       live, -- live,
-       self_destruct, -- self_destruct,
-       FALSE, -- exclusive_execution,
-       NULL -- excluded_execution_configs
-    );    
-END;
-$$ LANGUAGE 'plpgsql';
+) RETURNS BIGINT AS
+'WITH 
+    cte_task(v_task_id) AS ( --Create task
+        INSERT INTO timetable.base_task 
+        VALUES (DEFAULT, task_name, task_type, task_function)
+        RETURNING task_id
+    ),
+    cte_chain(v_chain_id) AS ( --Create chain
+        INSERT INTO timetable.task_chain (task_id, ignore_error)
+        SELECT v_task_id, TRUE FROM cte_task
+        RETURNING chain_id
+    )
+INSERT INTO timetable.chain_execution_config (
+    chain_id, 
+    chain_name, 
+    run_at, 
+    max_instances, 
+    live,
+    self_destruct 
+) SELECT 
+    v_chain_id, 
+    ''chain_'' || v_chain_id, 
+    run_at,
+    max_instances, 
+    live, 
+    self_destruct
+FROM cte_chain
+RETURNING chain_execution_config 
+' LANGUAGE 'sql';
 `
