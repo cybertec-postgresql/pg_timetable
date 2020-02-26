@@ -157,74 +157,20 @@ All tasks of the chain in **pg_timetable** are executed within one transaction. 
 Once a chain has been created, it has to be scheduled. For this, **pg_timetable** builds upon the standard **cron**-string, all the while adding multiple configuration options.
 
 <p align="center">Excerpt of <code>timetable.chain_execution_config</code></p>
-<table>
-    <tr>
-        <th>Column</th>
-        <th>Type</th>
-        <th>Definition</th>
-    </tr>
-    <tr>
-	<td>chain_id</td>
-	<td><code>bigint</code></td>
-	<td>The id of the <b><i>task chain</i></b>.</td>
-    </tr>
-    <tr>
-	<td>chain_name</td>
-	<td><code>text</code></td>
-	<td>The name of the <b><i>chain</i></b>.</td>
-    </tr>
-    <tr>
-        <td><code>run_at_minute</code></td>
-	<td><code>integer</code></td>
-        <td rowspan="5">To achieve the <b>cron</b> equivalent of <b>*</b>, set the value to NULL.</td>
-    </tr>
-    <tr>
-        <td><code>run_at_hour</code></td>
-	<td><code>integer</code></td>
-    </tr>
-    <tr>
-        <td><code>run_at_day</code></td>
-	<td><code>integer</code></td>
-    </tr>
-    <tr>
-        <td><code>run_at_month</code></td>
-	<td><code>integer</code></td>
-    </tr>
-    <tr>
-        <td><code>run_at_day_of_week</code></td>
-	<td><code>integer</code></td>
-    </tr>
-    <tr>
-        <td><code>max_instances</code></td>
-	<td><code>integer</code></td>
-	<td>The amount of instances that this chain may have running at the same time.</td>
-    </tr>
-    <tr>
-        <td><code>live</code></td>
-	<td><code>boolean</code></td>
-	<td>Control if the chain may be executed once it reaches its schedule.</td>
-    </tr>
-    <tr>
-        <td><code>self_destruct</code></td>
-	<td><code>boolean</code></td>
-	<td>Self destruct the chain.</td>
-    </tr>
-    <tr>
-        <td><code>exclusive_execution</code></td>
-	<td><code>boolean</code></td>
-	<td>Specifies whether the chain should be executed exclusively while all other chains are paused.</td>
-    </tr>
-    <tr>
-        <td><code>excluded_execution_configs</code></td>
-	<td><code>integer[]</code></td>
-	<td>TODO</td>
-    </tr>
-    <tr>
-        <td><code>client_name</code></td>
-        <td><code>text</code></td>
-        <td>Specifies which client should execute the chain. Set this to `NULL` to allow any client.</td>
-    </tr>
-</table>​
+
+| Column                        | Type             | Definition  |
+| :---------------------------  | :--------------- | :---------- |
+| `chain_id`                    | `bigint`         | The id of the task chain. |
+| `chain_name`                  | `text`           | The name of the chain. |
+| `run_at`                      | `timetable.cron` | To achieve the `cron` equivalent of \*, set the value to NULL. |
+| `max_instances`               | `integer`        | The amount of instances that this chain may have running at the same time. |
+| `live`                        | `boolean`        | Control if the chain may be executed once it reaches its schedule. |
+| `self_destruct`               | `boolean`        | Self destruct the chain. |
+| `exclusive_execution`         | `boolean`        | Specifies whether the chain should be executed exclusively while all other chains are paused. |
+| `excluded_execution_configs`  | `integer[]`      | TODO |
+| `client_name`                 | `text`           | Specifies which client should execute the chain. Set this to `NULL` to allow any client. |
+
+
 
 #### 3.2.2. Chain execution parameters
 
@@ -235,10 +181,10 @@ In most cases, they have to be brought to live by passing parameters to the exec
 
 | Column                   | Type    | Definition                                       |
 | :----------------------- | :------ | :----------------------------------------------- |
-| `chain_execution_config` | bigint  | The ID of the chain execution configuration.     |
-| `chain_id`               | bigint  | The ID of the chain.                             |
-| `order_id`               | integer | The order of the parameter.                      |
-| `value`                  | jsonb   | A `string` JSON array containing the paramaters. |
+| `chain_execution_config` | `bigint`  | The ID of the chain execution configuration.     |
+| `chain_id`               | `bigint`  | The ID of the chain.                             |
+| `order_id`               | `integer` | The order of the parameter.                      |
+| `value`                  | `jsonb`   | A `string` JSON array containing the paramaters. |
 
 ### 3.3. Example usages
 
