@@ -45,8 +45,18 @@ BEGIN
         chain_id INTO v_chain_id;
 
     --chain configuration
-    INSERT INTO timetable.chain_execution_config
-    VALUES (DEFAULT, -- chain_execution_config,
+    INSERT INTO timetable.chain_execution_config (
+        chain_execution_config, 
+        chain_id, 
+        chain_name, 
+        run_at, 
+        max_instances, 
+        live,
+        self_destruct, 
+        exclusive_execution, 
+        excluded_execution_configs
+    ) VALUES (
+        DEFAULT, -- chain_execution_config,
         v_chain_id, -- chain_id,
         'remote db', -- chain_name
         '* * * * *', -- run_at,

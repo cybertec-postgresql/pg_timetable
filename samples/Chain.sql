@@ -64,8 +64,17 @@ BEGIN
             )
     RETURNING chain_id INTO v_chain_id;
 
-    INSERT INTO timetable.chain_execution_config VALUES 
-        (
+    INSERT INTO timetable.chain_execution_config (
+        chain_execution_config, 
+        chain_id, 
+        chain_name, 
+        run_at, 
+        max_instances, 
+        live,
+        self_destruct, 
+        exclusive_execution, 
+        excluded_execution_configs
+    ) VALUES (
         DEFAULT, -- chain_execution_config, 
         v_parent_id, -- chain_id, 
         'chain operation', -- chain_name

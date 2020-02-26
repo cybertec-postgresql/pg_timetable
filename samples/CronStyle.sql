@@ -1,8 +1,7 @@
-
 -- Create a Job with the timetable.job_add function in cron style
 
 -- In order to demonstrate Cron style schduling of job execution, we will create a table(One time) for inserting of data 
-CREATE TABLE timetable.dummy_log (
+CREATE TABLE IF NOT EXISTS timetable.dummy_log (
     log_ID BIGSERIAL,
     event_name TEXT,
     timestmp TIMESTAMPTZ DEFAULT TRANSACTION_TIMESTAMP(),
@@ -13,12 +12,7 @@ CREATE TABLE timetable.dummy_log (
 -- task_function: The function wich will be executed.
 -- client_name: The name of worker under which this task will execute
 -- task_type: Type of the function SQL,SHELL and BUILTIN
--- by_cron: Time Schedule in Cron Syntax
--- by_minute: This specifies the minutes on which the job is to run
--- by_hour: This specifies the hours on which the job is to run
--- by_day: This specifies the days on which the job is to run.
--- by_month: This specifies the month on which the job is to run
--- by_day_of_week: This specifies the day of week (0,7 is sunday) on which the job is to run
+-- run_at: Time Schedule in Cron Syntax
 -- max_instances: The amount of instances that this chain may have running at the same time.
 -- live: Control if the chain may be executed once it reaches its schedule.
 -- self_destruct: Self destruct the chain.
@@ -38,12 +32,7 @@ SELECT timetable.job_add (
     task_function  => $$INSERT INTO timetable.dummy_log (event_name) VALUES ('Cron test')$$,
     client_name    => NULL, -- any worker may execute
     task_type      => 'SQL',
-    by_cron        => '40 */2 27 * *',
-    by_minute      => NULL,
-    by_hour        => NULL,
-    by_day         => NULL,
-    by_month       => NULL,
-    by_day_of_week => NULL,
+    run_at         => '40 */2 27 * *',
     max_instances  => 1,
     live           => TRUE,
     self_destruct  => FALSE);

@@ -10,16 +10,20 @@ chain_insert(chain_id) AS (
     RETURNING chain_id
 ),
 chain_config(id) as (
-    INSERT INTO timetable.chain_execution_config VALUES 
-    (
+    INSERT INTO timetable.chain_execution_config (
+        chain_execution_config, 
+        chain_id, 
+        chain_name, 
+        run_at, 
+        max_instances, 
+        live
+    ) VALUES ( 
         DEFAULT, -- chain_execution_config, 
         (SELECT chain_id FROM chain_insert), -- chain_id, 
         'sleep every minute', -- chain_name, 
         '* * * * *', -- run_at, 
         1, -- max_instances, 
-        TRUE, -- live, 
-        FALSE, -- self_destruct,
-        FALSE -- exclusive_execution, 
+        TRUE
     )
     RETURNING  chain_execution_config
 )
