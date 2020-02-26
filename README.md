@@ -162,7 +162,7 @@ Once a chain has been created, it has to be scheduled. For this, **pg_timetable*
 | :---------------------------  | :--------------- | :---------- |
 | `chain_id`                    | `bigint`         | The id of the task chain. |
 | `chain_name`                  | `text`           | The name of the chain. |
-| `run_at`                      | `timetable.cron` | To achieve the `cron` equivalent of \*, set the value to NULL. |
+| `run_at`                      | `timetable.cron` | To achieve the `cron` equivalent of \*, set the value to `NULL`. |
 | `max_instances`               | `integer`        | The amount of instances that this chain may have running at the same time. |
 | `live`                        | `boolean`        | Control if the chain may be executed once it reaches its schedule. |
 | `self_destruct`               | `boolean`        | Self destruct the chain. |
@@ -186,78 +186,35 @@ In most cases, they have to be brought to live by passing parameters to the exec
 | `order_id`               | `integer` | The order of the parameter.                      |
 | `value`                  | `jsonb`   | A `string` JSON array containing the paramaters. |
 
-### 3.3. Example usages
+### 3.3 Example usages
 
 A variety of examples can be found in the `/samples` directory.
 
-### 3.4 Examle functions
+### 3.4 Example functions
 Create a Job with the `timetable.job_add` function. With this function you can
 add a new Job with a specific time (`by_minute`,`by_hour`,`by_day`,`by_month`,`by_day_of_week`) as comma separated text list to run or with a in a cron-syntax.
 
 | Parameter                   | Type    | Definition                                       | Default |
 | :----------------------- | :------ | :----------------------------------------------- |:---------|
-| `task_name`     | text  | The name of the Task ||
-| `task_function` | text  | The function wich will be executed. ||
-| `task_type`     | text  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
-| `by_cron`       | text  | Time Schedule in Cron Syntax                      ||
-| `by_minute`     | text  | This specifies the minutes on which the job is to run |ALL|
-| `by_hour`       | text  | This specifies the hours on which the job is to run |ALL|
-| `by_day`        | text  | This specifies the days on which the job is to run. |ALL|
-| `by_month`      | text  | This specifies the month on which the job is to run |ALL|
-| `by_day_of_week`| text  | This specifies the day of week (0,7 is sunday)  on which the job is to run |ALL|
-| `max_instances` | integer | The amount of instances that this chain may have running at the same time. |NULL|
-| `live`          | boolean | Control if the chain may be executed once it reaches its schedule. |FALSE|
-| `self_destruct` | boolean | Self destruct the chain. |FALSE|
+| `task_name`     | `text`  | The name of the Task ||
+| `task_function` | `text`  | The function wich will be executed. ||
+| `task_type`     | `text`  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
+| `run_at`        | `timetable.cron`  | Time Schedule in Cron Syntax                      |NULL|
+| `max_instances` | `integer` | The amount of instances that this chain may have running at the same time. |NULL|
+| `live`          | `boolean` | Control if the chain may be executed once it reaches its schedule. |FALSE|
+| `self_destruct` | `boolean` | Self destruct the chain. |FALSE|
 
 If the parameter `by_cron` is used all other `by_*` (`by_minute`,`by_hour`,`by_day`,`by_month`,`by_day_of_week`) will be ignored.
 
-#### 3.4.1 Usage
+#### 3.5 Usage
 
-##### 3.4.1.1 With Cron-Style
+
 Run "MyJob" at 00:05 in August.
-```SELECT timetable.job_add('MyJob','Select public.my_func()',null,'SQL','5 0 * 8 *');```
+```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '5 0 * 8 *');```
 
 Run "MyJob" at minute 23 past every 2nd hour from 0 through 20.
-```SELECT timetable.job_add('MyJob','Select public.my_func()',null,'SQL','23 0-20/2 * * *');```
-
-##### 3.4.1.2 With specific time
-
-Run "SQL" at 01:00 on first day of Month
-```
-    SELECT timetable.job_add ('At minute 0 and 1st hour on first day of Month',
-    'SELECT timetable.insert_dummy_log()',
-    null,
-    'SQL',
-    null,
-    '0',
-    '1',
-    '1',
-    null,
-    null,
-    '1',
-    TRUE,
-    FALSE);
-```
- 
-Run "SQL" at 01:00 and 02:00 on every Monday´s
-
- ```
-    SELECT timetable.job_add ('at 01:00 and 02:00 on every Monday´s',
-    'SELECT timetable.insert_dummy_log()',
-    null,
-    'SQL',
-    null,
-    '0',
-    null,
-    '1,2',
-    null,
-    '1',
-    '1',
-    TRUE,
-    FALSE);
-```  
+```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '23 0-20/2 * * *');```
     
-
 ## 4. Database logging and transactions
 
 The entire activity of **pg_timetable** is logged in database tables (`timetable.log` and `timetable.execution_log`). Since there is no need to parse files when accessing log data, the representation through an UI can be easily achieved.
