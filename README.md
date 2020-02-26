@@ -198,7 +198,7 @@ Create a Job with the `timetable.job_add` function. With this function you can a
 | `task_name`     | `text`  | The name of the Task ||
 | `task_function` | `text`  | The function wich will be executed. ||
 | `task_type`     | `text`  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
-| `run_at`        | `timetable.cron`  | Time іchedule in сron syntax. `NULL` stands for `'* * * * *'`     |NULL|
+| `run_at`        | `timetable.cron`  | Time schedule in сron syntax. `NULL` stands for `'* * * * *'`     |NULL|
 | `max_instances` | `integer` | The amount of instances that this chain may have running at the same time. |NULL|
 | `live`          | `boolean` | Control if the chain may be executed once it reaches its schedule. |FALSE|
 | `self_destruct` | `boolean` | Self destruct the chain. |FALSE|
