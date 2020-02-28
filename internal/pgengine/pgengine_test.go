@@ -186,10 +186,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"SELECT '* * * * *' :: timetable.cron",
 			"SELECT '*/2 */2 * * *' :: timetable.cron",
 			// predefined
-			"SELECT '@annually' :: timetable.cron",
-			"SELECT '@yearly' :: timetable.cron",
-			"SELECT '@monthly' :: timetable.cron",
-			"SELECT '@weekly' :: timetable.cron",
+			"SELECT '@reboot' :: timetable.cron",
 			"SELECT '@every 1 sec' ::  timetable.cron",
 			"SELECT '@after 1 sec' ::  timetable.cron"}
 		for _, stmt := range stmts {
