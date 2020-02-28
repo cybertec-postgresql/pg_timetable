@@ -8,7 +8,7 @@ BEGIN
 
 	-- Create the base task
 	INSERT INTO timetable.base_task(name, kind, script)
-	VALUES ('psql', 'SHELL'::timetable.task_kind, 'psql')
+	VALUES ('run shell with psql', 'SHELL'::timetable.task_kind, 'psql')
 	RETURNING task_id INTO v_task_id;
 
 	-- Create the chain
