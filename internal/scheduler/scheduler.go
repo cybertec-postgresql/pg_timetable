@@ -200,6 +200,10 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 		}
 
 	case "SHELL":
+		if pgengine.NoShellTasks {
+			pgengine.LogToDB("LOG", "Shell task execution skipped: ", chainElemExec)
+			return -1
+		}
 		retCode, _, err = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
