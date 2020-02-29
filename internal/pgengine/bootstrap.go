@@ -46,6 +46,9 @@ var SSLMode string = "disable"
 // Upgrade parameter specifies if database should be upgraded to latest version
 var Upgrade bool
 
+// NoShellTasks parameter disables SHELL tasks executing
+var NoShellTasks bool
+
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
