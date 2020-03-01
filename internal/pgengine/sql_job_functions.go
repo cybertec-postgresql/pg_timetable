@@ -40,41 +40,35 @@ BEGIN
 END
 $$ LANGUAGE 'plpgsql';
 
--- check_task() stored procedure will tell us if chain execution config id have to be executed 
-CREATE OR REPLACE FUNCTION timetable.check_task(BIGINT) RETURNS BOOLEAN AS
+-- is_cron_in_time returns TRUE if timestamp is listed in cron expression
+CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(run_at timetable.cron, ts timestamptz) RETURNS BOOLEAN AS
 $$
 DECLARE 
-    v_chain_exec_conf   ALIAS FOR $1;
-    v_record        record;
-    v_return        BOOLEAN;
+    a_by_minute integer[];
+    a_by_hour integer[];
+    a_by_day integer[];
+    a_by_month integer[];
+    a_by_day_of_week integer[]; 
 BEGIN
-    SELECT *    
-        FROM    timetable.chain_execution_config 
-        WHERE   chain_execution_config = v_chain_exec_conf
-        INTO v_record;
-
-    IF NOT FOUND
+    IF run_at IS NULL
     THEN
-        RETURN FALSE;
+        RETURN TRUE;
     END IF;
-    
-    -- ALL NULLS means task executed every minute
-    RETURN  COALESCE(v_record.run_at_month, v_record.run_at_day_of_week, v_record.run_at_day,
-            v_record.run_at_hour,v_record.run_at_minute) IS NULL
-        OR 
-            COALESCE(v_record.run_at_month = date_part('month', now()), TRUE)
-        AND COALESCE(v_record.run_at_day_of_week = date_part('dow', now()), TRUE)
-        AND COALESCE(v_record.run_at_day = date_part('day', now()), TRUE)
-        AND COALESCE(v_record.run_at_hour = date_part('hour', now()), TRUE)
-        AND COALESCE(v_record.run_at_minute = date_part('minute', now()), TRUE);
+    a_by_minute := timetable.cron_element_to_array(run_at, 'minute');
+    a_by_hour := timetable.cron_element_to_array(run_at, 'hour');
+    a_by_day := timetable.cron_element_to_array(run_at, 'day');
+    a_by_month := timetable.cron_element_to_array(run_at, 'month');
+    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week'); 
+    RETURN  (a_by_month[1]       IS NULL OR date_part('month', ts) = ANY(a_by_month))
+        AND (a_by_day_of_week[1] IS NULL OR date_part('dow', ts) = ANY(a_by_day_of_week))
+        AND (a_by_day[1]         IS NULL OR date_part('day', ts) = ANY(a_by_day))
+        AND (a_by_hour[1]        IS NULL OR date_part('hour', ts) = ANY(a_by_hour))
+        AND (a_by_minute[1]      IS NULL OR date_part('minute', ts) = ANY(a_by_minute));    
 END;
 $$ LANGUAGE 'plpgsql';
 
 -- cron_element_to_array() will return array with minutes, hours, days etc. of execution
-CREATE OR REPLACE FUNCTION timetable.cron_element_to_array(
-    element text,
-    element_type text)
-    RETURNS integer[] AS
+CREATE OR REPLACE FUNCTION timetable.cron_element_to_array(element text, element_type text) RETURNS integer[] AS
 $$
 DECLARE
     a_element text[];
@@ -180,159 +174,41 @@ $$ LANGUAGE 'plpgsql';
 
 -- job_add() will add job to the system
 CREATE OR REPLACE FUNCTION timetable.job_add(
-    task_name text,
-    task_function text,
-    client_name text,
-    task_type timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
-    by_cron text DEFAULT NULL::text,
-    by_minute text DEFAULT NULL::text,
-    by_hour text DEFAULT NULL::text,
-    by_day text DEFAULT NULL::text,
-    by_month text DEFAULT NULL::text,
-    by_day_of_week text DEFAULT NULL::text,
-    max_instances integer DEFAULT NULL::integer,
-    live boolean DEFAULT false,
-    self_destruct boolean DEFAULT false)
-    RETURNS text AS
-$$
-DECLARE
-    v_task_id bigint;
-    v_chain_id bigint;
-    v_chain_name text;
-    c_matrix refcursor;
-    r_matrix record;
-    a_by_cron text[];
-    a_by_minute integer[];
-    a_by_hour integer[];
-    a_by_day integer[];
-    a_by_month integer[];
-    a_by_day_of_week integer[];
-    tmp_num numeric;
-BEGIN
-    --Create task
-    INSERT INTO timetable.base_task 
-    VALUES (DEFAULT, task_name, task_type, task_function)
-    RETURNING task_id INTO v_task_id;
-
-    --Create chain
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES (DEFAULT, NULL, v_task_id, NULL, NULL, TRUE)
-    RETURNING chain_id INTO v_chain_id;
-
-    IF by_cron IS NOT NULL then
-        a_by_minute	:= timetable.cron_element_to_array(by_cron, 'minute');
-        a_by_hour := timetable.cron_element_to_array(by_cron, 'hour');
-        a_by_day := timetable.cron_element_to_array(by_cron, 'day');
-        a_by_month := timetable.cron_element_to_array(by_cron, 'month');
-        a_by_day_of_week := timetable.cron_element_to_array(by_cron, 'day_of_week');
-    ELSE
-        a_by_minute := string_to_array(by_minute, ',');
-        a_by_hour := string_to_array(by_hour, ',');
-        IF lower(by_day) = 'weekend' then
-            a_by_day := '{6,0}'; -- Saturday,Sunday
-        ELSEIF lower(by_day) = 'workweek' then
-            a_by_day := '{1,2,3,4,5}'; 	-- Monday-Friday
-        ELSEIF lower(by_day) = 'daily' then
-            a_by_day := '{0,1,2,3,4,5,6,}';	-- Monday-Sunday
-        ELSE
-            a_by_day := string_to_array(by_day, ',');
-        END IF;
-        a_by_month := string_to_array(by_month, ',');
-        a_by_day_of_week := string_to_array(by_day_of_week, ',');
-    END IF;
-
-    IF a_by_minute IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_minute
-            LOOP
-                IF tmp_num > 59 OR tmp_num < 0 then
-                    RAISE EXCEPTION 'Minutes incorrect'
-                        USING HINT = 'Dude Minutes are between 0 and 59 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_hour IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_hour
-            LOOP
-                IF tmp_num > 23 OR tmp_num < 0 then
-                    RAISE EXCEPTION 'Hours incorrect'
-                        USING HINT = 'Dude Hours are between 0 and 23 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_day IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_day
-            LOOP
-                IF tmp_num > 31 OR tmp_num < 1 then
-                    RAISE EXCEPTION 'Days incorrect'
-                        USING HINT = 'Dude Days are between 1 and 31 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_month IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_month
-            LOOP
-                IF tmp_num > 12 OR tmp_num < 1 then
-                    RAISE EXCEPTION 'Months incorrect'
-                        USING HINT = 'Dude Months are between 1 and 12 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_day_of_week IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_day_of_week
-            LOOP
-                IF tmp_num > 7 OR tmp_num < 0 then
-                    RAISE EXCEPTION 'Days of week incorrect'
-                        USING HINT = 'Dude Days of week are between 0 and 7 (0 and 7 are Sunday)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    OPEN c_matrix FOR 
-      SELECT *
-      FROM
-          unnest(a_by_minute) v_min(min) CROSS JOIN 
-          unnest(a_by_hour) v_hour(hour) CROSS JOIN 
-          unnest(a_by_day) v_day(day) CROSS JOIN 
-          unnest(a_by_month) v_month(month) CROSS JOIN 
-          unnest(a_by_day_of_week) v_day_of_week(dow)
-      ORDER BY
-          min, hour, day, month, dow;
-
-    LOOP
-        FETCH c_matrix INTO r_matrix;
-        EXIT WHEN NOT FOUND;
-        RAISE NOTICE 'min: %, hour: %, day: %, month: %',r_matrix.min, r_matrix.hour, r_matrix.day, r_matrix.month;
-
-        v_chain_name := 'chain_'||v_chain_id||'_'||LPAD(COALESCE(r_matrix.min, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.hour, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.day, -1)::text, 2, '0')||LPAD(COALESCE (r_matrix.month, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.dow, -1)::text, 2, '0');
-        RAISE NOTICE 'chain_name: %',v_chain_name;
-
-
-        INSERT INTO timetable.chain_execution_config VALUES
-        (
-           DEFAULT, -- chain_execution_config,
-           v_chain_id, -- chain_id,
-           v_chain_name, -- chain_name,
-           r_matrix.min, -- run_at_minute,
-           r_matrix.hour, -- run_at_hour,
-           r_matrix.day, -- run_at_day,
-           r_matrix.month, -- run_at_month,
-           r_matrix.dow, -- run_at_day_of_week,
-           max_instances, -- max_instances,
-           live, -- live,
-           self_destruct, -- self_destruct,
-           FALSE, -- exclusive_execution,
-           NULL -- excluded_execution_configs
-        );
-    END LOOP;
-    CLOSE c_matrix;
-
-    RETURN format('JOB_ID: %s, is Created, EXCEUTE TIMES: Minutes: %s, Hours: %s, Days: %s, Months: %s, Day of Week: %s'
-        ,v_task_id, a_by_minute, a_by_hour, a_by_day, a_by_month, a_by_day_of_week);
-
-END;
-$$ LANGUAGE 'plpgsql';
+    task_name        TEXT,
+    task_function    TEXT,
+    client_name      TEXT,
+    task_type        timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
+    run_at           timetable.cron DEFAULT NULL,
+    max_instances    INTEGER DEFAULT NULL,
+    live             BOOLEAN DEFAULT false,
+    self_destruct    BOOLEAN DEFAULT false
+) RETURNS BIGINT AS
+'WITH 
+    cte_task(v_task_id) AS ( --Create task
+        INSERT INTO timetable.base_task 
+        VALUES (DEFAULT, task_name, task_type, task_function)
+        RETURNING task_id
+    ),
+    cte_chain(v_chain_id) AS ( --Create chain
+        INSERT INTO timetable.task_chain (task_id, ignore_error)
+        SELECT v_task_id, TRUE FROM cte_task
+        RETURNING chain_id
+    )
+INSERT INTO timetable.chain_execution_config (
+    chain_id, 
+    chain_name, 
+    run_at, 
+    max_instances, 
+    live,
+    self_destruct 
+) SELECT 
+    v_chain_id, 
+    ''chain_'' || v_chain_id, 
+    run_at,
+    max_instances, 
+    live, 
+    self_destruct
+FROM cte_chain
+RETURNING chain_execution_config 
+' LANGUAGE 'sql';
 `

@@ -24,16 +24,21 @@ chain_insert(chain_id) AS (
     RETURNING chain_id
 ),
 chain_config(id) as (
-    INSERT INTO timetable.chain_execution_config VALUES 
-    (
+    INSERT INTO timetable.chain_execution_config (
+        chain_execution_config, 
+        chain_id, 
+        chain_name, 
+        run_at, 
+        max_instances, 
+        live,
+        self_destruct, 
+        exclusive_execution, 
+        excluded_execution_configs
+    )  VALUES (
         DEFAULT, -- chain_execution_config, 
         (SELECT chain_id FROM chain_insert), -- chain_id, 
-        'notify every minute', -- chain_name, 
-        NULL, -- run_at_minute, 
-        NULL, -- run_at_hour, 
-        NULL, -- run_at_day, 
-        NULL, -- run_at_month,
-        NULL, -- run_at_day_of_week, 
+        'raise client message every minute', -- chain_name, 
+        '* * * * *', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,

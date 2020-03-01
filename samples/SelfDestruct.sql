@@ -1,10 +1,10 @@
 WITH 
 sql_task(id) AS (
     INSERT INTO timetable.base_task VALUES (
-		DEFAULT, 						-- task_id
-		'notify channel with payload',	-- name
-		DEFAULT, 						-- 'SQL' :: timetable.task_kind
-		'SELECT pg_notify($1, $2)'		-- task script
+		DEFAULT, 					-- task_id
+		'self destruct task',	    -- name
+		DEFAULT, 					-- 'SQL' :: timetable.task_kind
+		'SELECT raise_func($1)'		-- task script
 	)
 	RETURNING task_id
 ),
@@ -16,19 +16,24 @@ chain_insert(chain_id) AS (
     RETURNING chain_id
 ),
 chain_config(id) as (
-    INSERT INTO timetable.chain_execution_config VALUES 
-    (
+    INSERT INTO timetable.chain_execution_config (
+        chain_execution_config, 
+        chain_id, 
+        chain_name, 
+        run_at, 
+        max_instances, 
+        live,
+        self_destruct, 
+        exclusive_execution, 
+        excluded_execution_configs
+    ) VALUES ( 
         DEFAULT, -- chain_execution_config, 
         (SELECT chain_id FROM chain_insert), -- chain_id, 
-        'notify every minute', -- chain_name, 
-        NULL, -- run_at_minute, 
-        NULL, -- run_at_hour, 
-        NULL, -- run_at_day, 
-        NULL, -- run_at_month,
-        NULL, -- run_at_day_of_week, 
+        'notify then destruct', -- chain_name, 
+        '* * * * *', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
-        FALSE, -- self_destruct,
+        TRUE, -- self_destruct,
         FALSE, -- exclusive_execution, 
         NULL -- excluded_execution_configs
     )
@@ -40,4 +45,4 @@ VALUES (
     (SELECT id FROM chain_config),
     (SELECT chain_id FROM chain_insert),
     1,
-    '[ "TT_CHANNEL", "Ahoj from SQL base task" ]' :: jsonb) 
+    '[ "TT_CHANNEL", "Ahoi from SQL base task" ]' :: jsonb) 

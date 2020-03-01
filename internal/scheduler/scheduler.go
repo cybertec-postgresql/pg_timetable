@@ -20,6 +20,24 @@ const refetchTimeout = 60
 /* if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes */
 const maxChainsThreshold = workersNumber * refetchTimeout
 
+//Select chains to be executed right now()
+const sqlSelectChains = `
+SELECT
+	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+FROM 
+	timetable.chain_execution_config 
+WHERE 
+	live AND (client_name = $1 or client_name IS NULL) AND timetable.is_cron_in_time(run_at, now())`
+
+//Select chains to be executed right after reboot
+const sqlSelectRebootChains = `
+SELECT
+	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+FROM 
+	timetable.chain_execution_config 
+WHERE 
+	live AND (client_name = $1 or client_name IS NULL) AND run_at = '@reboot'`
+
 // Chain structure used to represent tasks chains
 type Chain struct {
 	ChainExecutionConfigID int    `db:"chain_execution_config"`
@@ -29,6 +47,9 @@ type Chain struct {
 	ExclusiveExecution     bool   `db:"exclusive_execution"`
 	MaxInstances           int    `db:"max_instances"`
 }
+
+// create channel for passing chains to workers
+var chains chan Chain = make(chan Chain)
 
 func (chain Chain) String() string {
 	data, _ := json.Marshal(chain)
@@ -41,51 +62,41 @@ func Run() {
 		pgengine.LogToDB("ERROR", "Another client is already connected to server with name: ", pgengine.ClientName)
 		time.Sleep(refetchTimeout * time.Second)
 	}
-
-	// create channel for passing chains to workers
-	chains := make(chan Chain)
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
 		go chainWorker(chains)
 	}
-
 	/* set maximum connection to workersNumber + 1 for system calls */
 	pgengine.ConfigDb.SetMaxOpenConns(workersNumber + 1)
-
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash()
-
+	retriveChainsAndRun(sqlSelectRebootChains)
 	/* loop forever or until we ask it to stop */
 	for {
-		/* ask the database which chains it has to perform */
-		pgengine.LogToDB("LOG", "Checking for task chains...")
-
-		query := " SELECT chain_execution_config, chain_id, chain_name, " +
-			" self_destruct, exclusive_execution, " +
-			" COALESCE(max_instances, 16) as max_instances" +
-			" FROM   timetable.chain_execution_config " +
-			" WHERE live AND (client_name = $1 or client_name IS NULL) " +
-			" AND timetable.check_task(chain_execution_config)"
-
-		headChains := []Chain{}
-		err := pgengine.ConfigDb.Select(&headChains, query, pgengine.ClientName)
-		if err != nil {
-			pgengine.LogToDB("ERROR", "Could not query pending tasks: ", err)
-		} else {
-			headChainsCount := len(headChains)
-			pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
-
-			/* now we can loop through so chains */
-			for _, headChain := range headChains {
-				if headChainsCount > maxChainsThreshold {
-					time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
-				}
-				pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
-				chains <- headChain
-			}
-		}
+		retriveChainsAndRun(sqlSelectChains)
 		/* wait for the next full minute to show up */
 		time.Sleep(refetchTimeout * time.Second)
+	}
+}
+
+func retriveChainsAndRun(sql string) {
+	pgengine.LogToDB("LOG", "Checking for task chains...")
+	headChains := []Chain{}
+	err := pgengine.ConfigDb.Select(&headChains, sql, pgengine.ClientName)
+	if err != nil {
+		pgengine.LogToDB("ERROR", "Could not query pending tasks: ", err)
+	} else {
+		headChainsCount := len(headChains)
+		pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
+
+		/* now we can loop through so chains */
+		for _, headChain := range headChains {
+			if headChainsCount > maxChainsThreshold {
+				time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
+			}
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+			chains <- headChain
+		}
 	}
 }
 

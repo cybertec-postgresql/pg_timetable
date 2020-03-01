@@ -166,11 +166,32 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"validate_json_schema(jsonb, jsonb, jsonb)",
 			"get_running_jobs(bigint)",
 			"trig_chain_fixer()",
-			"check_task(bigint)"}
+			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName))
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", funcName))
 			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", funcName))
+		}
+	})
+
+	t.Run("Check timetable.cron type input", func(t *testing.T) {
+		stmts := []string{
+			//cron
+			"SELECT '0 1 1 * 1' :: timetable.cron",
+			"SELECT '0 1 1 * 1,2' :: timetable.cron",
+			"SELECT '0 1 1 * 1,2,3' :: timetable.cron",
+			"SELECT '0 1 * * 1/4' :: timetable.cron",
+			"SELECT '0 * * 0 1-4' :: timetable.cron",
+			"SELECT '0 * * * 2/4' :: timetable.cron",
+			"SELECT '* * * * *' :: timetable.cron",
+			"SELECT '*/2 */2 * * *' :: timetable.cron",
+			// predefined
+			"SELECT '@reboot' :: timetable.cron",
+			"SELECT '@every 1 sec' ::  timetable.cron",
+			"SELECT '@after 1 sec' ::  timetable.cron"}
+		for _, stmt := range stmts {
+			_, err := pgengine.ConfigDb.Exec(stmt)
+			assert.NoError(t, err, fmt.Sprintf("Wrong input cron format: %s", stmt))
 		}
 	})
 
