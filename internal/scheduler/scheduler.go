@@ -20,23 +20,20 @@ const refetchTimeout = 60
 /* if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes */
 const maxChainsThreshold = workersNumber * refetchTimeout
 
-//Select chains to be executed right now()
-const sqlSelectChains = `
+//Select live chains with proper client_name value
+const sqlSelectLiveChains = `
 SELECT
 	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
 FROM 
 	timetable.chain_execution_config 
 WHERE 
-	live AND (client_name = $1 or client_name IS NULL) AND timetable.is_cron_in_time(run_at, now())`
+	live AND (client_name = $1 or client_name IS NULL)`
+
+//Select chains to be executed right now()
+const sqlSelectChains = sqlSelectLiveChains + ` AND timetable.is_cron_in_time(run_at, now())`
 
 //Select chains to be executed right after reboot
-const sqlSelectRebootChains = `
-SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
-FROM 
-	timetable.chain_execution_config 
-WHERE 
-	live AND (client_name = $1 or client_name IS NULL) AND run_at = '@reboot'`
+const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
 
 // Chain structure used to represent tasks chains
 type Chain struct {
