@@ -12,17 +12,18 @@ import (
 )
 
 type cmdOptions struct {
-	ClientName  string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True"`
-	Verbose     bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
-	Host        string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
-	Port        string `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
-	Dbname      string `short:"d" long:"dbname" description:"PG config DB dbname" default:"timetable" env:"PGTT_PGDATABASE"`
-	User        string `short:"u" long:"user" description:"PG config DB user" default:"scheduler" env:"PGTT_PGUSER"`
-	File        string `short:"f" long:"file" description:"Config file only mode" hidden:"TODO"`
-	Password    string `long:"password" description:"PG config DB password" env:"PGTT_PGPASSWORD"`
-	SSLMode     string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
-	PostgresURL DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
-	Upgrade     bool   `long:"upgrade" description:"Upgrade database to the latest version"`
+	ClientName   string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True"`
+	Verbose      bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
+	Host         string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
+	Port         string `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
+	Dbname       string `short:"d" long:"dbname" description:"PG config DB dbname" default:"timetable" env:"PGTT_PGDATABASE"`
+	User         string `short:"u" long:"user" description:"PG config DB user" default:"scheduler" env:"PGTT_PGUSER"`
+	File         string `short:"f" long:"file" description:"Config file only mode" hidden:"TODO"`
+	Password     string `long:"password" description:"PG config DB password" env:"PGTT_PGPASSWORD"`
+	SSLMode      string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
+	PostgresURL  DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
+	Upgrade      bool   `long:"upgrade" description:"Upgrade database to the latest version"`
+	NoShellTasks bool   `long:"no-shell-tasks" description:"Disable executing of shell tasks" env:"PGTT_NOSHELLTASKS"`
 }
 
 func (c cmdOptions) String() string {
@@ -126,6 +127,7 @@ func Parse() error {
 	pgengine.Password = cmdOpts.Password
 	pgengine.SSLMode = cmdOpts.SSLMode
 	pgengine.Upgrade = cmdOpts.Upgrade
+	pgengine.NoShellTasks = cmdOpts.NoShellTasks
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", cmdOpts))
 	return nil
 }
