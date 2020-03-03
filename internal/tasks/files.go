@@ -52,7 +52,7 @@ func grabDownloadUrls(urls []string, dest string, workers int) error {
 		if err := resp.Err(); err != nil {
 			errstrings = append(errstrings, err.Error())
 		} else {
-			pgengine.LogToDB("LOG", fmt.Sprintf("Downloaded %s to %s\n", resp.Request.URL(), resp.Filename))
+			pgengine.LogToDB("LOG", fmt.Sprintf("Downloaded %s to %s", resp.Request.URL(), resp.Filename))
 		}
 	}
 	if len(errstrings) > 0 {
