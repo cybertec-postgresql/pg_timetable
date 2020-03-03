@@ -62,22 +62,26 @@ func Run() {
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
 		go chainWorker(chains)
+		go intervalChainWorker(intervalChainsChan)
 	}
 	/* set maximum connection to workersNumber + 1 for system calls */
 	pgengine.ConfigDb.SetMaxOpenConns(workersNumber + 1)
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash()
+	pgengine.LogToDB("LOG", "Checking for @reboot task chains...")
 	retriveChainsAndRun(sqlSelectRebootChains)
 	/* loop forever or until we ask it to stop */
 	for {
+		pgengine.LogToDB("LOG", "Checking for task chains...")
 		retriveChainsAndRun(sqlSelectChains)
+		pgengine.LogToDB("LOG", "Checking for interval task chains...")
+		retriveIntervalChainsAndRun(sqlSelectIntervalChains)
 		/* wait for the next full minute to show up */
 		time.Sleep(refetchTimeout * time.Second)
 	}
 }
 
 func retriveChainsAndRun(sql string) {
-	pgengine.LogToDB("LOG", "Checking for task chains...")
 	headChains := []Chain{}
 	err := pgengine.ConfigDb.Select(&headChains, sql, pgengine.ClientName)
 	if err != nil {
@@ -85,7 +89,6 @@ func retriveChainsAndRun(sql string) {
 	} else {
 		headChainsCount := len(headChains)
 		pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
-
 		/* now we can loop through so chains */
 		for _, headChain := range headChains {
 			if headChainsCount > maxChainsThreshold {
@@ -109,7 +112,6 @@ func chainWorker(chains <-chan Chain) {
 		if chain.SelfDestruct {
 			pgengine.DeleteChainConfig(chain.ChainExecutionConfigID)
 		}
-
 	}
 }
 
