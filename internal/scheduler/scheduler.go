@@ -141,7 +141,7 @@ func executeChain(chainConfigID int, chainID int) {
 		}
 		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_DONE")
 	}
-	pgengine.LogToDB("LOG", fmt.Sprintf("Chain ID: %d executed successfully", chainID))
+	pgengine.LogToDB("LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
 	pgengine.UpdateChainRunStatus(
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,

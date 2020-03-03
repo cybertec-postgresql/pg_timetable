@@ -94,7 +94,8 @@ func intervalChainWorker(ichains <-chan IntervalChain) {
 		}
 
 		if !pgengine.CanProceedChainExecution(ichain.ChainExecutionConfigID, ichain.MaxInstances) {
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Skipping...", ichain))
+			pgengine.LogToDB("LOG", fmt.Sprintf("Cannot proceed with chain ID: %d; configuration ID: %d",
+				ichain.ChainID, ichain.ChainExecutionConfigID))
 			return
 		}
 
