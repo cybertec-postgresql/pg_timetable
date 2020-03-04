@@ -13,6 +13,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Build & Test
     steps:
+    - name: Set up PostgreSQL
+      uses: harmon758/postgresql-action@v1
+      with: 
+        postgresql version: '11'
+        postgresql db: 'timetable'
+        postgresql user: 'scheduler'
+        postgresql password: 'somestrong'
+
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
