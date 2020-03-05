@@ -45,13 +45,7 @@ jobs:
         go vet ./...
 
     - name: Test
-      run: go test -v ./...
-      # env:
-      #   PG_USER: postgres
-      #   PG_HOST: localhost
-      #   PG_DATABASE: postgres
-      #   PG_PASSWORD: postgres
-      #   PG_PORT: ${{ job.services.postgres.ports['5432'] }}
+      run: go test ./...
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
