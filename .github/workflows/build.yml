@@ -11,36 +11,53 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+
+    services:
+      if: startsWith(matrix.os,'ubuntu')
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: scheduler
+          POSTGRES_PASSWORD: somestrong
+          POSTGRES_DB: timetable
+        ports:
+        - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+
     name: Build & Test
     steps:
-    - name: Set up PostgreSQL
-      uses: harmon758/postgresql-action@v1
-      with: 
-        postgresql version: '11'
-        postgresql db: 'timetable'
-        postgresql user: 'scheduler'
-        postgresql password: 'somestrong'
 
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
         go-version: 1.13
       id: go
+
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+
     - name: Get dependencies
       run: |
         go mod download
-    - name: Build & Test
-      run: |
-        go build -v .
-        go vet ./...
-        # go test ./...
+
     - name: Lint on linux
       if: startsWith(matrix.os,'ubuntu')
       run: |
         GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
         ./bin/golint ./...
+        go vet ./...
+
+    - name: Test on Linux
+      run: go test -v ./...
+      # env:
+      #   PG_USER: postgres
+      #   PG_HOST: localhost
+      #   PG_DATABASE: postgres
+      #   PG_PASSWORD: postgres
+      #   PG_PORT: ${{ job.services.postgres.ports['5432'] }}
+
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
       with:
