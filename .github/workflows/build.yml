@@ -7,13 +7,9 @@ on:
       - '*'
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     services:
-      if: startsWith(matrix.os,'ubuntu')
       postgres:
         image: postgres:12
         env:
@@ -42,14 +38,13 @@ jobs:
       run: |
         go mod download
 
-    - name: Lint on linux
-      if: startsWith(matrix.os,'ubuntu')
+    - name: Lint and Vet
       run: |
         GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
         ./bin/golint ./...
         go vet ./...
 
-    - name: Test on Linux
+    - name: Test
       run: go test -v ./...
       # env:
       #   PG_USER: postgres
