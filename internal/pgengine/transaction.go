@@ -126,7 +126,7 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 				if err := json.Unmarshal([]byte(val), &params); err != nil {
 					return err
 				}
-				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("\nWith parameters: %+v", params))
+				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
 				_, err = tx.Exec(script, params...)
 			}
 		}

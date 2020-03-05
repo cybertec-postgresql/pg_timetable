@@ -20,23 +20,20 @@ const refetchTimeout = 60
 /* if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes */
 const maxChainsThreshold = workersNumber * refetchTimeout
 
-//Select chains to be executed right now()
-const sqlSelectChains = `
+//Select live chains with proper client_name value
+const sqlSelectLiveChains = `
 SELECT
 	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
 FROM 
 	timetable.chain_execution_config 
 WHERE 
-	live AND (client_name = $1 or client_name IS NULL) AND timetable.is_cron_in_time(run_at, now())`
+	live AND (client_name = $1 or client_name IS NULL)`
+
+//Select chains to be executed right now()
+const sqlSelectChains = sqlSelectLiveChains + ` AND NOT starts_with(run_at, '@') AND timetable.is_cron_in_time(run_at, now())`
 
 //Select chains to be executed right after reboot
-const sqlSelectRebootChains = `
-SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
-FROM 
-	timetable.chain_execution_config 
-WHERE 
-	live AND (client_name = $1 or client_name IS NULL) AND run_at = '@reboot'`
+const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
 
 // Chain structure used to represent tasks chains
 type Chain struct {
@@ -65,22 +62,26 @@ func Run() {
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
 		go chainWorker(chains)
+		go intervalChainWorker(intervalChainsChan)
 	}
 	/* set maximum connection to workersNumber + 1 for system calls */
 	pgengine.ConfigDb.SetMaxOpenConns(workersNumber + 1)
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash()
+	pgengine.LogToDB("LOG", "Checking for @reboot task chains...")
 	retriveChainsAndRun(sqlSelectRebootChains)
 	/* loop forever or until we ask it to stop */
 	for {
+		pgengine.LogToDB("LOG", "Checking for task chains...")
 		retriveChainsAndRun(sqlSelectChains)
+		pgengine.LogToDB("LOG", "Checking for interval task chains...")
+		retriveIntervalChainsAndRun(sqlSelectIntervalChains)
 		/* wait for the next full minute to show up */
 		time.Sleep(refetchTimeout * time.Second)
 	}
 }
 
 func retriveChainsAndRun(sql string) {
-	pgengine.LogToDB("LOG", "Checking for task chains...")
 	headChains := []Chain{}
 	err := pgengine.ConfigDb.Select(&headChains, sql, pgengine.ClientName)
 	if err != nil {
@@ -88,7 +89,6 @@ func retriveChainsAndRun(sql string) {
 	} else {
 		headChainsCount := len(headChains)
 		pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
-
 		/* now we can loop through so chains */
 		for _, headChain := range headChains {
 			if headChainsCount > maxChainsThreshold {
@@ -112,7 +112,6 @@ func chainWorker(chains <-chan Chain) {
 		if chain.SelfDestruct {
 			pgengine.DeleteChainConfig(chain.ChainExecutionConfigID)
 		}
-
 	}
 }
 
@@ -142,7 +141,7 @@ func executeChain(chainConfigID int, chainID int) {
 		}
 		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_DONE")
 	}
-	pgengine.LogToDB("LOG", fmt.Sprintf("Chain ID: %d executed successfully", chainID))
+	pgengine.LogToDB("LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
 	pgengine.UpdateChainRunStatus(
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
