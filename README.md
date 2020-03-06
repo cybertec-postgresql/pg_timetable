@@ -1,3 +1,7 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+![](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
+
+
 pg_timetable: Advanced scheduling for PostgreSQL
 ================================================
 
