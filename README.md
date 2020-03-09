@@ -42,7 +42,28 @@ It is completely database driven and provides a couple of advanced concepts.
 
 ## 2. Installation
 
-There are currently several options on how you can install and run pg_timetable.
+pg_timetable is compatible with the latest supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/): 11 and 12. 
+
+<details>
+  <summary>If you want to use pg_timetable with older versions (9.5, 9.6 and 10)...</summary>
+  
+please, execute this SQL script before running pg_timetable:
+```sql
+CREATE OR REPLACE FUNCTION starts_with(text, text)
+RETURNS bool AS 
+$$
+SELECT 
+	CASE WHEN length($2) > length($1) THEN 
+		FALSE 
+	ELSE 
+		left($1, length($2)) = $2 
+	END
+$$
+LANGUAGE SQL
+IMMUTABLE STRICT PARALLEL SAFE
+COST 5;
+```
+</details>
 
 ### 2.1 Official release packages
 
