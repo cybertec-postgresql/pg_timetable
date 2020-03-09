@@ -11,8 +11,9 @@ It is completely database driven and provides a couple of advanced concepts.
 ## Table of Contents
   - [1. Main features](#1-main-features)
   - [2. Installation](#2-installation)
-    - [2.1. Container installation](#21-container-installation)
-    - [2.2. Local installation](#22-local-installation)
+    - [2.1. Official release packages](#21-official-release-packages)
+    - [2.2. Container installation](#22-container-installation)
+    - [2.3. Build from sources](#23-build-from-sources)
   - [3. Features and advanced functionality](#3-features-and-advanced-functionality)
     - [3.1. Base task](#31-base-task)
     - [3.2. Task chain](#32-task-chain)
@@ -41,10 +42,13 @@ It is completely database driven and provides a couple of advanced concepts.
 
 ## 2. Installation
 
-There are currently two options on how you can install and run pg_timetable.
-> If you feel the need for a .deb or .rpm package, please let us know by submitting an issue, or - which we would really appreciate! - creating a pull request that does said things.
+There are currently several options on how you can install and run pg_timetable.
 
-### 2.1 Container installation
+### 2.1 Official release packages
+
+You may find binary package for you platform on the official [Releases](https://github.com/cybertec-postgresql/pg_timetable/releases) page. Right now `Windows`, `Linux` and `macOS` packages are available.
+
+### 2.2 Container installation
 
 > When using Docker, simply replace all `podman` occurrences with `docker`.
 
@@ -72,7 +76,7 @@ podman run --rm pg_timetable:latest
 podman run --rm pg_timetable:latest -h 10.0.0.3 -p 54321
 ```
 
-### 2.2 Local Installation
+### 2.3 Build from sources
 1. Downlod and install [Go](https://golang.org/doc/install) on your system.
 2. Clone **pg_timetable** using `go get`:
 ```sh
