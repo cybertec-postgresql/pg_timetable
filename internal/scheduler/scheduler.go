@@ -30,7 +30,8 @@ WHERE
 	live AND (client_name = $1 or client_name IS NULL)`
 
 //Select chains to be executed right now()
-const sqlSelectChains = sqlSelectLiveChains + ` AND NOT starts_with(run_at, '@') AND timetable.is_cron_in_time(run_at, now())`
+const sqlSelectChains = sqlSelectLiveChains +
+	` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
 
 //Select chains to be executed right after reboot
 const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
