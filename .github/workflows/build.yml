@@ -41,7 +41,7 @@ jobs:
     - name: GolangCI-Lint
       run: |
         curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.8
-        ./bin/golangci-lint run -D errcheck -E gocyclo,golint,misspell -v --exclude SA5008
+        ./bin/golangci-lint run -E gocyclo,golint,misspell -v --exclude SA5008
 
     - name: Test
       run: go test ./...
