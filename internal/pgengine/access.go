@@ -56,8 +56,8 @@ func LogToDB(level string, msg ...interface{}) {
 and marked as stopped at a certain point */
 func FixSchedulerCrash() {
 	_, err := ConfigDb.Exec(`
-		INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status)
-		  SELECT 'DEAD', now(), now(), start_status FROM (
+		INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config)
+		  SELECT 'DEAD', now(), now(), start_status, 0 FROM (
 		   SELECT   start_status
 		     FROM   timetable.run_status
 		     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
