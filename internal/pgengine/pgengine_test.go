@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"strconv"
 	"testing"
@@ -19,8 +18,6 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 )
-
-var pgURL *url.URL
 
 // setup environment variable runDocker to true to run testcases using postgres docker images
 var runDocker bool

@@ -38,21 +38,10 @@ jobs:
       run: |
         go mod download
 
-    - name: Lint and Vet
+    - name: GolangCI-Lint
       run: |
-        go vet ./...
-        GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
-        ./bin/golint ./...
-
-    - name: IneffAssign
-      run: |
-        GOBIN=$PWD/bin go get -u github.com/gordonklaus/ineffassign
-        ./bin/ineffassign ./...
-
-    - name: gocyclo
-      run: |
-        GOBIN=$PWD/bin go get -u github.com/fzipp/gocyclo
-        ./bin/gocyclo -over 15 ./...
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.8
+        ./bin/golangci-lint run -D errcheck -E gocyclo,golint,misspell -v --exclude SA5008
 
     - name: Test
       run: go test ./...
