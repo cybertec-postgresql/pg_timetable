@@ -29,5 +29,4 @@ func main() {
 	defer pgengine.FinalizeConfigDBConnection()
 	pgengine.SetupCloseHandler()
 	scheduler.Run()
-	return
 }

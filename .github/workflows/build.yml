@@ -38,11 +38,10 @@ jobs:
       run: |
         go mod download
 
-    - name: Lint and Vet
+    - name: GolangCI-Lint
       run: |
-        GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
-        ./bin/golint ./...
-        go vet ./...
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.8
+        ./bin/golangci-lint run -E gocyclo,golint,misspell -v
 
     - name: Test
       run: go test ./...

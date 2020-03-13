@@ -139,14 +139,20 @@ func ExecuteSQLTask(tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValu
 
 	if chainElemExec.IgnoreError {
 		LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", chainElemExec.TaskName)
-		execTx.Exec("SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+		_, err := execTx.Exec("SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+		if err != nil {
+			LogToDB("ERROR", err)
+		}
 	}
 
 	err := ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
 
 	if err != nil && chainElemExec.IgnoreError {
 		LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", chainElemExec.TaskName)
-		execTx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+		_, err := execTx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+		if err != nil {
+			LogToDB("ERROR", err)
+		}
 	}
 
 	//Reset The Role

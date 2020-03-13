@@ -97,7 +97,10 @@ func Parse() error {
 		}
 	}
 	//--pgurl option
-	cmdOpts.ParseCurl(cmdOpts.PostgresURL.pgurl)
+	err = cmdOpts.ParseCurl(cmdOpts.PostgresURL.pgurl)
+	if err != nil {
+		pgengine.LogToDB("ERROR", err)
+	}
 	//non option arguments
 	if len(nonOptionArgs) > 0 && cmdOpts.PostgresURL.pgurl == nil {
 		cmdOpts.PostgresURL.pgurl, err = url.Parse(strings.Join(nonOptionArgs, ""))
