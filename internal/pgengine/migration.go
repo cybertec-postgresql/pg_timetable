@@ -58,7 +58,7 @@ func init() {
 	}
 }
 
-// below this line should appear migration funtions only
+// below this line should appear migration funсtions only
 
 func migration70(tx *sql.Tx) error {
 	if _, err := tx.Exec(`

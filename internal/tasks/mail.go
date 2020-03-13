@@ -56,7 +56,7 @@ func gomailSendMail(conn emailConn) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", conn.SenderAddr)
 
-	//Multiple Recipeints addresses
+	//Multiple Recipients addresses
 	torecipients := make([]string, len(conn.ToAddr))
 	for i, toAddr := range conn.ToAddr {
 		torecipients[i] = mail.FormatAddress(toAddr, " ")

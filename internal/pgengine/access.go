@@ -64,7 +64,7 @@ func FixSchedulerCrash() {
 		     GROUP BY 1
 		     HAVING count(*) < 2 ) AS abc`)
 	if err != nil {
-		LogToDB("ERROR", "Error occured during reverting from the scheduler crash: ", err)
+		LogToDB("ERROR", "Error occurred during reverting from the scheduler crash: ", err)
 	}
 }
 
@@ -90,7 +90,7 @@ func DeleteChainConfig(chainConfigID int) bool {
 	LogToDB("LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
 	res, err := ConfigDb.Exec("DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
 	if err != nil {
-		LogToDB("ERROR", "Error occured during deleting self destructive chains: ", err)
+		LogToDB("ERROR", "Error occurred during deleting self destructive chains: ", err)
 	}
 	rowsDeleted, err := res.RowsAffected()
 	return err == nil && rowsDeleted == 1
@@ -106,7 +106,7 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int)
 		fmt.Sprintf("%d microsecond", chainElemExec.Duration),
 		retCode, os.Getpid())
 	if err != nil {
-		LogToDB("ERROR", "Error occured during logging current chain element execution status including retcode: ", err)
+		LogToDB("ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
 	}
 }
 
@@ -116,7 +116,7 @@ func TryLockClientName() (res bool) {
 	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
 	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
 	if err != nil {
-		LogToDB("ERROR", "Error occured during client name locking: ", err)
+		LogToDB("ERROR", "Error occurred during client name locking: ", err)
 	}
 	return
 }

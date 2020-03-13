@@ -155,7 +155,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"log", "execution_log", "run_status"}
 		for _, tableName := range tableNames {
 			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName))
-			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", tableName))
+			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", tableName))
 			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", tableName))
 		}
 	})
@@ -169,7 +169,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName))
-			assert.NoError(t, err, fmt.Sprintf("Query for %s existance failed", funcName))
+			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", funcName))
 			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", funcName))
 		}
 	})
@@ -247,15 +247,15 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NotPanics(t, pgengine.FixSchedulerCrash, "Fix scheduler crash failed")
 	})
 
-	t.Run("Check CanProceedChainExecution funtion", func(t *testing.T) {
+	t.Run("Check CanProceedChainExecution funсtion", func(t *testing.T) {
 		assert.Equal(t, true, pgengine.CanProceedChainExecution(0, 0), "Should proceed with clean database")
 	})
 
-	t.Run("Check DeleteChainConfig funtion", func(t *testing.T) {
+	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
 		assert.Equal(t, false, pgengine.DeleteChainConfig(0), "Should not delete in clean database")
 	})
 
-	t.Run("Check GetChainElements funtion", func(t *testing.T) {
+	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
 		var chains []pgengine.ChainElementExecution
 		tx := pgengine.StartTransaction()
 		assert.True(t, pgengine.GetChainElements(tx, &chains, 0), "Should no error in clean database")
@@ -263,7 +263,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		pgengine.MustCommitTransaction(tx)
 	})
 
-	t.Run("Check GetChainParamValues funtion", func(t *testing.T) {
+	t.Run("Check GetChainParamValues funсtion", func(t *testing.T) {
 		var paramVals []string
 		tx := pgengine.StartTransaction()
 		assert.True(t, pgengine.GetChainParamValues(tx, &paramVals, &pgengine.ChainElementExecution{
@@ -273,7 +273,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		pgengine.MustCommitTransaction(tx)
 	})
 
-	t.Run("Check InsertChainRunStatus funtion", func(t *testing.T) {
+	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var id int
 		tx := pgengine.StartTransaction()
 		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(tx, 0, 0) }, "Should no error in clean database")
@@ -309,7 +309,7 @@ func TestBuiltInTasks(t *testing.T) {
 	t.Run("Check built-in tasks number", func(t *testing.T) {
 		var num int
 		err := pgengine.ConfigDb.Get(&num, "SELECT count(1) FROM timetable.base_task WHERE kind = 'BUILTIN'")
-		assert.NoError(t, err, "Query for built-in tasks existance failed")
+		assert.NoError(t, err, "Query for built-in tasks existence failed")
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
 }

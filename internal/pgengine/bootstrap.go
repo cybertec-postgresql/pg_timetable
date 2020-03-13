@@ -109,10 +109,10 @@ func FinalizeConfigDBConnection() {
 	LogToDB("LOG", "Closing session")
 	_, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
 	if err != nil {
-		log.Println("Error occured during locks releasing: ", err)
+		log.Println("Error occurred during locks releasing: ", err)
 	}
 	if err = ConfigDb.Close(); err != nil {
-		log.Println("Error occured during connection closing: ", err)
+		log.Println("Error occurred during connection closing: ", err)
 	}
 	ConfigDb = nil
 }
