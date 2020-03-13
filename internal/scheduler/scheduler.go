@@ -3,8 +3,6 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -154,62 +152,17 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	var paramValues []string
 	var err error
 	var retCode int
-	var execTx *sqlx.Tx
-	var remoteDb *sqlx.DB
 
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing task: %s", chainElemExec))
 
 	if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
 		return -1
 	}
+
 	chainElemExec.StartedAt = time.Now()
 	switch chainElemExec.Kind {
 	case "SQL":
-		execTx = tx
-		//Connect to Remote DB
-		if chainElemExec.DatabaseConnection.Valid {
-			connectionString := pgengine.GetConnectionString(chainElemExec.DatabaseConnection)
-			//connection string is empty then don't proceed
-			if strings.TrimSpace(connectionString) == "" {
-				pgengine.LogToDB("ERROR", fmt.Sprintf("Connection string is blank"))
-				return -1
-			}
-			remoteDb, execTx = pgengine.GetRemoteDBTransaction(connectionString)
-			//don't proceed when remote db connection not established
-			if execTx == nil {
-				pgengine.LogToDB("ERROR", fmt.Sprintf("Couldn't connect to remote database"))
-				return -1
-			}
-			defer pgengine.FinalizeRemoteDBConnection(remoteDb)
-		}
-
-		// Set Role
-		if chainElemExec.RunUID.Valid {
-			pgengine.SetRole(execTx, chainElemExec.RunUID)
-		}
-
-		if chainElemExec.IgnoreError {
-			pgengine.LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", chainElemExec.TaskName)
-			execTx.Exec("SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
-		}
-
-		err = pgengine.ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
-
-		if err != nil && chainElemExec.IgnoreError {
-			pgengine.LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", chainElemExec.TaskName)
-			execTx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
-		}
-
-		//Reset The Role
-		if chainElemExec.RunUID.Valid {
-			pgengine.ResetRole(execTx)
-		}
-
-		// Commit changes on remote server
-		if chainElemExec.DatabaseConnection.Valid {
-			pgengine.MustCommitTransaction(execTx)
-		}
-
+		err = pgengine.ExecuteSQLTask(tx, chainElemExec, paramValues)
 	case "SHELL":
 		if pgengine.NoShellTasks {
 			pgengine.LogToDB("LOG", "Shell task execution skipped: ", chainElemExec)

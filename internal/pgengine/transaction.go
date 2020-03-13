@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -108,6 +109,57 @@ ORDER BY order_id ASC`
 		return false
 	}
 	return true
+}
+
+// ExecuteSQLTask executes SQL task
+func ExecuteSQLTask(tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
+	var execTx *sqlx.Tx
+	var remoteDb *sqlx.DB
+
+	execTx = tx
+	//Connect to Remote DB
+	if chainElemExec.DatabaseConnection.Valid {
+		connectionString := GetConnectionString(chainElemExec.DatabaseConnection)
+		//connection string is empty then don't proceed
+		if strings.TrimSpace(connectionString) == "" {
+			return errors.New("Connection string is blank")
+		}
+		remoteDb, execTx = GetRemoteDBTransaction(connectionString)
+		//don't proceed when remote db connection not established
+		if execTx == nil {
+			return errors.New("Couldn't connect to remote database")
+		}
+		defer FinalizeRemoteDBConnection(remoteDb)
+	}
+
+	// Set Role
+	if chainElemExec.RunUID.Valid {
+		SetRole(execTx, chainElemExec.RunUID)
+	}
+
+	if chainElemExec.IgnoreError {
+		LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", chainElemExec.TaskName)
+		execTx.Exec("SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+	}
+
+	err := ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
+
+	if err != nil && chainElemExec.IgnoreError {
+		LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", chainElemExec.TaskName)
+		execTx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
+	}
+
+	//Reset The Role
+	if chainElemExec.RunUID.Valid {
+		ResetRole(execTx)
+	}
+
+	// Commit changes on remote server
+	if chainElemExec.DatabaseConnection.Valid {
+		MustCommitTransaction(execTx)
+	}
+
+	return err
 }
 
 // ExecuteSQLCommand executes chain script with parameters inside transaction
