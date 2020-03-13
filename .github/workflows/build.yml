@@ -38,13 +38,21 @@ jobs:
       run: |
         go mod download
 
-    - name: Lint, Vet, IneffAssign
+    - name: Lint and Vet
       run: |
         go vet ./...
         GOBIN=$PWD/bin go get -u golang.org/x/lint/golint
         ./bin/golint ./...
+
+    - name: IneffAssign
+      run: |
         GOBIN=$PWD/bin go get -u github.com/gordonklaus/ineffassign
         ./bin/ineffassign ./...
+
+    - name: gocyclo
+      run: |
+        GOBIN=$PWD/bin go get -u github.com/fzipp/gocyclo
+        ./bin/gocyclo -over 15 ./...
 
     - name: Test
       run: go test ./...
