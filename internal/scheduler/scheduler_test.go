@@ -25,31 +25,31 @@ func TestShellCommand(t *testing.T) {
 	var err error
 	var retCode int
 
-	retCode, _, err = executeShellCommand("", []string{""})
+	_, _, err = executeShellCommand("", []string{""})
 	assert.EqualError(t, err, "Shell command cannot be empty", "Empty command should out, fail")
 
-	retCode, _, err = executeShellCommand("ping0", nil)
+	_, _, err = executeShellCommand("ping0", nil)
 	assert.NoError(t, err, "Command with nil param is out, OK")
 
-	retCode, _, err = executeShellCommand("ping1", []string{})
+	_, _, err = executeShellCommand("ping1", []string{})
 	assert.NoError(t, err, "Command with empty array param is OK")
 
-	retCode, _, err = executeShellCommand("ping2", []string{""})
+	_, _, err = executeShellCommand("ping2", []string{""})
 	assert.NoError(t, err, "Command with empty string param is OK")
 
-	retCode, _, err = executeShellCommand("ping3", []string{"[]"})
+	_, _, err = executeShellCommand("ping3", []string{"[]"})
 	assert.NoError(t, err, "Command with empty json array param is OK")
 
-	retCode, _, err = executeShellCommand("ping3", []string{"[null]"})
+	_, _, err = executeShellCommand("ping3", []string{"[null]"})
 	assert.NoError(t, err, "Command with nil array param is OK")
 
-	retCode, _, err = executeShellCommand("ping4", []string{`["localhost"]`})
+	_, _, err = executeShellCommand("ping4", []string{`["localhost"]`})
 	assert.NoError(t, err, "Command with one param is OK")
 
-	retCode, _, err = executeShellCommand("ping5", []string{`["localhost", "-4"]`})
+	_, _, err = executeShellCommand("ping5", []string{`["localhost", "-4"]`})
 	assert.NoError(t, err, "Command with many params is OK")
 
-	retCode, _, err = executeShellCommand("pong", nil)
+	_, _, err = executeShellCommand("pong", nil)
 	assert.IsType(t, (*exec.Error)(nil), err, "Uknown command should produce error")
 
 	retCode, _, err = executeShellCommand("ping5", []string{`{"param1": "localhost"}`})

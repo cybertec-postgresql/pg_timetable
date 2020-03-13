@@ -95,6 +95,9 @@ func InitAndTestConfigDBConnection() {
 				fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
 				_, err = ConfigDb.Exec("DROP SCHEMA IF EXISTS timetable CASCADE")
+				if err != nil {
+					fmt.Printf(GetLogPrefixLn("PANIC"), err)
+				}
 				os.Exit(2)
 			} else {
 				LogToDB("LOG", "Schema file executed: "+sqlName)
