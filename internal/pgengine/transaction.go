@@ -196,9 +196,9 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 func InsertChainRunStatus(tx *sqlx.Tx, chainConfigID int, chainID int) int {
 	const sqlInsertRunStatus = `
 INSERT INTO timetable.run_status 
-(chain_id, execution_status, started, start_status, chain_execution_config) 
+(chain_id, execution_status, started, chain_execution_config) 
 VALUES 
-($1, 'STARTED', now(), currval('timetable.run_status_run_status_seq'), $2) 
+($1, 'STARTED', now(), $2) 
 RETURNING run_status`
 	var id int
 	err := tx.Get(&id, sqlInsertRunStatus, chainID, chainConfigID)

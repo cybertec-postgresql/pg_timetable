@@ -39,8 +39,10 @@ func executeShellCommand(command string, paramValues []string) (code int, out []
 			}
 		}
 		out, err = cmd.CombinedOutput(command, params...) // #nosec
-		cmdLine := fmt.Sprintf("%s %v:\n", command, params)
-		pgengine.LogToDB("DEBUG", "Output for command ", cmdLine, string(out))
+		cmdLine := fmt.Sprintf("%s %v: ", command, params)
+		if len(out) > 0 {
+			pgengine.LogToDB("DEBUG", "Output for command ", cmdLine, string(out))
+		}
 		if err != nil {
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {

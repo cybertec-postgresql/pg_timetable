@@ -97,14 +97,15 @@ func DeleteChainConfig(chainConfigID int) bool {
 }
 
 // LogChainElementExecution will log current chain element execution status including retcode
-func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int) {
+func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int, output string) {
 	_, err := ConfigDb.Exec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
-		"kind, last_run, finished, returncode, pid) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9)",
+		"kind, last_run, finished, returncode, pid, output) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
+		"NULLIF($10, ''))",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
 		chainElemExec.Script, chainElemExec.Kind,
 		fmt.Sprintf("%d microsecond", chainElemExec.Duration),
-		retCode, os.Getpid())
+		retCode, os.Getpid(), output)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
 	}

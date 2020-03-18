@@ -51,6 +51,15 @@ func init() {
 				Name: "0070 Interval scheduling and cron only syntax",
 				Func: migration70,
 			},
+			&migrator.Migration{
+				Name: "0086 Add task output to execution_log",
+				Func: func(tx *sql.Tx) error {
+					_, err := tx.Exec("ALTER TABLE timetable.execution_log " +
+						"ADD COLUMN output TEXT")
+					return err
+				},
+			},
+			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
 		),
 	)
 	if err != nil {

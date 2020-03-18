@@ -3,6 +3,7 @@ package scheduler
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -151,6 +152,7 @@ func executeChain(chainConfigID int, chainID int) {
 func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
 	var paramValues []string
 	var err error
+	var out []byte
 	var retCode int
 
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing task: %s", chainElemExec))
@@ -168,13 +170,13 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 			pgengine.LogToDB("LOG", "Shell task execution skipped: ", chainElemExec)
 			return -1
 		}
-		retCode, _, err = executeShellCommand(chainElemExec.Script, paramValues)
+		retCode, out, err = executeShellCommand(chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
 	}
 
 	chainElemExec.Duration = time.Since(chainElemExec.StartedAt).Microseconds()
-	pgengine.LogChainElementExecution(chainElemExec, retCode) //TODO: Add output logging
+	pgengine.LogChainElementExecution(chainElemExec, retCode, strings.TrimSpace(string(out)))
 
 	if err != nil {
 		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))

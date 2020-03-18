@@ -16,7 +16,8 @@ INSERT INTO
 	timetable.migrations (id, version) 
 VALUES 
 	(0, '0051 Implement upgrade machinery'),
-	(1, '0070 Interval scheduling and cron only syntax');
+	(1, '0070 Interval scheduling and cron only syntax'),
+	(2, '0086 Add task output to execution_log');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
@@ -132,13 +133,14 @@ CREATE TABLE timetable.execution_log (
 	chain_execution_config	BIGINT,
 	chain_id        		BIGINT,
 	task_id         		BIGINT,
-	name            		TEXT		NOT NULL, -- expanded details about the task run
+	name            		TEXT		NOT NULL,
 	script          		TEXT,
 	kind          			TEXT,
 	last_run       	 		TIMESTAMPTZ	DEFAULT now(),
 	finished        		TIMESTAMPTZ,
 	returncode      		INTEGER,
-	pid             		BIGINT
+	pid             		BIGINT,
+	output					TEXT
 );
 
 CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');

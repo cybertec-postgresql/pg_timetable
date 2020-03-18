@@ -17,19 +17,21 @@ func (c testCommander) CombinedOutput(command string, args ...string) ([]byte, e
 	if strings.HasPrefix(command, "ping") {
 		return []byte(fmt.Sprint(command, args)), nil
 	}
-	return []byte(fmt.Sprint(command, args)), &exec.Error{Name: command, Err: exec.ErrNotFound}
+	return []byte(fmt.Sprintf("Command %s not found", command)), &exec.Error{Name: command, Err: exec.ErrNotFound}
 }
 
 func TestShellCommand(t *testing.T) {
 	cmd = testCommander{}
 	var err error
+	var out []byte
 	var retCode int
 
 	_, _, err = executeShellCommand("", []string{""})
 	assert.EqualError(t, err, "Shell command cannot be empty", "Empty command should out, fail")
 
-	_, _, err = executeShellCommand("ping0", nil)
+	_, out, err = executeShellCommand("ping0", nil)
 	assert.NoError(t, err, "Command with nil param is out, OK")
+	assert.True(t, strings.HasPrefix(string(out), "ping0"), "Output should containt only command ")
 
 	_, _, err = executeShellCommand("ping1", []string{})
 	assert.NoError(t, err, "Command with empty array param is OK")
