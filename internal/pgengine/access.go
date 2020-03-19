@@ -56,13 +56,13 @@ func LogToDB(level string, msg ...interface{}) {
 and marked as stopped at a certain point */
 func FixSchedulerCrash() {
 	_, err := ConfigDb.Exec(`
-		INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config)
-		  SELECT 'DEAD', now(), now(), start_status, 0 FROM (
+		INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
+		  SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
 		   SELECT   start_status
 		     FROM   timetable.run_status
-		     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+		     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
 		     GROUP BY 1
-		     HAVING count(*) < 2 ) AS abc`)
+		     HAVING count(*) < 2 ) AS abc`, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during reverting from the scheduler crash: ", err)
 	}
@@ -99,13 +99,13 @@ func DeleteChainConfig(chainConfigID int) bool {
 // LogChainElementExecution will log current chain element execution status including retcode
 func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int, output string) {
 	_, err := ConfigDb.Exec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
-		"kind, last_run, finished, returncode, pid, output) "+
+		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
-		"NULLIF($10, ''))",
+		"NULLIF($10, ''), $11)",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
 		chainElemExec.Script, chainElemExec.Kind,
 		fmt.Sprintf("%d microsecond", chainElemExec.Duration),
-		retCode, os.Getpid(), output)
+		retCode, os.Getpid(), output, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
 	}
@@ -136,17 +136,34 @@ func SetupCloseHandler() {
 	}()
 }
 
+// InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
+func InsertChainRunStatus(chainConfigID int, chainID int) int {
+	const sqlInsertRunStatus = `
+INSERT INTO timetable.run_status 
+(chain_id, execution_status, started, chain_execution_config, client_name) 
+VALUES 
+($1, 'STARTED', now(), $2, $3) 
+RETURNING run_status`
+	var id int
+	err := ConfigDb.Get(&id, sqlInsertRunStatus, chainID, chainConfigID, ClientName)
+	if err != nil {
+		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
+	}
+	return id
+}
+
 // UpdateChainRunStatus inserts status information about running chain elements
 func UpdateChainRunStatus(chainElemExec *ChainElementExecution, runStatusID int, status string) {
 
 	const sqlInsertFinishStatus = `
 INSERT INTO timetable.run_status 
-(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config)
+(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config, client_name)
 VALUES 
-($1, $2, $3, clock_timestamp(), now(), $4, $5)`
+($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
 	var err error
 
-	_, err = ConfigDb.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID, runStatusID, chainElemExec.ChainConfig)
+	_, err = ConfigDb.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
+		runStatusID, chainElemExec.ChainConfig, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Update Chain Status failed: ", err)
 	}

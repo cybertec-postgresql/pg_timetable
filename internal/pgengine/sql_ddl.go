@@ -17,7 +17,8 @@ INSERT INTO
 VALUES 
 	(0, '0051 Implement upgrade machinery'),
 	(1, '0070 Interval scheduling and cron only syntax'),
-	(2, '0086 Add task output to execution_log');
+	(2, '0086 Add task output to execution_log'),
+	(3, '0108 Add client_name column to timetable.run_status');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
@@ -140,7 +141,8 @@ CREATE TABLE timetable.execution_log (
 	finished        		TIMESTAMPTZ,
 	returncode      		INTEGER,
 	pid             		BIGINT,
-	output					TEXT
+	output					TEXT,
+	client_name				TEXT		NOT NULL
 );
 
 CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
@@ -154,6 +156,7 @@ CREATE TABLE timetable.run_status (
 	started 					TIMESTAMPTZ,
 	last_status_update 			TIMESTAMPTZ 				DEFAULT clock_timestamp(),
 	chain_execution_config 		BIGINT,
+	client_name					TEXT	NOT NULL,
 	PRIMARY KEY (run_status)
 );
 

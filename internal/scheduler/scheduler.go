@@ -122,7 +122,7 @@ func executeChain(chainConfigID int, chainID int) {
 	tx := pgengine.StartTransaction()
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
-	runStatusID := pgengine.InsertChainRunStatus(tx, chainConfigID, chainID)
+	runStatusID := pgengine.InsertChainRunStatus(chainConfigID, chainID)
 
 	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
 		return

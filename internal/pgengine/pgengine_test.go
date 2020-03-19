@@ -272,10 +272,8 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var id int
-		tx := pgengine.StartTransaction()
-		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(tx, 0, 0) }, "Should no error in clean database")
+		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(0, 0) }, "Should no error in clean database")
 		assert.NotZero(t, id, "Run status id should be greater then 0")
-		pgengine.MustCommitTransaction(tx)
 	})
 
 	t.Run("Check Remote DB Connection string", func(t *testing.T) {

@@ -192,22 +192,6 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 	return err
 }
 
-// InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func InsertChainRunStatus(tx *sqlx.Tx, chainConfigID int, chainID int) int {
-	const sqlInsertRunStatus = `
-INSERT INTO timetable.run_status 
-(chain_id, execution_status, started, chain_execution_config) 
-VALUES 
-($1, 'STARTED', now(), $2) 
-RETURNING run_status`
-	var id int
-	err := tx.Get(&id, sqlInsertRunStatus, chainID, chainConfigID)
-	if err != nil {
-		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
-	}
-	return id
-}
-
 //GetConnectionString of database_connection
 func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
 	rows := ConfigDb.QueryRow("SELECT connect_string FROM  timetable.database_connection WHERE database_connection = $1", databaseConnection)

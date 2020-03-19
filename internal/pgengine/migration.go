@@ -59,6 +59,10 @@ func init() {
 					return err
 				},
 			},
+			&migrator.Migration{
+				Name: "0108 Add client_name column to timetable.run_status",
+				Func: migration108,
+			},
 			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
 		),
 	)
@@ -68,6 +72,20 @@ func init() {
 }
 
 // below this line should appear migration funсtions only
+
+func migration108(tx *sql.Tx) error {
+	// first set <unknown> for existing rows, then drop default to force application to set it
+	_, err := tx.Exec(`
+ALTER TABLE timetable.execution_log
+	ADD COLUMN client_name TEXT NOT NULL DEFAULT '<unknown>';
+ALTER TABLE timetable.run_status
+	ADD COLUMN client_name TEXT NOT NULL DEFAULT '<unknown>';
+ALTER TABLE timetable.execution_log
+	ALTER COLUMN client_name DROP DEFAULT;
+ALTER TABLE timetable.run_status
+	ALTER COLUMN client_name DROP DEFAULT;`)
+	return err
+}
 
 func migration70(tx *sql.Tx) error {
 	if _, err := tx.Exec(`

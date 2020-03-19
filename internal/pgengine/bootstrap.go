@@ -84,6 +84,7 @@ func InitAndTestConfigDBConnection() {
 
 	ConfigDb = sqlx.NewDb(db, "postgres")
 	LogToDB("LOG", "Connection established...")
+	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 
 	var exists bool
 	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
