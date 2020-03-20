@@ -7,50 +7,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
-
-// VerboseLogLevel specifies if log messages with level LOG should be logged
-var VerboseLogLevel = true
 
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
 // AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
 const AppID = 0x204F04EE
-
-// GetLogPrefix perform formatted logging
-func GetLogPrefix(level string) string {
-	return fmt.Sprintf("[%v | %s | %-6s]:\t %%s", time.Now().Format("2006-01-02 15:04:05.000"), ClientName, level)
-}
-
-// GetLogPrefixLn perform formatted logging with new line at the end
-func GetLogPrefixLn(level string) string {
-	return GetLogPrefix(level) + "\n"
-}
-
-// LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
-func LogToDB(level string, msg ...interface{}) {
-	const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
-	if !VerboseLogLevel {
-		switch level {
-		case
-			"DEBUG", "NOTICE":
-			return
-		}
-	}
-	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
-	fmt.Println(s)
-	if ConfigDb != nil {
-		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-		for err != nil && ConfigDb.Ping() != nil {
-			// If there is DB outage, reconnect and write missing log
-			ReconnectDbAndFixLeftovers()
-			_, err = ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-			level = "ERROR" //we don't want panic in case of disconnect
-		}
-	}
-}
 
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
@@ -94,21 +57,6 @@ func DeleteChainConfig(chainConfigID int) bool {
 	}
 	rowsDeleted, err := res.RowsAffected()
 	return err == nil && rowsDeleted == 1
-}
-
-// LogChainElementExecution will log current chain element execution status including retcode
-func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int, output string) {
-	_, err := ConfigDb.Exec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
-		"kind, last_run, finished, returncode, pid, output, client_name) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
-		"NULLIF($10, ''), $11)",
-		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
-		chainElemExec.Script, chainElemExec.Kind,
-		fmt.Sprintf("%d microsecond", chainElemExec.Duration),
-		retCode, os.Getpid(), output, ClientName)
-	if err != nil {
-		LogToDB("ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
-	}
 }
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
