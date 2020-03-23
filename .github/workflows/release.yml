@@ -17,6 +17,8 @@ jobs:
       id: go
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+    - name: Unshallow
+      run: git fetch --prune --unshallow
     - name: Release via goreleaser
       uses: goreleaser/goreleaser-action@master
       with:
