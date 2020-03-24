@@ -1,7 +1,7 @@
 name: Go Build & Test
 on: 
   push:
-    paths-ignore:
+    paths:
       - '**.go'
     branches:
       - '*'
