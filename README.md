@@ -259,9 +259,10 @@ In order to examine the activity of **pg_timetable**, the table `timetable.run_s
 
 ## 7. Contributing
 
-If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a pull request.
+If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a [pull request][PR].
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
+[PR]: https://github.com/cybertec-postgresql/pg_timetable/pulls
 
 ## 8. Support
 
