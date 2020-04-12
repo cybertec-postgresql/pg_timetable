@@ -128,8 +128,7 @@ func ReconnectDbAndFixLeftovers() {
 		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
 		time.Sleep(waitTime * time.Second)
 		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
-		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
-			Host, Port, DbName, SSLMode, User, Password))
+		err = ConfigDb.Ping()
 		if err == nil {
 			LogToDB("LOG", "Connection reestablished...")
 			FixSchedulerCrash()
