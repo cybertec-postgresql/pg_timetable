@@ -20,6 +20,7 @@ const (
 var levelColors = map[string]int{
 	"PANIC":  red,
 	"ERROR":  red,
+	"REPAIR": red,
 	"USER":   yellow,
 	"LOG":    blue,
 	"NOTICE": green,
