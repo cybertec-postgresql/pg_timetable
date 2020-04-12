@@ -117,6 +117,7 @@ func FinalizeConfigDBConnection() {
 	if err := ConfigDb.Close(); err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during connection closing: %v", err))
 	}
+	ConfigDb = nil
 }
 
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
