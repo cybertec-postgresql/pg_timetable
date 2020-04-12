@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -68,9 +69,9 @@ func New(opts ...Option) (*Migrator, error) {
 }
 
 // Migrate applies all available migrations
-func (m *Migrator) Migrate(db *sql.DB) error {
+func (m *Migrator) Migrate(ctx context.Context, db *sql.DB) error {
 	// create migrations table if doesn't exist
-	_, err := db.Exec(fmt.Sprintf(`
+	_, err := db.ExecContext(ctx, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
 			id INT8 NOT NULL,
 			version TEXT	 NOT NULL,
@@ -82,7 +83,7 @@ func (m *Migrator) Migrate(db *sql.DB) error {
 	}
 
 	// count applied migrations
-	count, err := countApplied(db, m.TableName)
+	count, err := countApplied(ctx, db, m.TableName)
 	if err != nil {
 		return err
 	}
@@ -96,11 +97,11 @@ func (m *Migrator) Migrate(db *sql.DB) error {
 		insertVersion := fmt.Sprintf("INSERT INTO %s (id, version) VALUES (%d, '%s')", m.TableName, idx+count, migration.(fmt.Stringer).String())
 		switch mm := migration.(type) {
 		case *Migration:
-			if err := migrate(db, insertVersion, mm, m.onNotice); err != nil {
+			if err := migrate(ctx, db, insertVersion, mm, m.onNotice); err != nil {
 				return fmt.Errorf("Error while running migrations: %v", err)
 			}
 		case *MigrationNoTx:
-			if err := migrateNoTx(db, insertVersion, mm, m.onNotice); err != nil {
+			if err := migrateNoTx(ctx, db, insertVersion, mm, m.onNotice); err != nil {
 				return fmt.Errorf("Error while running migrations: %v", err)
 			}
 		}
@@ -110,8 +111,8 @@ func (m *Migrator) Migrate(db *sql.DB) error {
 }
 
 // Pending returns all pending (not yet applied) migrations
-func (m *Migrator) Pending(db *sql.DB) ([]interface{}, error) {
-	count, err := countApplied(db, m.TableName)
+func (m *Migrator) Pending(ctx context.Context, db *sql.DB) ([]interface{}, error) {
+	count, err := countApplied(ctx, db, m.TableName)
 	if err != nil {
 		return nil, err
 	}
@@ -119,28 +120,28 @@ func (m *Migrator) Pending(db *sql.DB) ([]interface{}, error) {
 }
 
 // NeedUpgrade returns True if database need to be updated with migrations
-func (m *Migrator) NeedUpgrade(db *sql.DB) (bool, error) {
-	exists, err := tableExists(db, m.TableName)
+func (m *Migrator) NeedUpgrade(ctx context.Context, db *sql.DB) (bool, error) {
+	exists, err := tableExists(ctx, db, m.TableName)
 	if !exists {
 		return true, err
 	}
-	mm, err := m.Pending(db)
+	mm, err := m.Pending(ctx, db)
 	return len(mm) > 0, err
 }
 
-func countApplied(db *sql.DB, tableName string) (int, error) {
+func countApplied(ctx context.Context, db *sql.DB, tableName string) (int, error) {
 	// count applied migrations
 	var count int
-	err := db.QueryRow(fmt.Sprintf("SELECT count(*) FROM %s", tableName)).Scan(&count)
+	err := db.QueryRowContext(ctx, fmt.Sprintf("SELECT count(*) FROM %s", tableName)).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 
-func tableExists(db *sql.DB, tableName string) (bool, error) {
+func tableExists(ctx context.Context, db *sql.DB, tableName string) (bool, error) {
 	var exists bool
-	err := db.QueryRow("SELECT to_regclass($1) IS NOT NULL", tableName).Scan(&exists)
+	err := db.QueryRowContext(ctx, "SELECT to_regclass($1) IS NOT NULL", tableName).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
@@ -161,15 +162,15 @@ func (m *Migration) String() string {
 // MigrationNoTx represents a single not transactional migration
 type MigrationNoTx struct {
 	Name string
-	Func func(*sql.DB) error
+	Func func(context.Context, *sql.DB) error
 }
 
 func (m *MigrationNoTx) String() string {
 	return m.Name
 }
 
-func migrate(db *sql.DB, insertVersion string, migration *Migration, notice func(string)) error {
-	tx, err := db.Begin()
+func migrate(ctx context.Context, db *sql.DB, insertVersion string, migration *Migration, notice func(string)) error {
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -194,12 +195,12 @@ func migrate(db *sql.DB, insertVersion string, migration *Migration, notice func
 	return err
 }
 
-func migrateNoTx(db *sql.DB, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
+func migrateNoTx(ctx context.Context, db *sql.DB, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
 	notice(fmt.Sprintf("Applying no tx migration named '%s'...", migration.Name))
-	if err := migration.Func(db); err != nil {
+	if err := migration.Func(ctx, db); err != nil {
 		return fmt.Errorf("Error executing golang migration: %s", err)
 	}
-	if _, err := db.Exec(insertVersion); err != nil {
+	if _, err := db.ExecContext(ctx, insertVersion); err != nil {
 		return fmt.Errorf("Error updating migration versions: %s", err)
 	}
 	notice(fmt.Sprintf("Applied no tx migration named '%s'...", migration.Name))

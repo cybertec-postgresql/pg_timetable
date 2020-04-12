@@ -1,8 +1,8 @@
 package pgengine
 
 import (
+	"context"
 	"database/sql"
-	"os"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 )
@@ -10,26 +10,26 @@ import (
 var m *migrator.Migrator
 
 // MigrateDb upgrades database with all migrations
-func MigrateDb() {
+func MigrateDb(ctx context.Context) bool {
 	LogToDB("LOG", "Upgrading database...")
-	if err := m.Migrate(ConfigDb.DB); err != nil {
+	if err := m.Migrate(ctx, ConfigDb.DB); err != nil {
 		LogToDB("PANIC", err)
-		os.Exit(3)
+		return false
 	}
+	return true
 }
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
-func CheckNeedMigrateDb() {
+func CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	LogToDB("DEBUG", "Check need of upgrading database...")
-	upgrade, err := m.NeedUpgrade(ConfigDb.DB)
+	upgrade, err := m.NeedUpgrade(ctx, ConfigDb.DB)
 	if upgrade {
 		LogToDB("PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
-		defer os.Exit(3)
 	}
 	if err != nil {
 		LogToDB("PANIC", err)
-		os.Exit(3)
 	}
+	return upgrade, err
 }
 
 func init() {
