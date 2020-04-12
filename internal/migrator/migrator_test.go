@@ -1,6 +1,7 @@
 package migrator_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -50,7 +51,7 @@ func migrateTest() error {
 	}
 
 	// Migrate up
-	pgengine.InitAndTestConfigDBConnection()
+	pgengine.InitAndTestConfigDBConnection(context.Background())
 	pgengine.ConfigDb.MustExec("DROP TABLE IF EXISTS foo, bar, baz")
 	if err := migrator.Migrate(pgengine.ConfigDb.DB); err != nil {
 		return err
@@ -84,7 +85,7 @@ func TestDatabaseNotFound(t *testing.T) {
 }
 
 func TestBadMigrations(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection()
+	pgengine.InitAndTestConfigDBConnection(context.Background())
 	db := pgengine.ConfigDb.DB
 
 	var migrators = []struct {
@@ -133,7 +134,7 @@ func TestBadMigrations(t *testing.T) {
 }
 
 func TestBadMigrationNumber(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection()
+	pgengine.InitAndTestConfigDBConnection(context.Background())
 	db := pgengine.ConfigDb.DB
 	migrator := mustMigrator(migrator.New(migrator.Migrations(
 		&migrator.Migration{
@@ -152,7 +153,7 @@ func TestBadMigrationNumber(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection()
+	pgengine.InitAndTestConfigDBConnection(context.Background())
 	db := pgengine.ConfigDb.DB
 	migrator := mustMigrator(migrator.New(migrator.Migrations(
 		&migrator.Migration{
