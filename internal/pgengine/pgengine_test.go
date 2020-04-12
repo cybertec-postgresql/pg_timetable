@@ -1,6 +1,7 @@
 package pgengine_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -108,7 +109,7 @@ var setupTestDBFunc = func() {
 	pgengine.LogToDB("LOG", "Trying to connect postgres container at ",
 		fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 			pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
-	pgengine.InitAndTestConfigDBConnection()
+	pgengine.InitAndTestConfigDBConnection(context.Background())
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
