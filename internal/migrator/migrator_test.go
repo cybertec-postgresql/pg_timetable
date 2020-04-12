@@ -26,8 +26,8 @@ var migrations = []interface{}{
 	},
 	&migrator.MigrationNoTx{
 		Name: "Using db, execute one query",
-		Func: func(db *sql.DB) error {
-			if _, err := db.Exec("INSERT INTO foo (id) VALUES (2)"); err != nil {
+		Func: func(ctx context.Context, db *sql.DB) error {
+			if _, err := db.ExecContext(ctx, "INSERT INTO foo (id) VALUES (2)"); err != nil {
 				return err
 			}
 			return nil
@@ -53,7 +53,7 @@ func migrateTest() error {
 	// Migrate up
 	pgengine.InitAndTestConfigDBConnection(context.Background())
 	pgengine.ConfigDb.MustExec("DROP TABLE IF EXISTS foo, bar, baz")
-	if err := migrator.Migrate(pgengine.ConfigDb.DB); err != nil {
+	if err := migrator.Migrate(context.Background(), pgengine.ConfigDb.DB); err != nil {
 		return err
 	}
 
@@ -79,7 +79,7 @@ func TestDatabaseNotFound(t *testing.T) {
 		t.Fatal(err)
 	}
 	db, _ := sql.Open("postgres", "")
-	if err := migrator.Migrate(db); err == nil {
+	if err := migrator.Migrate(context.Background(), db); err == nil {
 		t.Fatal(err)
 	}
 }
@@ -109,8 +109,8 @@ func TestBadMigrations(t *testing.T) {
 			name: "bad db migration",
 			input: mustMigrator(migrator.New(migrator.Migrations(&migrator.MigrationNoTx{
 				Name: "bad db migration",
-				Func: func(db *sql.DB) error {
-					if _, err := db.Exec("FAIL FAST"); err != nil {
+				Func: func(ctx context.Context, db *sql.DB) error {
+					if _, err := db.ExecContext(ctx, "FAIL FAST"); err != nil {
 						return err
 					}
 					return nil
@@ -125,7 +125,7 @@ func TestBadMigrations(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.input.Migrate(db)
+			err := tt.input.Migrate(context.Background(), db)
 			if err != nil && !strings.Contains(err.Error(), "pq: syntax error") {
 				t.Fatal(err)
 			}
@@ -147,7 +147,7 @@ func TestBadMigrationNumber(t *testing.T) {
 			},
 		},
 	)))
-	if err := migrator.Migrate(db); err == nil {
+	if err := migrator.Migrate(context.Background(), db); err == nil {
 		t.Fatalf("BAD MIGRATION NUMBER should fail: %v", err)
 	}
 }
@@ -166,7 +166,7 @@ func TestPending(t *testing.T) {
 			},
 		},
 	)))
-	pending, err := migrator.Pending(db)
+	pending, err := migrator.Pending(context.Background(), db)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -25,9 +25,13 @@ func main() {
 		os.Exit(2)
 	}
 	if pgengine.Upgrade {
-		pgengine.MigrateDb()
+		if !pgengine.MigrateDb(context.Background()) {
+			os.Exit(3)
+		}
 	} else {
-		pgengine.CheckNeedMigrateDb()
+		if upgrade, err := pgengine.CheckNeedMigrateDb(context.Background()); upgrade || err != nil {
+			os.Exit(3)
+		}
 	}
 	defer pgengine.FinalizeConfigDBConnection()
 	pgengine.SetupCloseHandler()
