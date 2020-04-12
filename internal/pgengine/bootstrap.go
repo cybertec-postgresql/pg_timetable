@@ -110,15 +110,13 @@ func InitAndTestConfigDBConnection() {
 
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
-	LogToDB("LOG", "Closing session")
-	_, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
-	if err != nil {
-		log.Println("Error occurred during locks releasing: ", err)
+	fmt.Printf(GetLogPrefixLn("LOG"), "Closing session")
+	if _, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()"); err != nil {
+		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during locks releasing: %v", err))
 	}
-	if err = ConfigDb.Close(); err != nil {
-		log.Println("Error occurred during connection closing: ", err)
+	if err := ConfigDb.Close(); err != nil {
+		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during connection closing: %v", err))
 	}
-	ConfigDb = nil
 }
 
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
