@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -53,7 +54,7 @@ var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection() {
+func InitAndTestConfigDBConnection(ctx context.Context) bool {
 	var wt int = waitTime
 	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
@@ -71,12 +72,18 @@ func InitAndTestConfigDBConnection() {
 	db := sql.OpenDB(connector)
 	LogToDB("DEBUG", "Connection string: ", connstr)
 
-	err = db.Ping()
+	err = db.PingContext(ctx)
 	for err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
 		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
-		time.Sleep(time.Duration(wt) * time.Second)
-		err = db.Ping()
+		select {
+		case <-time.After(time.Duration(wt) * time.Second):
+			err = db.PingContext(ctx)
+		case <-ctx.Done():
+			// If the request gets cancelled, log it
+			LogToDB("ERROR", "request cancelled\n")
+			return false
+		}
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
@@ -87,25 +94,26 @@ func InitAndTestConfigDBConnection() {
 	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 
 	var exists bool
-	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
+	err = ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
 			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
-			if _, err = ConfigDb.Exec(sql); err != nil {
+			if _, err = ConfigDb.ExecContext(ctx, sql); err != nil {
 				fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
-				_, err = ConfigDb.Exec("DROP SCHEMA IF EXISTS timetable CASCADE")
+				_, err = ConfigDb.ExecContext(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 				if err != nil {
 					fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				}
-				os.Exit(2)
+				return false
 			} else {
 				LogToDB("LOG", "Schema file executed: "+sqlName)
 			}
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
+	return true
 }
 
 // FinalizeConfigDBConnection closes session

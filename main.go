@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
@@ -20,7 +21,9 @@ func main() {
 	if cmdparser.Parse() != nil {
 		os.Exit(2)
 	}
-	pgengine.InitAndTestConfigDBConnection()
+	if !pgengine.InitAndTestConfigDBConnection(context.Background()) {
+		os.Exit(2)
+	}
 	if pgengine.Upgrade {
 		pgengine.MigrateDb()
 	} else {
