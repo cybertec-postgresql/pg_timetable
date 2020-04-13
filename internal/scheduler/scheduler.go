@@ -54,15 +54,15 @@ func (chain Chain) String() string {
 	return string(data)
 }
 
-type runStatus int
+type RunStatus int
 
 const (
-	ConnectionDroppped runStatus = iota
+	ConnectionDroppped RunStatus = iota
 	ContextCancelled
 )
 
 //Run executes jobs. Returns Fa
-func Run(ctx context.Context) runStatus {
+func Run(ctx context.Context) RunStatus {
 	for !pgengine.TryLockClientName(ctx) {
 		select {
 		case <-time.After(refetchTimeout * time.Second):
