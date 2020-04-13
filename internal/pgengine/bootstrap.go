@@ -106,9 +106,8 @@ func InitAndTestConfigDBConnection(ctx context.Context) bool {
 					fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				}
 				return false
-			} else {
-				LogToDB("LOG", "Schema file executed: "+sqlName)
 			}
+			LogToDB("LOG", "Schema file executed: "+sqlName)
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
