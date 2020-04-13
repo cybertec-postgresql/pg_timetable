@@ -1,4 +1,9 @@
-# all available settings of specific linters
+linters:
+  enable:
+    - gocyclo
+    - golint
+    - misspell  
+    
 linters-settings:
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
