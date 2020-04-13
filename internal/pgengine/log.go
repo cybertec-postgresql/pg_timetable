@@ -1,7 +1,6 @@
 package pgengine
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"time"
@@ -59,10 +58,8 @@ func LogToDB(level string, msg ...interface{}) {
 	fmt.Println(s)
 	if ConfigDb != nil {
 		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-		if err != nil && ConfigDb.Ping() != nil {
-			if ReconnectDbAndFixLeftovers(context.TODO()) {
-				_, _ = ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-			}
+		if err != nil {
+			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprint("Cannot log to the database: ", err))
 		}
 	}
 }

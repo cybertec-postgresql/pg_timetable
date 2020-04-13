@@ -18,22 +18,25 @@ import (
  */
 
 func main() {
+	ctx := context.Background()
 	if cmdparser.Parse() != nil {
 		os.Exit(2)
 	}
-	if !pgengine.InitAndTestConfigDBConnection(context.Background()) {
+	if !pgengine.InitAndTestConfigDBConnection(ctx) {
 		os.Exit(2)
 	}
 	if pgengine.Upgrade {
-		if !pgengine.MigrateDb(context.Background()) {
+		if !pgengine.MigrateDb(ctx) {
 			os.Exit(3)
 		}
 	} else {
-		if upgrade, err := pgengine.CheckNeedMigrateDb(context.Background()); upgrade || err != nil {
+		if upgrade, err := pgengine.CheckNeedMigrateDb(ctx); upgrade || err != nil {
 			os.Exit(3)
 		}
 	}
 	defer pgengine.FinalizeConfigDBConnection()
 	pgengine.SetupCloseHandler()
-	scheduler.Run(context.Background())
+	for scheduler.Run(ctx) == scheduler.ConnectionDroppped {
+		pgengine.ReconnectDbAndFixLeftovers(ctx)
+	}
 }
