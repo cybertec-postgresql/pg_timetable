@@ -61,10 +61,10 @@ func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 }
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
-func TryLockClientName() (res bool) {
+func TryLockClientName(ctx context.Context) (res bool) {
 	adler32Int := adler32.Checksum([]byte(ClientName))
 	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
-	err := ConfigDb.Get(&res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
+	err := ConfigDb.GetContext(ctx, &res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during client name locking: ", err)
 	}
@@ -92,7 +92,7 @@ func IsAlive() bool {
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func InsertChainRunStatus(chainConfigID int, chainID int) int {
+func InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
 	const sqlInsertRunStatus = `
 INSERT INTO timetable.run_status 
 (chain_id, execution_status, started, chain_execution_config, client_name) 
@@ -100,7 +100,7 @@ VALUES
 ($1, 'STARTED', now(), $2, $3) 
 RETURNING run_status`
 	var id int
-	err := ConfigDb.Get(&id, sqlInsertRunStatus, chainID, chainConfigID, ClientName)
+	err := ConfigDb.GetContext(ctx, &id, sqlInsertRunStatus, chainID, chainConfigID, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
 	}
@@ -108,16 +108,14 @@ RETURNING run_status`
 }
 
 // UpdateChainRunStatus inserts status information about running chain elements
-func UpdateChainRunStatus(chainElemExec *ChainElementExecution, runStatusID int, status string) {
-
+func UpdateChainRunStatus(ctx context.Context, chainElemExec *ChainElementExecution, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `
 INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config, client_name)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
 	var err error
-
-	_, err = ConfigDb.Exec(sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
+	_, err = ConfigDb.ExecContext(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
 		runStatusID, chainElemExec.ChainConfig, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Update Chain Status failed: ", err)

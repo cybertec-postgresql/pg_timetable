@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -34,8 +35,8 @@ func (chainElem ChainElementExecution) String() string {
 }
 
 // StartTransaction return transaction object and panic in the case of error
-func StartTransaction() *sqlx.Tx {
-	return ConfigDb.MustBegin()
+func StartTransaction(ctx context.Context) (*sqlx.Tx, error) {
+	return ConfigDb.BeginTxx(ctx, nil)
 }
 
 // MustCommitTransaction commits transaction and log error in the case of error
@@ -112,7 +113,7 @@ ORDER BY order_id ASC`
 }
 
 // ExecuteSQLTask executes SQL task
-func ExecuteSQLTask(tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
+func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
 	var execTx *sqlx.Tx
 	var remoteDb *sqlx.DB
 
@@ -124,7 +125,7 @@ func ExecuteSQLTask(tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValu
 		if strings.TrimSpace(connectionString) == "" {
 			return errors.New("Connection string is blank")
 		}
-		remoteDb, execTx = GetRemoteDBTransaction(connectionString)
+		remoteDb, execTx = GetRemoteDBTransaction(ctx, connectionString)
 		//don't proceed when remote db connection not established
 		if execTx == nil {
 			return errors.New("Couldn't connect to remote database")
@@ -203,14 +204,21 @@ func GetConnectionString(databaseConnection sql.NullString) (connectionString st
 }
 
 //GetRemoteDBTransaction create a remote db connection and returns transaction object
-func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
-	remoteDb, err := sqlx.Connect("postgres", connectionString)
+func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*sqlx.DB, *sqlx.Tx) {
+	remoteDb, err := sqlx.ConnectContext(ctx, "postgres", connectionString)
 	if err != nil {
-		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v", connectionString))
+		LogToDB("ERROR",
+			fmt.Sprintf("Error in remote connection (%s): %v", connectionString, err))
 		return nil, nil
 	}
 	LogToDB("LOG", "Remote Connection established...")
-	return remoteDb, remoteDb.MustBegin()
+	remoteTx, err := remoteDb.BeginTxx(ctx, nil)
+	if err != nil {
+		LogToDB("ERROR",
+			fmt.Sprintf("Error during start of remote transaction (%s): %v", connectionString, err))
+		return nil, nil
+	}
+	return remoteDb, remoteTx
 }
 
 // FinalizeRemoteDBConnection closes session

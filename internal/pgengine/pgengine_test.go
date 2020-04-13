@@ -137,12 +137,14 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
 	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 		pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password)
-	return pgengine.GetRemoteDBTransaction(connstr)
+	return pgengine.GetRemoteDBTransaction(context.Background(), connstr)
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
+
+	ctx := context.Background()
 
 	require.NotNil(t, pgengine.ConfigDb, "ConfigDB should be initialized")
 
@@ -225,12 +227,12 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.ReconnectDbAndFixLeftovers(context.Background()),
+		assert.Equal(t, true, pgengine.ReconnectDbAndFixLeftovers(ctx),
 			"Should succeed for reconnect")
 	})
 
 	t.Run("Check TryLockClientName()", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.TryLockClientName(), "Should succeed for clean database")
+		assert.Equal(t, true, pgengine.TryLockClientName(ctx), "Should succeed for clean database")
 	})
 
 	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
@@ -258,7 +260,8 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
 		var chains []pgengine.ChainElementExecution
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pgengine.GetChainElements(tx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
 		pgengine.MustCommitTransaction(tx)
@@ -266,7 +269,8 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check GetChainParamValues funсtion", func(t *testing.T) {
 		var paramVals []string
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pgengine.GetChainParamValues(tx, &paramVals, &pgengine.ChainElementExecution{
 			ChainID:     0,
 			ChainConfig: 0}), "Should no error in clean database")
@@ -276,19 +280,21 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var id int
-		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(0, 0) }, "Should no error in clean database")
+		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(ctx, 0, 0) }, "Should no error in clean database")
 		assert.NotZero(t, id, "Run status id should be greater then 0")
 	})
 
 	t.Run("Check Remote DB Connection string", func(t *testing.T) {
 		var databaseConnection sql.NullString
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.NotNil(t, pgengine.GetConnectionString(databaseConnection), "Should no error in clean database")
 		pgengine.MustCommitTransaction(tx)
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.Error(t, pgengine.ExecuteSQLCommand(tx, "", nil), "Should error for empty script")
 		assert.Error(t, pgengine.ExecuteSQLCommand(tx, " 	", nil), "Should error for whitespace only script")
 		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", nil), "Simple query with nil as parameters argument")
