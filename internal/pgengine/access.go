@@ -78,7 +78,6 @@ func SetupCloseHandler() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		LogToDB("LOG", "Ctrl+C pressed at terminal")
 		FinalizeConfigDBConnection()
 		os.Exit(0)
 	}()

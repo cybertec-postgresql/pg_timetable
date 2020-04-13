@@ -110,13 +110,12 @@ func InitAndTestConfigDBConnection() {
 
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
-	LogToDB("LOG", "Closing session")
-	_, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
-	if err != nil {
-		log.Println("Error occurred during locks releasing: ", err)
+	fmt.Printf(GetLogPrefixLn("LOG"), "Closing session")
+	if _, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()"); err != nil {
+		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during locks releasing: %v", err))
 	}
-	if err = ConfigDb.Close(); err != nil {
-		log.Println("Error occurred during connection closing: ", err)
+	if err := ConfigDb.Close(); err != nil {
+		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during connection closing: %v", err))
 	}
 	ConfigDb = nil
 }
@@ -128,8 +127,7 @@ func ReconnectDbAndFixLeftovers() {
 		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
 		time.Sleep(waitTime * time.Second)
 		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
-		ConfigDb, err = sqlx.Connect("postgres", fmt.Sprintf("host=%s port=%s dbname=%s sslmode=%s user=%s password=%s",
-			Host, Port, DbName, SSLMode, User, Password))
+		err = ConfigDb.Ping()
 		if err == nil {
 			LogToDB("LOG", "Connection reestablished...")
 			FixSchedulerCrash()

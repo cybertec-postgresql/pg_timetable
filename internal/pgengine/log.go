@@ -20,6 +20,7 @@ const (
 var levelColors = map[string]int{
 	"PANIC":  red,
 	"ERROR":  red,
+	"REPAIR": red,
 	"USER":   yellow,
 	"LOG":    blue,
 	"NOTICE": green,
@@ -42,9 +43,10 @@ func GetLogPrefixLn(level string) string {
 	return GetLogPrefix(level) + "\n"
 }
 
+const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
+
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(level string, msg ...interface{}) {
-	const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 	if !VerboseLogLevel {
 		switch level {
 		case
