@@ -63,7 +63,7 @@ const (
 
 //Run executes jobs. Returns Fa
 func Run(ctx context.Context) runStatus {
-	for !pgengine.TryLockClientName() {
+	for !pgengine.TryLockClientName(ctx) {
 		select {
 		case <-time.After(refetchTimeout * time.Second):
 		case <-ctx.Done():
@@ -148,37 +148,43 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
 
-	tx := pgengine.StartTransaction()
-
-	pgengine.LogToDB("LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
-	runStatusID := pgengine.InsertChainRunStatus(chainConfigID, chainID)
-
-	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
+	tx, err := pgengine.StartTransaction(ctx)
+	if err != nil {
+		pgengine.LogToDB("ERROR", fmt.Sprint("Cannot start transaction: ", err))
 		return
 	}
+
+	pgengine.LogToDB("LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
+
+	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
+		pgengine.MustRollbackTransaction(tx)
+		return
+	}
+
+	runStatusID := pgengine.InsertChainRunStatus(ctx, chainConfigID, chainID)
 
 	/* now we can loop through every element of the task chain */
 	for _, chainElemExec := range ChainElements {
 		chainElemExec.ChainConfig = chainConfigID
-		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "STARTED")
-		retCode := executeСhainElement(tx, &chainElemExec)
+		pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "STARTED")
+		retCode := executeСhainElement(ctx, tx, &chainElemExec)
 		if retCode != 0 && !chainElemExec.IgnoreError {
 			pgengine.LogToDB("ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
-			pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_FAILED")
+			pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "CHAIN_FAILED")
 			pgengine.MustRollbackTransaction(tx)
 			return
 		}
-		pgengine.UpdateChainRunStatus(&chainElemExec, runStatusID, "CHAIN_DONE")
+		pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "CHAIN_DONE")
 	}
 	pgengine.LogToDB("LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
-	pgengine.UpdateChainRunStatus(
+	pgengine.UpdateChainRunStatus(ctx,
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
 			ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
 	pgengine.MustCommitTransaction(tx)
 }
 
-func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
+func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
 	var paramValues []string
 	var err error
 	var out []byte
@@ -193,13 +199,13 @@ func executeСhainElement(tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecu
 	chainElemExec.StartedAt = time.Now()
 	switch chainElemExec.Kind {
 	case "SQL":
-		err = pgengine.ExecuteSQLTask(tx, chainElemExec, paramValues)
+		err = pgengine.ExecuteSQLTask(ctx, tx, chainElemExec, paramValues)
 	case "SHELL":
 		if pgengine.NoShellTasks {
 			pgengine.LogToDB("LOG", "Shell task execution skipped: ", chainElemExec)
 			return -1
 		}
-		retCode, out, err = executeShellCommand(chainElemExec.Script, paramValues)
+		retCode, out, err = executeShellCommand(ctx, chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(chainElemExec.TaskName, paramValues)
 	}

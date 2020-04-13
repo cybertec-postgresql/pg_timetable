@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,19 +12,19 @@ import (
 )
 
 type commander interface {
-	CombinedOutput(string, ...string) ([]byte, error)
+	CombinedOutput(context.Context, string, ...string) ([]byte, error)
 }
 
 type realCommander struct{}
 
-func (c realCommander) CombinedOutput(command string, args ...string) ([]byte, error) {
-	return exec.Command(command, args...).CombinedOutput()
+func (c realCommander) CombinedOutput(ctx context.Context, command string, args ...string) ([]byte, error) {
+	return exec.CommandContext(ctx, command, args...).CombinedOutput()
 }
 
 var cmd commander
 
 // ExecuteTask executes built-in task depending on task name and returns err result
-func executeShellCommand(command string, paramValues []string) (code int, out []byte, err error) {
+func executeShellCommand(ctx context.Context, command string, paramValues []string) (code int, out []byte, err error) {
 
 	if strings.TrimSpace(command) == "" {
 		return -1, []byte{}, errors.New("Shell command cannot be empty")
@@ -38,7 +39,7 @@ func executeShellCommand(command string, paramValues []string) (code int, out []
 				return -1, []byte{}, err
 			}
 		}
-		out, err = cmd.CombinedOutput(command, params...) // #nosec
+		out, err = cmd.CombinedOutput(ctx, command, params...) // #nosec
 		cmdLine := fmt.Sprintf("%s %v: ", command, params)
 		if len(out) > 0 {
 			pgengine.LogToDB("DEBUG", "Output for command ", cmdLine, string(out))
