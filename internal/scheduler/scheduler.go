@@ -54,15 +54,22 @@ func (chain Chain) String() string {
 	return string(data)
 }
 
-//Run executes jobs
-func Run(ctx context.Context) bool {
+type runStatus int
+
+const (
+	ConnectionDroppped runStatus = iota
+	ContextCancelled
+)
+
+//Run executes jobs. Returns Fa
+func Run(ctx context.Context) runStatus {
 	for !pgengine.TryLockClientName() {
 		select {
 		case <-time.After(refetchTimeout * time.Second):
 		case <-ctx.Done():
 			// If the request gets cancelled, log it
 			pgengine.LogToDB("ERROR", "request cancelled\n")
-			return false
+			return ContextCancelled
 		}
 	}
 	// create sleeping workers waiting data on channel
@@ -88,10 +95,13 @@ func Run(ctx context.Context) bool {
 		retriveIntervalChainsAndRun(sqlSelectIntervalChains)
 		select {
 		case <-time.After(refetchTimeout * time.Second):
+			if !pgengine.IsAlive() {
+				return ConnectionDroppped
+			}
 		case <-ctx.Done():
 			// If the request gets cancelled, log it
 			pgengine.LogToDB("ERROR", "request cancelled\n")
-			return false
+			return ContextCancelled
 		}
 	}
 }

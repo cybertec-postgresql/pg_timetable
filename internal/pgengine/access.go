@@ -87,6 +87,10 @@ func SetupCloseHandler() {
 	}()
 }
 
+func IsAlive() bool {
+	return ConfigDb != nil && ConfigDb.Ping() == nil
+}
+
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
 func InsertChainRunStatus(chainConfigID int, chainID int) int {
 	const sqlInsertRunStatus = `
