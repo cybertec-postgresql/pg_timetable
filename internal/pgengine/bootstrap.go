@@ -74,14 +74,13 @@ func InitAndTestConfigDBConnection(ctx context.Context) bool {
 
 	err = db.PingContext(ctx)
 	for err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
-		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
+		LogToDB("ERROR", err)
+		LogToDB("LOG", "Reconnecting in ", wt, " sec...")
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
 			err = db.PingContext(ctx)
 		case <-ctx.Done():
-			// If the request gets cancelled, log it
-			LogToDB("ERROR", "request cancelled\n")
+			LogToDB("ERROR", "Connection request cancelled: ", ctx.Err())
 			return false
 		}
 		if wt < maxWaitTime {
