@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -54,69 +55,87 @@ func (chain Chain) String() string {
 }
 
 //Run executes jobs
-func Run() {
+func Run(ctx context.Context) bool {
 	for !pgengine.TryLockClientName() {
-		pgengine.LogToDB("ERROR", "Another client is already connected to server with name: ", pgengine.ClientName)
-		time.Sleep(refetchTimeout * time.Second)
+		select {
+		case <-time.After(refetchTimeout * time.Second):
+		case <-ctx.Done():
+			// If the request gets cancelled, log it
+			pgengine.LogToDB("ERROR", "request cancelled\n")
+			return false
+		}
 	}
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
-		go chainWorker(chains)
-		go intervalChainWorker(intervalChainsChan)
+		chainCtx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		go chainWorker(chainCtx, chains)
+		chainCtx, cancel = context.WithCancel(ctx)
+		defer cancel()
+		go intervalChainWorker(chainCtx, intervalChainsChan)
 	}
 	/* set maximum connection to workersNumber + 1 for system calls */
 	pgengine.ConfigDb.SetMaxOpenConns(workersNumber + 1)
 	/* cleanup potential database leftovers */
-	pgengine.FixSchedulerCrash()
+	pgengine.FixSchedulerCrash(ctx)
 	pgengine.LogToDB("LOG", "Checking for @reboot task chains...")
-	retriveChainsAndRun(sqlSelectRebootChains)
+	retriveChainsAndRun(ctx, sqlSelectRebootChains)
 	/* loop forever or until we ask it to stop */
 	for {
 		pgengine.LogToDB("LOG", "Checking for task chains...")
-		retriveChainsAndRun(sqlSelectChains)
+		retriveChainsAndRun(ctx, sqlSelectChains)
 		pgengine.LogToDB("LOG", "Checking for interval task chains...")
 		retriveIntervalChainsAndRun(sqlSelectIntervalChains)
-		/* wait for the next full minute to show up */
-		time.Sleep(refetchTimeout * time.Second)
+		select {
+		case <-time.After(refetchTimeout * time.Second):
+		case <-ctx.Done():
+			// If the request gets cancelled, log it
+			pgengine.LogToDB("ERROR", "request cancelled\n")
+			return false
+		}
 	}
 }
 
-func retriveChainsAndRun(sql string) {
+func retriveChainsAndRun(ctx context.Context, sql string) {
 	headChains := []Chain{}
-	err := pgengine.ConfigDb.Select(&headChains, sql, pgengine.ClientName)
+	err := pgengine.ConfigDb.SelectContext(ctx, &headChains, sql, pgengine.ClientName)
 	if err != nil {
 		pgengine.LogToDB("ERROR", "Could not query pending tasks: ", err)
-	} else {
-		headChainsCount := len(headChains)
-		pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
-		/* now we can loop through so chains */
-		for _, headChain := range headChains {
-			if headChainsCount > maxChainsThreshold {
-				time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
-			}
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
-			chains <- headChain
+		return
+	}
+	headChainsCount := len(headChains)
+	pgengine.LogToDB("LOG", "Number of chains to be executed: ", headChainsCount)
+	/* now we can loop through so chains */
+	for _, headChain := range headChains {
+		if headChainsCount > maxChainsThreshold {
+			time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
 		}
+		pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+		chains <- headChain
 	}
 }
 
-func chainWorker(chains <-chan Chain) {
+func chainWorker(ctx context.Context, chains <-chan Chain) {
 	for chain := range chains {
 		pgengine.LogToDB("DEBUG", fmt.Sprintf("Calling process chain for %s", chain))
-		for !pgengine.CanProceedChainExecution(chain.ChainExecutionConfigID, chain.MaxInstances) {
+		for !pgengine.CanProceedChainExecution(ctx, chain.ChainExecutionConfigID, chain.MaxInstances) {
 			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
-			time.Sleep(3 * time.Second)
+			select {
+			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
+			case <-ctx.Done():
+				pgengine.LogToDB("ERROR", "request cancelled\n")
+				return
+			}
 		}
-
-		executeChain(chain.ChainExecutionConfigID, chain.ChainID)
+		executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
 		if chain.SelfDestruct {
-			pgengine.DeleteChainConfig(chain.ChainExecutionConfigID)
+			pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
 		}
 	}
 }
 
 /* execute a chain of tasks */
-func executeChain(chainConfigID int, chainID int) {
+func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
 
 	tx := pgengine.StartTransaction()
