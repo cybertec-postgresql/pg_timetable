@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -22,7 +23,9 @@ func main() {
 	if cmdparser.Parse() != nil {
 		os.Exit(2)
 	}
-	if !pgengine.InitAndTestConfigDBConnection(ctx) {
+	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	defer cancel()
+	if !pgengine.InitAndTestConfigDBConnection(connctx) {
 		os.Exit(2)
 	}
 	if pgengine.Upgrade {
