@@ -225,7 +225,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
+		assert.Equal(t, true, pgengine.ReconnectDbAndFixLeftovers(context.Background()),
+			"Should succeed for reconnect")
 	})
 
 	t.Run("Check TryLockClientName()", func(t *testing.T) {
@@ -241,16 +242,18 @@ func TestSchedulerFunctions(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
 
+	ctx := context.Background()
+
 	t.Run("Check FixSchedulerCrash function", func(t *testing.T) {
-		assert.NotPanics(t, pgengine.FixSchedulerCrash, "Fix scheduler crash failed")
+		assert.NotPanics(t, func() { pgengine.FixSchedulerCrash(ctx) }, "Fix scheduler crash failed")
 	})
 
 	t.Run("Check CanProceedChainExecution funсtion", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.CanProceedChainExecution(0, 0), "Should proceed with clean database")
+		assert.Equal(t, true, pgengine.CanProceedChainExecution(ctx, 0, 0), "Should proceed with clean database")
 	})
 
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
-		assert.Equal(t, false, pgengine.DeleteChainConfig(0), "Should not delete in clean database")
+		assert.Equal(t, false, pgengine.DeleteChainConfig(ctx, 0), "Should not delete in clean database")
 	})
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {

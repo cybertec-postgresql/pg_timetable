@@ -13,11 +13,11 @@ import (
 	"github.com/lib/pq"
 )
 
-// wait for 5 sec before reconnecting to DB
-const waitTime = 5
+// WaitTime specifies amount of time in seconds to wait before reconnecting to DB
+const WaitTime = 5
 
 // maximum wait time before reconnect attempts
-const maxWaitTime = waitTime * 16
+const maxWaitTime = WaitTime * 16
 
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
@@ -55,7 +55,7 @@ var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context) bool {
-	var wt int = waitTime
+	var wt int = WaitTime
 	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		Host, Port, DbName, SSLMode, User, Password)
@@ -129,17 +129,19 @@ func FinalizeConfigDBConnection() {
 }
 
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
-func ReconnectDbAndFixLeftovers() {
-	var err error
-	for {
-		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
-		time.Sleep(waitTime * time.Second)
-		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
-		err = ConfigDb.Ping()
-		if err == nil {
-			LogToDB("LOG", "Connection reestablished...")
-			FixSchedulerCrash()
-			break
+func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
+	for ConfigDb.PingContext(ctx) != nil {
+		fmt.Printf(GetLogPrefixLn("REPAIR"),
+			fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", WaitTime))
+		select {
+		case <-time.After(WaitTime * time.Second):
+			fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
+		case <-ctx.Done():
+			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("request cancelled: %v", ctx.Err()))
+			return false
 		}
 	}
+	LogToDB("LOG", "Connection reestablished...")
+	FixSchedulerCrash(ctx)
+	return true
 }
