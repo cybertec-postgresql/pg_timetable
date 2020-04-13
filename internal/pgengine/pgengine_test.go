@@ -124,7 +124,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 	}()
 	select {
 	case <-timeout:
-		t.Fatal(fmt.Sprintf("Cannot connect and initialize test database in time"))
+		t.Fatal("Cannot connect and initialize test database in time")
 	case <-done:
 	}
 	return func(t *testing.T) {
