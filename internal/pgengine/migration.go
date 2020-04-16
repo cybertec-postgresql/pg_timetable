@@ -159,7 +159,7 @@ CREATE OR REPLACE FUNCTION timetable.job_add(
     max_instances    INTEGER DEFAULT NULL,
     live             BOOLEAN DEFAULT false,
     self_destruct    BOOLEAN DEFAULT false,
-    autonomous		 BOOLEAN DEFAULT false
+    autonomous       BOOLEAN DEFAULT false
 ) RETURNS BIGINT AS
 'WITH
     cte_task(v_task_id) AS ( --Create task
