@@ -98,7 +98,7 @@ ALTER TABLE timetable.run_status
 func migration70(tx *sql.Tx) error {
 	if _, err := tx.Exec(`
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
-	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
+	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
 	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
 	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
 );
@@ -106,8 +106,8 @@ CREATE DOMAIN timetable.cron AS TEXT CHECK(
 ALTER TABLE timetable.chain_execution_config
 	ADD COLUMN run_at timetable.cron;
 
-UPDATE timetable.chain_execution_config 
-	SET run_at = format('%s %s %s %s %s', 
+UPDATE timetable.chain_execution_config
+	SET run_at = format('%s %s %s %s %s',
 		COALESCE(run_at_minute :: TEXT, '*'),
 		COALESCE(run_at_hour :: TEXT, '*'),
 		COALESCE(run_at_day :: TEXT, '*'),
@@ -124,12 +124,12 @@ ALTER TABLE timetable.chain_execution_config
 
 CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(run_at timetable.cron, ts timestamptz) RETURNS BOOLEAN AS
 $$
-DECLARE 
+DECLARE
     a_by_minute integer[];
     a_by_hour integer[];
     a_by_day integer[];
     a_by_month integer[];
-    a_by_day_of_week integer[]; 
+    a_by_day_of_week integer[];
 BEGIN
     IF run_at IS NULL
     THEN
@@ -139,12 +139,12 @@ BEGIN
     a_by_hour := timetable.cron_element_to_array(run_at, 'hour');
     a_by_day := timetable.cron_element_to_array(run_at, 'day');
     a_by_month := timetable.cron_element_to_array(run_at, 'month');
-    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week'); 
+    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week');
     RETURN  (a_by_month[1]       IS NULL OR date_part('month', ts) = ANY(a_by_month))
         AND (a_by_day_of_week[1] IS NULL OR date_part('dow', ts) = ANY(a_by_day_of_week))
         AND (a_by_day[1]         IS NULL OR date_part('day', ts) = ANY(a_by_day))
         AND (a_by_hour[1]        IS NULL OR date_part('hour', ts) = ANY(a_by_hour))
-        AND (a_by_minute[1]      IS NULL OR date_part('minute', ts) = ANY(a_by_minute));    
+        AND (a_by_minute[1]      IS NULL OR date_part('minute', ts) = ANY(a_by_minute));
 END;
 $$ LANGUAGE 'plpgsql';
 
@@ -158,35 +158,36 @@ CREATE OR REPLACE FUNCTION timetable.job_add(
     run_at           timetable.cron DEFAULT NULL,
     max_instances    INTEGER DEFAULT NULL,
     live             BOOLEAN DEFAULT false,
-    self_destruct    BOOLEAN DEFAULT false
+    self_destruct    BOOLEAN DEFAULT false,
+    autonomous		 BOOLEAN DEFAULT false
 ) RETURNS BIGINT AS
-'WITH 
+'WITH
     cte_task(v_task_id) AS ( --Create task
-        INSERT INTO timetable.base_task 
+        INSERT INTO timetable.base_task
         VALUES (DEFAULT, task_name, task_type, task_function)
         RETURNING task_id
     ),
     cte_chain(v_chain_id) AS ( --Create chain
-        INSERT INTO timetable.task_chain (task_id, ignore_error)
-        SELECT v_task_id, TRUE FROM cte_task
+        INSERT INTO timetable.task_chain (task_id, ignore_error, autonomous)
+        SELECT v_task_id, TRUE, autonomous FROM cte_task
         RETURNING chain_id
     )
 INSERT INTO timetable.chain_execution_config (
-    chain_id, 
-    chain_name, 
-    run_at, 
-    max_instances, 
-    live,
-    self_destruct 
-) SELECT 
-    v_chain_id, 
-    ''chain_'' || v_chain_id, 
+    chain_id,
+    chain_name,
     run_at,
-    max_instances, 
-    live, 
+    max_instances,
+    live,
+    self_destruct
+) SELECT
+    v_chain_id,
+    ''chain_'' || v_chain_id,
+    run_at,
+    max_instances,
+    live,
     self_destruct
 FROM cte_chain
-RETURNING chain_execution_config 
+RETURNING chain_execution_config
 ' LANGUAGE 'sql';`); err != nil {
 		return err
 	}
