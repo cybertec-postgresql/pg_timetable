@@ -63,6 +63,14 @@ func init() {
 				Name: "0108 Add client_name column to timetable.run_status",
 				Func: migration108,
 			},
+			&migrator.Migration{
+				Name: "0122 Add autonomous tasks",
+				Func: func(tx *sql.Tx) error {
+					_, err := tx.Exec("ALTER TABLE timetable.task_chain " +
+						"ADD COLUMN autonomous BOOLEAN NOT NULL DEFAULT false")
+					return err
+				},
+			},
 			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
 		),
 	)

@@ -134,7 +134,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 }
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
-var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
+var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx, error) {
 	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 		pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password)
 	return pgengine.GetRemoteDBTransaction(context.Background(), connstr)
@@ -323,9 +323,9 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
 
-	remoteDb, tx := setupTestRemoteDBFunc()
+	remoteDb, tx, err := setupTestRemoteDBFunc()
 	defer pgengine.FinalizeRemoteDBConnection(remoteDb)
-
+	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
 	t.Run("Check connection closing", func(t *testing.T) {
