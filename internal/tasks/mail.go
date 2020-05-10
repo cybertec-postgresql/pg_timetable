@@ -3,8 +3,6 @@ package tasks
 import (
 	"encoding/json"
 	"errors"
-	"io"
-	"io/ioutil"
 
 	"gopkg.in/gomail.v2"
 )
@@ -23,7 +21,13 @@ type emailConn struct {
 	Attachments []string `json:"attachment"`
 }
 
-var sendMail func(m emailConn) error
+type Dialer interface {
+	DialAndSend(m ...*gomail.Message) error
+}
+
+var getNewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
+	return gomail.NewDialer(host, port, username, password)
+}
 
 func taskSendMail(paramValues string) error {
 	var conn emailConn
@@ -52,7 +56,7 @@ func taskSendMail(paramValues string) error {
 	return sendMail(conn)
 }
 
-func gomailSendMail(conn emailConn) error {
+func sendMail(conn emailConn) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", conn.SenderAddr)
 
@@ -82,24 +86,9 @@ func gomailSendMail(conn emailConn) error {
 
 	//attach multiple documents
 	for _, attachment := range conn.Attachments {
-		content, err := ioutil.ReadFile(attachment)
-		if err != nil {
-			return err
-		}
-		mail.Attach(attachment, gomail.SetCopyFunc(func(w io.Writer) error {
-			_, err = w.Write(content)
-			return err
-		}))
+		mail.Attach(attachment)
 	}
 	// Send Mail
-	dialer := gomail.NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
-	s, err := dialer.Dial()
-	if err != nil {
-		return err
-	}
-	return gomail.Send(s, mail)
-}
-
-func init() {
-	sendMail = gomailSendMail
+	dialer := getNewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
+	return dialer.DialAndSend(mail)
 }
