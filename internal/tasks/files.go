@@ -16,8 +16,6 @@ type downloadOpts struct {
 	DestPath   string   `json:"destpath"`
 }
 
-var downloadUrls func(urls []string, dest string, workers int) error
-
 func taskDownloadFile(paramValues string) error {
 	var opts downloadOpts
 	if err := json.Unmarshal([]byte(paramValues), &opts); err != nil {
@@ -33,7 +31,7 @@ func taskDownloadFile(paramValues string) error {
 }
 
 // downloadUrls function implemented using grab library
-func grabDownloadUrls(urls []string, dest string, workers int) error {
+func downloadUrls(urls []string, dest string, workers int) error {
 	// create multiple download requests
 	reqs := make([]*grab.Request, 0)
 	for _, url := range urls {
@@ -59,8 +57,4 @@ func grabDownloadUrls(urls []string, dest string, workers int) error {
 		return fmt.Errorf("download failed: %v", errstrings)
 	}
 	return nil
-}
-
-func init() {
-	downloadUrls = grabDownloadUrls
 }

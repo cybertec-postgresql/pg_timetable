@@ -16,6 +16,7 @@ func (d *fakeDialer) DialAndSend(m ...*gomail.Message) error {
 }
 
 func TestTaskSendMail(t *testing.T) {
+	assert.NotNil(t, getNewDialer("", 0, "", ""), "Default dialer should be created")
 	getNewDialer = func(host string, port int, username, password string) Dialer {
 		return &fakeDialer{}
 	}
