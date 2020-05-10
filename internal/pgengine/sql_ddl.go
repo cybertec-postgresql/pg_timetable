@@ -18,7 +18,8 @@ VALUES
 	(0, '0051 Implement upgrade machinery'),
 	(1, '0070 Interval scheduling and cron only syntax'),
 	(2, '0086 Add task output to execution_log'),
-	(3, '0108 Add client_name column to timetable.run_status');
+	(3, '0108 Add client_name column to timetable.run_status'),
+	(4, '0122 Add autonomous tasks');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
@@ -67,7 +68,8 @@ CREATE TABLE timetable.task_chain (
 	database_connection	BIGINT		REFERENCES timetable.database_connection(database_connection)
 									ON UPDATE CASCADE
 									ON DELETE CASCADE,
-	ignore_error		BOOLEAN		DEFAULT false
+	ignore_error		BOOLEAN		NOT NULL DEFAULT false,
+	autonomous			BOOLEAN		NOT NULL DEFAULT false
 );
 
 

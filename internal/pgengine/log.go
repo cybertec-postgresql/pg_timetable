@@ -58,11 +58,8 @@ func LogToDB(level string, msg ...interface{}) {
 	fmt.Println(s)
 	if ConfigDb != nil {
 		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-		for err != nil && ConfigDb.Ping() != nil {
-			// If there is DB outage, reconnect and write missing log
-			ReconnectDbAndFixLeftovers()
-			_, err = ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
-			level = "ERROR" //we don't want panic in case of disconnect
+		if err != nil {
+			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprint("Cannot log to the database: ", err))
 		}
 	}
 }

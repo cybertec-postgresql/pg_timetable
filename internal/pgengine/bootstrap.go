@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -12,11 +13,11 @@ import (
 	"github.com/lib/pq"
 )
 
-// wait for 5 sec before reconnecting to DB
-const waitTime = 5
+// WaitTime specifies amount of time in seconds to wait before reconnecting to DB
+const WaitTime = 5
 
 // maximum wait time before reconnect attempts
-const maxWaitTime = waitTime * 16
+const maxWaitTime = WaitTime * 16
 
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
@@ -53,8 +54,8 @@ var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection() {
-	var wt int = waitTime
+func InitAndTestConfigDBConnection(ctx context.Context) bool {
+	var wt int = WaitTime
 	var err error
 	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		Host, Port, DbName, SSLMode, User, Password)
@@ -71,41 +72,46 @@ func InitAndTestConfigDBConnection() {
 	db := sql.OpenDB(connector)
 	LogToDB("DEBUG", "Connection string: ", connstr)
 
-	err = db.Ping()
+	err = db.PingContext(ctx)
 	for err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR")+"\n", err)
-		fmt.Printf(GetLogPrefixLn("LOG"), fmt.Sprintf("Reconnecting in %d sec...", wt))
-		time.Sleep(time.Duration(wt) * time.Second)
-		err = db.Ping()
+		LogToDB("ERROR", err)
+		LogToDB("LOG", "Reconnecting in ", wt, " sec...")
+		select {
+		case <-time.After(time.Duration(wt) * time.Second):
+			err = db.PingContext(ctx)
+		case <-ctx.Done():
+			LogToDB("ERROR", "Connection request cancelled: ", ctx.Err())
+			return false
+		}
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
 	}
 
-	ConfigDb = sqlx.NewDb(db, "postgres")
 	LogToDB("LOG", "Connection established...")
 	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
+	ConfigDb = sqlx.NewDb(db, "postgres")
 
 	var exists bool
-	err = ConfigDb.Get(&exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
+	err = ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
 			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
-			if _, err = ConfigDb.Exec(sql); err != nil {
+			if _, err = ConfigDb.ExecContext(ctx, sql); err != nil {
 				fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
-				_, err = ConfigDb.Exec("DROP SCHEMA IF EXISTS timetable CASCADE")
+				_, err = ConfigDb.ExecContext(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 				if err != nil {
 					fmt.Printf(GetLogPrefixLn("PANIC"), err)
 				}
-				os.Exit(2)
-			} else {
-				LogToDB("LOG", "Schema file executed: "+sqlName)
+				return false
 			}
+			LogToDB("LOG", "Schema file executed: "+sqlName)
 		}
 		LogToDB("LOG", "Configuration schema created...")
 	}
+	return true
 }
 
 // FinalizeConfigDBConnection closes session
@@ -121,17 +127,19 @@ func FinalizeConfigDBConnection() {
 }
 
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
-func ReconnectDbAndFixLeftovers() {
-	var err error
-	for {
-		fmt.Printf(GetLogPrefixLn("REPAIR"), fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", waitTime))
-		time.Sleep(waitTime * time.Second)
-		fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
-		err = ConfigDb.Ping()
-		if err == nil {
-			LogToDB("LOG", "Connection reestablished...")
-			FixSchedulerCrash()
-			break
+func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
+	for ConfigDb.PingContext(ctx) != nil {
+		fmt.Printf(GetLogPrefixLn("REPAIR"),
+			fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", WaitTime))
+		select {
+		case <-time.After(WaitTime * time.Second):
+			fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
+		case <-ctx.Done():
+			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("request cancelled: %v", ctx.Err()))
+			return false
 		}
 	}
+	LogToDB("LOG", "Connection reestablished...")
+	FixSchedulerCrash(ctx)
+	return true
 }

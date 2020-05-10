@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -22,6 +23,7 @@ type ChainElementExecution struct {
 	Kind               string         `db:"kind"`
 	RunUID             sql.NullString `db:"run_uid"`
 	IgnoreError        bool           `db:"ignore_error"`
+	Autonomous         bool           `db:"autonomous"`
 	DatabaseConnection sql.NullString `db:"database_connection"`
 	ConnectString      sql.NullString `db:"connect_string"`
 	StartedAt          time.Time
@@ -34,8 +36,8 @@ func (chainElem ChainElementExecution) String() string {
 }
 
 // StartTransaction return transaction object and panic in the case of error
-func StartTransaction() *sqlx.Tx {
-	return ConfigDb.MustBegin()
+func StartTransaction(ctx context.Context) (*sqlx.Tx, error) {
+	return ConfigDb.BeginTxx(ctx, nil)
 }
 
 // MustCommitTransaction commits transaction and log error in the case of error
@@ -56,16 +58,33 @@ func MustRollbackTransaction(tx *sqlx.Tx) {
 	}
 }
 
+func mustSavepoint(tx *sqlx.Tx, savepoint string) {
+	LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ")
+	_, err := tx.Exec("SAVEPOINT " + strconv.Quote(savepoint))
+	if err != nil {
+		LogToDB("ERROR", err)
+	}
+}
+
+func mustRollbackToSavepoint(tx *sqlx.Tx, savepoint string) {
+	LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", savepoint)
+	_, err := tx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(savepoint))
+	if err != nil {
+		LogToDB("ERROR", err)
+	}
+}
+
 // GetChainElements returns all elements for a given chain
 func GetChainElements(tx *sqlx.Tx, chains interface{}, chainID int) bool {
 	const sqlSelectChains = `
 WITH RECURSIVE x
-(chain_id, task_id, task_name, script, kind, run_uid, ignore_error, database_connection) AS 
+(chain_id, task_id, task_name, script, kind, run_uid, ignore_error, autonomous, database_connection) AS 
 (
 	SELECT tc.chain_id, tc.task_id, bt.name, 
 	bt.script, bt.kind, 
 	tc.run_uid, 
 	tc.ignore_error, 
+	tc.autonomous,
 	tc.database_connection 
 	FROM timetable.task_chain tc JOIN 
 	timetable.base_task bt USING (task_id) 
@@ -75,6 +94,7 @@ WITH RECURSIVE x
 	bt.script, bt.kind, 
 	tc.run_uid, 
 	tc.ignore_error, 
+	tc.autonomous,
 	tc.database_connection 
 	FROM timetable.task_chain tc JOIN 
 	timetable.base_task bt USING (task_id) JOIN 
@@ -112,64 +132,67 @@ ORDER BY order_id ASC`
 }
 
 // ExecuteSQLTask executes SQL task
-func ExecuteSQLTask(tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
+func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
 	var execTx *sqlx.Tx
 	var remoteDb *sqlx.DB
+	var err error
+	var executor SQLExecutor
 
 	execTx = tx
+	if chainElemExec.Autonomous {
+		executor = ConfigDb
+	} else {
+		executor = tx
+	}
+
 	//Connect to Remote DB
 	if chainElemExec.DatabaseConnection.Valid {
 		connectionString := GetConnectionString(chainElemExec.DatabaseConnection)
-		//connection string is empty then don't proceed
-		if strings.TrimSpace(connectionString) == "" {
-			return errors.New("Connection string is blank")
+		remoteDb, execTx, err = GetRemoteDBTransaction(ctx, connectionString)
+		if err != nil {
+			return err
 		}
-		remoteDb, execTx = GetRemoteDBTransaction(connectionString)
-		//don't proceed when remote db connection not established
-		if execTx == nil {
-			return errors.New("Couldn't connect to remote database")
+		if chainElemExec.Autonomous {
+			executor = remoteDb
+			_ = execTx.Rollback()
 		}
 		defer FinalizeRemoteDBConnection(remoteDb)
 	}
 
 	// Set Role
-	if chainElemExec.RunUID.Valid {
+	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
 		SetRole(execTx, chainElemExec.RunUID)
 	}
 
-	if chainElemExec.IgnoreError {
-		LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", chainElemExec.TaskName)
-		_, err := execTx.Exec("SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
-		if err != nil {
-			LogToDB("ERROR", err)
-		}
+	if chainElemExec.IgnoreError && !chainElemExec.Autonomous {
+		mustSavepoint(execTx, chainElemExec.TaskName)
 	}
 
-	err := ExecuteSQLCommand(execTx, chainElemExec.Script, paramValues)
+	err = ExecuteSQLCommand(executor, chainElemExec.Script, paramValues)
 
-	if err != nil && chainElemExec.IgnoreError {
-		LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", chainElemExec.TaskName)
-		_, err := execTx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(chainElemExec.TaskName))
-		if err != nil {
-			LogToDB("ERROR", err)
-		}
+	if err != nil && chainElemExec.IgnoreError && !chainElemExec.Autonomous {
+		mustRollbackToSavepoint(execTx, chainElemExec.TaskName)
 	}
 
 	//Reset The Role
-	if chainElemExec.RunUID.Valid {
+	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
 		ResetRole(execTx)
 	}
 
 	// Commit changes on remote server
-	if chainElemExec.DatabaseConnection.Valid {
+	if chainElemExec.DatabaseConnection.Valid && !chainElemExec.Autonomous {
 		MustCommitTransaction(execTx)
 	}
 
 	return err
 }
 
+type SQLExecutor interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+
 // ExecuteSQLCommand executes chain script with parameters inside transaction
-func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
+func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string) error {
 	var err error
 	var params []interface{}
 
@@ -177,7 +200,7 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		_, err = tx.Exec(script)
+		_, err = executor.Exec(script)
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
@@ -185,7 +208,7 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 					return err
 				}
 				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
-				_, err = tx.Exec(script, params...)
+				_, err = executor.Exec(script, params...)
 			}
 		}
 	}
@@ -194,8 +217,8 @@ func ExecuteSQLCommand(tx *sqlx.Tx, script string, paramValues []string) error {
 
 //GetConnectionString of database_connection
 func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
-	rows := ConfigDb.QueryRow("SELECT connect_string FROM  timetable.database_connection WHERE database_connection = $1", databaseConnection)
-	err := rows.Scan(&connectionString)
+	err := ConfigDb.Get(&connectionString, "SELECT connect_string "+
+		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection)
 	if err != nil {
 		LogToDB("ERROR", "Issue while fetching connection string:", err)
 	}
@@ -203,14 +226,24 @@ func GetConnectionString(databaseConnection sql.NullString) (connectionString st
 }
 
 //GetRemoteDBTransaction create a remote db connection and returns transaction object
-func GetRemoteDBTransaction(connectionString string) (*sqlx.DB, *sqlx.Tx) {
-	remoteDb, err := sqlx.Connect("postgres", connectionString)
+func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*sqlx.DB, *sqlx.Tx, error) {
+	if strings.TrimSpace(connectionString) == "" {
+		return nil, nil, errors.New("Connection string is blank")
+	}
+	remoteDb, err := sqlx.ConnectContext(ctx, "postgres", connectionString)
 	if err != nil {
-		LogToDB("ERROR", fmt.Sprintf("Error in remote connection %v", connectionString))
-		return nil, nil
+		LogToDB("ERROR",
+			fmt.Sprintf("Error in remote connection (%s): %v", connectionString, err))
+		return nil, nil, err
 	}
 	LogToDB("LOG", "Remote Connection established...")
-	return remoteDb, remoteDb.MustBegin()
+	remoteTx, err := remoteDb.BeginTxx(ctx, nil)
+	if err != nil {
+		LogToDB("ERROR",
+			fmt.Sprintf("Error during start of remote transaction (%s): %v", connectionString, err))
+		return nil, nil, err
+	}
+	return remoteDb, remoteTx, nil
 }
 
 // FinalizeRemoteDBConnection closes session

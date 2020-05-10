@@ -7,7 +7,7 @@ linters:
 linters-settings:
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
-    min-complexity: 15
+    min-complexity: 16
 
 issues:
   # List of regexps of issue texts to exclude, empty list by default.

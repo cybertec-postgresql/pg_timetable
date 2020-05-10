@@ -1,6 +1,7 @@
 package pgengine_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -108,7 +109,7 @@ var setupTestDBFunc = func() {
 	pgengine.LogToDB("LOG", "Trying to connect postgres container at ",
 		fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 			pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
-	pgengine.InitAndTestConfigDBConnection()
+	pgengine.InitAndTestConfigDBConnection(context.Background())
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
@@ -133,15 +134,17 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 }
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
-var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx) {
+var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx, error) {
 	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 		pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password)
-	return pgengine.GetRemoteDBTransaction(connstr)
+	return pgengine.GetRemoteDBTransaction(context.Background(), connstr)
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
+
+	ctx := context.Background()
 
 	require.NotNil(t, pgengine.ConfigDb, "ConfigDB should be initialized")
 
@@ -224,11 +227,12 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		assert.NotPanics(t, pgengine.ReconnectDbAndFixLeftovers, "Does not panics")
+		assert.Equal(t, true, pgengine.ReconnectDbAndFixLeftovers(ctx),
+			"Should succeed for reconnect")
 	})
 
 	t.Run("Check TryLockClientName()", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.TryLockClientName(), "Should succeed for clean database")
+		assert.Equal(t, true, pgengine.TryLockClientName(ctx), "Should succeed for clean database")
 	})
 
 	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
@@ -240,21 +244,24 @@ func TestSchedulerFunctions(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
 
+	ctx := context.Background()
+
 	t.Run("Check FixSchedulerCrash function", func(t *testing.T) {
-		assert.NotPanics(t, pgengine.FixSchedulerCrash, "Fix scheduler crash failed")
+		assert.NotPanics(t, func() { pgengine.FixSchedulerCrash(ctx) }, "Fix scheduler crash failed")
 	})
 
 	t.Run("Check CanProceedChainExecution funсtion", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.CanProceedChainExecution(0, 0), "Should proceed with clean database")
+		assert.Equal(t, true, pgengine.CanProceedChainExecution(ctx, 0, 0), "Should proceed with clean database")
 	})
 
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
-		assert.Equal(t, false, pgengine.DeleteChainConfig(0), "Should not delete in clean database")
+		assert.Equal(t, false, pgengine.DeleteChainConfig(ctx, 0), "Should not delete in clean database")
 	})
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
 		var chains []pgengine.ChainElementExecution
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pgengine.GetChainElements(tx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
 		pgengine.MustCommitTransaction(tx)
@@ -262,7 +269,8 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check GetChainParamValues funсtion", func(t *testing.T) {
 		var paramVals []string
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pgengine.GetChainParamValues(tx, &paramVals, &pgengine.ChainElementExecution{
 			ChainID:     0,
 			ChainConfig: 0}), "Should no error in clean database")
@@ -272,19 +280,21 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var id int
-		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(0, 0) }, "Should no error in clean database")
+		assert.NotPanics(t, func() { id = pgengine.InsertChainRunStatus(ctx, 0, 0) }, "Should no error in clean database")
 		assert.NotZero(t, id, "Run status id should be greater then 0")
 	})
 
 	t.Run("Check Remote DB Connection string", func(t *testing.T) {
 		var databaseConnection sql.NullString
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.NotNil(t, pgengine.GetConnectionString(databaseConnection), "Should no error in clean database")
 		pgengine.MustCommitTransaction(tx)
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
-		tx := pgengine.StartTransaction()
+		tx, err := pgengine.StartTransaction(ctx)
+		assert.NoError(t, err, "Should start transaction")
 		assert.Error(t, pgengine.ExecuteSQLCommand(tx, "", nil), "Should error for empty script")
 		assert.Error(t, pgengine.ExecuteSQLCommand(tx, " 	", nil), "Should error for whitespace only script")
 		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", nil), "Simple query with nil as parameters argument")
@@ -313,9 +323,9 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := setupTestCase(t)
 	defer teardownTestCase(t)
 
-	remoteDb, tx := setupTestRemoteDBFunc()
+	remoteDb, tx, err := setupTestRemoteDBFunc()
 	defer pgengine.FinalizeRemoteDBConnection(remoteDb)
-
+	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
 	t.Run("Check connection closing", func(t *testing.T) {
