@@ -40,6 +40,18 @@ func (ichain IntervalChain) isValid() bool {
 	return (IntervalChain{}) != intervalChains[ichain.ChainExecutionConfigID]
 }
 
+func (ichain IntervalChain) reschedule(ctx context.Context) {
+	if ichain.SelfDestruct {
+		pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
+		return
+	}
+	pgengine.LogToDB("DEBUG", fmt.Sprintf("Sleeping before next execution in %ds for chain %s", ichain.Interval, ichain))
+	time.Sleep(time.Duration(ichain.Interval) * time.Second)
+	if ichain.isValid() {
+		intervalChainsChan <- ichain
+	}
+}
+
 // map of active chains, updated every minute
 var intervalChains map[int]IntervalChain = make(map[int]IntervalChain)
 
@@ -76,37 +88,26 @@ func retriveIntervalChainsAndRun(sql string) {
 }
 
 func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
-
 	for ichain := range ichains {
 		if !ichain.isValid() { // chain not in the list of active chains
 			continue
 		}
 		pgengine.LogToDB("DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
 		if !ichain.RepeatAfter {
-			go func() {
-				pgengine.LogToDB("DEBUG", fmt.Sprintf("Sleeping before next execution in %ds for chain %s", ichain.Interval, ichain))
-				time.Sleep(time.Duration(ichain.Interval) * time.Second)
-				if ichain.isValid() {
-					intervalChainsChan <- ichain
-				}
-			}()
+			ichain.reschedule(ctx)
 		}
-		if !pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
-			pgengine.LogToDB("LOG", fmt.Sprintf("Cannot proceed with chain ID: %d; configuration ID: %d",
-				ichain.ChainID, ichain.ChainExecutionConfigID))
-			return
+		for !pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
+			select {
+			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
+			case <-ctx.Done():
+				pgengine.LogToDB("ERROR", "request cancelled\n")
+				return
+			}
 		}
 		executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
-		if ichain.SelfDestruct {
-			pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
-		} else if ichain.RepeatAfter {
-			go func() {
-				pgengine.LogToDB("DEBUG", fmt.Sprintf("Sleeping before next execution in %ds for chain %s", ichain.Interval, ichain))
-				time.Sleep(time.Duration(ichain.Interval) * time.Second)
-				if ichain.isValid() {
-					intervalChainsChan <- ichain
-				}
-			}()
+		if ichain.RepeatAfter {
+			ichain.reschedule(ctx)
 		}
 	}
 }
