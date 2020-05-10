@@ -17,3 +17,19 @@ func TestDownloadFile(t *testing.T) {
 	assert.NoError(t, taskDownloadFile(`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "." }`),
 		"Downlod with correct json input should succeed")
 }
+
+func TestNoOp(t *testing.T) {
+	assert.NoError(t, taskNoOp("foo"))
+}
+
+func TestTaskSleep(t *testing.T) {
+	assert.NoError(t, taskSleep("1"))
+	assert.Error(t, taskSleep("foo"))
+}
+
+func TestExecuteTask(t *testing.T) {
+	assert.Error(t, ExecuteTask("foo", []string{}))
+	assert.Error(t, ExecuteTask("Sleep", []string{"foo"}))
+	assert.NoError(t, ExecuteTask("NoOp", []string{}))
+	assert.NoError(t, ExecuteTask("NoOp", []string{"foo", "bar"}))
+}

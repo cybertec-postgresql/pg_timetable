@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -22,8 +23,12 @@ func ExecuteTask(name string, paramValues []string) error {
 	if len(paramValues) == 0 {
 		paramValues = append(paramValues, "")
 	}
+	f := Tasks[name]
+	if f == nil {
+		return errors.New("No built-in task found: " + name)
+	}
 	for _, val := range paramValues {
-		err := Tasks[name](val)
+		err := f(val)
 		if err != nil {
 			return err
 		}
