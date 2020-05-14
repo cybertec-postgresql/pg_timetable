@@ -11,7 +11,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 )
 
-type cmdOptions struct {
+type CmdOptions struct {
 	ClientName   string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True"`
 	Verbose      bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
 	Host         string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
@@ -22,11 +22,12 @@ type cmdOptions struct {
 	Password     string `long:"password" description:"PG config DB password" env:"PGTT_PGPASSWORD"`
 	SSLMode      string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
 	PostgresURL  DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
+	Init         bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
 	Upgrade      bool   `long:"upgrade" description:"Upgrade database to the latest version"`
 	NoShellTasks bool   `long:"no-shell-tasks" description:"Disable executing of shell tasks" env:"PGTT_NOSHELLTASKS"`
 }
 
-func (c cmdOptions) String() string {
+func (c CmdOptions) String() string {
 	s := fmt.Sprintf("Client:%s Verbose:%t Host:%s:%s DB:%s User:%s ",
 		c.ClientName, c.Verbose, c.Host, c.Port, c.Dbname, c.User)
 	if c.PostgresURL.pgurl != nil {
@@ -49,8 +50,9 @@ func (d *DbURL) UnmarshalFlag(s string) error {
 	return err
 }
 
-//ParseCurl parses URL structure into cmdOptions
-func (c *cmdOptions) ParseCurl(cmdURL *url.URL) error {
+//ParseCurl parses URL structure into CmdOptions
+func (c *CmdOptions) ParseCurl(cmdURL *url.URL) error {
+	var err error
 	if cmdURL == nil {
 		return nil
 	}
@@ -58,13 +60,15 @@ func (c *cmdOptions) ParseCurl(cmdURL *url.URL) error {
 		return fmt.Errorf("Incorrect URI scheme: %s. "+
 			"The URI scheme designator can be either postgresql:// or postgres://", cmdURL.Scheme)
 	}
-	var err error
-	c.Host, c.Port, err = net.SplitHostPort(cmdURL.Host)
-	// Restore default values
-	if err != nil {
-		c.Host = "localhost"
-		c.Port = "5432"
+	if strings.Contains(cmdURL.Host, ":") {
+		c.Host, c.Port, err = net.SplitHostPort(cmdURL.Host)
+		if err != nil {
+			return err
+		}
+	} else {
+		c.Host = cmdURL.Host
 	}
+
 	if cmdURL.User != nil {
 		c.User = cmdURL.User.Username()
 		c.Password, _ = cmdURL.User.Password()
@@ -86,26 +90,21 @@ func isPostgresURI(s string) bool {
 }
 
 // Parse will parse command line arguments and initialize pgengine
-func Parse() error {
-	cmdOpts := new(cmdOptions)
+func Parse() (*CmdOptions, error) {
+	cmdOpts := new(CmdOptions)
 	parser := flags.NewParser(cmdOpts, flags.PrintErrors)
 	var err error
 	if nonOptionArgs, err = parser.Parse(); err != nil {
 		if !flags.WroteHelp(err) {
 			parser.WriteHelp(os.Stdout)
-			return err
+			return nil, err
 		}
-	}
-	//--pgurl option
-	err = cmdOpts.ParseCurl(cmdOpts.PostgresURL.pgurl)
-	if err != nil {
-		pgengine.LogToDB("ERROR", err)
 	}
 	//non option arguments
 	if len(nonOptionArgs) > 0 && cmdOpts.PostgresURL.pgurl == nil {
 		cmdOpts.PostgresURL.pgurl, err = url.Parse(strings.Join(nonOptionArgs, ""))
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 	}
@@ -113,13 +112,12 @@ func Parse() error {
 	if isPostgresURI(cmdOpts.Dbname) && cmdOpts.PostgresURL.pgurl == nil {
 		cmdOpts.PostgresURL.pgurl, err = url.Parse(cmdOpts.Dbname)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-
 	err = cmdOpts.ParseCurl(cmdOpts.PostgresURL.pgurl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	pgengine.ClientName = cmdOpts.ClientName
 	pgengine.VerboseLogLevel = cmdOpts.Verbose
@@ -129,8 +127,9 @@ func Parse() error {
 	pgengine.User = cmdOpts.User
 	pgengine.Password = cmdOpts.Password
 	pgengine.SSLMode = cmdOpts.SSLMode
+	pgengine.InitOnly = cmdOpts.Init
 	pgengine.Upgrade = cmdOpts.Upgrade
 	pgengine.NoShellTasks = cmdOpts.NoShellTasks
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", cmdOpts))
-	return nil
+	return cmdOpts, nil
 }

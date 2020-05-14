@@ -20,7 +20,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	if cmdparser.Parse() != nil {
+	if _, err := cmdparser.Parse(); err != nil {
 		os.Exit(2)
 	}
 	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
@@ -28,6 +28,7 @@ func main() {
 	if !pgengine.InitAndTestConfigDBConnection(connctx) {
 		os.Exit(2)
 	}
+	defer pgengine.FinalizeConfigDBConnection()
 	if pgengine.Upgrade {
 		if !pgengine.MigrateDb(ctx) {
 			os.Exit(3)
@@ -37,7 +38,9 @@ func main() {
 			os.Exit(3)
 		}
 	}
-	defer pgengine.FinalizeConfigDBConnection()
+	if pgengine.InitOnly {
+		os.Exit(0)
+	}
 	pgengine.SetupCloseHandler()
 	for scheduler.Run(ctx) == scheduler.ConnectionDroppped {
 		pgengine.ReconnectDbAndFixLeftovers(ctx)

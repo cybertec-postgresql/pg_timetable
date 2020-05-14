@@ -47,6 +47,9 @@ var SSLMode string = "disable"
 // Upgrade parameter specifies if database should be upgraded to latest version
 var Upgrade bool
 
+// InitOnly parameter specifies if database schema should be initialized followed by exit
+var InitOnly bool
+
 // NoShellTasks parameter disables SHELL tasks executing
 var NoShellTasks bool
 
