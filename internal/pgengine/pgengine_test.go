@@ -109,7 +109,7 @@ func TestMain(m *testing.M) {
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions())
+	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdOpts)
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
