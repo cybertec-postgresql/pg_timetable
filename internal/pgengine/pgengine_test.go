@@ -353,11 +353,10 @@ func TestSamplesScripts(t *testing.T) {
 	t.Run("Check samples scripts", func(t *testing.T) {
 		files, err := ioutil.ReadDir("../../samples")
 		assert.NoError(t, err, "Cannot read samples directory")
+
 		for _, f := range files {
-			content, err := ioutil.ReadFile("../../samples/" + f.Name())
-			assert.NoError(t, err, "Cannot read samples script file: ", f.Name())
-			_, err = pgengine.ConfigDb.Exec(string(content))
-			assert.NoError(t, err, "Sample query failed: ", f.Name())
+			ok := pgengine.ExecuteCustomScripts(context.Background(), "../../samples/"+f.Name())
+			assert.True(t, ok, "Sample query failed: ", f.Name())
 			_, err = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")
 			assert.NoError(t, err, "Cannot TRUNCATE timetable.task_chain after ", f.Name())
 		}

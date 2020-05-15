@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -73,8 +74,38 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 	ConfigDb = sqlx.NewDb(db, "postgres")
 
+	if !executeSchemaScripts(ctx) {
+		return false
+	}
+	if cmdOpts.File != "" {
+		if !ExecuteCustomScripts(ctx, cmdOpts.File) {
+			return false
+		}
+	}
+	return true
+}
+
+// ExecuteCustomScripts executes SQL scripts in files
+func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
+	for _, f := range filename {
+		sql, err := ioutil.ReadFile(f)
+		if err != nil {
+			fmt.Printf(GetLogPrefixLn("PANIC"), err)
+			return false
+		}
+		fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+f)
+		if _, err = ConfigDb.ExecContext(ctx, string(sql)); err != nil {
+			fmt.Printf(GetLogPrefixLn("PANIC"), err)
+			return false
+		}
+		LogToDB("LOG", "Script file executed: "+f)
+	}
+	return true
+}
+
+func executeSchemaScripts(ctx context.Context) bool {
 	var exists bool
-	err = ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
+	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil || !exists {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
