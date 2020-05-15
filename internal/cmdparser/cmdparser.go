@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	flags "github.com/jessevdk/go-flags"
 )
 
@@ -27,7 +26,14 @@ type CmdOptions struct {
 	NoShellTasks bool   `long:"no-shell-tasks" description:"Disable executing of shell tasks" env:"PGTT_NOSHELLTASKS"`
 }
 
-func (c CmdOptions) String() string {
+// NewCmdOptions returns a new instance of CmdOptions with default values
+func NewCmdOptions() *CmdOptions {
+	cmdOpts := new(CmdOptions)
+	_, _ = flags.NewParser(cmdOpts, flags.Default).ParseArgs([]string{})
+	return cmdOpts
+}
+
+func (c *CmdOptions) String() string {
 	s := fmt.Sprintf("Client:%s Verbose:%t Host:%s:%s DB:%s User:%s ",
 		c.ClientName, c.Verbose, c.Host, c.Port, c.Dbname, c.User)
 	if c.PostgresURL.pgurl != nil {
@@ -100,6 +106,11 @@ func Parse() (*CmdOptions, error) {
 			return nil, err
 		}
 	}
+	if cmdOpts.File != "" {
+		if _, err := os.Stat(cmdOpts.File); os.IsNotExist(err) {
+			return nil, err
+		}
+	}
 	//non option arguments
 	if len(nonOptionArgs) > 0 && cmdOpts.PostgresURL.pgurl == nil {
 		cmdOpts.PostgresURL.pgurl, err = url.Parse(strings.Join(nonOptionArgs, ""))
@@ -119,17 +130,5 @@ func Parse() (*CmdOptions, error) {
 	if err != nil {
 		return nil, err
 	}
-	pgengine.ClientName = cmdOpts.ClientName
-	pgengine.VerboseLogLevel = cmdOpts.Verbose
-	pgengine.Host = cmdOpts.Host
-	pgengine.Port = cmdOpts.Port
-	pgengine.DbName = cmdOpts.Dbname
-	pgengine.User = cmdOpts.User
-	pgengine.Password = cmdOpts.Password
-	pgengine.SSLMode = cmdOpts.SSLMode
-	pgengine.InitOnly = cmdOpts.Init
-	pgengine.Upgrade = cmdOpts.Upgrade
-	pgengine.NoShellTasks = cmdOpts.NoShellTasks
-	pgengine.LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", cmdOpts))
 	return cmdOpts, nil
 }

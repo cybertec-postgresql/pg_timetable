@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/lib/pq"
@@ -22,33 +23,8 @@ const maxWaitTime = WaitTime * 16
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
 
-// Host is used to reconnect to data base
-var Host string = "localhost"
-
-// Port is used to reconnect to data base
-var Port string = "5432"
-
-// DbName is used to reconnect to data base
-var DbName string = "timetable"
-
-// User is used to reconnect to data base
-var User string = "scheduler"
-
-// Password is used to Reconnect Data base
-var Password string = "somestrong"
-
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
-
-// SSLMode parameter determines whether or with what priority a secure SSL TCP/IP connection will
-// be negotiated with the server
-var SSLMode string = "disable"
-
-// Upgrade parameter specifies if database should be upgraded to latest version
-var Upgrade bool
-
-// InitOnly parameter specifies if database schema should be initialized followed by exit
-var InitOnly bool
 
 // NoShellTasks parameter disables SHELL tasks executing
 var NoShellTasks bool
@@ -57,12 +33,14 @@ var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection(ctx context.Context) bool {
+func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
+	ClientName = cmdOpts.ClientName
+	NoShellTasks = cmdOpts.NoShellTasks
+	LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error
-	connstr := fmt.Sprintf("application_name=pg_timetable host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
-		Host, Port, DbName, SSLMode, User, Password)
-
+	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
 	// Base connector to wrap
 	base, err := pq.NewConnector(connstr)
 	if err != nil {

@@ -20,16 +20,19 @@ import (
 
 func main() {
 	ctx := context.Background()
-	if _, err := cmdparser.Parse(); err != nil {
+	cmdOpts, err := cmdparser.Parse()
+	if err != nil {
+
+		pgengine.LogToDB("PANIC", "Error parsing command line arguments: ", err)
 		os.Exit(2)
 	}
 	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
-	if !pgengine.InitAndTestConfigDBConnection(connctx) {
+	if !pgengine.InitAndTestConfigDBConnection(connctx, *cmdOpts) {
 		os.Exit(2)
 	}
 	defer pgengine.FinalizeConfigDBConnection()
-	if pgengine.Upgrade {
+	if cmdOpts.Upgrade {
 		if !pgengine.MigrateDb(ctx) {
 			os.Exit(3)
 		}
@@ -38,7 +41,7 @@ func main() {
 			os.Exit(3)
 		}
 	}
-	if pgengine.InitOnly {
+	if cmdOpts.Init {
 		os.Exit(0)
 	}
 	pgengine.SetupCloseHandler()

@@ -16,12 +16,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 )
 
 // setup environment variable runDocker to true to run testcases using postgres docker images
 var runDocker bool
+
+var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions()
 
 func TestMain(m *testing.M) {
 	pgengine.LogToDB("LOG", "Starting TestMain...")
@@ -41,9 +44,9 @@ func TestMain(m *testing.M) {
 			Repository: "postgres",
 			Tag:        "latest",
 			Env: []string{
-				"POSTGRES_USER=" + pgengine.User,
-				"POSTGRES_PASSWORD=" + pgengine.Password,
-				"POSTGRES_DB=" + pgengine.DbName,
+				"POSTGRES_USER=" + cmdOpts.User,
+				"POSTGRES_PASSWORD=" + cmdOpts.Password,
+				"POSTGRES_DB=" + cmdOpts.Dbname,
 			},
 		}
 
@@ -60,7 +63,7 @@ func TestMain(m *testing.M) {
 			}
 		}()
 
-		pgengine.Host = resource.Container.NetworkSettings.IPAddress
+		cmdOpts.Host = resource.Container.NetworkSettings.IPAddress
 
 		logWaiter, err := pool.Client.AttachToContainerNonBlocking(docker.AttachToContainerOptions{
 			Container: resource.Container.ID,
@@ -88,7 +91,7 @@ func TestMain(m *testing.M) {
 		pool.MaxWait = 10 * time.Second
 		err = pool.Retry(func() error {
 			db, err := sqlx.Open("postgres", fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-				pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password))
 			if err != nil {
 				return err
 			}
@@ -99,17 +102,14 @@ func TestMain(m *testing.M) {
 		}
 		pgengine.LogToDB("LOG", "Connetion to postgres established at ",
 			fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-				pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
+				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password))
 	}
 	os.Exit(m.Run())
 }
 
 // setupTestDBFunc used to conect and to initialize test PostgreSQL database
 var setupTestDBFunc = func() {
-	pgengine.LogToDB("LOG", "Trying to connect postgres container at ",
-		fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-			pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password))
-	pgengine.InitAndTestConfigDBConnection(context.Background())
+	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions())
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
@@ -136,7 +136,7 @@ func setupTestCase(t *testing.T) func(t *testing.T) {
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
 var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx, error) {
 	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-		pgengine.Host, pgengine.Port, pgengine.SSLMode, pgengine.DbName, pgengine.User, pgengine.Password)
+		cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password)
 	return pgengine.GetRemoteDBTransaction(context.Background(), connstr)
 }
 
@@ -335,7 +335,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 
 	t.Run("Check set role function", func(t *testing.T) {
 		var runUID sql.NullString
-		runUID.String = pgengine.User
+		runUID.String = cmdOpts.User
 		assert.NotPanics(t, func() { pgengine.SetRole(tx, runUID) }, "Set Role failed")
 	})
 
