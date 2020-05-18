@@ -37,6 +37,7 @@ var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
 	NoShellTasks = cmdOpts.NoShellTasks
+	VerboseLogLevel = cmdOpts.Verbose
 	LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error

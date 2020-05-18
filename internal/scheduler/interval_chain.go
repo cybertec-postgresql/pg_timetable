@@ -94,7 +94,7 @@ func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 		}
 		pgengine.LogToDB("DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
 		if !ichain.RepeatAfter {
-			ichain.reschedule(ctx)
+			go ichain.reschedule(ctx)
 		}
 		for !pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
 			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
@@ -107,7 +107,7 @@ func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 		}
 		executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
 		if ichain.RepeatAfter {
-			ichain.reschedule(ctx)
+			go ichain.reschedule(ctx)
 		}
 	}
 }
