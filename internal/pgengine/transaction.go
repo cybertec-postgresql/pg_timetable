@@ -59,7 +59,7 @@ func MustRollbackTransaction(tx *sqlx.Tx) {
 }
 
 func mustSavepoint(tx *sqlx.Tx, savepoint string) {
-	LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ")
+	LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", strconv.Quote(savepoint))
 	_, err := tx.Exec("SAVEPOINT " + strconv.Quote(savepoint))
 	if err != nil {
 		LogToDB("ERROR", err)

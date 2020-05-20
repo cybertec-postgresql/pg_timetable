@@ -45,7 +45,7 @@ func (ichain IntervalChain) reschedule(ctx context.Context) {
 		pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
 		return
 	}
-	pgengine.LogToDB("DEBUG", fmt.Sprintf("Sleeping before next execution in %ds for chain %s", ichain.Interval, ichain))
+	pgengine.LogToDB("DEBUG", fmt.Sprintf("Sleeping before next execution for %ds for chain %s", ichain.Interval, ichain))
 	time.Sleep(time.Duration(ichain.Interval) * time.Second)
 	if ichain.isValid() {
 		intervalChainsChan <- ichain
