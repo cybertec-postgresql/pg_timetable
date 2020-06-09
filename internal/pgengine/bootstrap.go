@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/lib/pq"
+	pgconn "github.com/jackc/pgconn"
+	pgx "github.com/jackc/pgx/v4" //use pgx/stdlib instead lib/pq
+	stdlib "github.com/jackc/pgx/v4/stdlib"
 )
 
 // WaitTime specifies amount of time in seconds to wait before reconnecting to DB
@@ -41,21 +42,23 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error
+
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
-	// Base connector to wrap
-	base, err := pq.NewConnector(connstr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Wrap the connector to simply print out the message
-	connector := pq.ConnectorWithNoticeHandler(base, func(notice *pq.Error) {
-		LogToDB("USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
-	})
-	db := sql.OpenDB(connector)
 	LogToDB("DEBUG", "Connection string: ", connstr)
-
-	err = db.PingContext(ctx)
+	connConfig, err := pgx.ParseConfig(connstr)
+	if err != nil {
+		LogToDB("ERROR", err)
+		return false
+	}
+	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+		LogToDB("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+	}
+	connstr = stdlib.RegisterConnConfig(connConfig)
+	db, err := sql.Open("pgx", connstr)
+	if err == nil {
+		err = db.PingContext(ctx)
+	}
 	for err != nil {
 		LogToDB("ERROR", err)
 		LogToDB("LOG", "Reconnecting in ", wt, " sec...")

@@ -230,7 +230,7 @@ func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*sqlx
 	if strings.TrimSpace(connectionString) == "" {
 		return nil, nil, errors.New("Connection string is blank")
 	}
-	remoteDb, err := sqlx.ConnectContext(ctx, "postgres", connectionString)
+	remoteDb, err := sqlx.ConnectContext(ctx, "pgx", connectionString)
 	if err != nil {
 		LogToDB("ERROR",
 			fmt.Sprintf("Error in remote connection (%s): %v", connectionString, err))
