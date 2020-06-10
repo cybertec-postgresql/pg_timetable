@@ -79,7 +79,7 @@ func TestDatabaseNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	db, _ := sql.Open("postgres", "")
+	db, _ := sql.Open("pgx", "")
 	if err := migrator.Migrate(context.Background(), db); err == nil {
 		t.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func TestBadMigrations(t *testing.T) {
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.input.Migrate(context.Background(), db)
-			if err != nil && !strings.Contains(err.Error(), "pq: syntax error") {
+			if err != nil && !strings.Contains(err.Error(), "syntax error") {
 				t.Fatal(err)
 			}
 		})

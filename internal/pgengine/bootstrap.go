@@ -54,6 +54,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		LogToDB("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
 	}
+	connConfig.PreferSimpleProtocol = true
 	connstr = stdlib.RegisterConnConfig(connConfig)
 	db, err := sql.Open("pgx", connstr)
 	if err == nil {
