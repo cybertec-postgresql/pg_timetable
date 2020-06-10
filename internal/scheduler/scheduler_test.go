@@ -24,7 +24,7 @@ func (c testCommander) CombinedOutput(ctx context.Context, command string, args 
 func TestShellCommand(t *testing.T) {
 	cmd = testCommander{}
 	var err error
-	var out []byte
+	var out string
 	var retCode int
 
 	ctx := context.Background()
