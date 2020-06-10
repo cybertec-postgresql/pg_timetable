@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -216,7 +215,7 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 		retCode = -1
 		out = err.Error()
 	}
-	pgengine.LogChainElementExecution(chainElemExec, retCode, strings.TrimSpace(string(out)))
+	pgengine.LogChainElementExecution(chainElemExec, retCode, out)
 
 	if err != nil {
 		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
