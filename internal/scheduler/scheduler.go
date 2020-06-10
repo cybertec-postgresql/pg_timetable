@@ -211,17 +211,19 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 
 	chainElemExec.Duration = time.Since(chainElemExec.StartedAt).Microseconds()
 
-	if err != nil && retCode == 0 {
-		retCode = -1
-		out = err.Error()
-	}
-	pgengine.LogChainElementExecution(chainElemExec, retCode, out)
-
 	if err != nil {
+		if retCode == 0 {
+			retCode = -1
+		}
+		if out == "" {
+			out = err.Error()
+		}
+		pgengine.LogChainElementExecution(chainElemExec, retCode, out)
 		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
 		return retCode
 	}
 
+	pgengine.LogChainElementExecution(chainElemExec, retCode, out)
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
 	return 0
 }
