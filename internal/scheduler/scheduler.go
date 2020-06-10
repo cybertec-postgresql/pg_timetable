@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -187,7 +186,7 @@ func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
 	var paramValues []string
 	var err error
-	var out []byte
+	var out string
 	var retCode int
 
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing task: %s", chainElemExec))
@@ -211,17 +210,20 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 	}
 
 	chainElemExec.Duration = time.Since(chainElemExec.StartedAt).Microseconds()
-	pgengine.LogChainElementExecution(chainElemExec, retCode, strings.TrimSpace(string(out)))
 
 	if err != nil {
-		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
-		if retCode != 0 {
-			return retCode
+		if retCode == 0 {
+			retCode = -1
 		}
-		return -1
+		if out == "" {
+			out = err.Error()
+		}
+		pgengine.LogChainElementExecution(chainElemExec, retCode, out)
+		pgengine.LogToDB("ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
+		return retCode
 	}
 
+	pgengine.LogChainElementExecution(chainElemExec, retCode, out)
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
-
 	return 0
 }
