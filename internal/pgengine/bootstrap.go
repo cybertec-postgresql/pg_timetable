@@ -12,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	pgconn "github.com/jackc/pgconn"
-	pgx "github.com/jackc/pgx/v4" //use pgx/stdlib instead lib/pq
+	pgx "github.com/jackc/pgx/v4"
 	stdlib "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -34,6 +34,26 @@ var NoShellTasks bool
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
+type logger struct {
+	pgx.Logger
+}
+
+func (l logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+	var s string
+	switch level {
+	case pgx.LogLevelTrace, pgx.LogLevelDebug, pgx.LogLevelInfo:
+		s = "DEBUG"
+	case pgx.LogLevelWarn:
+		s = "NOTICE"
+	case pgx.LogLevelError:
+		s = "ERROR"
+	default:
+		s = "LOG"
+	}
+	s = fmt.Sprintf(GetLogPrefix(s), fmt.Sprint(msg, data))
+	fmt.Println(s)
+}
+
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
@@ -53,6 +73,15 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		LogToDB("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+	}
+	connConfig.OnNotification = func(c *pgconn.PgConn, n *pgconn.Notification) {
+		LogToDB("NOTIFY", "Channel: ", n.Channel, "Payload: ", n.Payload)
+	}
+	connConfig.Logger = logger{}
+	if VerboseLogLevel {
+		connConfig.LogLevel = pgx.LogLevelDebug
+	} else {
+		connConfig.LogLevel = pgx.LogLevelWarn
 	}
 	connConfig.PreferSimpleProtocol = true
 	connstr = stdlib.RegisterConnConfig(connConfig)
@@ -74,11 +103,12 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 			wt = wt * 2
 		}
 	}
-
 	LogToDB("LOG", "Connection established...")
-	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
-	ConfigDb = sqlx.NewDb(db, "postgres")
 
+	_, _ = db.ExecContext(ctx, "LISTEN "+ClientName)
+	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
+
+	ConfigDb = sqlx.NewDb(db, "pgx")
 	if !executeSchemaScripts(ctx) {
 		return false
 	}
