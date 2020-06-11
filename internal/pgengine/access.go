@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	pgx "github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -19,14 +21,14 @@ const AppID = 0x204F04EE
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func FixSchedulerCrash(ctx context.Context) {
-	_, err := ConfigDb.ExecContext(ctx, `
-		INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
-		  SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
-		   SELECT   start_status
-		     FROM   timetable.run_status
-		     WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
-		     GROUP BY 1
-		     HAVING count(*) < 2 ) AS abc`, ClientName)
+	_, err := ConfigDb.ExecContext(ctx,
+		`INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
+			SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
+				SELECT   start_status
+				FROM   timetable.run_status
+				WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
+				GROUP BY 1
+				HAVING count(*) < 2 ) AS abc`, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during reverting from the scheduler crash: ", err)
 	}
@@ -61,10 +63,10 @@ func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 }
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
-func TryLockClientName(ctx context.Context) (res bool) {
+func TryLockClientName(ctx context.Context, conn *pgx.Conn) (res bool) {
 	adler32Int := adler32.Checksum([]byte(ClientName))
 	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
-	err := ConfigDb.GetContext(ctx, &res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
+	err := conn.QueryRow(ctx, "SELECT pg_try_advisory_lock($1, $2)", AppID, adler32Int).Scan(&res)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during client name locking: ", err)
 	}
@@ -119,5 +121,23 @@ VALUES
 		runStatusID, chainElemExec.ChainConfig, ClientName)
 	if err != nil {
 		LogToDB("ERROR", "Update Chain Status failed: ", err)
+	}
+}
+
+func HandleNotifications(ctx context.Context, conn *pgx.Conn) {
+	_, err := conn.Exec(ctx, "LISTEN "+ClientName)
+	if err != nil {
+		LogToDB("ERROR", err)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			LogToDB("ERROR", "request cancelled")
+			return
+		default:
+		}
+		if n, err := conn.WaitForNotification(ctx); err == nil {
+			LogToDB("USER", "Channel: ", n.Channel, " PID: ", n.PID, " Payload: ", n.Payload)
+		}
 	}
 }

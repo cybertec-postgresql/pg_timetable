@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	stdlib "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -232,7 +233,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check TryLockClientName()", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.TryLockClientName(ctx), "Should succeed for clean database")
+		sysConn, _ := stdlib.AcquireConn(pgengine.ConfigDb.DB)
+		assert.Equal(t, true, pgengine.TryLockClientName(ctx, sysConn), "Should succeed for clean database")
 	})
 
 	t.Run("Check SetupCloseHandler function", func(t *testing.T) {

@@ -3,6 +3,7 @@ package pgengine
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -50,7 +51,8 @@ func (l logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 	default:
 		s = "LOG"
 	}
-	s = fmt.Sprintf(GetLogPrefix(s), fmt.Sprint(msg, data))
+	j, _ := json.Marshal(data)
+	s = fmt.Sprintf(GetLogPrefix(s), fmt.Sprint(msg, " ", string(j)))
 	fmt.Println(s)
 }
 
@@ -73,9 +75,6 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		LogToDB("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
-	}
-	connConfig.OnNotification = func(c *pgconn.PgConn, n *pgconn.Notification) {
-		LogToDB("NOTIFY", "Channel: ", n.Channel, "Payload: ", n.Payload)
 	}
 	connConfig.Logger = logger{}
 	if VerboseLogLevel {
@@ -104,8 +103,6 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 		}
 	}
 	LogToDB("LOG", "Connection established...")
-
-	_, _ = db.ExecContext(ctx, "LISTEN "+ClientName)
 	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 
 	ConfigDb = sqlx.NewDb(db, "pgx")
@@ -164,9 +161,6 @@ func executeSchemaScripts(ctx context.Context) bool {
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	fmt.Printf(GetLogPrefixLn("LOG"), "Closing session")
-	if _, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()"); err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during locks releasing: %v", err))
-	}
 	if err := ConfigDb.Close(); err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during connection closing: %v", err))
 	}
