@@ -17,9 +17,6 @@ const workersNumber = 16
 //the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes
 const refetchTimeout = 60
 
-//the ping loop period. Allows to fetch notifications from the database
-const pingTimeout = refetchTimeout / 10
-
 // if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes
 const maxChainsThreshold = workersNumber * refetchTimeout
 
