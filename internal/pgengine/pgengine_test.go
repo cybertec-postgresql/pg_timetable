@@ -114,8 +114,8 @@ var setupTestDBFunc = func() {
 }
 
 func setupTestCase(t *testing.T) func(t *testing.T) {
-	pgengine.ClientName = "pgengine_unit_test"
-	pgengine.VerboseLogLevel = testing.Verbose()
+	cmdOpts.ClientName = "pgengine_unit_test"
+	cmdOpts.Verbose = testing.Verbose()
 	t.Log("Setup test case")
 	timeout := time.After(5 * time.Second)
 	done := make(chan bool)
