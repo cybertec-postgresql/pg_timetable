@@ -76,6 +76,12 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		LogToDB("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
 	}
+	if !cmdOpts.Debug {
+		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
+			return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+		}
+		connConfig.OnNotification = notificationHandler
+	}
 	connConfig.Logger = logger{}
 	if VerboseLogLevel {
 		connConfig.LogLevel = pgx.LogLevelDebug

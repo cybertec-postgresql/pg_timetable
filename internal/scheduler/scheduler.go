@@ -33,6 +33,9 @@ WHERE
 const sqlSelectChains = sqlSelectLiveChains +
 	` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
 
+const sqlSelectSingleChain = sqlSelectLiveChains +
+	` AND chain_execution_config = $2`
+
 //Select chains to be executed right after reboot
 const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
 
@@ -62,7 +65,7 @@ const (
 )
 
 //Run executes jobs
-func Run(ctx context.Context) RunStatus {
+func Run(ctx context.Context, debug bool) RunStatus {
 	sysConn, err := stdlib.AcquireConn(pgengine.ConfigDb.DB)
 	if err != nil {
 		return ConnectionDroppped
@@ -92,25 +95,37 @@ func Run(ctx context.Context) RunStatus {
 	pgengine.ConfigDb.SetMaxOpenConns(workersNumber)
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash(ctx)
-	pgengine.LogToDB("LOG", "Checking for @reboot task chains...")
-	retriveChainsAndRun(ctx, sqlSelectRebootChains)
+
 	/*
 		Loop forever or until we ask it to stop.
 		First loop fetches notifications.
 		Main loop works every refetchTimeout seconds and runs chains.
 	*/
-	go pgengine.HandleNotifications(ctx, sysConn)
+	pgengine.LogToDB("LOG", "Accepting asynchronous chains execution requests...")
+	go retrieveAsyncChainsAndRun(ctx)
+
+	if debug { //run blocking notifications receiving
+		pgengine.HandleNotifications(ctx)
+		return ContextCancelled
+	}
+
+	pgengine.LogToDB("LOG", "Checking for @reboot task chains...")
+	retriveChainsAndRun(ctx, sqlSelectRebootChains, pgengine.ClientName)
 
 	for {
-		pgengine.LogToDB("LOG", "Checking for task chains...")
-		go retriveChainsAndRun(ctx, sqlSelectChains)
-		pgengine.LogToDB("LOG", "Checking for interval task chains...")
-		go retriveIntervalChainsAndRun(sqlSelectIntervalChains)
+		if !debug {
+			pgengine.LogToDB("LOG", "Checking for task chains...")
+			go retriveChainsAndRun(ctx, sqlSelectChains, pgengine.ClientName)
+			pgengine.LogToDB("LOG", "Checking for interval task chains...")
+			go retriveIntervalChainsAndRun(sqlSelectIntervalChains)
+		}
 		select {
 		case <-time.After(refetchTimeout * time.Second):
 			if !pgengine.IsAlive() {
 				return ConnectionDroppped
 			}
+		case <-time.After(10 * time.Second):
+			_ = pgengine.ConfigDb.PingContext(ctx)
 		case <-ctx.Done():
 			// If the request gets cancelled, log it
 			pgengine.LogToDB("ERROR", "request cancelled")
@@ -119,9 +134,27 @@ func Run(ctx context.Context) RunStatus {
 	}
 }
 
-func retriveChainsAndRun(ctx context.Context, sql string) {
+func retrieveAsyncChainsAndRun(ctx context.Context) {
+	for {
+		chainExecutionConfigID := pgengine.WaitForAsyncChain(ctx)
+		if chainExecutionConfigID == 0 {
+			return
+		}
+		var headChain Chain
+		err := pgengine.ConfigDb.GetContext(ctx, &headChain, sqlSelectSingleChain,
+			pgengine.ClientName, chainExecutionConfigID)
+		if err != nil {
+			pgengine.LogToDB("ERROR", "Could not query pending tasks: ", err)
+		} else {
+			pgengine.LogToDB("DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+			chains <- headChain
+		}
+	}
+}
+
+func retriveChainsAndRun(ctx context.Context, sql string, args ...interface{}) {
 	headChains := []Chain{}
-	err := pgengine.ConfigDb.SelectContext(ctx, &headChains, sql, pgengine.ClientName)
+	err := pgengine.ConfigDb.SelectContext(ctx, &headChains, sql, args...)
 	if err != nil {
 		pgengine.LogToDB("ERROR", "Could not query pending tasks: ", err)
 		return

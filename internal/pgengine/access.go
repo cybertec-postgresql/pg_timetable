@@ -123,21 +123,3 @@ VALUES
 		LogToDB("ERROR", "Update Chain Status failed: ", err)
 	}
 }
-
-func HandleNotifications(ctx context.Context, conn *pgx.Conn) {
-	_, err := conn.Exec(ctx, "LISTEN "+ClientName)
-	if err != nil {
-		LogToDB("ERROR", err)
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			LogToDB("ERROR", "request cancelled")
-			return
-		default:
-		}
-		if n, err := conn.WaitForNotification(ctx); err == nil {
-			LogToDB("USER", "Channel: ", n.Channel, " PID: ", n.PID, " Payload: ", n.Payload)
-		}
-	}
-}
