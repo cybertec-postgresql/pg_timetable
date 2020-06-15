@@ -19,7 +19,8 @@ VALUES
 	(1, '0070 Interval scheduling and cron only syntax'),
 	(2, '0086 Add task output to execution_log'),
 	(3, '0108 Add client_name column to timetable.run_status'),
-	(4, '0122 Add autonomous tasks');
+	(4, '0122 Add autonomous tasks'),
+	(5, '0105 Add next_run function');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
