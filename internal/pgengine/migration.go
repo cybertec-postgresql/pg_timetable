@@ -161,7 +161,7 @@ ALTER TABLE timetable.run_status
 }
 
 func migration70(tx *sql.Tx) error {
-	if _, err := tx.Exec(`
+	_, err := tx.Exec(`
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
 	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
 	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
@@ -252,8 +252,6 @@ INSERT INTO timetable.chain_execution_config (
     self_destruct
 FROM cte_chain
 RETURNING chain_execution_config 
-' LANGUAGE 'sql';`); err != nil {
-		return err
-	}
-	return nil
+' LANGUAGE 'sql';`)
+	return err
 }
