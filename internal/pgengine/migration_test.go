@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMigrations(t *testing.T) {
-	teardownTestCase := setupTestCase(t)
+	teardownTestCase := testutils.SetupTestCase(t)
 	defer teardownTestCase(t)
 
 	ctx := context.Background()
