@@ -26,13 +26,13 @@ func TestRun(t *testing.T) {
 
 	require.NotNil(t, pgengine.ConfigDb, "ConfigDB should be initialized")
 
-	ok := pgengine.ExecuteCustomScripts(context.Background(), "../../samples/interval.sql")
+	ok := pgengine.ExecuteCustomScripts(context.Background(), "../../samples/Interval.sql")
 	assert.True(t, ok, "Creating interval tasks failed")
 	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql")
 	assert.True(t, ok, "Creating sql tasks failed")
-	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/noop.sql")
+	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/NoOp.sql")
 	assert.True(t, ok, "Creating built-in tasks failed")
-	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/shell.sql")
+	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/Shell.sql")
 	assert.True(t, ok, "Creating shell tasks failed")
 
 	t.Run("Check main loop of the application", func(t *testing.T) {
