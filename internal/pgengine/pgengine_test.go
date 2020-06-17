@@ -17,9 +17,6 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
-// setup environment variable runDocker to true to run testcases using postgres docker images
-var runDocker bool
-
 var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions()
 
 func TestMain(m *testing.M) {
