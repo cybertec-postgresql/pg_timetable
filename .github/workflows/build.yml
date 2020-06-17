@@ -50,10 +50,17 @@ jobs:
       with:
         path-to-profile: profile.cov
 
+    - name: Convert coverage to lcov
+      uses: jandelgado/gcov2lcov-action@v1.0.2
+      with:
+          infile: profile.cov
+          outfile: coverage.lcov
+
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: coverage.lcov
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
