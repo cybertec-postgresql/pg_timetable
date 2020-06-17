@@ -35,6 +35,7 @@ jobs:
     - name: Get dependencies
       run: |
         go mod download
+        go version
 
     - name: GolangCI-Lint
       run: |
@@ -42,7 +43,19 @@ jobs:
         ./bin/golangci-lint run -v
 
     - name: Test
-      run: go test ./...
+      run: go test -v -coverprofile=profile.cov ./...
+
+    - name: Convert coverage to lcov
+      uses: jandelgado/gcov2lcov-action@v1.0.2
+      with:
+          infile: profile.cov
+          outfile: coverage.lcov
+
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: coverage.lcov
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master

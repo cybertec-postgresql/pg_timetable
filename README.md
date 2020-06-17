@@ -1,5 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=master)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cybertec-postgresql/pg_timetable)](https://goreportcard.com/report/github.com/cybertec-postgresql/pg_timetable)
 [![Release](https://img.shields.io/github/release/cybertec-postgresql/pg_timetable.svg)](https://github.com/cybertec-postgresql/pg_timetable/releases/latest)
 
