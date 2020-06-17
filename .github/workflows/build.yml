@@ -45,11 +45,6 @@ jobs:
     - name: Test
       run: go test -v -coverprofile=profile.cov ./...
 
-    # - name: Send coverage
-    #   uses: shogo82148/actions-goveralls@v1
-    #   with:
-    #     path-to-profile: profile.cov
-
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@v1.0.2
       with:
