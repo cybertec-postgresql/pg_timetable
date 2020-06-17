@@ -35,6 +35,7 @@ jobs:
     - name: Get dependencies
       run: |
         go mod download
+        go version
 
     - name: GolangCI-Lint
       run: |
@@ -42,7 +43,12 @@ jobs:
         ./bin/golangci-lint run -v
 
     - name: Test
-      run: go test ./...
+      run: go test -v -coverprofile=profile.cov ./...
+
+    - name: Send coverage
+      uses: shogo82148/actions-goveralls@v1
+      with:
+        path-to-profile: profile.cov
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
