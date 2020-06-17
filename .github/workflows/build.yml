@@ -50,6 +50,11 @@ jobs:
       with:
         path-to-profile: profile.cov
 
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@master
       with:
