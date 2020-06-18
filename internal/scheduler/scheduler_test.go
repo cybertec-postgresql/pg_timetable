@@ -21,7 +21,7 @@ func TestRun(t *testing.T) {
 	teardownTestCase := testutils.SetupTestCase(t)
 	defer teardownTestCase(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	require.NotNil(t, pgengine.ConfigDb, "ConfigDB should be initialized")

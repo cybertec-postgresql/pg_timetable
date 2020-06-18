@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
@@ -245,8 +247,11 @@ func TestSamplesScripts(t *testing.T) {
 		assert.NoError(t, err, "Cannot read samples directory")
 
 		for _, f := range files {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
 			ok := pgengine.ExecuteCustomScripts(context.Background(), "../../samples/"+f.Name())
 			assert.True(t, ok, "Sample query failed: ", f.Name())
+			assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
 			_, err = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")
 			assert.NoError(t, err, "Cannot TRUNCATE timetable.task_chain after ", f.Name())
 		}

@@ -58,7 +58,7 @@ func MustRollbackTransaction(tx *sqlx.Tx) {
 	}
 }
 
-func mustSavepoint(tx *sqlx.Tx, savepoint string) {
+func MustSavepoint(tx *sqlx.Tx, savepoint string) {
 	LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", strconv.Quote(savepoint))
 	_, err := tx.Exec("SAVEPOINT " + strconv.Quote(savepoint))
 	if err != nil {
@@ -66,7 +66,7 @@ func mustSavepoint(tx *sqlx.Tx, savepoint string) {
 	}
 }
 
-func mustRollbackToSavepoint(tx *sqlx.Tx, savepoint string) {
+func MustRollbackToSavepoint(tx *sqlx.Tx, savepoint string) {
 	LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", savepoint)
 	_, err := tx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(savepoint))
 	if err != nil {
@@ -165,13 +165,13 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 	}
 
 	if chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		mustSavepoint(execTx, chainElemExec.TaskName)
+		MustSavepoint(execTx, chainElemExec.TaskName)
 	}
 
 	err = ExecuteSQLCommand(executor, chainElemExec.Script, paramValues)
 
 	if err != nil && chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		mustRollbackToSavepoint(execTx, chainElemExec.TaskName)
+		MustRollbackToSavepoint(execTx, chainElemExec.TaskName)
 	}
 
 	//Reset The Role
