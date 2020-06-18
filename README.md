@@ -11,6 +11,25 @@ pg_timetable: Advanced scheduling for PostgreSQL
 **pg_timetable** is an advanced job scheduler for PostgreSQL, offering many advantages over traditional schedulers such as **cron** and others.
 It is completely database driven and provides a couple of advanced concepts.
 
+```terminal
+# ./pg_timetable
+
+Application Options:
+  -c, --clientname=               Unique name for application instance
+  -v, --verbose                   Show verbose debug information [$PGTT_VERBOSE]
+  -h, --host=                     PG config DB host (default: localhost) [$PGTT_PGHOST]
+  -p, --port=                     PG config DB port (default: 5432) [$PGTT_PGPORT]
+  -d, --dbname=                   PG config DB dbname (default: timetable) [$PGTT_PGDATABASE]
+  -u, --user=                     PG config DB user (default: scheduler) [$PGTT_PGUSER]
+  -f, --file=                     SQL script file to execute during startup
+      --password=                 PG config DB password (default: somestrong) [$PGTT_PGPASSWORD]
+      --sslmode=[disable|require] What SSL priority use for connection (default: disable)
+      --pgurl=                    PG config DB url [$PGTT_URL]
+      --init                      Initialize database schema and exit. Can be used with --upgrade
+      --upgrade                   Upgrade database to the latest version
+      --no-shell-tasks            Disable executing of shell tasks [$PGTT_NOSHELLTASKS]
+```      
+
 ## Table of Contents
   - [1. Main features](#1-main-features)
   - [2. Installation](#2-installation)
