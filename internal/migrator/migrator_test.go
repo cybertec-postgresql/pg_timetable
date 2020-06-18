@@ -3,13 +3,17 @@ package migrator_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/stretchr/testify/assert"
 )
 
 var migrations = []interface{}{
@@ -167,11 +171,172 @@ func TestPending(t *testing.T) {
 			},
 		},
 	)))
-	pending, err := migrator.Pending(context.Background(), db)
+	pending, _, err := migrator.Pending(context.Background(), db)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(pending) != 1 {
 		t.Fatalf("pending migrations should be 1, got %d", len(pending))
+	}
+}
+
+func TestMigratorConstructor(t *testing.T) {
+	_, err := migrator.New() //migrator.Migrations(migrations...)
+	assert.Error(t, err, "Should throw error when migrations are empty")
+
+	_, err = migrator.New(migrator.Migrations(struct{ Foo string }{Foo: "bar"}))
+	assert.Error(t, err, "Should throw error for unknown migration type")
+}
+
+func TestTableExists(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	m, err := migrator.New(migrator.Migrations(migrations...))
+	assert.NoError(t, err)
+	assert.NotNil(t, m)
+
+	sqlresults := []struct {
+		testname     string
+		tableexists  bool
+		appliedcount int
+		needupgrade  bool
+		tableerr     error
+		counterr     error
+	}{
+		{
+			testname:     "table exists and no migrations applied",
+			tableexists:  true,
+			appliedcount: 0,
+			needupgrade:  true,
+			tableerr:     nil,
+			counterr:     nil,
+		},
+		{
+			testname:     "table exists and a lot of migrations applied",
+			tableexists:  true,
+			appliedcount: math.MaxInt32,
+			needupgrade:  false,
+			tableerr:     nil,
+			counterr:     nil,
+		},
+		{
+			testname:     "error occurred during count query",
+			tableexists:  true,
+			appliedcount: 0,
+			needupgrade:  false,
+			tableerr:     nil,
+			counterr:     errors.New("internal error"),
+		},
+		{
+			testname:     "error occurred during table exists query",
+			tableexists:  false,
+			appliedcount: 0,
+			needupgrade:  true,
+			tableerr:     errors.New("internal error"),
+			counterr:     nil,
+		},
+	}
+	var expectederr error
+	for _, res := range sqlresults {
+		if q := mock.ExpectQuery("SELECT to_regclass"); res.tableerr != nil {
+			q.WillReturnError(res.tableerr)
+			expectederr = res.tableerr
+		} else {
+			q.WillReturnRows(sqlmock.NewRows([]string{"to_regclass"}).AddRow(res.tableexists))
+		}
+		if q := mock.ExpectQuery("SELECT count"); res.counterr != nil {
+			q.WillReturnError(res.counterr)
+			expectederr = res.counterr
+		} else {
+			q.WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(res.appliedcount))
+		}
+		need, err := m.NeedUpgrade(context.Background(), db)
+		assert.Equal(t, expectederr, err, "NeedUpgrade test failed: ", res.testname)
+		assert.Equal(t, res.needupgrade, need, "NeedUpgrade incorrect return: ", res.testname)
+	}
+}
+
+func TestMigrateExists(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	m, err := migrator.New(migrator.Migrations(migrations...))
+	assert.NoError(t, err)
+	assert.NotNil(t, m)
+
+	expectederr := errors.New("internal error")
+
+	mock.ExpectExec("CREATE TABLE").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery("SELECT count").WillReturnError(expectederr)
+
+	err = m.Migrate(context.Background(), db)
+	assert.Equal(t, expectederr, err, "Migrate test failed: ", err)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestMigrateNoTxError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	m, err := migrator.New(migrator.Migrations(&migrator.MigrationNoTx{Func: func(context.Context, *sql.DB) error { return nil }}))
+	assert.NoError(t, err)
+	assert.NotNil(t, m)
+
+	expectederr := errors.New("internal error")
+
+	mock.ExpectExec("CREATE TABLE").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery("SELECT count").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectExec("INSERT").WillReturnError(expectederr)
+
+	err = m.Migrate(context.Background(), db)
+	for errors.Unwrap(err) != nil {
+		err = errors.Unwrap(err)
+	}
+	assert.Equal(t, expectederr, err, "MigrateNoTxError test failed: ", err)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestMigrateTxError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	m, err := migrator.New(migrator.Migrations(&migrator.Migration{Func: func(*sql.Tx) error { return nil }}))
+	assert.NoError(t, err)
+	assert.NotNil(t, m)
+
+	expectederr := errors.New("internal tx error")
+	mock.ExpectExec("CREATE TABLE").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery("SELECT count").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectBegin().WillReturnError(expectederr)
+	err = m.Migrate(context.Background(), db)
+	for errors.Unwrap(err) != nil {
+		err = errors.Unwrap(err)
+	}
+	assert.Equal(t, expectederr, err, "MigrateTxError test failed: ", err)
+
+	expectederr = errors.New("internal tx error")
+	mock.ExpectExec("CREATE TABLE").WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery("SELECT count").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT").WillReturnError(expectederr)
+	err = m.Migrate(context.Background(), db)
+	for errors.Unwrap(err) != nil {
+		err = errors.Unwrap(err)
+	}
+	assert.Equal(t, expectederr, err, "MigrateTxError test failed: ", err)
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }

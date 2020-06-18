@@ -3,6 +3,7 @@ module github.com/cybertec-postgresql/pg_timetable
 go 1.13
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.4.1
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/containerd/continuity v0.0.0-20200107194136-26c1120b8d41 // indirect
 	github.com/jessevdk/go-flags v1.4.1-0.20181221193153-c0795c8afcf4
