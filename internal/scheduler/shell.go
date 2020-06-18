@@ -21,10 +21,10 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 	return exec.CommandContext(ctx, command, args...).CombinedOutput()
 }
 
-var cmd commander
+var Cmd commander
 
 // ExecuteTask executes built-in task depending on task name and returns err result
-func executeShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
+func ExecuteShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
 
 	if strings.TrimSpace(command) == "" {
 		return -1, "", errors.New("Shell command cannot be empty")
@@ -39,7 +39,7 @@ func executeShellCommand(ctx context.Context, command string, paramValues []stri
 				return -1, "", err
 			}
 		}
-		out, err := cmd.CombinedOutput(ctx, command, params...) // #nosec
+		out, err := Cmd.CombinedOutput(ctx, command, params...) // #nosec
 		cmdLine := fmt.Sprintf("%s %v: ", command, params)
 		stdout = strings.TrimSpace(string(out))
 		if len(out) > 0 {
@@ -59,5 +59,5 @@ func executeShellCommand(ctx context.Context, command string, paramValues []stri
 }
 
 func init() {
-	cmd = realCommander{}
+	Cmd = realCommander{}
 }

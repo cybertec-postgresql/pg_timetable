@@ -43,7 +43,7 @@ jobs:
         ./bin/golangci-lint run -v
 
     - name: Test
-      run: go test -v -coverprofile=profile.cov ./...
+      run: go test -v -p 1 -coverprofile=profile.cov ./...
 
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@v1.0.2
