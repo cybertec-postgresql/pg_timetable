@@ -58,24 +58,24 @@ func MustRollbackTransaction(tx *sqlx.Tx) {
 	}
 }
 
-func MustSavepoint(tx *sqlx.Tx, savepoint string) {
+func MustSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
 	LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", strconv.Quote(savepoint))
-	_, err := tx.Exec("SAVEPOINT " + strconv.Quote(savepoint))
+	_, err := tx.ExecContext(ctx, "SAVEPOINT "+strconv.Quote(savepoint))
 	if err != nil {
 		LogToDB("ERROR", err)
 	}
 }
 
-func MustRollbackToSavepoint(tx *sqlx.Tx, savepoint string) {
+func MustRollbackToSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
 	LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", savepoint)
-	_, err := tx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(savepoint))
+	_, err := tx.ExecContext(ctx, "ROLLBACK TO SAVEPOINT "+strconv.Quote(savepoint))
 	if err != nil {
 		LogToDB("ERROR", err)
 	}
 }
 
 // GetChainElements returns all elements for a given chain
-func GetChainElements(tx *sqlx.Tx, chains interface{}, chainID int) bool {
+func GetChainElements(ctx context.Context, tx *sqlx.Tx, chains interface{}, chainID int) bool {
 	const sqlSelectChains = `
 WITH RECURSIVE x
 (chain_id, task_id, task_name, script, kind, run_uid, ignore_error, autonomous, database_connection) AS 
@@ -106,7 +106,7 @@ WITH RECURSIVE x
 		WHERE a.database_connection = x.database_connection) 
 	FROM x`
 
-	err := tx.Select(chains, sqlSelectChains, chainID)
+	err := tx.SelectContext(ctx, chains, sqlSelectChains, chainID)
 
 	if err != nil {
 		LogToDB("ERROR", "Recursive queries to fetch chain tasks failed: ", err)
@@ -116,14 +116,14 @@ WITH RECURSIVE x
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func GetChainParamValues(tx *sqlx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
+func GetChainParamValues(ctx context.Context, tx *sqlx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
 	const sqlGetParamValues = `
 SELECT value
 FROM  timetable.chain_execution_parameters
 WHERE chain_execution_config = $1
   AND chain_id = $2
 ORDER BY order_id ASC`
-	err := tx.Select(paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
+	err := tx.SelectContext(ctx, paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
 		LogToDB("ERROR", "cannot fetch parameters values for chain: ", err)
 		return false
@@ -147,7 +147,7 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 
 	//Connect to Remote DB
 	if chainElemExec.DatabaseConnection.Valid {
-		connectionString := GetConnectionString(chainElemExec.DatabaseConnection)
+		connectionString := GetConnectionString(ctx, chainElemExec.DatabaseConnection)
 		remoteDb, execTx, err = GetRemoteDBTransaction(ctx, connectionString)
 		if err != nil {
 			return err
@@ -161,22 +161,22 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 
 	// Set Role
 	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
-		SetRole(execTx, chainElemExec.RunUID)
+		SetRole(ctx, execTx, chainElemExec.RunUID)
 	}
 
 	if chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		MustSavepoint(execTx, chainElemExec.TaskName)
+		MustSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
-	err = ExecuteSQLCommand(executor, chainElemExec.Script, paramValues)
+	err = ExecuteSQLCommand(ctx, executor, chainElemExec.Script, paramValues)
 
 	if err != nil && chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		MustRollbackToSavepoint(execTx, chainElemExec.TaskName)
+		MustRollbackToSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
 	//Reset The Role
 	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
-		ResetRole(execTx)
+		ResetRole(ctx, execTx)
 	}
 
 	// Commit changes on remote server
@@ -188,11 +188,11 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 }
 
 type SQLExecutor interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
 // ExecuteSQLCommand executes chain script with parameters inside transaction
-func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string) error {
+func ExecuteSQLCommand(ctx context.Context, executor SQLExecutor, script string, paramValues []string) error {
 	var err error
 	var params []interface{}
 
@@ -200,7 +200,7 @@ func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		_, err = executor.Exec(script)
+		_, err = executor.ExecContext(ctx, script)
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
@@ -208,7 +208,7 @@ func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string
 					return err
 				}
 				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
-				_, err = executor.Exec(script, params...)
+				_, err = executor.ExecContext(ctx, script, params...)
 			}
 		}
 	}
@@ -216,7 +216,7 @@ func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string
 }
 
 //GetConnectionString of database_connection
-func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
+func GetConnectionString(ctx context.Context, databaseConnection sql.NullString) (connectionString string) {
 	err := ConfigDb.Get(&connectionString, "SELECT connect_string "+
 		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection)
 	if err != nil {
@@ -256,7 +256,7 @@ func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
 }
 
 // SetRole - set the current user identifier of the current session
-func SetRole(tx *sqlx.Tx, runUID sql.NullString) {
+func SetRole(ctx context.Context, tx *sqlx.Tx, runUID sql.NullString) {
 	LogToDB("LOG", "Setting Role to ", runUID.String)
 	_, err := tx.Exec(fmt.Sprintf("SET ROLE %v", runUID.String))
 	if err != nil {
@@ -265,7 +265,7 @@ func SetRole(tx *sqlx.Tx, runUID sql.NullString) {
 }
 
 //ResetRole - RESET forms reset the current user identifier to be the current session user identifier
-func ResetRole(tx *sqlx.Tx) {
+func ResetRole(ctx context.Context, tx *sqlx.Tx) {
 	LogToDB("LOG", "Resetting Role")
 	const sqlResetRole = `RESET ROLE`
 	_, err := tx.Exec(sqlResetRole)

@@ -149,7 +149,7 @@ func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 
 	pgengine.LogToDB("LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
 
-	if !pgengine.GetChainElements(tx, &ChainElements, chainID) {
+	if !pgengine.GetChainElements(ctx, tx, &ChainElements, chainID) {
 		pgengine.MustRollbackTransaction(tx)
 		return
 	}
@@ -185,7 +185,7 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 
 	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing task: %s", chainElemExec))
 
-	if !pgengine.GetChainParamValues(tx, &paramValues, chainElemExec) {
+	if !pgengine.GetChainParamValues(ctx, tx, &paramValues, chainElemExec) {
 		return -1
 	}
 
