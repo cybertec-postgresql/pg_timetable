@@ -56,6 +56,7 @@ func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 	res, err := ConfigDb.ExecContext(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
 	if err != nil {
 		LogToDB("ERROR", "Error occurred during deleting self destructive chains: ", err)
+		return false
 	}
 	rowsDeleted, err := res.RowsAffected()
 	return err == nil && rowsDeleted == 1
