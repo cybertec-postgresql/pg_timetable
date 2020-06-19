@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -62,14 +63,28 @@ func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func TryLockClientName(ctx context.Context) (res bool) {
+	var wt int = WaitTime
 	adler32Int := adler32.Checksum([]byte(ClientName))
-	LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
-	err := ConfigDb.GetContext(ctx, &res, "select pg_try_advisory_lock($1, $2)", AppID, adler32Int)
-	if err != nil {
-		LogToDB("ERROR", "Error occurred during client name locking: ", err)
-	}
-	if !res {
-		LogToDB("ERROR", "Another client is already connected to server with name: ", ClientName)
+	res = false
+	for !res {
+		LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
+		err := ConfigDb.GetContext(ctx, &res, "SELECT pg_try_advisory_lock($1, $2)", AppID, adler32Int)
+		if err != nil {
+			LogToDB("ERROR", "Error occurred during client name locking: ", err)
+		}
+		if !res {
+			LogToDB("ERROR", "Another client is already connected to server with name: ", ClientName)
+		}
+		select {
+		case <-time.After(time.Duration(wt) * time.Second):
+		case <-ctx.Done():
+			// If the request gets cancelled, log it
+			LogToDB("ERROR", "request cancelled\n")
+			return false
+		}
+		if wt < maxWaitTime {
+			wt = wt * 2
+		}
 	}
 	return
 }

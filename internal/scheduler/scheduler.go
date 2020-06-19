@@ -62,14 +62,8 @@ const (
 
 //Run executes jobs. Returns Fa
 func Run(ctx context.Context) RunStatus {
-	for !pgengine.TryLockClientName(ctx) {
-		select {
-		case <-time.After(refetchTimeout * time.Second):
-		case <-ctx.Done():
-			// If the request gets cancelled, log it
-			pgengine.LogToDB("ERROR", "request cancelled\n")
-			return ContextCancelled
-		}
+	if !pgengine.TryLockClientName(ctx) {
+		return ContextCancelled
 	}
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
