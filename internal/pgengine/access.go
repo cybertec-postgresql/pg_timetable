@@ -80,7 +80,7 @@ func TryLockClientName(ctx context.Context) (res bool) {
 		case <-time.After(time.Duration(wt) * time.Second):
 		case <-ctx.Done():
 			// If the request gets cancelled, log it
-			LogToDB(ctx, "ERROR", "request cancelled\n")
+			LogToDB(ctx, "ERROR", "request cancelled")
 			return false
 		}
 		if wt < maxWaitTime {

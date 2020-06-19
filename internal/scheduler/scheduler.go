@@ -93,7 +93,7 @@ func Run(ctx context.Context) RunStatus {
 			}
 		case <-ctx.Done():
 			// If the request gets cancelled, log it
-			pgengine.LogToDB(ctx, "ERROR", "request cancelled\n")
+			pgengine.LogToDB(ctx, "ERROR", "request cancelled")
 			return ContextCancelled
 		}
 	}
@@ -131,7 +131,7 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 			select {
 			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
 			case <-ctx.Done():
-				pgengine.LogToDB(ctx, "ERROR", "request cancelled\n")
+				pgengine.LogToDB(ctx, "ERROR", "request cancelled")
 				return
 			}
 		}

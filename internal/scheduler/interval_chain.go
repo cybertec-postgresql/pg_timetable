@@ -106,7 +106,7 @@ func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 			select {
 			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
 			case <-ctx.Done():
-				pgengine.LogToDB(ctx, "ERROR", "request cancelled\n")
+				pgengine.LogToDB(ctx, "ERROR", "request cancelled")
 				return
 			}
 		}
