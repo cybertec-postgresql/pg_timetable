@@ -56,7 +56,7 @@ func migrateTest() error {
 	}
 
 	// Migrate up
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions())
+	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
 	pgengine.ConfigDb.MustExec("DROP TABLE IF EXISTS foo, bar, baz")
 	if err := migrator.Migrate(context.Background(), pgengine.ConfigDb.DB); err != nil {
 		return err
@@ -90,7 +90,7 @@ func TestDatabaseNotFound(t *testing.T) {
 }
 
 func TestBadMigrations(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions())
+	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
 	db := pgengine.ConfigDb.DB
 
 	var migrators = []struct {
@@ -139,7 +139,7 @@ func TestBadMigrations(t *testing.T) {
 }
 
 func TestBadMigrationNumber(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions())
+	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
 	db := pgengine.ConfigDb.DB
 	migrator := mustMigrator(migrator.New(migrator.Migrations(
 		&migrator.Migration{
@@ -158,7 +158,7 @@ func TestBadMigrationNumber(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions())
+	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
 	db := pgengine.ConfigDb.DB
 	migrator := mustMigrator(migrator.New(migrator.Migrations(
 		&migrator.Migration{

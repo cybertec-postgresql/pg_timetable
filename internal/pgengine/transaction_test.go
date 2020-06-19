@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +96,6 @@ func TestExecuteSQLTask(t *testing.T) {
 		assert.NoError(t, err)
 		if element.DatabaseConnection.Valid {
 			q := mock.ExpectQuery("SELECT connect_string").WithArgs(element.DatabaseConnection)
-			cmdOpts := cmdparser.NewCmdOptions()
 			connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password)
 			if element.DatabaseConnection.String == "error" {

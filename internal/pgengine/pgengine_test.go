@@ -19,7 +19,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
-var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions()
+var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions("pgengine_unit_test")
 
 func TestMain(m *testing.M) {
 	testutils.TestMain(m)

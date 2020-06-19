@@ -85,6 +85,6 @@ func TestParseSuccessful(t *testing.T) {
 }
 
 func TestNewCmdOptions(t *testing.T) {
-	c := NewCmdOptions()
+	c := NewCmdOptions("cmdparser_unit_test")
 	assert.NotNil(t, c)
 }

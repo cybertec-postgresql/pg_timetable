@@ -19,11 +19,9 @@ import (
 // setup environment variable runDocker to true to run testcases using postgres docker images
 var runDocker bool
 
-var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions()
+var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions("pgengine_unit_test")
 
 func TestMain(m *testing.M) {
-	pgengine.LogToDB("LOG", "Starting TestMain...")
-
 	runDocker, _ = strconv.ParseBool(os.Getenv("RUN_DOCKER"))
 	//Create Docker image and run postgres docker image
 	if runDocker {
@@ -104,7 +102,6 @@ func TestMain(m *testing.M) {
 
 //SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
-	cmdOpts.ClientName = "pgengine_unit_test"
 	cmdOpts.Verbose = testing.Verbose()
 	t.Log("Setup test case")
 	timeout := time.After(5 * time.Second)
