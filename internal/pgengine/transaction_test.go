@@ -21,15 +21,15 @@ var (
 	mock sqlmock.Sqlmock
 )
 
-func initdb(t *testing.T) {
+func initmockdb(t *testing.T) {
 	var err error
-	db, mock, err = sqlmock.New()
+	db, mock, err = sqlmock.New(sqlmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	xdb = sqlx.NewDb(db, "sqlmock")
 }
 
 func TestMustTransaction(t *testing.T) {
-	initdb(t)
+	initmockdb(t)
 	defer db.Close()
 
 	mock.ExpectBegin()
@@ -62,7 +62,7 @@ func TestMustTransaction(t *testing.T) {
 }
 
 func TestExecuteSQLTask(t *testing.T) {
-	initdb(t)
+	initmockdb(t)
 	pgengine.ConfigDb = xdb
 
 	elements := []pgengine.ChainElementExecution{
@@ -111,7 +111,7 @@ func TestExecuteSQLTask(t *testing.T) {
 }
 
 func TestExpectedCloseError(t *testing.T) {
-	initdb(t)
+	initmockdb(t)
 
 	mock.ExpectClose().WillReturnError(errors.New("Close failed"))
 	pgengine.FinalizeRemoteDBConnection(xdb)
@@ -122,7 +122,7 @@ func TestExpectedCloseError(t *testing.T) {
 }
 
 func TestExecuteSQLCommand(t *testing.T) {
-	initdb(t)
+	initmockdb(t)
 	defer db.Close()
 
 	sqlresults := []struct {
@@ -163,7 +163,7 @@ func TestExecuteSQLCommand(t *testing.T) {
 }
 
 func TestGetChainElements(t *testing.T) {
-	initdb(t)
+	initmockdb(t)
 	defer db.Close()
 
 	assert.True(t, pgengine.ChainElementExecution{}.String() > "")
@@ -194,7 +194,7 @@ func TestGetChainElements(t *testing.T) {
 }
 
 func TestSetRole(t *testing.T) {
-	initdb(t)
+	initmockdb(t)
 	defer db.Close()
 
 	mock.ExpectBegin()

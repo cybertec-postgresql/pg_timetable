@@ -3,6 +3,7 @@ package pgengine
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -33,6 +34,9 @@ var NoShellTasks bool
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
+//OpenDB used for mocking purposes
+var OpenDB func(c driver.Connector) *sql.DB = sql.OpenDB
+
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
@@ -52,8 +56,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	connector := pq.ConnectorWithNoticeHandler(base, func(notice *pq.Error) {
 		LogToDB("USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
 	})
-	db := sql.OpenDB(connector)
-	LogToDB("DEBUG", "Connection string: ", connstr)
+	db := OpenDB(connector)
 
 	err = db.PingContext(ctx)
 	for err != nil {
@@ -71,6 +74,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 		}
 	}
 
+	LogToDB("DEBUG", "Connection string: ", connstr)
 	LogToDB("LOG", "Connection established...")
 	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 	ConfigDb = sqlx.NewDb(db, "postgres")
@@ -107,7 +111,10 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 func executeSchemaScripts(ctx context.Context) bool {
 	var exists bool
 	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
-	if err != nil || !exists {
+	if err != nil {
+		return false
+	}
+	if !exists {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
 			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
