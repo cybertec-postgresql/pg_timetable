@@ -34,9 +34,6 @@ func TestRun(t *testing.T) {
 	assert.True(t, ok, "Creating built-in tasks failed")
 	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/Shell.sql")
 	assert.True(t, ok, "Creating shell tasks failed")
-
-	t.Run("Check main loop of the application", func(t *testing.T) {
-		assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
-	})
+	assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
 
 }

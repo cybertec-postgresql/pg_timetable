@@ -55,9 +55,7 @@ func TestMustTransaction(t *testing.T) {
 	assert.NoError(t, err)
 	pgengine.MustRollbackToSavepoint(tx, "foo")
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestExecuteSQLTask(t *testing.T) {
@@ -114,9 +112,7 @@ func TestExpectedCloseError(t *testing.T) {
 	mock.ExpectClose().WillReturnError(errors.New("Close failed"))
 	pgengine.FinalizeRemoteDBConnection(xdb)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestExecuteSQLCommand(t *testing.T) {
