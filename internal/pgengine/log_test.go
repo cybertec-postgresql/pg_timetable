@@ -1,6 +1,7 @@
 package pgengine_test
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"testing"
@@ -17,14 +18,14 @@ func TestLogToDb(t *testing.T) {
 
 	t.Run("Check LogToDB in terse mode", func(t *testing.T) {
 		pgengine.VerboseLogLevel = false
-		pgengine.LogToDB("DEBUG", "Test DEBUG message")
+		pgengine.LogToDB(context.TODO(), "DEBUG", "Test DEBUG message")
 
 	})
 
 	t.Run("Check LogToDB in verbose mode", func(t *testing.T) {
 		pgengine.VerboseLogLevel = true
 		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnError(sql.ErrConnDone)
-		pgengine.LogToDB("DEBUG", "Test DEBUG message")
+		pgengine.LogToDB(context.TODO(), "DEBUG", "Test DEBUG message")
 	})
 
 	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
@@ -38,7 +39,7 @@ func TestLogChainElementExecution(t *testing.T) {
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
 		mock.ExpectExec("INSERT INTO timetable\\.execution_log").WillReturnError(errors.New("error"))
 		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
-		pgengine.LogChainElementExecution(&pgengine.ChainElementExecution{}, 0, "STATUS")
+		pgengine.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")

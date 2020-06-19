@@ -45,7 +45,7 @@ func (ichain IntervalChain) reschedule(ctx context.Context) {
 		pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
 		return
 	}
-	pgengine.LogToDB("DEBUG", fmt.Sprintf("Sleeping before next execution for %ds for chain %s", ichain.Interval, ichain))
+	pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Sleeping before next execution for %ds for chain %s", ichain.Interval, ichain))
 	time.Sleep(time.Duration(ichain.Interval) * time.Second)
 	if ichain.isValid() {
 		intervalChainsChan <- ichain
@@ -60,14 +60,14 @@ var intervalChainsChan chan IntervalChain = make(chan IntervalChain)
 
 var mutex = &sync.Mutex{}
 
-func retriveIntervalChainsAndRun(sql string) {
+func retriveIntervalChainsAndRun(ctx context.Context, sql string) {
 	mutex.Lock()
 	ichains := []IntervalChain{}
-	err := pgengine.ConfigDb.Select(&ichains, sql, pgengine.ClientName)
+	err := pgengine.ConfigDb.SelectContext(ctx, &ichains, sql, pgengine.ClientName)
 	if err != nil {
-		pgengine.LogToDB("ERROR", "Could not query pending interval tasks: ", err)
+		pgengine.LogToDB(ctx, "ERROR", "Could not query pending interval tasks: ", err)
 	} else {
-		pgengine.LogToDB("LOG", "Number of active interval chains: ", len(ichains))
+		pgengine.LogToDB(ctx, "LOG", "Number of active interval chains: ", len(ichains))
 	}
 
 	// delete chains that are not returned from the database
@@ -92,16 +92,16 @@ func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 		if !ichain.isValid() { // chain not in the list of active chains
 			continue
 		}
-		pgengine.LogToDB("DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
+		pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
 		if !ichain.RepeatAfter {
 			go ichain.reschedule(ctx)
 		}
 		for !pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
-			pgengine.LogToDB("DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
+			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
 			select {
 			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
 			case <-ctx.Done():
-				pgengine.LogToDB("ERROR", "request cancelled\n")
+				pgengine.LogToDB(ctx, "ERROR", "request cancelled\n")
 				return
 			}
 		}

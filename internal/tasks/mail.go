@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
@@ -29,7 +30,7 @@ var getNewDialer func(host string, port int, username, password string) Dialer =
 	return gomail.NewDialer(host, port, username, password)
 }
 
-func taskSendMail(paramValues string) error {
+func taskSendMail(ctx context.Context, paramValues string) error {
 	var conn emailConn
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
 		return err

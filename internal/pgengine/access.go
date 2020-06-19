@@ -29,7 +29,7 @@ func FixSchedulerCrash(ctx context.Context) {
 		     GROUP BY 1
 		     HAVING count(*) < 2 ) AS abc`, ClientName)
 	if err != nil {
-		LogToDB("ERROR", "Error occurred during reverting from the scheduler crash: ", err)
+		LogToDB(ctx, "ERROR", "Error occurred during reverting from the scheduler crash: ", err)
 	}
 }
 
@@ -37,7 +37,7 @@ func FixSchedulerCrash(ctx context.Context) {
 func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstances int) bool {
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
-	LogToDB("DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
+	LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
 	err := ConfigDb.GetContext(ctx, &procCount, sqlProcCount, chainConfigID)
 	switch {
 	case err == sql.ErrNoRows:
@@ -45,17 +45,17 @@ func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstanc
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		LogToDB("ERROR", "Cannot read information about concurrent running jobs: ", err)
+		LogToDB(ctx, "ERROR", "Cannot read information about concurrent running jobs: ", err)
 		return false
 	}
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
-	LogToDB("LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
+	LogToDB(ctx, "LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
 	res, err := ConfigDb.ExecContext(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
 	if err != nil {
-		LogToDB("ERROR", "Error occurred during deleting self destructive chains: ", err)
+		LogToDB(ctx, "ERROR", "Error occurred during deleting self destructive chains: ", err)
 		return false
 	}
 	rowsDeleted, err := res.RowsAffected()
@@ -68,19 +68,19 @@ func TryLockClientName(ctx context.Context) (res bool) {
 	adler32Int := adler32.Checksum([]byte(ClientName))
 	res = false
 	for !res {
-		LogToDB("DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
+		LogToDB(ctx, "DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
 		err := ConfigDb.GetContext(ctx, &res, "SELECT pg_try_advisory_lock($1, $2)", AppID, adler32Int)
 		if err != nil {
-			LogToDB("ERROR", "Error occurred during client name locking: ", err)
+			LogToDB(ctx, "ERROR", "Error occurred during client name locking: ", err)
 		}
 		if !res {
-			LogToDB("ERROR", "Another client is already connected to server with name: ", ClientName)
+			LogToDB(ctx, "ERROR", "Another client is already connected to server with name: ", ClientName)
 		}
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
 		case <-ctx.Done():
 			// If the request gets cancelled, log it
-			LogToDB("ERROR", "request cancelled\n")
+			LogToDB(ctx, "ERROR", "request cancelled\n")
 			return false
 		}
 		if wt < maxWaitTime {
@@ -118,7 +118,7 @@ RETURNING run_status`
 	var id int
 	err := ConfigDb.GetContext(ctx, &id, sqlInsertRunStatus, chainID, chainConfigID, ClientName)
 	if err != nil {
-		LogToDB("ERROR", "Cannot save information about the chain run status: ", err)
+		LogToDB(ctx, "ERROR", "Cannot save information about the chain run status: ", err)
 	}
 	return id
 }
@@ -134,6 +134,6 @@ VALUES
 	_, err = ConfigDb.ExecContext(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
 		runStatusID, chainElemExec.ChainConfig, ClientName)
 	if err != nil {
-		LogToDB("ERROR", "Update Chain Status failed: ", err)
+		LogToDB(ctx, "ERROR", "Update Chain Status failed: ", err)
 	}
 }

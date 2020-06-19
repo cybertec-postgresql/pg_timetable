@@ -36,13 +36,13 @@ func TestMustTransaction(t *testing.T) {
 	mock.ExpectCommit().WillReturnError(errors.New("error"))
 	tx, err := xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.MustCommitTransaction(tx)
+	pgengine.MustCommitTransaction(ctx, tx)
 
 	mock.ExpectBegin()
 	mock.ExpectRollback().WillReturnError(errors.New("error"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.MustRollbackTransaction(tx)
+	pgengine.MustRollbackTransaction(ctx, tx)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("SAVEPOINT").WillReturnError(errors.New("error"))
@@ -111,7 +111,7 @@ func TestExpectedCloseError(t *testing.T) {
 	initmockdb(t)
 
 	mock.ExpectClose().WillReturnError(errors.New("Close failed"))
-	pgengine.FinalizeRemoteDBConnection(xdb)
+	pgengine.FinalizeRemoteDBConnection(context.TODO(), xdb)
 
 	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }

@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,7 +11,7 @@ import (
 )
 
 // Tasks maps builtin task names with event handlers
-var Tasks = map[string](func(string) error){
+var Tasks = map[string](func(context.Context, string) error){
 	"NoOp":     taskNoOp,
 	"Sleep":    taskSleep,
 	"Log":      taskLog,
@@ -18,8 +19,8 @@ var Tasks = map[string](func(string) error){
 	"Download": taskDownloadFile}
 
 // ExecuteTask executes built-in task depending on task name and returns err result
-func ExecuteTask(name string, paramValues []string) error {
-	pgengine.LogToDB("DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
+func ExecuteTask(ctx context.Context, name string, paramValues []string) error {
+	pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
 	if len(paramValues) == 0 {
 		paramValues = append(paramValues, "")
 	}
@@ -28,7 +29,7 @@ func ExecuteTask(name string, paramValues []string) error {
 		return errors.New("No built-in task found: " + name)
 	}
 	for _, val := range paramValues {
-		err := f(val)
+		err := f(ctx, val)
 		if err != nil {
 			return err
 		}
@@ -36,17 +37,17 @@ func ExecuteTask(name string, paramValues []string) error {
 	return nil
 }
 
-func taskNoOp(val string) error {
-	pgengine.LogToDB("DEBUG", "NoOp task called with value: ", val)
+func taskNoOp(ctx context.Context, val string) error {
+	pgengine.LogToDB(ctx, "DEBUG", "NoOp task called with value: ", val)
 	return nil
 }
 
-func taskSleep(val string) (err error) {
+func taskSleep(ctx context.Context, val string) (err error) {
 	var d int
 	if d, err = strconv.Atoi(val); err != nil {
 		return err
 	}
-	pgengine.LogToDB("DEBUG", "Sleep task called for ", d, " seconds")
+	pgengine.LogToDB(ctx, "DEBUG", "Sleep task called for ", d, " seconds")
 	time.Sleep(time.Duration(d) * time.Second)
 	return nil
 }

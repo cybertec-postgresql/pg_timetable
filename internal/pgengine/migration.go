@@ -11,9 +11,9 @@ var m *migrator.Migrator
 
 // MigrateDb upgrades database with all migrations
 func MigrateDb(ctx context.Context) bool {
-	LogToDB("LOG", "Upgrading database...")
+	LogToDB(ctx, "LOG", "Upgrading database...")
 	if err := m.Migrate(ctx, ConfigDb.DB); err != nil {
-		LogToDB("PANIC", err)
+		LogToDB(ctx, "PANIC", err)
 		return false
 	}
 	return true
@@ -21,13 +21,13 @@ func MigrateDb(ctx context.Context) bool {
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
 func CheckNeedMigrateDb(ctx context.Context) (bool, error) {
-	LogToDB("DEBUG", "Check need of upgrading database...")
+	LogToDB(ctx, "DEBUG", "Check need of upgrading database...")
 	upgrade, err := m.NeedUpgrade(ctx, ConfigDb.DB)
 	if upgrade {
-		LogToDB("PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
+		LogToDB(ctx, "PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
 	}
 	if err != nil {
-		LogToDB("PANIC", err)
+		LogToDB(ctx, "PANIC", err)
 	}
 	return upgrade, err
 }
@@ -37,7 +37,7 @@ func init() {
 	m, err = migrator.New(
 		migrator.TableName("timetable.migrations"),
 		migrator.SetNotice(func(s string) {
-			LogToDB("LOG", s)
+			LogToDB(context.TODO(), "LOG", s)
 		}),
 		migrator.Migrations(
 			&migrator.Migration{
@@ -79,7 +79,7 @@ func init() {
 		),
 	)
 	if err != nil {
-		LogToDB("ERROR", err)
+		LogToDB(context.TODO(), "ERROR", err)
 	}
 }
 

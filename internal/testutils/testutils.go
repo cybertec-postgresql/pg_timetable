@@ -23,15 +23,16 @@ var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions("pgengine_unit_test"
 
 func TestMain(m *testing.M) {
 	runDocker, _ = strconv.ParseBool(os.Getenv("RUN_DOCKER"))
+	ctx := context.Background()
 	//Create Docker image and run postgres docker image
 	if runDocker {
-		pgengine.LogToDB("LOG", "Running in docker mode...")
+		pgengine.LogToDB(ctx, "LOG", "Running in docker mode...")
 
 		pool, err := dockertest.NewPool("")
 		if err != nil {
 			panic("Could not connect to docker")
 		}
-		pgengine.LogToDB("LOG", "Connetion to docker established...")
+		pgengine.LogToDB(ctx, "LOG", "Connetion to docker established...")
 
 		runOpts := dockertest.RunOptions{
 			Repository: "postgres",
@@ -47,7 +48,7 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic("Could start postgres container")
 		}
-		pgengine.LogToDB("LOG", "Postgres container is running...")
+		pgengine.LogToDB(ctx, "LOG", "Postgres container is running...")
 
 		defer func() {
 			err = pool.Purge(resource)
@@ -73,11 +74,11 @@ func TestMain(m *testing.M) {
 		defer func() {
 			err = logWaiter.Close()
 			if err != nil {
-				pgengine.LogToDB("ERROR", "Could not close container log")
+				pgengine.LogToDB(ctx, "ERROR", "Could not close container log")
 			}
 			err = logWaiter.Wait()
 			if err != nil {
-				pgengine.LogToDB("ERROR", "Could not wait for container log to close")
+				pgengine.LogToDB(ctx, "ERROR", "Could not wait for container log to close")
 			}
 		}()
 
@@ -93,7 +94,7 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic("Could not connect to postgres server")
 		}
-		pgengine.LogToDB("LOG", "Connetion to postgres established at ",
+		pgengine.LogToDB(ctx, "LOG", "Connetion to postgres established at ",
 			fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password))
 	}

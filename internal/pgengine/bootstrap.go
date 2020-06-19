@@ -42,7 +42,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	ClientName = cmdOpts.ClientName
 	NoShellTasks = cmdOpts.NoShellTasks
 	VerboseLogLevel = cmdOpts.Verbose
-	LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
+	LogToDB(ctx, "DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
@@ -54,19 +54,19 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	// Wrap the connector to simply print out the message
 	connector := pq.ConnectorWithNoticeHandler(base, func(notice *pq.Error) {
-		LogToDB("USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
+		LogToDB(ctx, "USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
 	})
 	db := OpenDB(connector)
 
 	err = db.PingContext(ctx)
 	for err != nil {
-		LogToDB("ERROR", err)
-		LogToDB("LOG", "Reconnecting in ", wt, " sec...")
+		LogToDB(ctx, "ERROR", err)
+		LogToDB(ctx, "LOG", "Reconnecting in ", wt, " sec...")
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
 			err = db.PingContext(ctx)
 		case <-ctx.Done():
-			LogToDB("ERROR", "Connection request cancelled: ", ctx.Err())
+			LogToDB(ctx, "ERROR", "Connection request cancelled: ", ctx.Err())
 			return false
 		}
 		if wt < maxWaitTime {
@@ -74,9 +74,9 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 		}
 	}
 
-	LogToDB("DEBUG", "Connection string: ", connstr)
-	LogToDB("LOG", "Connection established...")
-	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
+	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
+	LogToDB(ctx, "LOG", "Connection established...")
+	LogToDB(ctx, "LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 	ConfigDb = sqlx.NewDb(db, "postgres")
 
 	if !executeSchemaScripts(ctx) {
@@ -103,7 +103,7 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 			fmt.Printf(GetLogPrefixLn("PANIC"), err)
 			return false
 		}
-		LogToDB("LOG", "Script file executed: "+f)
+		LogToDB(ctx, "LOG", "Script file executed: "+f)
 	}
 	return true
 }
@@ -127,9 +127,9 @@ func executeSchemaScripts(ctx context.Context) bool {
 				}
 				return false
 			}
-			LogToDB("LOG", "Schema file executed: "+sqlName)
+			LogToDB(ctx, "LOG", "Schema file executed: "+sqlName)
 		}
-		LogToDB("LOG", "Configuration schema created...")
+		LogToDB(ctx, "LOG", "Configuration schema created...")
 	}
 	return true
 }
@@ -159,7 +159,7 @@ func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
 			return false
 		}
 	}
-	LogToDB("LOG", "Connection reestablished...")
+	LogToDB(ctx, "LOG", "Connection reestablished...")
 	FixSchedulerCrash(ctx)
 	return true
 }
