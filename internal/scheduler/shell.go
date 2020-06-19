@@ -21,7 +21,7 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 	return exec.CommandContext(ctx, command, args...).CombinedOutput()
 }
 
-var Cmd commander
+var Cmd commander = realCommander{}
 
 // ExecuteTask executes built-in task depending on task name and returns err result
 func ExecuteShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
@@ -56,8 +56,4 @@ func ExecuteShellCommand(ctx context.Context, command string, paramValues []stri
 		}
 	}
 	return 0, stdout, nil
-}
-
-func init() {
-	Cmd = realCommander{}
 }
