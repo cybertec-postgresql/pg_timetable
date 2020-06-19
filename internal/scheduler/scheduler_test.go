@@ -34,6 +34,8 @@ func TestRun(t *testing.T) {
 	assert.True(t, ok, "Creating built-in tasks failed")
 	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/Shell.sql")
 	assert.True(t, ok, "Creating shell tasks failed")
+	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/SelfDestruct.sql")
+	assert.True(t, ok, "Creating shell tasks failed")
 	assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
 
 }
