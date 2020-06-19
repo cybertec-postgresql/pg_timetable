@@ -120,6 +120,11 @@ func retriveChainsAndRun(ctx context.Context, sql string) {
 
 func chainWorker(ctx context.Context, chains <-chan Chain) {
 	for chain := range chains {
+		select {
+		default:
+		case <-ctx.Done():
+			return
+		}
 		pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process chain for %s", chain))
 		for !pgengine.CanProceedChainExecution(ctx, chain.ChainExecutionConfigID, chain.MaxInstances) {
 			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))

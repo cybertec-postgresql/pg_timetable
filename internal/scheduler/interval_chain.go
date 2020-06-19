@@ -89,6 +89,11 @@ func retriveIntervalChainsAndRun(ctx context.Context, sql string) {
 
 func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 	for ichain := range ichains {
+		select {
+		default:
+		case <-ctx.Done():
+			return
+		}
 		if !ichain.isValid() { // chain not in the list of active chains
 			continue
 		}
