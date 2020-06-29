@@ -1,8 +1,12 @@
 package tasks
 
-import "github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+import (
+	"context"
 
-func taskLog(val string) error {
-	pgengine.LogToDB("USER", val)
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+)
+
+func taskLog(ctx context.Context, val string) error {
+	pgengine.LogToDB(ctx, "USER", val)
 	return nil
 }

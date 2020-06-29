@@ -94,7 +94,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			pgengine.ConfigDb.MustExec("TRUNCATE timetable.log")
 			for _, logLevel := range logLevels {
 				assert.NotPanics(t, func() {
-					pgengine.LogToDB(logLevel, logLevel)
+					pgengine.LogToDB(ctx, logLevel, logLevel)
 				}, "LogToDB panicked")
 
 				if !pgengine.VerboseLogLevel {
@@ -154,20 +154,20 @@ func TestSchedulerFunctions(t *testing.T) {
 		var chains []pgengine.ChainElementExecution
 		tx, err := pgengine.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.True(t, pgengine.GetChainElements(tx, &chains, 0), "Should no error in clean database")
+		assert.True(t, pgengine.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
-		pgengine.MustCommitTransaction(tx)
+		pgengine.MustCommitTransaction(ctx, tx)
 	})
 
 	t.Run("Check GetChainParamValues funсtion", func(t *testing.T) {
 		var paramVals []string
 		tx, err := pgengine.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.True(t, pgengine.GetChainParamValues(tx, &paramVals, &pgengine.ChainElementExecution{
+		assert.True(t, pgengine.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainElementExecution{
 			ChainID:     0,
 			ChainConfig: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")
-		pgengine.MustCommitTransaction(tx)
+		pgengine.MustCommitTransaction(ctx, tx)
 	})
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
@@ -180,22 +180,22 @@ func TestSchedulerFunctions(t *testing.T) {
 		var databaseConnection sql.NullString
 		tx, err := pgengine.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.NotNil(t, pgengine.GetConnectionString(databaseConnection), "Should no error in clean database")
-		pgengine.MustCommitTransaction(tx)
+		assert.NotNil(t, pgengine.GetConnectionString(ctx, databaseConnection), "Should no error in clean database")
+		pgengine.MustCommitTransaction(ctx, tx)
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
 		tx, err := pgengine.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.Error(t, pgengine.ExecuteSQLCommand(tx, "", nil), "Should error for empty script")
-		assert.Error(t, pgengine.ExecuteSQLCommand(tx, " 	", nil), "Should error for whitespace only script")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", nil), "Simple query with nil as parameters argument")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, ";", []string{}), "Simple query with empty slice as parameters argument")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1", []string{"[42]"}), "Simple query with non empty parameters")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1", []string{"[42]", `["hey"]`}), "Simple query with doubled parameters")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(tx, "SELECT $1, $2", []string{`[42, "hey"]`}), "Simple query with two parameters")
+		assert.Error(t, pgengine.ExecuteSQLCommand(ctx, tx, "", nil), "Should error for empty script")
+		assert.Error(t, pgengine.ExecuteSQLCommand(ctx, tx, " 	", nil), "Should error for whitespace only script")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, ";", nil), "Simple query with nil as parameters argument")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, ";", []string{}), "Simple query with empty slice as parameters argument")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1", []string{"[42]"}), "Simple query with non empty parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1", []string{"[42]", `["hey"]`}), "Simple query with doubled parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1, $2", []string{`[42, "hey"]`}), "Simple query with two parameters")
 
-		pgengine.MustCommitTransaction(tx)
+		pgengine.MustCommitTransaction(ctx, tx)
 	})
 
 }
@@ -215,27 +215,29 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := testutils.SetupTestCase(t)
 	defer teardownTestCase(t)
 
+	ctx := context.Background()
+
 	remoteDb, tx, err := setupTestRemoteDBFunc()
-	defer pgengine.FinalizeRemoteDBConnection(remoteDb)
+	defer pgengine.FinalizeRemoteDBConnection(ctx, remoteDb)
 	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
 	t.Run("Check connection closing", func(t *testing.T) {
-		pgengine.FinalizeRemoteDBConnection(remoteDb)
+		pgengine.FinalizeRemoteDBConnection(ctx, remoteDb)
 		assert.NotNil(t, remoteDb, "Connection isn't closed properly")
 	})
 
 	t.Run("Check set role function", func(t *testing.T) {
 		var runUID sql.NullString
 		runUID.String = cmdOpts.User
-		assert.NotPanics(t, func() { pgengine.SetRole(tx, runUID) }, "Set Role failed")
+		assert.NotPanics(t, func() { pgengine.SetRole(ctx, tx, runUID) }, "Set Role failed")
 	})
 
 	t.Run("Check reset role function", func(t *testing.T) {
-		assert.NotPanics(t, func() { pgengine.ResetRole(tx) }, "Reset Role failed")
+		assert.NotPanics(t, func() { pgengine.ResetRole(ctx, tx) }, "Reset Role failed")
 	})
 
-	pgengine.MustCommitTransaction(tx)
+	pgengine.MustCommitTransaction(ctx, tx)
 }
 
 func TestSamplesScripts(t *testing.T) {

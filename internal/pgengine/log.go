@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -46,7 +47,7 @@ func GetLogPrefixLn(level string) string {
 const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
-func LogToDB(level string, msg ...interface{}) {
+func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	if !VerboseLogLevel {
 		switch level {
 		case
@@ -57,7 +58,7 @@ func LogToDB(level string, msg ...interface{}) {
 	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
 	fmt.Println(s)
 	if ConfigDb != nil {
-		_, err := ConfigDb.Exec(logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+		_, err := ConfigDb.ExecContext(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
 			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprint("Cannot log to the database: ", err))
 		}
@@ -65,8 +66,8 @@ func LogToDB(level string, msg ...interface{}) {
 }
 
 // LogChainElementExecution will log current chain element execution status including retcode
-func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int, output string) {
-	_, err := ConfigDb.Exec("INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+func LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementExecution, retCode int, output string) {
+	_, err := ConfigDb.ExecContext(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
 		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
 		"NULLIF($10, ''), $11)",
@@ -75,6 +76,6 @@ func LogChainElementExecution(chainElemExec *ChainElementExecution, retCode int,
 		fmt.Sprintf("%d microsecond", chainElemExec.Duration),
 		retCode, os.Getpid(), output, ClientName)
 	if err != nil {
-		LogToDB("ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
+		LogToDB(ctx, "ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
 	}
 }

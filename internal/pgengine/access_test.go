@@ -33,9 +33,7 @@ func TestTryLockClientName(t *testing.T) {
 		assert.False(t, pgengine.TryLockClientName(ctx))
 	})
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestDeleteChainConfig(t *testing.T) {
@@ -62,9 +60,7 @@ func TestDeleteChainConfig(t *testing.T) {
 		assert.False(t, pgengine.DeleteChainConfig(ctx, 0))
 	})
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestFixSchedulerCrash(t *testing.T) {
@@ -82,9 +78,7 @@ func TestFixSchedulerCrash(t *testing.T) {
 		pgengine.FixSchedulerCrash(ctx)
 	})
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestCanProceedChainExecution(t *testing.T) {
@@ -116,9 +110,7 @@ func TestCanProceedChainExecution(t *testing.T) {
 		assert.False(t, pgengine.CanProceedChainExecution(ctx, 0, 0))
 	})
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestInsertChainRunStatus(t *testing.T) {
@@ -136,9 +128,7 @@ func TestInsertChainRunStatus(t *testing.T) {
 		pgengine.InsertChainRunStatus(ctx, 0, 0)
 	})
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestUpdateChainRunStatus(t *testing.T) {
@@ -156,9 +146,7 @@ func TestUpdateChainRunStatus(t *testing.T) {
 		pgengine.UpdateChainRunStatus(ctx, &pgengine.ChainElementExecution{}, 0, "STATUS")
 	})
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestIsAlive(t *testing.T) {

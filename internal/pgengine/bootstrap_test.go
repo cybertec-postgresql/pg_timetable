@@ -54,7 +54,5 @@ func TestInitAndTestMock(t *testing.T) {
 
 	pgengine.OpenDB = sql.OpenDB
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }

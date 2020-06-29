@@ -41,41 +41,41 @@ func StartTransaction(ctx context.Context) (*sqlx.Tx, error) {
 }
 
 // MustCommitTransaction commits transaction and log error in the case of error
-func MustCommitTransaction(tx *sqlx.Tx) {
-	LogToDB("DEBUG", "Commit transaction for successful chain execution")
+func MustCommitTransaction(ctx context.Context, tx *sqlx.Tx) {
+	LogToDB(ctx, "DEBUG", "Commit transaction for successful chain execution")
 	err := tx.Commit()
 	if err != nil {
-		LogToDB("ERROR", "Application cannot commit after job finished: ", err)
+		LogToDB(ctx, "ERROR", "Application cannot commit after job finished: ", err)
 	}
 }
 
 // MustRollbackTransaction rollbacks transaction and log error in the case of error
-func MustRollbackTransaction(tx *sqlx.Tx) {
-	LogToDB("DEBUG", "Rollback transaction for failed chain execution")
+func MustRollbackTransaction(ctx context.Context, tx *sqlx.Tx) {
+	LogToDB(ctx, "DEBUG", "Rollback transaction for failed chain execution")
 	err := tx.Rollback()
 	if err != nil {
-		LogToDB("ERROR", "Application cannot rollback after job failed: ", err)
+		LogToDB(ctx, "ERROR", "Application cannot rollback after job failed: ", err)
 	}
 }
 
-func MustSavepoint(tx *sqlx.Tx, savepoint string) {
-	LogToDB("DEBUG", "Define savepoint to ignore an error for the task: ", strconv.Quote(savepoint))
-	_, err := tx.Exec("SAVEPOINT " + strconv.Quote(savepoint))
+func MustSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
+	LogToDB(ctx, "DEBUG", "Define savepoint to ignore an error for the task: ", strconv.Quote(savepoint))
+	_, err := tx.ExecContext(ctx, "SAVEPOINT "+strconv.Quote(savepoint))
 	if err != nil {
-		LogToDB("ERROR", err)
+		LogToDB(ctx, "ERROR", err)
 	}
 }
 
-func MustRollbackToSavepoint(tx *sqlx.Tx, savepoint string) {
-	LogToDB("DEBUG", "Rollback to savepoint ignoring error for the task: ", savepoint)
-	_, err := tx.Exec("ROLLBACK TO SAVEPOINT " + strconv.Quote(savepoint))
+func MustRollbackToSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
+	LogToDB(ctx, "DEBUG", "Rollback to savepoint ignoring error for the task: ", savepoint)
+	_, err := tx.ExecContext(ctx, "ROLLBACK TO SAVEPOINT "+strconv.Quote(savepoint))
 	if err != nil {
-		LogToDB("ERROR", err)
+		LogToDB(ctx, "ERROR", err)
 	}
 }
 
 // GetChainElements returns all elements for a given chain
-func GetChainElements(tx *sqlx.Tx, chains interface{}, chainID int) bool {
+func GetChainElements(ctx context.Context, tx *sqlx.Tx, chains interface{}, chainID int) bool {
 	const sqlSelectChains = `
 WITH RECURSIVE x
 (chain_id, task_id, task_name, script, kind, run_uid, ignore_error, autonomous, database_connection) AS 
@@ -106,26 +106,26 @@ WITH RECURSIVE x
 		WHERE a.database_connection = x.database_connection) 
 	FROM x`
 
-	err := tx.Select(chains, sqlSelectChains, chainID)
+	err := tx.SelectContext(ctx, chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB("ERROR", "Recursive queries to fetch chain tasks failed: ", err)
+		LogToDB(ctx, "ERROR", "Recursive queries to fetch chain tasks failed: ", err)
 		return false
 	}
 	return true
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func GetChainParamValues(tx *sqlx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
+func GetChainParamValues(ctx context.Context, tx *sqlx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
 	const sqlGetParamValues = `
 SELECT value
 FROM  timetable.chain_execution_parameters
 WHERE chain_execution_config = $1
   AND chain_id = $2
 ORDER BY order_id ASC`
-	err := tx.Select(paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
+	err := tx.SelectContext(ctx, paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
-		LogToDB("ERROR", "cannot fetch parameters values for chain: ", err)
+		LogToDB(ctx, "ERROR", "cannot fetch parameters values for chain: ", err)
 		return false
 	}
 	return true
@@ -136,7 +136,7 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 	var execTx *sqlx.Tx
 	var remoteDb *sqlx.DB
 	var err error
-	var executor SQLExecutor
+	var executor sqlx.ExecerContext
 
 	execTx = tx
 	if chainElemExec.Autonomous {
@@ -147,7 +147,7 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 
 	//Connect to Remote DB
 	if chainElemExec.DatabaseConnection.Valid {
-		connectionString := GetConnectionString(chainElemExec.DatabaseConnection)
+		connectionString := GetConnectionString(ctx, chainElemExec.DatabaseConnection)
 		remoteDb, execTx, err = GetRemoteDBTransaction(ctx, connectionString)
 		if err != nil {
 			return err
@@ -156,43 +156,39 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 			executor = remoteDb
 			_ = execTx.Rollback()
 		}
-		defer FinalizeRemoteDBConnection(remoteDb)
+		defer FinalizeRemoteDBConnection(ctx, remoteDb)
 	}
 
 	// Set Role
 	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
-		SetRole(execTx, chainElemExec.RunUID)
+		SetRole(ctx, execTx, chainElemExec.RunUID)
 	}
 
 	if chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		MustSavepoint(execTx, chainElemExec.TaskName)
+		MustSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
-	err = ExecuteSQLCommand(executor, chainElemExec.Script, paramValues)
+	err = ExecuteSQLCommand(ctx, executor, chainElemExec.Script, paramValues)
 
 	if err != nil && chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		MustRollbackToSavepoint(execTx, chainElemExec.TaskName)
+		MustRollbackToSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
 	//Reset The Role
 	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
-		ResetRole(execTx)
+		ResetRole(ctx, execTx)
 	}
 
 	// Commit changes on remote server
 	if chainElemExec.DatabaseConnection.Valid && !chainElemExec.Autonomous {
-		MustCommitTransaction(execTx)
+		MustCommitTransaction(ctx, execTx)
 	}
 
 	return err
 }
 
-type SQLExecutor interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
 // ExecuteSQLCommand executes chain script with parameters inside transaction
-func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string) error {
+func ExecuteSQLCommand(ctx context.Context, executor sqlx.ExecerContext, script string, paramValues []string) error {
 	var err error
 	var params []interface{}
 
@@ -200,15 +196,15 @@ func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string
 		return errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		_, err = executor.Exec(script)
+		_, err = executor.ExecContext(ctx, script)
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
 				if err := json.Unmarshal([]byte(val), &params); err != nil {
 					return err
 				}
-				LogToDB("DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
-				_, err = executor.Exec(script, params...)
+				LogToDB(ctx, "DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
+				_, err = executor.ExecContext(ctx, script, params...)
 			}
 		}
 	}
@@ -216,11 +212,11 @@ func ExecuteSQLCommand(executor SQLExecutor, script string, paramValues []string
 }
 
 //GetConnectionString of database_connection
-func GetConnectionString(databaseConnection sql.NullString) (connectionString string) {
+func GetConnectionString(ctx context.Context, databaseConnection sql.NullString) (connectionString string) {
 	err := ConfigDb.Get(&connectionString, "SELECT connect_string "+
 		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection)
 	if err != nil {
-		LogToDB("ERROR", "Issue while fetching connection string:", err)
+		LogToDB(ctx, "ERROR", "Issue while fetching connection string:", err)
 	}
 	return connectionString
 }
@@ -232,14 +228,14 @@ func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*sqlx
 	}
 	remoteDb, err := sqlx.ConnectContext(ctx, "postgres", connectionString)
 	if err != nil {
-		LogToDB("ERROR",
+		LogToDB(ctx, "ERROR",
 			fmt.Sprintf("Error in remote connection (%s): %v", connectionString, err))
 		return nil, nil, err
 	}
-	LogToDB("LOG", "Remote Connection established...")
+	LogToDB(ctx, "LOG", "Remote Connection established...")
 	remoteTx, err := remoteDb.BeginTxx(ctx, nil)
 	if err != nil {
-		LogToDB("ERROR",
+		LogToDB(ctx, "ERROR",
 			fmt.Sprintf("Error during start of remote transaction (%s): %v", connectionString, err))
 		return nil, nil, err
 	}
@@ -247,29 +243,29 @@ func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*sqlx
 }
 
 // FinalizeRemoteDBConnection closes session
-func FinalizeRemoteDBConnection(remoteDb *sqlx.DB) {
-	LogToDB("LOG", "Closing remote session")
+func FinalizeRemoteDBConnection(ctx context.Context, remoteDb *sqlx.DB) {
+	LogToDB(ctx, "LOG", "Closing remote session")
 	if err := remoteDb.Close(); err != nil {
-		LogToDB("ERROR", "Cannot close database connection:", err)
+		LogToDB(ctx, "ERROR", "Cannot close database connection:", err)
 	}
 	remoteDb = nil
 }
 
 // SetRole - set the current user identifier of the current session
-func SetRole(tx *sqlx.Tx, runUID sql.NullString) {
-	LogToDB("LOG", "Setting Role to ", runUID.String)
+func SetRole(ctx context.Context, tx *sqlx.Tx, runUID sql.NullString) {
+	LogToDB(ctx, "LOG", "Setting Role to ", runUID.String)
 	_, err := tx.Exec(fmt.Sprintf("SET ROLE %v", runUID.String))
 	if err != nil {
-		LogToDB("ERROR", "Error in Setting role", err)
+		LogToDB(ctx, "ERROR", "Error in Setting role", err)
 	}
 }
 
 //ResetRole - RESET forms reset the current user identifier to be the current session user identifier
-func ResetRole(tx *sqlx.Tx) {
-	LogToDB("LOG", "Resetting Role")
+func ResetRole(ctx context.Context, tx *sqlx.Tx) {
+	LogToDB(ctx, "LOG", "Resetting Role")
 	const sqlResetRole = `RESET ROLE`
 	_, err := tx.Exec(sqlResetRole)
 	if err != nil {
-		LogToDB("ERROR", "Error in ReSetting role", err)
+		LogToDB(ctx, "ERROR", "Error in ReSetting role", err)
 	}
 }

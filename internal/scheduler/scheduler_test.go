@@ -21,9 +21,6 @@ func TestRun(t *testing.T) {
 	teardownTestCase := testutils.SetupTestCase(t)
 	defer teardownTestCase(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	require.NotNil(t, pgengine.ConfigDb, "ConfigDB should be initialized")
 
 	ok := pgengine.ExecuteCustomScripts(context.Background(), "../../samples/Interval.sql")
@@ -34,9 +31,10 @@ func TestRun(t *testing.T) {
 	assert.True(t, ok, "Creating built-in tasks failed")
 	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/Shell.sql")
 	assert.True(t, ok, "Creating shell tasks failed")
-
-	t.Run("Check main loop of the application", func(t *testing.T) {
-		assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
-	})
+	ok = pgengine.ExecuteCustomScripts(context.Background(), "../../samples/SelfDestruct.sql")
+	assert.True(t, ok, "Creating shell tasks failed")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
 
 }

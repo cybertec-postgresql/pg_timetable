@@ -30,34 +30,33 @@ func initmockdb(t *testing.T) {
 func TestMustTransaction(t *testing.T) {
 	initmockdb(t)
 	defer db.Close()
+	ctx := context.Background()
 
 	mock.ExpectBegin()
 	mock.ExpectCommit().WillReturnError(errors.New("error"))
 	tx, err := xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.MustCommitTransaction(tx)
+	pgengine.MustCommitTransaction(ctx, tx)
 
 	mock.ExpectBegin()
 	mock.ExpectRollback().WillReturnError(errors.New("error"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.MustRollbackTransaction(tx)
+	pgengine.MustRollbackTransaction(ctx, tx)
 
 	mock.ExpectBegin()
 	mock.ExpectExec("SAVEPOINT").WillReturnError(errors.New("error"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.MustSavepoint(tx, "foo")
+	pgengine.MustSavepoint(ctx, tx, "foo")
 
 	mock.ExpectBegin()
 	mock.ExpectExec("ROLLBACK TO SAVEPOINT").WillReturnError(errors.New("error"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.MustRollbackToSavepoint(tx, "foo")
+	pgengine.MustRollbackToSavepoint(ctx, tx, "foo")
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestExecuteSQLTask(t *testing.T) {
@@ -112,11 +111,9 @@ func TestExpectedCloseError(t *testing.T) {
 	initmockdb(t)
 
 	mock.ExpectClose().WillReturnError(errors.New("Close failed"))
-	pgengine.FinalizeRemoteDBConnection(xdb)
+	pgengine.FinalizeRemoteDBConnection(context.TODO(), xdb)
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
 func TestExecuteSQLCommand(t *testing.T) {
@@ -151,12 +148,12 @@ func TestExecuteSQLCommand(t *testing.T) {
 			}("foo"),
 		},
 	}
-
+	ctx := context.Background()
 	for _, res := range sqlresults {
 		if res.sql != "" {
 			mock.ExpectExec(res.sql).WillReturnResult(sqlmock.NewResult(0, 0))
 		}
-		assert.Equal(t, res.err, pgengine.ExecuteSQLCommand(xdb, res.sql, res.params))
+		assert.Equal(t, res.err, pgengine.ExecuteSQLCommand(ctx, xdb, res.sql, res.params))
 	}
 }
 
@@ -165,45 +162,47 @@ func TestGetChainElements(t *testing.T) {
 	defer db.Close()
 
 	assert.True(t, pgengine.ChainElementExecution{}.String() > "")
+	ctx := context.Background()
 
 	mock.ExpectBegin()
 	mock.ExpectQuery("WITH RECURSIVE").WillReturnError(errors.New("error"))
 	tx, err := xdb.Beginx()
 	assert.NoError(t, err)
-	assert.False(t, pgengine.GetChainElements(tx, &[]string{}, 0))
+	assert.False(t, pgengine.GetChainElements(ctx, tx, &[]string{}, 0))
 
 	mock.ExpectBegin()
 	mock.ExpectQuery("WITH RECURSIVE").WithArgs(0).WillReturnRows(sqlmock.NewRows([]string{"s"}).AddRow("foo"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	assert.True(t, pgengine.GetChainElements(tx, &[]string{}, 0))
+	assert.True(t, pgengine.GetChainElements(ctx, tx, &[]string{}, 0))
 
 	mock.ExpectBegin()
 	mock.ExpectQuery("SELECT").WillReturnError(errors.New("error"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	assert.False(t, pgengine.GetChainParamValues(tx, &[]string{}, &pgengine.ChainElementExecution{}))
+	assert.False(t, pgengine.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElementExecution{}))
 
 	mock.ExpectBegin()
 	mock.ExpectQuery("SELECT").WithArgs(0, 0).WillReturnRows(sqlmock.NewRows([]string{"s"}).AddRow("foo"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	assert.True(t, pgengine.GetChainParamValues(tx, &[]string{}, &pgengine.ChainElementExecution{}))
+	assert.True(t, pgengine.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElementExecution{}))
 }
 
 func TestSetRole(t *testing.T) {
 	initmockdb(t)
 	defer db.Close()
+	ctx := context.Background()
 
 	mock.ExpectBegin()
 	mock.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
 	tx, err := xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.SetRole(tx, sql.NullString{String: "foo"})
+	pgengine.SetRole(ctx, tx, sql.NullString{String: "foo"})
 
 	mock.ExpectBegin()
 	mock.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))
 	tx, err = xdb.Beginx()
 	assert.NoError(t, err)
-	pgengine.ResetRole(tx)
+	pgengine.ResetRole(ctx, tx)
 }
