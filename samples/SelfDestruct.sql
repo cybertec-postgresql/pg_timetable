@@ -1,3 +1,11 @@
+CREATE OR REPLACE FUNCTION raise_func(text)
+  RETURNS void LANGUAGE plpgsql AS
+$BODY$ 
+BEGIN 
+   RAISE NOTICE '%', $1; 
+END; 
+$BODY$;
+
 WITH 
 sql_task(id) AS (
     INSERT INTO timetable.base_task VALUES (
@@ -45,4 +53,4 @@ VALUES (
     (SELECT id FROM chain_config),
     (SELECT chain_id FROM chain_insert),
     1,
-    '[ "TT_CHANNEL", "Ahoi from SQL base task" ]' :: jsonb) 
+    '[ "Ahoj from self destruct task" ]' :: jsonb) 

@@ -21,10 +21,10 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 	return exec.CommandContext(ctx, command, args...).CombinedOutput()
 }
 
-var cmd commander
+var Cmd commander = realCommander{}
 
 // ExecuteTask executes built-in task depending on task name and returns err result
-func executeShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
+func ExecuteShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
 
 	if strings.TrimSpace(command) == "" {
 		return -1, "", errors.New("Shell command cannot be empty")
@@ -39,25 +39,21 @@ func executeShellCommand(ctx context.Context, command string, paramValues []stri
 				return -1, "", err
 			}
 		}
-		out, err := cmd.CombinedOutput(ctx, command, params...) // #nosec
+		out, err := Cmd.CombinedOutput(ctx, command, params...) // #nosec
 		cmdLine := fmt.Sprintf("%s %v: ", command, params)
 		stdout = strings.TrimSpace(string(out))
 		if len(out) > 0 {
-			pgengine.LogToDB("DEBUG", "Output for command ", cmdLine, string(out))
+			pgengine.LogToDB(ctx, "DEBUG", "Output for command ", cmdLine, string(out))
 		}
 		if err != nil {
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {
 				exitCode := exitError.ProcessState.ExitCode()
-				pgengine.LogToDB("DEBUG", "Return value of the command ", cmdLine, exitCode)
+				pgengine.LogToDB(ctx, "DEBUG", "Return value of the command ", cmdLine, exitCode)
 				return exitCode, stdout, exitError
 			}
 			return -1, stdout, err
 		}
 	}
 	return 0, stdout, nil
-}
-
-func init() {
-	cmd = realCommander{}
 }

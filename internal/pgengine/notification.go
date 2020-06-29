@@ -16,10 +16,10 @@ func notificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 		return // already handled
 	}
 	notifications[*n] = struct{}{}
-	LogToDB("DEBUG", "Async notifications received: ", len(notifications))
+	LogToDB(context.Background(), "DEBUG", "Async notifications received: ", len(notifications))
 	if id, err := strconv.Atoi(n.Payload); err == nil {
 		configIDsChan <- id
-		LogToDB("LOG", "Received async execution request: ", *n)
+		LogToDB(context.Background(), "LOG", "Received async execution request: ", *n)
 	}
 }
 
@@ -35,11 +35,11 @@ func WaitForAsyncChain(ctx context.Context) int {
 func HandleNotifications(ctx context.Context) {
 	conn, err := ConfigDb.DB.Conn(ctx)
 	if err != nil {
-		LogToDB("ERROR", err)
+		LogToDB(ctx, "ERROR", err)
 	}
 	_, err = conn.ExecContext(ctx, "LISTEN "+ClientName)
 	if err != nil {
-		LogToDB("ERROR", err)
+		LogToDB(ctx, "ERROR", err)
 	}
 	for {
 		select {
@@ -55,7 +55,7 @@ func HandleNotifications(ctx context.Context) {
 			return nil
 		})
 		if err != nil {
-			LogToDB("ERROR", err)
+			LogToDB(ctx, "ERROR", err)
 		}
 	}
 }

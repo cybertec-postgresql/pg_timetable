@@ -82,27 +82,22 @@ func (m *Migrator) Migrate(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	// count applied migrations
-	count, err := countApplied(ctx, db, m.TableName)
+	pm, count, err := m.Pending(ctx, db)
 	if err != nil {
 		return err
 	}
 
-	if count > len(m.migrations) {
-		return errors.New("Applied migration number on db cannot be greater than the defined migration list")
-	}
-
 	// plan migrations
-	for idx, migration := range m.migrations[count:len(m.migrations)] {
+	for idx, migration := range pm {
 		insertVersion := fmt.Sprintf("INSERT INTO %s (id, version) VALUES (%d, '%s')", m.TableName, idx+count, migration.(fmt.Stringer).String())
 		switch mm := migration.(type) {
 		case *Migration:
 			if err := migrate(ctx, db, insertVersion, mm, m.onNotice); err != nil {
-				return fmt.Errorf("Error while running migrations: %v", err)
+				return fmt.Errorf("Error while running migrations: %w", err)
 			}
 		case *MigrationNoTx:
 			if err := migrateNoTx(ctx, db, insertVersion, mm, m.onNotice); err != nil {
-				return fmt.Errorf("Error while running migrations: %v", err)
+				return fmt.Errorf("Error while running migrations: %w", err)
 			}
 		}
 	}
@@ -110,13 +105,16 @@ func (m *Migrator) Migrate(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-// Pending returns all pending (not yet applied) migrations
-func (m *Migrator) Pending(ctx context.Context, db *sql.DB) ([]interface{}, error) {
+// Pending returns all pending (not yet applied) migrations and count of migration applied
+func (m *Migrator) Pending(ctx context.Context, db *sql.DB) ([]interface{}, int, error) {
 	count, err := countApplied(ctx, db, m.TableName)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return m.migrations[count:len(m.migrations)], nil
+	if count > len(m.migrations) {
+		count = len(m.migrations)
+	}
+	return m.migrations[count:len(m.migrations)], count, nil
 }
 
 // NeedUpgrade returns True if database need to be updated with migrations
@@ -125,7 +123,7 @@ func (m *Migrator) NeedUpgrade(ctx context.Context, db *sql.DB) (bool, error) {
 	if !exists {
 		return true, err
 	}
-	mm, err := m.Pending(ctx, db)
+	mm, _, err := m.Pending(ctx, db)
 	return len(mm) > 0, err
 }
 
@@ -185,10 +183,10 @@ func migrate(ctx context.Context, db *sql.DB, insertVersion string, migration *M
 	}()
 	notice(fmt.Sprintf("Applying migration named '%s'...", migration.Name))
 	if err = migration.Func(tx); err != nil {
-		return fmt.Errorf("Error executing golang migration: %s", err)
+		return fmt.Errorf("Error executing golang migration: %w", err)
 	}
 	if _, err = tx.Exec(insertVersion); err != nil {
-		return fmt.Errorf("Error updating migration versions: %s", err)
+		return fmt.Errorf("Error updating migration versions: %w", err)
 	}
 	notice(fmt.Sprintf("Applied migration named '%s'", migration.Name))
 
@@ -198,10 +196,10 @@ func migrate(ctx context.Context, db *sql.DB, insertVersion string, migration *M
 func migrateNoTx(ctx context.Context, db *sql.DB, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
 	notice(fmt.Sprintf("Applying no tx migration named '%s'...", migration.Name))
 	if err := migration.Func(ctx, db); err != nil {
-		return fmt.Errorf("Error executing golang migration: %s", err)
+		return fmt.Errorf("Error executing golang migration: %w", err)
 	}
 	if _, err := db.ExecContext(ctx, insertVersion); err != nil {
-		return fmt.Errorf("Error updating migration versions: %s", err)
+		return fmt.Errorf("Error updating migration versions: %w", err)
 	}
 	notice(fmt.Sprintf("Applied no tx migration named '%s'...", migration.Name))
 

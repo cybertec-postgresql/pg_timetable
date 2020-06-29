@@ -17,6 +17,7 @@ func TestParseFail(t *testing.T) {
 		{0: "go-test", "-c", "client01", "-d", "postgres:// "},
 		{0: "go-test", "-c", "client01", "postgres:// "},
 		{0: "go-test", "-c", "client01", "postgres://foo@bar:5432:5432/"},
+		{0: "go-test", "-c", "client01", "-f", "foo"},
 	}
 	for _, d := range tests {
 		os.Args = d
@@ -81,4 +82,9 @@ func TestParseSuccessful(t *testing.T) {
 		assert.NoError(t, err, d.msg)
 		assert.Equal(t, d.result.String(), c.String(), d.msg)
 	}
+}
+
+func TestNewCmdOptions(t *testing.T) {
+	c := NewCmdOptions("cmdparser_unit_test")
+	assert.NotNil(t, c)
 }

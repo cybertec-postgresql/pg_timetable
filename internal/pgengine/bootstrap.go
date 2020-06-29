@@ -56,25 +56,27 @@ func (l logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 	fmt.Println(s)
 }
 
+var OpenDB func(driverName string, dataSourceName string) (*sql.DB, error) = sql.Open
+
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
 	NoShellTasks = cmdOpts.NoShellTasks
 	VerboseLogLevel = cmdOpts.Verbose
-	LogToDB("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
+	LogToDB(ctx, "DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error
 
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
-	LogToDB("DEBUG", "Connection string: ", connstr)
+	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
 	connConfig, err := pgx.ParseConfig(connstr)
 	if err != nil {
-		LogToDB("ERROR", err)
+		LogToDB(ctx, "ERROR", err)
 		return false
 	}
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
-		LogToDB("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+		LogToDB(ctx, "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
 	}
 	if !cmdOpts.Debug {
 		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
@@ -90,26 +92,28 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	connConfig.PreferSimpleProtocol = true
 	connstr = stdlib.RegisterConnConfig(connConfig)
-	db, err := sql.Open("pgx", connstr)
+	db, err := OpenDB("pgx", connstr)
 	if err == nil {
 		err = db.PingContext(ctx)
 	}
 	for err != nil {
-		LogToDB("ERROR", err)
-		LogToDB("LOG", "Reconnecting in ", wt, " sec...")
+		LogToDB(ctx, "ERROR", err)
+		LogToDB(ctx, "LOG", "Reconnecting in ", wt, " sec...")
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
 			err = db.PingContext(ctx)
 		case <-ctx.Done():
-			LogToDB("ERROR", "Connection request cancelled: ", ctx.Err())
+			LogToDB(ctx, "ERROR", "Connection request cancelled: ", ctx.Err())
 			return false
 		}
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
 	}
-	LogToDB("LOG", "Connection established...")
-	LogToDB("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
+
+	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
+	LogToDB(ctx, "LOG", "Connection established...")
+	LogToDB(ctx, "LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 
 	ConfigDb = sqlx.NewDb(db, "pgx")
 	if !executeSchemaScripts(ctx) {
@@ -136,7 +140,7 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 			fmt.Printf(GetLogPrefixLn("PANIC"), err)
 			return false
 		}
-		LogToDB("LOG", "Script file executed: "+f)
+		LogToDB(ctx, "LOG", "Script file executed: "+f)
 	}
 	return true
 }
@@ -144,7 +148,10 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 func executeSchemaScripts(ctx context.Context) bool {
 	var exists bool
 	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
-	if err != nil || !exists {
+	if err != nil {
+		return false
+	}
+	if !exists {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
 			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
@@ -157,9 +164,9 @@ func executeSchemaScripts(ctx context.Context) bool {
 				}
 				return false
 			}
-			LogToDB("LOG", "Schema file executed: "+sqlName)
+			LogToDB(ctx, "LOG", "Schema file executed: "+sqlName)
 		}
-		LogToDB("LOG", "Configuration schema created...")
+		LogToDB(ctx, "LOG", "Configuration schema created...")
 	}
 	return true
 }
@@ -186,7 +193,7 @@ func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
 			return false
 		}
 	}
-	LogToDB("LOG", "Connection reestablished...")
+	LogToDB(ctx, "LOG", "Connection reestablished...")
 	FixSchedulerCrash(ctx)
 	return true
 }

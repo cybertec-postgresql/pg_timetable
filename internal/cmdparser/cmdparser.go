@@ -29,9 +29,9 @@ type CmdOptions struct {
 }
 
 // NewCmdOptions returns a new instance of CmdOptions with default values
-func NewCmdOptions() *CmdOptions {
+func NewCmdOptions(ClientName string) *CmdOptions {
 	cmdOpts := new(CmdOptions)
-	_, _ = flags.NewParser(cmdOpts, flags.Default).ParseArgs([]string{})
+	_, _ = flags.NewParser(cmdOpts, flags.Default).ParseArgs([]string{"-c", ClientName})
 	return cmdOpts
 }
 
