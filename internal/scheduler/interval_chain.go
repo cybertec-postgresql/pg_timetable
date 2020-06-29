@@ -47,8 +47,13 @@ func (ichain IntervalChain) reschedule(ctx context.Context) {
 	}
 	pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Sleeping before next execution for %ds for chain %s", ichain.Interval, ichain))
 	time.Sleep(time.Duration(ichain.Interval) * time.Second)
-	if ichain.isValid() {
-		intervalChainsChan <- ichain
+	select {
+	case <-time.After(time.Duration(ichain.Interval) * time.Second):
+		if ichain.isValid() {
+			intervalChainsChan <- ichain
+		}
+	case <-ctx.Done():
+		pgengine.LogToDB(ctx, "ERROR", "Context cancelled: ", ctx.Err())
 	}
 }
 
