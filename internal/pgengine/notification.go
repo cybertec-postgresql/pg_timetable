@@ -52,7 +52,7 @@ func HandleNotifications(ctx context.Context) {
 			if n, err := c.WaitForNotification(ctx); err == nil {
 				notificationHandler(c.PgConn(), n)
 			}
-			return nil
+			return err
 		})
 		if err != nil {
 			LogToDB(ctx, "ERROR", err)

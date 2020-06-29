@@ -115,14 +115,10 @@ func Run(ctx context.Context, debug bool) RunStatus {
 		}
 		select {
 		case <-time.After(refetchTimeout * time.Second):
-			if !pgengine.IsAlive() {
+			if sysConn.Ping(ctx) != nil {
 				return ConnectionDroppped
 			}
-		case <-time.After(10 * time.Second):
-			_ = pgengine.ConfigDb.PingContext(ctx)
 		case <-ctx.Done():
-			// If the request gets cancelled, log it
-			pgengine.LogToDB(ctx, "ERROR", "request cancelled")
 			return ContextCancelled
 		}
 	}
