@@ -82,7 +82,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
 			return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
 		}
-		connConfig.OnNotification = notificationHandler
+		connConfig.OnNotification = NotificationHandler
 	}
 	connConfig.Logger = logger{}
 	if VerboseLogLevel {

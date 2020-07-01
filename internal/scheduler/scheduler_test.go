@@ -1,15 +1,18 @@
-package scheduler_test
+package scheduler
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jackc/pgconn"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
@@ -35,6 +38,32 @@ func TestRun(t *testing.T) {
 	assert.True(t, ok, "Creating shell tasks failed")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	assert.Equal(t, scheduler.Run(ctx, false), scheduler.ContextCancelled)
+	assert.Equal(t, Run(ctx, false), ContextCancelled)
 
+}
+
+func TestAsyncChains(t *testing.T) {
+	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	assert.NoError(t, err)
+	pgengine.ConfigDb = sqlx.NewDb(db, "sqlmock")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	//add correct chain
+	pgengine.NotificationHandler(nil, &pgconn.Notification{Payload: "24"})
+	mock.ExpectQuery("SELECT.+chain_execution_config").
+		WillReturnRows(sqlmock.NewRows([]string{"chain_execution_config", "chain_id", "chain_name",
+			"self_destruct", "exclusive_execution", "max_instances"}).
+			AddRow(24, 24, "foo", false, false, 16))
+	if pgengine.VerboseLogLevel {
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+	}
+	//add incorrect chaing
+	pgengine.NotificationHandler(nil, &pgconn.Notification{Payload: "42"})
+	mock.ExpectQuery("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
+	mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+	//emulate context cancellation
+	pgengine.NotificationHandler(nil, &pgconn.Notification{Payload: "0"})
+	retrieveAsyncChainsAndRun(ctx)
 }

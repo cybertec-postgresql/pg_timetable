@@ -10,10 +10,10 @@ import (
 )
 
 var notifications map[pgconn.Notification]struct{} = make(map[pgconn.Notification]struct{})
-var configIDsChan chan int = make(chan int)
+var configIDsChan chan int = make(chan int, 64)
 var mutex = &sync.Mutex{}
 
-func notificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
+func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	mutex.Lock()
 	if _, ok := notifications[*n]; ok {
 		return // already handled
@@ -52,7 +52,7 @@ func HandleNotifications(ctx context.Context) {
 		err = conn.Raw(func(driverConn interface{}) error {
 			c := driverConn.(*stdlib.Conn).Conn()
 			if n, err := c.WaitForNotification(ctx); err == nil {
-				notificationHandler(c.PgConn(), n)
+				NotificationHandler(c.PgConn(), n)
 			}
 			return err
 		})

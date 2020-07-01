@@ -50,7 +50,7 @@ type Chain struct {
 }
 
 // create channel for passing chains to workers
-var chains chan Chain = make(chan Chain)
+var chains chan Chain = make(chan Chain, workersNumber)
 
 func (chain Chain) String() string {
 	data, _ := json.Marshal(chain)
