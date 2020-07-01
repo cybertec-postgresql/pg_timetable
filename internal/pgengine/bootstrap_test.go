@@ -89,3 +89,27 @@ func TestExecuteSchemaScripts(t *testing.T) {
 		assert.True(t, pgengine.ExecuteSchemaScripts(ctx))
 	})
 }
+
+func TestReconnectAndFixLeftovers(t *testing.T) {
+	initmockdb(t)
+	defer db.Close()
+	pgengine.ConfigDb = xdb
+
+	t.Run("Check ReconnectAndFixLeftovers if everything fine", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		mock.ExpectPing()
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnResult(sqlmock.NewResult(0, 0))
+		assert.True(t, pgengine.ReconnectDbAndFixLeftovers(ctx))
+	})
+
+	t.Run("Check ReconnectAndFixLeftovers if error returned", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), (pgengine.WaitTime+2)*time.Second)
+		defer cancel()
+		mock.ExpectPing().WillReturnError(errors.New("expected"))
+		mock.ExpectPing().WillDelayFor(pgengine.WaitTime * time.Second * 2)
+		assert.False(t, pgengine.ReconnectDbAndFixLeftovers(ctx))
+	})
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
