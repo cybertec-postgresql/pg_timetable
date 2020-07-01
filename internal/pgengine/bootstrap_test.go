@@ -91,6 +91,27 @@ func TestExecuteSchemaScripts(t *testing.T) {
 	})
 }
 
+func TestExecuteCustomScripts(t *testing.T) {
+	initmockdb(t)
+	defer db.Close()
+	pgengine.ConfigDb = xdb
+
+	t.Run("Check ExecuteCustomScripts for non-existent file", func(t *testing.T) {
+		assert.False(t, pgengine.ExecuteCustomScripts(context.Background(), "foo.bar"))
+	})
+
+	t.Run("Check ExecuteCustomScripts if error returned", func(t *testing.T) {
+		mock.ExpectExec("WITH").WillReturnError(errors.New("expected"))
+		assert.False(t, pgengine.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql"))
+	})
+
+	t.Run("Check ExecuteCustomScripts if everything fine", func(t *testing.T) {
+		mock.ExpectExec("WITH").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		assert.True(t, pgengine.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql"))
+	})
+}
+
 func TestReconnectAndFixLeftovers(t *testing.T) {
 	initmockdb(t)
 	defer db.Close()
