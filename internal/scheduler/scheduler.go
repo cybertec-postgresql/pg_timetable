@@ -162,26 +162,26 @@ func retriveChainsAndRun(ctx context.Context, sql string, args ...interface{}) {
 }
 
 func chainWorker(ctx context.Context, chains <-chan Chain) {
-	for chain := range chains {
+	for {
 		select {
-		default:
+		case chain := <-chains:
+			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process chain for %s", chain))
+			for !pgengine.CanProceedChainExecution(ctx, chain.ChainExecutionConfigID, chain.MaxInstances) {
+				pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
+				select {
+				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
+				case <-ctx.Done():
+					return
+				}
+			}
+			executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
+			if chain.SelfDestruct {
+				pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
+			}
 		case <-ctx.Done():
 			return
 		}
-		pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process chain for %s", chain))
-		for !pgengine.CanProceedChainExecution(ctx, chain.ChainExecutionConfigID, chain.MaxInstances) {
-			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
-			select {
-			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
-			case <-ctx.Done():
-				pgengine.LogToDB(ctx, "ERROR", "request cancelled")
-				return
-			}
-		}
-		executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
-		if chain.SelfDestruct {
-			pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
-		}
+
 	}
 }
 
