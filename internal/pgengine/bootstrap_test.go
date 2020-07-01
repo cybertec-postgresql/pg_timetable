@@ -55,3 +55,37 @@ func TestInitAndTestMock(t *testing.T) {
 
 	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
+
+func TestExecuteSchemaScripts(t *testing.T) {
+	initmockdb(t)
+	defer db.Close()
+	pgengine.ConfigDb = xdb
+
+	t.Run("Check schema scripts if error returned for SELECT EXISTS", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		mock.ExpectQuery("SELECT EXISTS").WillReturnError(errors.New("expected"))
+		assert.False(t, pgengine.ExecuteSchemaScripts(ctx))
+	})
+
+	t.Run("Check schema scripts if error returned", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+		mock.ExpectExec("CREATE SCHEMA timetable").WillReturnError(errors.New("expected"))
+		mock.ExpectExec("DROP SCHEMA IF EXISTS timetable CASCADE").WillReturnError(errors.New("expected"))
+		assert.False(t, pgengine.ExecuteSchemaScripts(ctx))
+	})
+
+	t.Run("Check schema scripts if everything fine", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+		for i := 0; i < 4; i++ {
+			mock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 1))
+			mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		}
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		assert.True(t, pgengine.ExecuteSchemaScripts(ctx))
+	})
+}

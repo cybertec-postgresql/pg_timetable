@@ -116,7 +116,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	LogToDB(ctx, "LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 
 	ConfigDb = sqlx.NewDb(db, "pgx")
-	if !executeSchemaScripts(ctx) {
+	if !ExecuteSchemaScripts(ctx) {
 		return false
 	}
 	if cmdOpts.File != "" {
@@ -145,7 +145,8 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 	return true
 }
 
-func executeSchemaScripts(ctx context.Context) bool {
+// ExecuteCustomScripts executes initial schema scripts
+func ExecuteSchemaScripts(ctx context.Context) bool {
 	var exists bool
 	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil {
