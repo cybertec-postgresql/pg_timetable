@@ -3,6 +3,7 @@ package pgengine
 import (
 	"context"
 	"strconv"
+	"sync"
 
 	pgconn "github.com/jackc/pgconn"
 	stdlib "github.com/jackc/pgx/v4/stdlib"
@@ -10,17 +11,18 @@ import (
 
 var notifications map[pgconn.Notification]struct{} = make(map[pgconn.Notification]struct{})
 var configIDsChan chan int = make(chan int)
+var mutex = &sync.Mutex{}
 
 func notificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
+	mutex.Lock()
 	if _, ok := notifications[*n]; ok {
 		return // already handled
 	}
 	notifications[*n] = struct{}{}
-	LogToDB(context.Background(), "DEBUG", "Async notifications received: ", len(notifications))
 	if id, err := strconv.Atoi(n.Payload); err == nil {
 		configIDsChan <- id
-		LogToDB(context.Background(), "LOG", "Received async execution request: ", *n)
 	}
+	mutex.Unlock()
 }
 
 func WaitForAsyncChain(ctx context.Context) int {
