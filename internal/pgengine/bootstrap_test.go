@@ -121,3 +121,10 @@ func TestLogger(t *testing.T) {
 		l.Log(context.Background(), pgx.LogLevel(level), "", nil)
 	}
 }
+
+func TestFinalizeConnection(t *testing.T) {
+	initmockdb(t)
+	pgengine.ConfigDb = xdb
+	mock.ExpectClose().WillReturnError(errors.New("expected"))
+	pgengine.FinalizeConfigDBConnection()
+}
