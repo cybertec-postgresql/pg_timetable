@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	pgx "github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -112,4 +113,11 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 		assert.False(t, pgengine.ReconnectDbAndFixLeftovers(ctx))
 	})
 	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestLogger(t *testing.T) {
+	l := pgengine.Logger{}
+	for level := pgx.LogLevelNone; level <= pgx.LogLevelTrace; level++ {
+		l.Log(context.Background(), pgx.LogLevel(level), "", nil)
+	}
 }

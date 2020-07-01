@@ -35,11 +35,11 @@ var NoShellTasks bool
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
-type logger struct {
+type Logger struct {
 	pgx.Logger
 }
 
-func (l logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	var s string
 	switch level {
 	case pgx.LogLevelTrace, pgx.LogLevelDebug, pgx.LogLevelInfo:
@@ -84,7 +84,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 		}
 		connConfig.OnNotification = NotificationHandler
 	}
-	connConfig.Logger = logger{}
+	connConfig.Logger = Logger{}
 	if VerboseLogLevel {
 		connConfig.LogLevel = pgx.LogLevelDebug
 	} else {
