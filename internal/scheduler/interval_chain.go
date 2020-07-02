@@ -92,31 +92,31 @@ func retriveIntervalChainsAndRun(ctx context.Context, sql string) {
 }
 
 func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
-	for ichain := range ichains {
+	for {
 		select {
-		default:
+		case ichain := <-ichains:
+			if !ichain.isValid() { // chain not in the list of active chains
+				continue
+			}
+			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
+			if !ichain.RepeatAfter {
+				go ichain.reschedule(ctx)
+			}
+			for !pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
+				pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
+				select {
+				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
+				case <-ctx.Done():
+					pgengine.LogToDB(ctx, "ERROR", "request cancelled")
+					return
+				}
+			}
+			executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
+			if ichain.RepeatAfter {
+				go ichain.reschedule(ctx)
+			}
 		case <-ctx.Done():
 			return
-		}
-		if !ichain.isValid() { // chain not in the list of active chains
-			continue
-		}
-		pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
-		if !ichain.RepeatAfter {
-			go ichain.reschedule(ctx)
-		}
-		for !pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
-			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
-			select {
-			case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
-			case <-ctx.Done():
-				pgengine.LogToDB(ctx, "ERROR", "request cancelled")
-				return
-			}
-		}
-		executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
-		if ichain.RepeatAfter {
-			go ichain.reschedule(ctx)
 		}
 	}
 }
