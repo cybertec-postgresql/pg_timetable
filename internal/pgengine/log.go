@@ -13,9 +13,9 @@ const (
 	green  = 32
 	yellow = 33
 	// purple  = 34
-	// magenta = 35
-	blue = 36
-	gray = 37
+	magenta = 35
+	blue    = 36
+	//gray = 37
 )
 
 var levelColors = map[string]int{
@@ -23,20 +23,20 @@ var levelColors = map[string]int{
 	"ERROR":  red,
 	"REPAIR": red,
 	"USER":   yellow,
-	"LOG":    blue,
-	"NOTICE": green,
-	"DEBUG":  gray}
+	"LOG":    green,
+	"NOTICE": magenta,
+	"DEBUG":  blue}
 
 // VerboseLogLevel specifies if log messages with level LOG should be logged
 var VerboseLogLevel = true
 
-func getColorizedLevel(level string) string {
-	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", levelColors[level], level)
+func getColorizedPrefix(level string) string {
+	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", levelColors[level], time.Now().Format("2006-01-02 15:04:05.000")+" | "+level)
 }
 
 // GetLogPrefix perform formatted logging
 func GetLogPrefix(level string) string {
-	return fmt.Sprintf("[%v | %s | %-15s]: %%s", time.Now().Format("2006-01-02 15:04:05.000"), ClientName, getColorizedLevel(level))
+	return fmt.Sprintf("[ %-40s ]: %%s", getColorizedPrefix(level))
 }
 
 // GetLogPrefixLn perform formatted logging with new line at the end
@@ -49,9 +49,7 @@ const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, mess
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	if !VerboseLogLevel {
-		switch level {
-		case
-			"DEBUG", "NOTICE":
+		if level == "DEBUG" {
 			return
 		}
 	}

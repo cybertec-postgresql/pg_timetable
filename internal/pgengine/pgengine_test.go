@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	stdlib "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -124,7 +125,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check TryLockClientName()", func(t *testing.T) {
-		assert.Equal(t, true, pgengine.TryLockClientName(ctx), "Should succeed for clean database")
+		sysConn, _ := stdlib.AcquireConn(pgengine.ConfigDb.DB)
+		assert.Equal(t, true, pgengine.TryLockClientName(ctx, sysConn), "Should succeed for clean database")
 	})
 
 	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
@@ -252,7 +254,7 @@ func TestSamplesScripts(t *testing.T) {
 		defer cancel()
 		ok := pgengine.ExecuteCustomScripts(ctx, "../../samples/"+f.Name())
 		assert.True(t, ok, "Sample query failed: ", f.Name())
-		assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
+		assert.Equal(t, scheduler.Run(ctx, false), scheduler.ContextCancelled)
 		_, err = pgengine.ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
 		assert.NoError(t, err, "Cannot release locks by ", f.Name())
 		_, err = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")

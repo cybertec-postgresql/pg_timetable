@@ -101,6 +101,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func SetupTestCaseEx(t *testing.T, fc func(c *cmdparser.CmdOptions)) func(t *testing.T) {
+	fc(cmdOpts)
+	return SetupTestCase(t)
+}
+
 //SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
 	cmdOpts.Verbose = testing.Verbose()

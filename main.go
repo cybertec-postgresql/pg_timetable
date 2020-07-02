@@ -45,7 +45,7 @@ func main() {
 		os.Exit(0)
 	}
 	pgengine.SetupCloseHandler()
-	for scheduler.Run(ctx) == scheduler.ConnectionDroppped {
+	for scheduler.Run(ctx, cmdOpts.Debug) == scheduler.ConnectionDroppped {
 		pgengine.ReconnectDbAndFixLeftovers(ctx)
 	}
 }

@@ -20,11 +20,12 @@ type CmdOptions struct {
 	File          string `short:"f" long:"file" description:"SQL script file to execute during startup"`
 	Password      string `long:"password" description:"PG config DB password" default:"somestrong" env:"PGTT_PGPASSWORD"`
 	SSLMode       string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
-	PostgresURL   DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
 	Init          bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
 	Upgrade       bool   `long:"upgrade" description:"Upgrade database to the latest version"`
 	NoShellTasks  bool   `long:"no-shell-tasks" description:"Disable executing of shell tasks" env:"PGTT_NOSHELLTASKS"`
 	NoHelpMessage bool   `long:"no-help" hidden:"system use"`
+	Debug         bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
+	PostgresURL   DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`
 }
 
 // NewCmdOptions returns a new instance of CmdOptions with default values

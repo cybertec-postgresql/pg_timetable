@@ -3,17 +3,18 @@ package pgengine
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/lib/pq"
+	pgconn "github.com/jackc/pgconn"
+	pgx "github.com/jackc/pgx/v4"
+	stdlib "github.com/jackc/pgx/v4/stdlib"
 )
 
 // WaitTime specifies amount of time in seconds to wait before reconnecting to DB
@@ -34,8 +35,28 @@ var NoShellTasks bool
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
-//OpenDB used for mocking purposes
-var OpenDB func(c driver.Connector) *sql.DB = sql.OpenDB
+type Logger struct {
+	pgx.Logger
+}
+
+func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+	var s string
+	switch level {
+	case pgx.LogLevelTrace, pgx.LogLevelDebug, pgx.LogLevelInfo:
+		s = "DEBUG"
+	case pgx.LogLevelWarn:
+		s = "NOTICE"
+	case pgx.LogLevelError:
+		s = "ERROR"
+	default:
+		s = "LOG"
+	}
+	j, _ := json.Marshal(data)
+	s = fmt.Sprintf(GetLogPrefix(s), fmt.Sprint(msg, " ", string(j)))
+	fmt.Println(s)
+}
+
+var OpenDB func(driverName string, dataSourceName string) (*sql.DB, error) = sql.Open
 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
@@ -45,20 +66,36 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	LogToDB(ctx, "DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error
+
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
-	// Base connector to wrap
-	base, err := pq.NewConnector(connstr)
+	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
+	connConfig, err := pgx.ParseConfig(connstr)
 	if err != nil {
-		log.Fatal(err)
+		LogToDB(ctx, "ERROR", err)
+		return false
 	}
-	// Wrap the connector to simply print out the message
-	connector := pq.ConnectorWithNoticeHandler(base, func(notice *pq.Error) {
-		LogToDB(ctx, "USER", "Severity: ", notice.Severity, "; Message: ", notice.Message)
-	})
-	db := OpenDB(connector)
-
-	err = db.PingContext(ctx)
+	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+		LogToDB(ctx, "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+	}
+	if !cmdOpts.Debug {
+		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
+			return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+		}
+		connConfig.OnNotification = NotificationHandler
+	}
+	connConfig.Logger = Logger{}
+	if VerboseLogLevel {
+		connConfig.LogLevel = pgx.LogLevelDebug
+	} else {
+		connConfig.LogLevel = pgx.LogLevelWarn
+	}
+	connConfig.PreferSimpleProtocol = true
+	connstr = stdlib.RegisterConnConfig(connConfig)
+	db, err := OpenDB("pgx", connstr)
+	if err == nil {
+		err = db.PingContext(ctx)
+	}
 	for err != nil {
 		LogToDB(ctx, "ERROR", err)
 		LogToDB(ctx, "LOG", "Reconnecting in ", wt, " sec...")
@@ -77,9 +114,9 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
 	LogToDB(ctx, "LOG", "Connection established...")
 	LogToDB(ctx, "LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
-	ConfigDb = sqlx.NewDb(db, "postgres")
 
-	if !executeSchemaScripts(ctx) {
+	ConfigDb = sqlx.NewDb(db, "pgx")
+	if !ExecuteSchemaScripts(ctx) {
 		return false
 	}
 	if cmdOpts.File != "" {
@@ -108,7 +145,8 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 	return true
 }
 
-func executeSchemaScripts(ctx context.Context) bool {
+// ExecuteCustomScripts executes initial schema scripts
+func ExecuteSchemaScripts(ctx context.Context) bool {
 	var exists bool
 	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
 	if err != nil {
@@ -137,9 +175,6 @@ func executeSchemaScripts(ctx context.Context) bool {
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	fmt.Printf(GetLogPrefixLn("LOG"), "Closing session")
-	if _, err := ConfigDb.Exec("SELECT pg_advisory_unlock_all()"); err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during locks releasing: %v", err))
-	}
 	if err := ConfigDb.Close(); err != nil {
 		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during connection closing: %v", err))
 	}
