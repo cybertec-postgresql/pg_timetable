@@ -244,18 +244,18 @@ func TestSamplesScripts(t *testing.T) {
 	teardownTestCase := testutils.SetupTestCase(t)
 	defer teardownTestCase(t)
 
-	t.Run("Check samples scripts", func(t *testing.T) {
-		files, err := ioutil.ReadDir("../../samples")
-		assert.NoError(t, err, "Cannot read samples directory")
+	files, err := ioutil.ReadDir("../../samples")
+	assert.NoError(t, err, "Cannot read samples directory")
 
-		for _, f := range files {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			ok := pgengine.ExecuteCustomScripts(context.Background(), "../../samples/"+f.Name())
-			assert.True(t, ok, "Sample query failed: ", f.Name())
-			assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
-			_, err = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")
-			assert.NoError(t, err, "Cannot TRUNCATE timetable.task_chain after ", f.Name())
-		}
-	})
+	for _, f := range files {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		ok := pgengine.ExecuteCustomScripts(ctx, "../../samples/"+f.Name())
+		assert.True(t, ok, "Sample query failed: ", f.Name())
+		assert.Equal(t, scheduler.Run(ctx), scheduler.ContextCancelled)
+		_, err = pgengine.ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
+		assert.NoError(t, err, "Cannot release locks by ", f.Name())
+		_, err = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")
+		assert.NoError(t, err, "Cannot TRUNCATE timetable.task_chain after ", f.Name())
+	}
 }

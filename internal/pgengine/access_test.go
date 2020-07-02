@@ -20,16 +20,27 @@ func TestTryLockClientName(t *testing.T) {
 	pgengine.VerboseLogLevel = false
 
 	t.Run("Check TryLockClientName if everything fine", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		mock.ExpectQuery("SELECT pg_try_advisory_lock").WillReturnRows(sqlmock.NewRows([]string{"pg_try_advisory_lock"}).AddRow(true))
 		assert.True(t, pgengine.TryLockClientName(ctx))
 	})
 
 	t.Run("Check TryLockClientName if sql fails", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		mock.ExpectQuery("SELECT pg_try_advisory_lock").WillReturnError(errors.New("error"))
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		assert.False(t, pgengine.TryLockClientName(ctx))
+	})
+
+	t.Run("Check TryLockClientName if another client applied lock", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), (pgengine.WaitTime+1)*time.Second)
+		defer cancel()
+		mock.ExpectQuery("SELECT pg_try_advisory_lock").WillReturnRows(sqlmock.NewRows([]string{"pg_try_advisory_lock"}).AddRow(false))
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery("SELECT pg_try_advisory_lock").WillReturnRows(sqlmock.NewRows([]string{"pg_try_advisory_lock"}).AddRow(false))
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
 		assert.False(t, pgengine.TryLockClientName(ctx))
 	})
 

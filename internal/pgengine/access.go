@@ -67,27 +67,25 @@ func TryLockClientName(ctx context.Context) (res bool) {
 	var wt int = WaitTime
 	adler32Int := adler32.Checksum([]byte(ClientName))
 	res = false
-	for !res {
+	for {
 		LogToDB(ctx, "DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
 		err := ConfigDb.GetContext(ctx, &res, "SELECT pg_try_advisory_lock($1, $2)", AppID, adler32Int)
 		if err != nil {
 			LogToDB(ctx, "ERROR", "Error occurred during client name locking: ", err)
-		}
-		if !res {
+		} else if !res {
 			LogToDB(ctx, "ERROR", "Another client is already connected to server with name: ", ClientName)
+		} else {
+			return true
 		}
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
+			if wt < maxWaitTime {
+				wt = wt * 2
+			}
 		case <-ctx.Done():
-			// If the request gets cancelled, log it
-			LogToDB(ctx, "ERROR", "request cancelled")
 			return false
 		}
-		if wt < maxWaitTime {
-			wt = wt * 2
-		}
 	}
-	return
 }
 
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
