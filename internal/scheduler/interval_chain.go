@@ -46,14 +46,13 @@ func (ichain IntervalChain) reschedule(ctx context.Context) {
 		return
 	}
 	pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Sleeping before next execution for %ds for chain %s", ichain.Interval, ichain))
-	time.Sleep(time.Duration(ichain.Interval) * time.Second)
 	select {
 	case <-time.After(time.Duration(ichain.Interval) * time.Second):
 		if ichain.isValid() {
 			intervalChainsChan <- ichain
 		}
 	case <-ctx.Done():
-		pgengine.LogToDB(ctx, "ERROR", "Context cancelled: ", ctx.Err())
+		return
 	}
 }
 
@@ -61,7 +60,7 @@ func (ichain IntervalChain) reschedule(ctx context.Context) {
 var intervalChains map[int]IntervalChain = make(map[int]IntervalChain)
 
 // create channel for passing interval chains to workers
-var intervalChainsChan chan IntervalChain = make(chan IntervalChain)
+var intervalChainsChan chan IntervalChain = make(chan IntervalChain, workersNumber)
 
 var mutex = &sync.Mutex{}
 
