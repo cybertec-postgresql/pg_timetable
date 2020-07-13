@@ -197,7 +197,7 @@ All tasks of the chain in **pg_timetable** are executed within one transaction. 
 
 | Column                | Type      | Definition                                                                        |
 | :-------------------- | :-------- | :-------------------------------------------------------------------------------- |
-| `parent_id`           | `bigint`  | The ID of the previous base task in the chain.  Set this to `NULL` if it is the first base task in the chain.|
+| `parent_id`           | `bigint`  | The ID of the previous chain task.  Set this to `NULL` if it is the first base task in the chain.|
 | `task_id`             | `bigint`  | The ID of the **base task**.                                                      |
 | `run_uid`             | `text`    | The role as which the chain should be executed as.                                |
 | `database_connection` | `integer` | The ID of the `timetable.database_connection` that should be used.                |
