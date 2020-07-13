@@ -4,7 +4,8 @@ on:
     paths:
       - '**.go'
       - '**.yaml'
-      - '**.yml'      
+      - '**.yml'
+      - '**.sql'      
     branches:
       - '*'
     tags-ignore:

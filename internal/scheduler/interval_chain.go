@@ -111,7 +111,9 @@ func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 					return
 				}
 			}
+			ichain.Lock()
 			executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
+			ichain.Unlock()
 			if ichain.RepeatAfter {
 				go ichain.reschedule(ctx)
 			}
