@@ -12,7 +12,7 @@ WITH
 sql_task(id) AS (
     INSERT INTO timetable.base_task VALUES (
         DEFAULT,                     -- task_id
-        'execute sleepy fucntions',  -- name
+        'execute sleepy',  -- name
         DEFAULT,                     -- 'SQL' :: timetable.task_kind
         'SELECT sleepy_func($1)'     -- task script
     )
