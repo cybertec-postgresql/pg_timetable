@@ -130,12 +130,12 @@ Password for 'https://cyberboy@github.com': <Github Password>
 3. Run `pg_timetable`:
 ```sh
 $ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
-$ go run main.go --dbname=dbname --name=worker001 --user=scheduler --password=strongpwd
+$ go run main.go --dbname=dbname --clientname=worker001 --user=scheduler --password=strongpwd
 ```
 Alternatively, build a binary and run it:
 ```sh
 $ go build
-$ ./pg_timetable --dbname=dbname --name=worker001 --user=scheduler --password=strongpwd
+$ ./pg_timetable --dbname=dbname --clientname=worker001 --user=scheduler --password=strongpwd
 ```
 
 4. (Optional) Run tests in all sub-folders of the project:
