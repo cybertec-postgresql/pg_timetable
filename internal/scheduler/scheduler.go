@@ -61,6 +61,22 @@ func (chain Chain) String() string {
 	return string(data)
 }
 
+func (chain Chain) Lock() {
+	if chain.ExclusiveExecution {
+		exclusiveMutex.Lock()
+	} else {
+		exclusiveMutex.RLock()
+	}
+}
+
+func (chain Chain) Unlock() {
+	if chain.ExclusiveExecution {
+		exclusiveMutex.Unlock()
+	} else {
+		exclusiveMutex.RUnlock()
+	}
+}
+
 type RunStatus int
 
 const (
@@ -178,19 +194,11 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 					return
 				}
 			}
-			if chain.ExclusiveExecution {
-				exclusiveMutex.Lock()
-			} else {
-				exclusiveMutex.RLock()
-			}
+			chain.Lock()
 			executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
+			chain.Unlock()
 			if chain.SelfDestruct {
 				pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
-			}
-			if chain.ExclusiveExecution {
-				exclusiveMutex.Unlock()
-			} else {
-				exclusiveMutex.RUnlock()
 			}
 
 		case <-ctx.Done():

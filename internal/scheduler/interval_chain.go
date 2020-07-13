@@ -111,17 +111,9 @@ func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
 					return
 				}
 			}
-			if ichain.ExclusiveExecution {
-				exclusiveMutex.Lock()
-			} else {
-				exclusiveMutex.RLock()
-			}
+			ichain.Lock()
 			executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
-			if ichain.ExclusiveExecution {
-				exclusiveMutex.Unlock()
-			} else {
-				exclusiveMutex.RUnlock()
-			}
+			ichain.Unlock()
 			if ichain.RepeatAfter {
 				go ichain.reschedule(ctx)
 			}
