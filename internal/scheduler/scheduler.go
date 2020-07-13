@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -51,6 +52,9 @@ type Chain struct {
 
 // create channel for passing chains to workers
 var chains chan Chain = make(chan Chain, workersNumber)
+
+//read-write mutex for running regular and exclusive chains
+var exclusiveMutex sync.RWMutex
 
 func (chain Chain) String() string {
 	data, _ := json.Marshal(chain)
@@ -174,10 +178,21 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 					return
 				}
 			}
+			if chain.ExclusiveExecution {
+				exclusiveMutex.Lock()
+			} else {
+				exclusiveMutex.RLock()
+			}
 			executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
 			if chain.SelfDestruct {
 				pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
 			}
+			if chain.ExclusiveExecution {
+				exclusiveMutex.Unlock()
+			} else {
+				exclusiveMutex.RUnlock()
+			}
+
 		case <-ctx.Done():
 			return
 		}
