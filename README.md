@@ -203,6 +203,10 @@ All tasks of the chain in **pg_timetable** are executed within one transaction. 
 | `database_connection` | `integer` | The ID of the `timetable.database_connection` that should be used.                |
 | `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `true`). |
 
+
+If the chain has been configured with `ignore_error` set to `true` (the default value), the worker process will report a success on execution *even if the task within the chain fails*.
+
+
 #### 3.2.1. Chain execution configuration
 
 Once a chain has been created, it has to be scheduled. For this, **pg_timetable** builds upon the standard **cron**-string, all the while adding multiple configuration options.
