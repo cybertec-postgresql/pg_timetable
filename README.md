@@ -130,12 +130,12 @@ Password for 'https://cyberboy@github.com': <Github Password>
 3. Run `pg_timetable`:
 ```sh
 $ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
-$ go run main.go --dbname=dbname --name=worker001 --user=scheduler --password=strongpwd
+$ go run main.go --dbname=dbname --clientname=worker001 --user=scheduler --password=strongpwd
 ```
 Alternatively, build a binary and run it:
 ```sh
 $ go build
-$ ./pg_timetable --dbname=dbname --name=worker001 --user=scheduler --password=strongpwd
+$ ./pg_timetable --dbname=dbname --clientname=worker001 --user=scheduler --password=strongpwd
 ```
 
 4. (Optional) Run tests in all sub-folders of the project:
@@ -197,11 +197,15 @@ All tasks of the chain in **pg_timetable** are executed within one transaction. 
 
 | Column                | Type      | Definition                                                                        |
 | :-------------------- | :-------- | :-------------------------------------------------------------------------------- |
-| `parent_id`           | `bigint`  | The ID of the previous base task in the chain.  Set this to `NULL` if it is the first base task in the chain.|
+| `parent_id`           | `bigint`  | The ID of the previous chain task.  Set this to `NULL` if it is the first base task in the chain.|
 | `task_id`             | `bigint`  | The ID of the **base task**.                                                      |
 | `run_uid`             | `text`    | The role as which the chain should be executed as.                                |
 | `database_connection` | `integer` | The ID of the `timetable.database_connection` that should be used.                |
 | `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `true`). |
+
+
+If the chain has been configured with `ignore_error` set to `true` (the default value), the worker process will report a success on execution *even if the task within the chain fails*.
+
 
 #### 3.2.1. Chain execution configuration
 
