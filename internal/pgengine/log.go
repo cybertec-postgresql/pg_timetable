@@ -71,7 +71,7 @@ func LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementEx
 		"NULLIF($10, ''), $11)",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
 		chainElemExec.Script, chainElemExec.Kind,
-		fmt.Sprintf("%d microsecond", chainElemExec.Duration),
+		fmt.Sprintf("%f seconds", float64(chainElemExec.Duration)/1000000),
 		retCode, os.Getpid(), output, ClientName)
 	if err != nil {
 		LogToDB(ctx, "ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
