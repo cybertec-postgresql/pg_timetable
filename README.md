@@ -252,6 +252,7 @@ Create a Job with the `timetable.job_add` function. With this function you can a
 | :----------------------- | :------ | :----------------------------------------------- |:---------|
 | `task_name`     | `text`  | The name of the Task ||
 | `task_function` | `text`  | The function wich will be executed. ||
+| `client_name`   | `text`  | Specifies which client should execute the chain. Set this to `NULL` to allow any client. |
 | `task_type`     | `text`  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
 | `run_at`        | `timetable.cron`  | Time schedule in сron syntax. `NULL` stands for `'* * * * *'`     |NULL|
 | `max_instances` | `integer` | The amount of instances that this chain may have running at the same time. |NULL|
