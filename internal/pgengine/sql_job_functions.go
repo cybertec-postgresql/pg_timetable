@@ -200,14 +200,16 @@ INSERT INTO timetable.chain_execution_config (
     run_at, 
     max_instances, 
     live,
-    self_destruct 
+    self_destruct,
+    client_name
 ) SELECT 
     v_chain_id, 
     ''chain_'' || v_chain_id, 
     run_at,
     max_instances, 
     live, 
-    self_destruct
+    self_destruct,
+    client_name
 FROM cte_chain
 RETURNING chain_execution_config 
 ' LANGUAGE 'sql';
