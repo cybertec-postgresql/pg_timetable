@@ -10,6 +10,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 )
 
+// CmdOptions holds command line options passed
 type CmdOptions struct {
 	ClientName    string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True"`
 	Verbose       bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`

@@ -21,6 +21,7 @@ var runDocker bool
 
 var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions("pgengine_unit_test")
 
+// TestMain is the entry point for the tests
 func TestMain(m *testing.M) {
 	runDocker, _ = strconv.ParseBool(os.Getenv("RUN_DOCKER"))
 	ctx := context.Background()
@@ -101,6 +102,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+// SetupTestCaseEx allows to configure the test case before execution
 func SetupTestCaseEx(t *testing.T, fc func(c *cmdparser.CmdOptions)) func(t *testing.T) {
 	fc(cmdOpts)
 	return SetupTestCase(t)

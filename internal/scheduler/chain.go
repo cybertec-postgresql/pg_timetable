@@ -49,6 +49,7 @@ func (chain Chain) String() string {
 	return string(data)
 }
 
+// Lock locks the chain in exclusive or non-exclusive mode
 func (chain Chain) Lock() {
 	if chain.ExclusiveExecution {
 		exclusiveMutex.Lock()
@@ -57,6 +58,7 @@ func (chain Chain) Lock() {
 	}
 }
 
+// Unlock releases the lock after the chain execution
 func (chain Chain) Unlock() {
 	if chain.ExclusiveExecution {
 		exclusiveMutex.Unlock()

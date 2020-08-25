@@ -19,10 +19,13 @@ const maxChainsThreshold = workersNumber * refetchTimeout
 // create channel for passing chains to workers
 var chains chan Chain = make(chan Chain, workersNumber)
 
+// RunStatus specifies the current status of execution
 type RunStatus int
 
 const (
+	// ConnectionDroppped specifies the connection has been dropped
 	ConnectionDroppped RunStatus = iota
+	// ContextCancelled specifies the context has been cancelled probably due to timeout
 	ContextCancelled
 )
 

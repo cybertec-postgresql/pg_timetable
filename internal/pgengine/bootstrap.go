@@ -35,10 +35,12 @@ var NoShellTasks bool
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
+// Logger incapsulates Logger interface from pgx package
 type Logger struct {
 	pgx.Logger
 }
 
+// Log prints messages using native log levels
 func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	var s string
 	switch level {
@@ -56,6 +58,7 @@ func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 	fmt.Println(s)
 }
 
+// OpenDB opens connection to the database
 var OpenDB func(driverName string, dataSourceName string) (*sql.DB, error) = sql.Open
 
 // InitAndTestConfigDBConnection opens connection and creates schema
@@ -145,7 +148,7 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 	return true
 }
 
-// ExecuteCustomScripts executes initial schema scripts
+// ExecuteSchemaScripts executes initial schema scripts
 func ExecuteSchemaScripts(ctx context.Context) bool {
 	var exists bool
 	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")

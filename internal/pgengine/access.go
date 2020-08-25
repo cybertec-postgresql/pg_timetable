@@ -103,6 +103,7 @@ func SetupCloseHandler() {
 	}()
 }
 
+// IsAlive returns true if the connection to the database is alive
 func IsAlive() bool {
 	return ConfigDb != nil && ConfigDb.Ping() == nil
 }

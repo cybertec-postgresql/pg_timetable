@@ -22,6 +22,7 @@ type emailConn struct {
 	Attachments []string `json:"attachment"`
 }
 
+// Dialer implements DialAndSend function for mailer
 type Dialer interface {
 	DialAndSend(m ...*gomail.Message) error
 }

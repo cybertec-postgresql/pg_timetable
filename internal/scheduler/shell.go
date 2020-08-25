@@ -21,9 +21,10 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 	return exec.CommandContext(ctx, command, args...).CombinedOutput()
 }
 
+// Cmd executes a command
 var Cmd commander = realCommander{}
 
-// ExecuteTask executes built-in task depending on task name and returns err result
+// ExecuteShellCommand executes shell command and returns status code, output and error if any
 func ExecuteShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
 
 	if strings.TrimSpace(command) == "" {

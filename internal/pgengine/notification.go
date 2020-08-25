@@ -13,6 +13,7 @@ var notifications map[pgconn.Notification]struct{} = make(map[pgconn.Notificatio
 var configIDsChan chan int = make(chan int, 64)
 var mutex = &sync.Mutex{}
 
+// NotificationHandler consumes notifications from the PostgreSQL server
 func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	mutex.Lock()
 	if _, ok := notifications[*n]; ok {
@@ -25,6 +26,7 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	mutex.Unlock()
 }
 
+// WaitForAsyncChain returns configuration id from the notifications
 func WaitForAsyncChain(ctx context.Context) int {
 	select {
 	case <-ctx.Done():
@@ -34,6 +36,7 @@ func WaitForAsyncChain(ctx context.Context) int {
 	}
 }
 
+// HandleNotifications consumes notifications in blocking mode
 func HandleNotifications(ctx context.Context) {
 	conn, err := ConfigDb.DB.Conn(ctx)
 	if err != nil {
