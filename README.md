@@ -89,7 +89,7 @@ COST 5;
 
 ### 2.1 Official release packages
 
-You may find binary package for you platform on the official [Releases](https://github.com/cybertec-postgresql/pg_timetable/releases) page. Right now `Windows`, `Linux` and `macOS` packages are available.
+You may find binary package for your platform on the official [Releases](https://github.com/cybertec-postgresql/pg_timetable/releases) page. Right now `Windows`, `Linux` and `macOS` packages are available.
 
 ### 2.2 Container installation
 
@@ -120,7 +120,7 @@ podman run --rm pg_timetable:latest -h 10.0.0.3 -p 54321
 ```
 
 ### 2.3 Build from sources
-1. Downlod and install [Go](https://golang.org/doc/install) on your system.
+1. Download and install [Go](https://golang.org/doc/install) on your system.
 2. Clone **pg_timetable** using `go get`:
 ```sh
 $ env GIT_TERMINAL_PROMPT=1 go get github.com/cybertec-postgresql/pg_timetable/
@@ -201,10 +201,10 @@ All tasks of the chain in **pg_timetable** are executed within one transaction. 
 | `task_id`             | `bigint`  | The ID of the **base task**.                                                      |
 | `run_uid`             | `text`    | The role as which the chain should be executed as.                                |
 | `database_connection` | `integer` | The ID of the `timetable.database_connection` that should be used.                |
-| `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `true`). |
+| `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `false`).|
 
 
-If the chain has been configured with `ignore_error` set to `true` (the default value), the worker process will report a success on execution *even if the task within the chain fails*.
+If the chain has been configured with `ignore_error` set to `true` (the default value is `false`), the worker process will report a success on execution *even if the task within the chain fails*.
 
 
 #### 3.2.1. Chain execution configuration
@@ -232,14 +232,14 @@ Once a chain has been created, it has to be scheduled. For this, **pg_timetable*
 As mentioned above, base tasks are simple skeletons (e.g. *send email*, *vacuum*, etc.).
 In most cases, they have to be brought to live by passing parameters to the execution.
 
-<p align="center">Excerpt of <code>timetable.chain_execution_paramaters</code></p>
+<p align="center">Excerpt of <code>timetable.chain_execution_parameters</code></p>
 
 | Column                   | Type    | Definition                                       |
 | :----------------------- | :------ | :----------------------------------------------- |
 | `chain_execution_config` | `bigint`  | The ID of the chain execution configuration.     |
 | `chain_id`               | `bigint`  | The ID of the chain.                             |
 | `order_id`               | `integer` | The order of the parameter.                      |
-| `value`                  | `jsonb`   | A `string` JSON array containing the paramaters. |
+| `value`                  | `jsonb`   | A `string` JSON array containing the parameters. |
 
 ### 3.3 Example usages
 
@@ -251,8 +251,8 @@ Create a Job with the `timetable.job_add` function. With this function you can a
 | Parameter                   | Type    | Definition                                       | Default |
 | :----------------------- | :------ | :----------------------------------------------- |:---------|
 | `task_name`     | `text`  | The name of the Task ||
-| `task_function` | `text`  | The function wich will be executed. ||
-| `client_name`   | `text`  | Specifies which client should execute the chain. Set this to `NULL` to allow any client. |
+| `task_function` | `text`  | The function which will be executed. ||
+| `client_name`   | `text`  | Specifies which client should execute the chain. Set this to `NULL` to allow any client. |NULL|
 | `task_type`     | `text`  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
 | `run_at`        | `timetable.cron`  | Time schedule in сron syntax. `NULL` stands for `'* * * * *'`     |NULL|
 | `max_instances` | `integer` | The amount of instances that this chain may have running at the same time. |NULL|
