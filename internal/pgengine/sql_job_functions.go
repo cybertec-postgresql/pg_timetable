@@ -147,6 +147,7 @@ BEGIN
             ELSIF tmp_item ~ '^[*]+[\/][0-9]+$' THEN
                 a_split := regexp_split_to_array(tmp_item, '/');
                 counter_range := allowed_range;
+                a_res := array_append(a_res, allowed_range[1]);
                 WHILE counter_range[1]::int+a_split[2]::int <= counter_range[2]::int LOOP
                     counter_range[1] := counter_range[1] + a_split[2]::int ;
                     a_res := array_append(a_res, counter_range[1]);
