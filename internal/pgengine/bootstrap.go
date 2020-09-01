@@ -1,6 +1,7 @@
 package pgengine
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -61,6 +62,41 @@ func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 // OpenDB opens connection to the database
 var OpenDB func(driverName string, dataSourceName string) (*sql.DB, error) = sql.Open
 
+// flag indicates whether we finished bootstraping and now can call TryLockClientName()
+var bootstraping bool = true
+
+// TryLockClientName obtains lock on the server to prevent another client with the same name
+func TryLockClientName(ctx context.Context, conn *pgconn.PgConn) error {
+	if bootstraping {
+		return nil
+	}
+	var wt int = WaitTime
+
+	for {
+		LogToDB(ctx, "DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d, server pid %d", ClientName, os.Getpid(), conn.PID()))
+		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), ClientName)
+		LogToDB(ctx, "DEBUG", "Exec ", sql)
+		multiresultsres := conn.Exec(ctx, sql)
+		results, err := multiresultsres.ReadAll()
+		if err != nil {
+			LogToDB(ctx, "ERROR", "Error occurred during client name locking: ", err)
+			return err
+		} else if !bytes.Equal(results[0].Rows[0][0], []byte("t")) {
+			LogToDB(ctx, "ERROR", "Another client is already connected to server with name: ", ClientName)
+		} else {
+			return nil
+		}
+		select {
+		case <-time.After(time.Duration(wt) * time.Second):
+			if wt < maxWaitTime {
+				wt = wt * 2
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
@@ -83,6 +119,9 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	if !cmdOpts.Debug {
 		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
+			if err := TryLockClientName(ctx, pgconn); err != nil {
+				return err
+			}
 			return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
 		}
 		connConfig.OnNotification = NotificationHandler
@@ -95,6 +134,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	connConfig.PreferSimpleProtocol = true
 	connstr = stdlib.RegisterConnConfig(connConfig)
+	bootstraping = true
 	db, err := OpenDB("pgx", connstr)
 	if err == nil {
 		err = db.PingContext(ctx)
@@ -127,6 +167,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -155,31 +196,52 @@ func ExecuteSchemaScripts(ctx context.Context) bool {
 	if err != nil {
 		return false
 	}
+	bootstraping = false
 	if !exists {
-		for i, sql := range sqls {
-			sqlName := sqlNames[i]
-			fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
-			if _, err = ConfigDb.ExecContext(ctx, sql); err != nil {
-				fmt.Printf(GetLogPrefixLn("PANIC"), err)
-				fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
-				_, err = ConfigDb.ExecContext(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
-				if err != nil {
-					fmt.Printf(GetLogPrefixLn("PANIC"), err)
-				}
-				return false
-			}
-			LogToDB(ctx, "LOG", "Schema file executed: "+sqlName)
+		conn, err := ConfigDb.DB.Conn(ctx)
+		if err != nil {
+			fmt.Printf(GetLogPrefixLn("PANIC"), err)
+			return false
 		}
-		LogToDB(ctx, "LOG", "Configuration schema created...")
+		err = conn.Raw(func(driverConn interface{}) error {
+			c := driverConn.(*stdlib.Conn).Conn()
+			for i, sql := range sqls {
+				sqlName := sqlNames[i]
+				fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
+				if _, err = c.Exec(ctx, sql); err != nil {
+					fmt.Printf(GetLogPrefixLn("PANIC"), err)
+					fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
+					_, err = c.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
+					if err != nil {
+						fmt.Printf(GetLogPrefixLn("PANIC"), err)
+					}
+					return err
+				}
+				LogToDB(ctx, "LOG", "Schema file executed: "+sqlName)
+			}
+			LogToDB(ctx, "LOG", "Configuration schema created...")
+
+			err = TryLockClientName(ctx, c.PgConn())
+			return err
+		})
+		if err != nil {
+			LogToDB(ctx, "ERROR", err)
+			return false
+		}
 	}
+
 	return true
 }
 
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	fmt.Printf(GetLogPrefixLn("LOG"), "Closing session")
+	_, err := ConfigDb.Exec("DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), ClientName)
+	if err != nil {
+		fmt.Printf(GetLogPrefixLn("ERROR"), "Cannot finalize database session: ", err)
+	}
 	if err := ConfigDb.Close(); err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("Error occurred during connection closing: %v", err))
+		fmt.Printf(GetLogPrefixLn("ERROR"), "Error occurred during connection closing: ", err)
 	}
 	ConfigDb = nil
 }
