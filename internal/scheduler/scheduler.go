@@ -30,16 +30,6 @@ const (
 
 //Run executes jobs. Returns Fa
 func Run(ctx context.Context, debug bool) RunStatus {
-	// sysConn, err := stdlib.AcquireConn(pgengine.ConfigDb.DB)
-	// if err != nil {
-	// 	return ConnectionDroppped
-	// }
-	// defer func() { _ = stdlib.ReleaseConn(pgengine.ConfigDb.DB, sysConn) }()
-
-	// if !pgengine.TryLockClientName(ctx, sysConn) {
-	// 	return ContextCancelled
-	// }
-
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
 		chainCtx, cancel := context.WithCancel(ctx)
