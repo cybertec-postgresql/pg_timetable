@@ -62,27 +62,32 @@ func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 // OpenDB opens connection to the database
 var OpenDB func(driverName string, dataSourceName string) (*sql.DB, error) = sql.Open
 
-// flag indicates whether we finished bootstraping and now can call TryLockClientName()
-var bootstraping bool = true
-
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func TryLockClientName(ctx context.Context, conn *pgconn.PgConn) error {
-	if bootstraping {
+	// check if the schema is available already first
+	multiresultsres := conn.Exec(ctx, "SELECT COALESCE(to_regproc('timetable.try_lock_client_name')::int4, 0)")
+	defer multiresultsres.Close()
+	results, err := multiresultsres.ReadAll()
+	if err != nil {
+		return err
+	}
+	if bytes.Equal(results[0].Rows[0][0], []byte("0")) {
+		//there is no schema yet, will lock after bootstrapping
+		Log("DEBUG", "There is no schema yet, will lock after bootstrapping, server pid ", conn.PID())
 		return nil
 	}
-	var wt int = WaitTime
 
+	var wt int = WaitTime
 	for {
-		LogToDB(ctx, "DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d, server pid %d", ClientName, os.Getpid(), conn.PID()))
+		Log("DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d, server pid %d", ClientName, os.Getpid(), conn.PID()))
 		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), ClientName)
-		LogToDB(ctx, "DEBUG", "Exec ", sql)
-		multiresultsres := conn.Exec(ctx, sql)
+		multiresultsres = conn.Exec(ctx, sql)
 		results, err := multiresultsres.ReadAll()
 		if err != nil {
-			LogToDB(ctx, "ERROR", "Error occurred during client name locking: ", err)
+			Log("ERROR", "Error occurred during client name locking: ", err)
 			return err
 		} else if !bytes.Equal(results[0].Rows[0][0], []byte("t")) {
-			LogToDB(ctx, "ERROR", "Another client is already connected to server with name: ", ClientName)
+			Log("ERROR", "Another client is already connected to server with name: ", ClientName)
 		} else {
 			return nil
 		}
@@ -97,22 +102,15 @@ func TryLockClientName(ctx context.Context, conn *pgconn.PgConn) error {
 	}
 }
 
-// InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
-	ClientName = cmdOpts.ClientName
-	NoShellTasks = cmdOpts.NoShellTasks
-	VerboseLogLevel = cmdOpts.Verbose
-	LogToDB(ctx, "DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
-	var wt int = WaitTime
-	var err error
-
+// getPgxConnString transforms standard connestion string to pgx specific one with
+func getPgxConnString(ctx context.Context, cmdOpts cmdparser.CmdOptions) string {
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
-	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
+	Log("DEBUG", "Connection string: ", connstr)
 	connConfig, err := pgx.ParseConfig(connstr)
 	if err != nil {
-		LogToDB(ctx, "ERROR", err)
-		return false
+		Log("ERROR", err)
+		return ""
 	}
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		LogToDB(ctx, "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
@@ -133,31 +131,38 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 		connConfig.LogLevel = pgx.LogLevelWarn
 	}
 	connConfig.PreferSimpleProtocol = true
-	connstr = stdlib.RegisterConnConfig(connConfig)
-	bootstraping = true
-	db, err := OpenDB("pgx", connstr)
+	return stdlib.RegisterConnConfig(connConfig)
+}
+
+// InitAndTestConfigDBConnection opens connection and creates schema
+func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
+	ClientName = cmdOpts.ClientName
+	NoShellTasks = cmdOpts.NoShellTasks
+	VerboseLogLevel = cmdOpts.Verbose
+	Log("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
+	var wt int = WaitTime
+	var err error
+
+	db, err := OpenDB("pgx", getPgxConnString(ctx, cmdOpts))
 	if err == nil {
 		err = db.PingContext(ctx)
 	}
 	for err != nil {
-		LogToDB(ctx, "ERROR", err)
-		LogToDB(ctx, "LOG", "Reconnecting in ", wt, " sec...")
+		Log("ERROR", err)
+		Log("LOG", "Reconnecting in ", wt, " sec...")
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
 			err = db.PingContext(ctx)
 		case <-ctx.Done():
-			LogToDB(ctx, "ERROR", "Connection request cancelled: ", ctx.Err())
+			Log("ERROR", "Connection request cancelled: ", ctx.Err())
 			return false
 		}
 		if wt < maxWaitTime {
 			wt = wt * 2
 		}
 	}
-
-	LogToDB(ctx, "DEBUG", "Connection string: ", connstr)
-	LogToDB(ctx, "LOG", "Connection established...")
-	LogToDB(ctx, "LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
-
+	Log("LOG", "Connection established...")
+	Log("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
 	ConfigDb = sqlx.NewDb(db, "pgx")
 	if !ExecuteSchemaScripts(ctx) {
 		return false
@@ -167,7 +172,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 			return false
 		}
 	}
-
+	_, _ = ConfigDb.ExecContext(ctx, "SELECT timetable.try_lock_client_name($1, $2)", os.Getpid(), ClientName)
 	return true
 }
 
@@ -176,15 +181,15 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 	for _, f := range filename {
 		sql, err := ioutil.ReadFile(f)
 		if err != nil {
-			fmt.Printf(GetLogPrefixLn("PANIC"), err)
+			Log("PANIC", err)
 			return false
 		}
-		fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+f)
+		Log("LOG", "Executing script: ", f)
 		if _, err = ConfigDb.ExecContext(ctx, string(sql)); err != nil {
-			fmt.Printf(GetLogPrefixLn("PANIC"), err)
+			Log("PANIC", err)
 			return false
 		}
-		LogToDB(ctx, "LOG", "Script file executed: "+f)
+		Log("LOG", "Script file executed: ", f)
 	}
 	return true
 }
@@ -196,52 +201,35 @@ func ExecuteSchemaScripts(ctx context.Context) bool {
 	if err != nil {
 		return false
 	}
-	bootstraping = false
 	if !exists {
-		conn, err := ConfigDb.DB.Conn(ctx)
-		if err != nil {
-			fmt.Printf(GetLogPrefixLn("PANIC"), err)
-			return false
-		}
-		err = conn.Raw(func(driverConn interface{}) error {
-			c := driverConn.(*stdlib.Conn).Conn()
-			for i, sql := range sqls {
-				sqlName := sqlNames[i]
-				fmt.Printf(GetLogPrefixLn("LOG"), "Executing script: "+sqlName)
-				if _, err = c.Exec(ctx, sql); err != nil {
-					fmt.Printf(GetLogPrefixLn("PANIC"), err)
-					fmt.Printf(GetLogPrefixLn("PANIC"), "Dropping \"timetable\" schema")
-					_, err = c.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
-					if err != nil {
-						fmt.Printf(GetLogPrefixLn("PANIC"), err)
-					}
-					return err
+		for i, sql := range sqls {
+			sqlName := sqlNames[i]
+			Log("LOG", "Executing script: ", sqlName)
+			if _, err = ConfigDb.ExecContext(ctx, sql); err != nil {
+				Log("PANIC", err)
+				Log("PANIC", "Dropping \"timetable\" schema...")
+				_, err = ConfigDb.ExecContext(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
+				if err != nil {
+					Log("PANIC", err)
 				}
-				LogToDB(ctx, "LOG", "Schema file executed: "+sqlName)
+				return false
 			}
-			LogToDB(ctx, "LOG", "Configuration schema created...")
-
-			err = TryLockClientName(ctx, c.PgConn())
-			return err
-		})
-		if err != nil {
-			LogToDB(ctx, "ERROR", err)
-			return false
+			Log("LOG", "Schema file executed: "+sqlName)
 		}
+		Log("LOG", "Configuration schema created...")
 	}
-
 	return true
 }
 
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
-	fmt.Printf(GetLogPrefixLn("LOG"), "Closing session")
+	Log("LOG", "Closing session")
 	_, err := ConfigDb.Exec("DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), ClientName)
 	if err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR"), "Cannot finalize database session: ", err)
+		Log("ERROR", "Cannot finalize database session: ", err)
 	}
 	if err := ConfigDb.Close(); err != nil {
-		fmt.Printf(GetLogPrefixLn("ERROR"), "Error occurred during connection closing: ", err)
+		Log("ERROR", "Error occurred during connection closing: ", err)
 	}
 	ConfigDb = nil
 }
@@ -249,17 +237,16 @@ func FinalizeConfigDBConnection() {
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
 func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
 	for ConfigDb.PingContext(ctx) != nil {
-		fmt.Printf(GetLogPrefixLn("REPAIR"),
-			fmt.Sprintf("Connection to the server was lost. Waiting for %d sec...", WaitTime))
+		Log("REPAIR", "Connection to the server was lost. Waiting for ", WaitTime, " sec...")
 		select {
 		case <-time.After(WaitTime * time.Second):
-			fmt.Printf(GetLogPrefix("REPAIR"), "Reconnecting...\n")
+			Log("REPAIR", "Reconnecting...")
 		case <-ctx.Done():
-			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprintf("request cancelled: %v", ctx.Err()))
+			Log("ERROR", fmt.Sprintf("request cancelled: %v", ctx.Err()))
 			return false
 		}
 	}
-	LogToDB(ctx, "LOG", "Connection reestablished...")
+	Log("LOG", "Connection reestablished...")
 	FixSchedulerCrash(ctx)
 	return true
 }
