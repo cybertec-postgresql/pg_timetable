@@ -104,6 +104,9 @@ func retriveChainsAndRun(ctx context.Context, sql string, args ...interface{}) {
 	}
 }
 
+// activeChains holds the map of chain ID with context cancel() function, so we can abort chain by request
+var activeChains map[int]func()
+
 func chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {
 		select {
@@ -118,7 +121,11 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 				}
 			}
 			chain.Lock()
-			executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
+			chainContext, cancel := context.WithCancel(ctx)
+			activeChains[chain.ChainID] = cancel
+			executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
+			delete(activeChains, chain.ChainID)
+			cancel()
 			chain.Unlock()
 			if chain.SelfDestruct {
 				pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)

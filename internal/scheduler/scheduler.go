@@ -43,12 +43,12 @@ func Run(ctx context.Context, debug bool) RunStatus {
 
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
-		chainCtx, cancel := context.WithCancel(ctx)
+		workerCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
-		go chainWorker(chainCtx, chains)
-		chainCtx, cancel = context.WithCancel(ctx)
+		go chainWorker(workerCtx, chains)
+		workerCtx, cancel = context.WithCancel(ctx)
 		defer cancel()
-		go intervalChainWorker(chainCtx, intervalChainsChan)
+		go intervalChainWorker(workerCtx, intervalChainsChan)
 	}
 	/* set maximum connection to workersNumber + 1 for system calls */
 	pgengine.ConfigDb.SetMaxOpenConns(workersNumber)
