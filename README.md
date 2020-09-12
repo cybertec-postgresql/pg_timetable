@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=master&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cybertec-postgresql/pg_timetable)](https://goreportcard.com/report/github.com/cybertec-postgresql/pg_timetable)
 [![Release](https://img.shields.io/github/release/cybertec-postgresql/pg_timetable.svg)](https://github.com/cybertec-postgresql/pg_timetable/releases/latest)
-
+[![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 pg_timetable: Advanced scheduling for PostgreSQL
 ================================================
