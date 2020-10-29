@@ -17,11 +17,14 @@ jobs:
     name: Build & Test
     steps:
 
-    - name: pg_isready
+    - name: Start PostgreSQL
       run: |
         sudo service postgresql start
         pg_isready
-        sudo -u postgres psql --list
+    - name: Create scheduler user
+        sudo -u postgres psql -с "CREATE USER scheduler PASSWORD 'somestrong'"
+        sudo -u postgres psql -с "\du"
+    - name: Create timetable database
         sudo -u postgres createdb timetable
         sudo -u postgres psql --list
 
