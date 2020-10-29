@@ -21,10 +21,14 @@ jobs:
       run: |
         sudo service postgresql start
         pg_isready
+
     - name: Create scheduler user
+      run: |
         sudo -u postgres psql -с "CREATE USER scheduler PASSWORD 'somestrong'"
         sudo -u postgres psql -с "\du"
+
     - name: Create timetable database
+      run: |
         sudo -u postgres createdb timetable
         sudo -u postgres psql --list
 
