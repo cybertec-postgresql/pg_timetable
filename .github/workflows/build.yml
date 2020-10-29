@@ -19,6 +19,7 @@ jobs:
 
     - name: pg_isready
       run: |
+        sudo service postgresql start
         pg_isready
 
     # - name: Check out code into the Go module directory
