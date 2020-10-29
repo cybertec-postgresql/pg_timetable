@@ -25,7 +25,7 @@ jobs:
     - name: Create scheduler user
       run: |
         sudo -u postgres createuser scheduler
-        sudo -u postgres psql -с "\du"
+        sudo -u postgres psql -c "\du"
 
     - name: Create timetable database
       run: |
