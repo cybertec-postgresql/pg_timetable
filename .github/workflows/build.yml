@@ -31,6 +31,7 @@ jobs:
       run: |
         sudo -u postgres createdb timetable -O scheduler
         sudo -u postgres psql --list
+        psql -U scheduler -c "SELECT version()" timetable 
 
     
     

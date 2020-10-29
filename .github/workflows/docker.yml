@@ -14,8 +14,9 @@ jobs:
     steps:
 
     - name: Success
-      run:
-      
+      run: |
+        echo "ok"
+
     # - name: Check out code
     #   uses: actions/checkout@v2
 
