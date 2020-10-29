@@ -29,7 +29,7 @@ jobs:
 
     - name: Create timetable database
       run: |
-        sudo -u postgres createdb timetable
+        sudo -u postgres createdb timetable -O scheduler
         sudo -u postgres psql --list
 
     
