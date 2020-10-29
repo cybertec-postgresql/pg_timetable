@@ -21,7 +21,7 @@ jobs:
       run: |
         sudo service postgresql start
         pg_isready
-        psql --list
+        psql -U postgres --list
 
     # - name: Check out code into the Go module directory
     #   uses: actions/checkout@v2
