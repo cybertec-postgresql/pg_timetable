@@ -13,23 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Success
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    # despite the fact docker will build binary internally 
+    # we want to stop workflow in case of any error before pushing to registry 
+    - name: Get dependencies and Build
       run: |
-        echo "ok"
+        go mod download
+        go build
 
-    # - name: Check out code
-    #   uses: actions/checkout@v2
-
-    # # despite the fact docker will build binary internally 
-    # # we want to stop workflow in case of any error before pushing to registry 
-    # - name: Get dependencies and Build
-    #   run: |
-    #     go mod download
-    #     go build
-
-    # - name: Publish to Registry
-    #   uses: elgohr/Publish-Docker-Github-Action@master
-    #   with:
-    #     name: cybertecpostgresql/pg_timetable
-    #     username: ${{ secrets.DOCKER_USERNAME }}
-    #     password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: cybertecpostgresql/pg_timetable
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
