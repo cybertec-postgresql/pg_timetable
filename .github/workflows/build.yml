@@ -24,7 +24,7 @@ jobs:
 
     - name: Create scheduler user
       run: |
-        sudo -u postgres psql -с "CREATE USER scheduler PASSWORD 'somestrong'"
+        sudo -u postgres createuser scheduler
         sudo -u postgres psql -с "\du"
 
     - name: Create timetable database
@@ -32,6 +32,9 @@ jobs:
         sudo -u postgres createdb timetable
         sudo -u postgres psql --list
 
+    
+    
+    # sudo -u postgres psql -с "CREATE USER scheduler PASSWORD 'somestrong'"
     # - name: Check out code into the Go module directory
     #   uses: actions/checkout@v2
 
