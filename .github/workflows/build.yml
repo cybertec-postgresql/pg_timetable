@@ -35,14 +35,15 @@ jobs:
             sleep 10
         done
 
+    # Homebrew creates an account with the same name as the installing user, but no password
     - name: Create scheduler user
       run: |
-        sudo -u postgres psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
-        sudo -u postgres psql -c "\du"
+        psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
+        psql -c "\du"
 
     - name: Create timetable database
       run: |
-        sudo -u postgres createdb timetable -O scheduler
+        createdb timetable -O scheduler
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable 
 
   setup-postgresql-ubuntu:
