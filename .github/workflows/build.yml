@@ -11,7 +11,39 @@ on:
     tags-ignore:
       - '*'
 jobs:
+  setup-postgresql:
+    name: Setup PostgreSQL
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-latest] #, windows-latest, ubuntu-latest
+    steps:
+
+    - name: Start PostgreSQL on Ubuntu
+      if: ${{ matrix.os }} == "ubuntu-latest"
+      run: |
+        systemctl stop postgresql.service
+        pg_isready
+
+    - name: Start PostgreSQL on MacOS
+      if: ${{ matrix.os }} == "macos-latest"
+      run: |
+        sudo service postgresql start
+        pg_isready
+
+    - name: Create scheduler user
+      run: |
+        sudo -u postgres psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
+        sudo -u postgres psql -c "\du"
+        
+    - name: Create timetable database
+      run: |
+        sudo -u postgres createdb timetable -O scheduler
+        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable    
+
   build:
+    if: false # skip job during debug
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
