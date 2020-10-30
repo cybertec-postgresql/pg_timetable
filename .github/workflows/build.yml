@@ -21,17 +21,15 @@ jobs:
       run: |
         $pgService = Get-Service -Name postgresql*
         Set-Service -InputObject $pgService -Status running -StartupType automatic
-        $pgReady = Join-Path $env:PGBIN "pg_isready.exe"
-        Start-Process -FilePath $pgReady -Wait -PassThru
+        Start-Process -FilePath "$env:PGBIN\pg_isready" -Wait -PassThru
 
     - name: Create scheduler user on Windows
       run: |
-        & $env:PGBIN\psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
-        & $env:PGBIN\psql -c "\du"
+        & $env:PGBIN\psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du"
 
     - name: Create timetable database
       run: |
-        & $env:PGBIN\createdb timetable -O scheduler
+        & $env:PGBIN\createdb --owner=scheduler timetable
         $env:PGPASSWORD = 'somestrong'
         & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable 
 
@@ -64,12 +62,11 @@ jobs:
     # Homebrew creates an account with the same name as the installing user, but no password
     - name: Create scheduler user
       run: |
-        psql -c "CREATE USER scheduler PASSWORD 'somestrong'" postgres
-        psql -c "\du" postgres
+        psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du" postgres
 
     - name: Create timetable database
       run: |
-        createdb timetable -O scheduler
+        createdb --owner=scheduler timetable
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable 
 
   setup-postgresql-ubuntu:
@@ -85,12 +82,11 @@ jobs:
 
     - name: Create scheduler user
       run: |
-        sudo -u postgres psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
-        sudo -u postgres psql -c "\du"
+        sudo -u postgres psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du"
 
     - name: Create timetable database
       run: |
-        sudo -u postgres createdb timetable -O scheduler
+        sudo -u postgres createdb --owner=scheduler timetable -O scheduler
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable    
 
   build:
