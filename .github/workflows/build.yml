@@ -21,17 +21,19 @@ jobs:
       run: |
         $pgService = Get-Service -Name postgresql*
         Start-Service -InputObject $pgService
-        $PGBIN\pg_isready
+        $pgReady = Join-Path $env:PGBIN "pg_isready.exe"
+        Start-Process -FilePath $pgReady -Wait -PassThru
 
     - name: Create scheduler user on Windows
       run: |
-        $PGBIN\psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
-        $PGBIN\psql -c "\du"
+        & $env:PGBIN\psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
+        & $env:PGBIN\psql -c "\du"
 
     - name: Create timetable database
       run: |
-        $PGBIN\createdb timetable -O scheduler
-        PGPASSWORD=somestrong $PGBIN\psql --username=scheduler --host=localhost --list timetable 
+        & $env:PGBIN\createdb timetable -O scheduler
+        $env:PGPASSWORD = 'somestrong'
+        & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable 
 
 
   setup-postgresql-macos:
