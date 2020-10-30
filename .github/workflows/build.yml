@@ -12,11 +12,11 @@ on:
       - '*'
 jobs:
   setup-postgresql-macos:
-    name: Setup PostgreSQL
+    name: Setup PostgreSQL on the latest MacOS
     runs-on: macos-latest
     steps:
 
-    - name: Start PostgreSQL on the latest MacOS
+    - name: Start PostgreSQL on MacOS
       if: ${{ matrix.os }} == "macos-latest"
       run: |
         brew services start postgresql
@@ -38,7 +38,7 @@ jobs:
     # Homebrew creates an account with the same name as the installing user, but no password
     - name: Create scheduler user
       run: |
-        psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
+        psql -c "CREATE USER scheduler PASSWORD 'somestrong'" postgres
         psql -c "\du"
 
     - name: Create timetable database
