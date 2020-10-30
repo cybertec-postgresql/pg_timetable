@@ -20,8 +20,8 @@ jobs:
     - name: Start PostgreSQL on Windows
       run: |
         $pgService = Get-Service -Name postgresql*
-        Stop-Service -InputObject $pgService
-        pg_isready
+        Start-Service -InputObject $pgService
+        $PGBIN\pg_isready
 
     - name: Create scheduler user on Windows
       run: |
