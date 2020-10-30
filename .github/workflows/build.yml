@@ -33,6 +33,9 @@ jobs:
         $env:PGPASSWORD = 'somestrong'
         & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable
 
+    - name: Check out code
+      uses: actions/checkout@v2
+
     - name: Test
       run: go test -v -p 1 -coverprofile=profile.cov ./... 
 
@@ -72,7 +75,10 @@ jobs:
       run: |
         createdb --owner=scheduler timetable
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
-    
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
     - name: Test
       run: go test -v -p 1 -coverprofile=profile.cov ./...
 
