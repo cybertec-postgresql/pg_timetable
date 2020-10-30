@@ -39,7 +39,7 @@ jobs:
     - name: Create scheduler user
       run: |
         psql -c "CREATE USER scheduler PASSWORD 'somestrong'" postgres
-        psql -c "\du"
+        psql -c "\du" postgres
 
     - name: Create timetable database
       run: |
