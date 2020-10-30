@@ -23,7 +23,7 @@ jobs:
     - name: Start PostgreSQL on Ubuntu
       if: ${{ matrix.os }} == "ubuntu-latest"
       run: |
-        sudo systemctl stop postgresql.service
+        sudo systemctl start postgresql.service
         pg_isready
 
     - name: Start PostgreSQL on MacOS
