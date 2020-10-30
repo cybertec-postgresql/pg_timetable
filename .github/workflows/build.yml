@@ -11,6 +11,9 @@ on:
     tags-ignore:
       - '*'
 jobs:
+
+
+
   setup-postgresql-windows:
     if: true # false to skip job during debug
     name: Test on Windows
@@ -37,7 +40,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Test
-      run: go test -p 1 ./... 
+      run: go test -v -p 1 -parallel 1 -failfast ./... 
 
 
 
@@ -48,7 +51,6 @@ jobs:
     steps:
 
     - name: Start PostgreSQL on MacOS
-      if: ${{ matrix.os }} == "macos-latest"
       run: |
         brew services start postgresql
         echo "Check PostgreSQL service is running"
@@ -80,7 +82,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Test
-      run: go test -p 1 ./...
+      run: go test -v -p 1 -parallel 1 -failfast ./...
 
 
 
