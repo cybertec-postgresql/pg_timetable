@@ -11,7 +11,31 @@ on:
     tags-ignore:
       - '*'
 jobs:
+  setup-postgresql-windows:
+    if: true # skip job during debug
+    name: Setup PostgreSQL on the latest Windows
+    runs-on: windows-latest
+    steps:
+
+    - name: Start PostgreSQL on Windows
+      run: |
+        $pgService = Get-Service -Name postgresql*
+        Stop-Service -InputObject $pgService
+        pg_isready
+
+    - name: Create scheduler user on Windows
+      run: |
+        $PGBIN\psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
+        $PGBIN\psql -c "\du"
+
+    - name: Create timetable database
+      run: |
+        $PGBIN\createdb timetable -O scheduler
+        PGPASSWORD=somestrong $PGBIN\psql --username=scheduler --host=localhost --list timetable 
+
+
   setup-postgresql-macos:
+    if: false # skip job during debug
     name: Setup PostgreSQL on the latest MacOS
     runs-on: macos-latest
     steps:
@@ -47,6 +71,7 @@ jobs:
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable 
 
   setup-postgresql-ubuntu:
+    if: false # skip job during debug
     name: Setup PostgreSQL on the latest Ubuntu
     runs-on: ubuntu-latest
     steps:
