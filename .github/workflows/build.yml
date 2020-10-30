@@ -11,22 +11,12 @@ on:
     tags-ignore:
       - '*'
 jobs:
-  setup-postgresql:
+  setup-postgresql-macos:
     name: Setup PostgreSQL
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [macos-latest, ubuntu-latest] #, windows-latest
+    runs-on: macos-latest
     steps:
 
-    - name: Start PostgreSQL on Ubuntu
-      if: ${{ matrix.os }} == "ubuntu-latest"
-      run: |
-        sudo systemctl start postgresql.service
-        pg_isready
-
-    - name: Start PostgreSQL on MacOS
+    - name: Start PostgreSQL on the latest MacOS
       if: ${{ matrix.os }} == "macos-latest"
       run: |
         brew services start postgresql
@@ -44,6 +34,26 @@ jobs:
             echo "PostgreSQL service not ready, wait 10 more sec, attempts left: $i"
             sleep 10
         done
+
+    - name: Create scheduler user
+      run: |
+        sudo -u postgres psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
+        sudo -u postgres psql -c "\du"
+
+    - name: Create timetable database
+      run: |
+        sudo -u postgres createdb timetable -O scheduler
+        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable 
+
+  setup-postgresql-ubuntu:
+    name: Setup PostgreSQL on the latest Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Start PostgreSQL on Ubuntu
+      run: |
+        sudo systemctl start postgresql.service
+        pg_isready
 
     - name: Create scheduler user
       run: |
