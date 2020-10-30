@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [macos-latest] #, windows-latest, ubuntu-latest
+        os: [macos-latest, ubuntu-latest] #, windows-latest
     steps:
 
     - name: Start PostgreSQL on Ubuntu
@@ -36,7 +36,7 @@ jobs:
       run: |
         sudo -u postgres psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
         sudo -u postgres psql -c "\du"
-        
+
     - name: Create timetable database
       run: |
         sudo -u postgres createdb timetable -O scheduler
