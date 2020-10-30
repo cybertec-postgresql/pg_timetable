@@ -12,7 +12,7 @@ on:
       - '*'
 jobs:
   setup-postgresql-windows:
-    if: true # skip job during debug
+    if: true # false to skip job during debug
     name: Setup PostgreSQL on Windows
     runs-on: windows-latest
     steps:
@@ -35,7 +35,7 @@ jobs:
 
 
   setup-postgresql-macos:
-    if: false # skip job during debug
+    if: true # false to skip job during debug
     name: Setup PostgreSQL on MacOS
     runs-on: macos-latest
     steps:
@@ -70,7 +70,7 @@ jobs:
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable 
 
   setup-postgresql-ubuntu:
-    if: false # skip job during debug
+    if: true # false to skip job during debug
     name: Setup PostgreSQL on Ubuntu
     runs-on: ubuntu-latest
     steps:
