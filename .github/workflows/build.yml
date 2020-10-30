@@ -12,7 +12,11 @@ on:
       - '*'
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
 
     name: Build & Test
     steps:
@@ -31,6 +35,7 @@ jobs:
         ./bin/golangci-lint run -v
 
     - name: Start PostgreSQL
+      if: ${{ matrix.os }} == "ubuntu-latest"
       run: |
         sudo service postgresql start
         pg_isready
