@@ -13,7 +13,7 @@ on:
 jobs:
   setup-postgresql-windows:
     if: true # false to skip job during debug
-    name: Setup PostgreSQL on Windows
+    name: Test on Windows
     runs-on: windows-latest
     steps:
 
@@ -31,12 +31,16 @@ jobs:
       run: |
         & $env:PGBIN\createdb --owner=scheduler timetable
         $env:PGPASSWORD = 'somestrong'
-        & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable 
+        & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable
+
+    - name: Test
+      run: go test -v -p 1 -coverprofile=profile.cov ./... 
+
 
 
   setup-postgresql-macos:
     if: true # false to skip job during debug
-    name: Setup PostgreSQL on MacOS
+    name: Test on MacOS
     runs-on: macos-latest
     steps:
 
@@ -67,11 +71,16 @@ jobs:
     - name: Create timetable database
       run: |
         createdb --owner=scheduler timetable
-        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable 
+        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
+    
+    - name: Test
+      run: go test -v -p 1 -coverprofile=profile.cov ./...
+
+
 
   setup-postgresql-ubuntu:
     if: true # false to skip job during debug
-    name: Setup PostgreSQL on Ubuntu
+    name: Test and Build on Ubuntu
     runs-on: ubuntu-latest
     steps:
 
@@ -89,17 +98,6 @@ jobs:
         sudo -u postgres createdb --owner=scheduler timetable -O scheduler
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable    
 
-  build:
-    if: false # skip job during debug
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-
-    name: Build & Test
-    steps:
-    
     - name: Check out code
       uses: actions/checkout@v2
 
@@ -113,22 +111,6 @@ jobs:
         curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.24.0
         ./bin/golangci-lint run -v
 
-    - name: Start PostgreSQL
-      if: ${{ matrix.os }} == "ubuntu-latest"
-      run: |
-        sudo service postgresql start
-        pg_isready
-
-    - name: Create scheduler user
-      run: |
-        sudo -u postgres psql -c "CREATE USER scheduler PASSWORD 'somestrong'"
-        sudo -u postgres psql -c "\du"
-
-    - name: Create timetable database
-      run: |
-        sudo -u postgres createdb timetable -O scheduler
-        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
-    
     - name: Test
       run: go test -v -p 1 -coverprofile=profile.cov ./...
 
@@ -148,4 +130,3 @@ jobs:
       uses: goreleaser/goreleaser-action@master
       with:
         args: release --snapshot --skip-publish --rm-dist
-   
