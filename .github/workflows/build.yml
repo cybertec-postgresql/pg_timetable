@@ -12,9 +12,7 @@ on:
       - '*'
 jobs:
 
-
-
-  setup-postgresql-windows:
+  test-postgresql-windows:
     if: true # false to skip job during debug
     name: Test on Windows
     runs-on: windows-latest
@@ -44,7 +42,7 @@ jobs:
 
 
 
-  setup-postgresql-macos:
+  test-postgresql-macos:
     if: true # false to skip job during debug
     name: Test on MacOS
     runs-on: macos-latest
@@ -86,7 +84,7 @@ jobs:
 
 
 
-  setup-postgresql-ubuntu:
+  test-postgresql-ubuntu:
     if: true # false to skip job during debug
     name: Test and Build on Ubuntu
     runs-on: ubuntu-latest

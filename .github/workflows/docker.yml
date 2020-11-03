@@ -10,7 +10,7 @@ on:
 
 jobs:
   docker:
-    if: false # skip job during debug
+    if: true # false to skip job during debug
     runs-on: ubuntu-latest
     steps:
 
