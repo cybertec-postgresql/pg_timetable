@@ -14,16 +14,12 @@ func TestMigrations(t *testing.T) {
 	defer teardownTestCase(t)
 
 	ctx := context.Background()
-
-	t.Run("Check migrations", func(t *testing.T) {
-		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
-		_, err := pgengine.ConfigDb.Exec(initialsql)
-		assert.NoError(t, err, "Should execute initial schema sql")
-		ok, err := pgengine.CheckNeedMigrateDb(ctx)
-		assert.NoError(t, err)
-		assert.True(t, ok, "Should need migrations")
-		assert.True(t, pgengine.MigrateDb(ctx), "Migrations should be applied")
-	})
+	pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
+	pgengine.ConfigDb.MustExec(initialsql)
+	ok, err := pgengine.CheckNeedMigrateDb(ctx)
+	assert.NoError(t, err)
+	assert.True(t, ok, "Should need migrations")
+	assert.True(t, pgengine.MigrateDb(ctx), "Migrations should be applied")
 
 }
 

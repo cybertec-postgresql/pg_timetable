@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/jackc/pgx/v4/stdlib"
 )
 
 const workersNumber = 16
@@ -31,16 +30,6 @@ const (
 
 //Run executes jobs. Returns Fa
 func Run(ctx context.Context, debug bool) RunStatus {
-	sysConn, err := stdlib.AcquireConn(pgengine.ConfigDb.DB)
-	if err != nil {
-		return ConnectionDroppped
-	}
-	defer func() { _ = stdlib.ReleaseConn(pgengine.ConfigDb.DB, sysConn) }()
-
-	if !pgengine.TryLockClientName(ctx, sysConn) {
-		return ContextCancelled
-	}
-
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
 		chainCtx, cancel := context.WithCancel(ctx)
@@ -72,17 +61,14 @@ func Run(ctx context.Context, debug bool) RunStatus {
 	retriveChainsAndRun(ctx, sqlSelectRebootChains, pgengine.ClientName)
 
 	for {
-		if !debug {
-			pgengine.LogToDB(ctx, "LOG", "Checking for task chains...")
-			go retriveChainsAndRun(ctx, sqlSelectChains, pgengine.ClientName)
-			pgengine.LogToDB(ctx, "LOG", "Checking for interval task chains...")
-			go retriveIntervalChainsAndRun(ctx, sqlSelectIntervalChains)
-		}
+		pgengine.LogToDB(ctx, "LOG", "Checking for task chains...")
+		go retriveChainsAndRun(ctx, sqlSelectChains, pgengine.ClientName)
+		pgengine.LogToDB(ctx, "LOG", "Checking for interval task chains...")
+		go retriveIntervalChainsAndRun(ctx, sqlSelectIntervalChains)
+
 		select {
 		case <-time.After(refetchTimeout * time.Second):
-			if sysConn.Ping(ctx) != nil {
-				return ConnectionDroppped
-			}
+			// pass
 		case <-ctx.Done():
 			return ContextCancelled
 		}

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	stdlib "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -122,11 +121,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
 		assert.Equal(t, true, pgengine.ReconnectDbAndFixLeftovers(ctx),
 			"Should succeed for reconnect")
-	})
-
-	t.Run("Check TryLockClientName()", func(t *testing.T) {
-		sysConn, _ := stdlib.AcquireConn(pgengine.ConfigDb.DB)
-		assert.Equal(t, true, pgengine.TryLockClientName(ctx, sysConn), "Should succeed for clean database")
 	})
 
 	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
@@ -255,9 +249,6 @@ func TestSamplesScripts(t *testing.T) {
 		ok := pgengine.ExecuteCustomScripts(ctx, "../../samples/"+f.Name())
 		assert.True(t, ok, "Sample query failed: ", f.Name())
 		assert.Equal(t, scheduler.Run(ctx, false), scheduler.ContextCancelled)
-		_, err = pgengine.ConfigDb.Exec("SELECT pg_advisory_unlock_all()")
-		assert.NoError(t, err, "Cannot release locks by ", f.Name())
-		_, err = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")
-		assert.NoError(t, err, "Cannot TRUNCATE timetable.task_chain after ", f.Name())
+		pgengine.ConfigDb.MustExec("TRUNCATE timetable.task_chain CASCADE")
 	}
 }
