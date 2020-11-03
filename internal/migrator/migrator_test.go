@@ -83,7 +83,7 @@ func TestDatabaseNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	db, _ := sql.Open("pgx", "")
+	db, _ := sql.Open("pgx", "foobarbaz")
 	if err := m.Migrate(context.Background(), db); err == nil {
 		t.Fatal(err)
 	}
