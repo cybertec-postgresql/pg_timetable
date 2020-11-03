@@ -157,7 +157,10 @@ func ExecuteSQLTask(ctx context.Context, tx *sqlx.Tx, chainElemExec *ChainElemen
 		if chainElemExec.Autonomous {
 			executor = remoteDb
 			_ = execTx.Rollback()
+		} else {
+			executor = execTx
 		}
+
 		defer FinalizeRemoteDBConnection(ctx, remoteDb)
 	}
 
