@@ -79,12 +79,12 @@ func TestPostgres(t *testing.T) {
 }
 
 func TestDatabaseNotFound(t *testing.T) {
-	migrator, err := migrator.New(migrator.Migrations(&migrator.Migration{}))
+	m, err := migrator.New(migrator.Migrations(&migrator.Migration{}))
 	if err != nil {
 		t.Fatal(err)
 	}
-	db, _ := sql.Open("pgx", "")
-	if err := migrator.Migrate(context.Background(), db); err == nil {
+	db, _ := sql.Open("pgx", "foobarbaz")
+	if err := m.Migrate(context.Background(), db); err == nil {
 		t.Fatal(err)
 	}
 }
