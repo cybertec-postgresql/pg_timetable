@@ -24,11 +24,11 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 // Cmd executes a command
 var Cmd commander = realCommander{}
 
-// ExecuteShellCommand executes shell command and returns status code, output and error if any
-func ExecuteShellCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
+// ExecuteShellCommand executes program command and returns status code, output and error if any
+func ExecuteProgramCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
 
 	if strings.TrimSpace(command) == "" {
-		return -1, "", errors.New("Shell command cannot be empty")
+		return -1, "", errors.New("Program command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		paramValues = []string{""}

@@ -112,7 +112,7 @@ func SetupTestCaseEx(t *testing.T, fc func(c *cmdparser.CmdOptions)) func(t *tes
 func SetupTestCase(t *testing.T) func(t *testing.T) {
 	cmdOpts.Verbose = testing.Verbose()
 	t.Log("Setup test case")
-	timeout := time.After(5 * time.Second)
+	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
 		pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdOpts)
@@ -125,7 +125,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	}
 	return func(t *testing.T) {
 		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
-		pgengine.FinalizeConfigDBConnection()
+		pgengine.ConfigDb.Close()
 		t.Log("Test schema dropped")
 	}
 }

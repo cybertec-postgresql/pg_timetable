@@ -46,8 +46,8 @@ func GetLogPrefixLn(level string) string {
 
 const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 
-// LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
-func LogToDB(ctx context.Context, level string, msg ...interface{}) {
+// LogToDB performs logging to standard output
+func Log(level string, msg ...interface{}) {
 	if !VerboseLogLevel {
 		if level == "DEBUG" {
 			return
@@ -55,10 +55,20 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	}
 	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
 	fmt.Println(s)
+}
+
+// LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
+func LogToDB(ctx context.Context, level string, msg ...interface{}) {
+	if !VerboseLogLevel {
+		if level == "DEBUG" {
+			return
+		}
+	}
+	Log(level, msg...)
 	if ConfigDb != nil {
 		_, err := ConfigDb.ExecContext(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
-			fmt.Printf(GetLogPrefixLn("ERROR"), fmt.Sprint("Cannot log to the database: ", err))
+			fmt.Printf(GetLogPrefixLn("ERROR"), "Cannot log to the database: ", err)
 		}
 	}
 }

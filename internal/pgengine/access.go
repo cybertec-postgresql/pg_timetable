@@ -4,13 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"hash/adler32"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
-
-	pgx "github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -62,32 +58,6 @@ func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 	}
 	rowsDeleted, err := res.RowsAffected()
 	return err == nil && rowsDeleted == 1
-}
-
-// TryLockClientName obtains lock on the server to prevent another client with the same name
-func TryLockClientName(ctx context.Context, conn *pgx.Conn) (res bool) {
-	var wt int = WaitTime
-	adler32Int := adler32.Checksum([]byte(ClientName))
-	res = false
-	for {
-		LogToDB(ctx, "DEBUG", fmt.Sprintf("Trying to get advisory lock for '%s' with hash 0x%x", ClientName, adler32Int))
-		err := conn.QueryRow(ctx, "SELECT pg_try_advisory_lock($1, $2)", AppID, adler32Int).Scan(&res)
-		if err != nil {
-			LogToDB(ctx, "ERROR", "Error occurred during client name locking: ", err)
-		} else if !res {
-			LogToDB(ctx, "ERROR", "Another client is already connected to server with name: ", ClientName)
-		} else {
-			return true
-		}
-		select {
-		case <-time.After(time.Duration(wt) * time.Second):
-			if wt < maxWaitTime {
-				wt = wt * 2
-			}
-		case <-ctx.Done():
-			return false
-		}
-	}
 }
 
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the

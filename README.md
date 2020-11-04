@@ -27,7 +27,7 @@ Application Options:
       --pgurl=                    PG config DB url [$PGTT_URL]
       --init                      Initialize database schema and exit. Can be used with --upgrade
       --upgrade                   Upgrade database to the latest version
-      --no-shell-tasks            Disable executing of shell tasks [$PGTT_NOSHELLTASKS]
+      --no-program-tasks            Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
 ```      
 
 ## Table of Contents
@@ -64,7 +64,7 @@ Application Options:
 
 ## 2. Installation
 
-pg_timetable is compatible with the latest supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/): 11 and 12. 
+pg_timetable is compatible with the latest supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/): 11, 12 and 13. 
 
 <details>
   <summary>If you want to use pg_timetable with older versions (9.5, 9.6 and 10)...</summary>
@@ -168,7 +168,7 @@ In **pg_timetable**, the most basic building block is a ***base task***. Current
 | Base task kind   | Task kind type | Example                                                                                                                                                             |
 | :--------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | SQL snippet      | `SQL`          | Starting a cleanup, refreshing a materialized view or processing data.                                                                                              |
-| External program | `SHELL`        | Anything that can be called from the command line.                                                                                                                  |
+| External program | `PROGRAM`        | Anything that can be called as an external binary, including shells, e.g. `bash`, `pwsh`, etc. |                                                                                                                  |
 | Internal Task    | `BUILTIN`      | A prebuilt functionality included in **pg_timetable**. These include: <ul style="margin-top:12px"><li>Sleep</li><li>Log</li><li>SendMail</li><li>Download</li></ul> |
 
 A new base task can be created by inserting a new entry into `timetable.base_task`.
@@ -178,7 +178,7 @@ A new base task can be created by inserting a new entry into `timetable.base_tas
 | Column   | Type                  | Definition                                                              |
 | :------- | :-------------------- | :---------------------------------------------------------------------- |
 | `name`   | `text`                | The name of the base task.                                              |
-| `kind`   | `timetable.task_kind` | The type of the base task. Can be `SQL`(default), `SHELL` or `BUILTIN`. |
+| `kind`   | `timetable.task_kind` | The type of the base task. Can be `SQL`(default), `PROGRAM` or `BUILTIN`. |
 | `script` | `text`                | Contains either a SQL script or a command string which will be executed.|
 
 ### 3.2. Task chain
@@ -191,7 +191,7 @@ The next building block is a ***chain***, which simply represents a list of task
 - Commit the transaction
 - Remove the files from disk
 
-All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback `SHELL` and `BUILTIN` tasks.
+All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback `PROGRAM` and `BUILTIN` tasks.
 
 <p align="center">Excerpt of <code>timetable.task_chain</code></p>
 
@@ -253,7 +253,7 @@ Create a Job with the `timetable.job_add` function. With this function you can a
 | `task_name`     | `text`  | The name of the Task ||
 | `task_function` | `text`  | The function which will be executed. ||
 | `client_name`   | `text`  | Specifies which client should execute the chain. Set this to `NULL` to allow any client. |NULL|
-| `task_type`     | `text`  | Type of the function `SQL`,`SHELL` and `BUILTIN` |SQL|
+| `task_type`     | `text`  | Type of the function `SQL`,`PROGRAM` and `BUILTIN` |SQL|
 | `run_at`        | `timetable.cron`  | Time schedule in сron syntax. `NULL` stands for `'* * * * *'`     |NULL|
 | `max_instances` | `integer` | The amount of instances that this chain may have running at the same time. |NULL|
 | `live`          | `boolean` | Control if the chain may be executed once it reaches its schedule. |FALSE|

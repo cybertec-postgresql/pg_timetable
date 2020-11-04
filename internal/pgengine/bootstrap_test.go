@@ -84,9 +84,7 @@ func TestExecuteSchemaScripts(t *testing.T) {
 		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 		for i := 0; i < 4; i++ {
 			mock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 1))
-			mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
 		}
-		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
 		assert.True(t, pgengine.ExecuteSchemaScripts(ctx))
 	})
 }
@@ -121,7 +119,6 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		mock.ExpectPing()
-		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnResult(sqlmock.NewResult(0, 0))
 		assert.True(t, pgengine.ReconnectDbAndFixLeftovers(ctx))
 	})
