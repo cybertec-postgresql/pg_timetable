@@ -30,35 +30,35 @@ func TestShellCommand(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "", []string{""})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})
 	assert.EqualError(t, err, "Shell command cannot be empty", "Empty command should out, fail")
 
-	_, out, err = scheduler.ExecuteShellCommand(ctx, "ping0", nil)
+	_, out, err = scheduler.ExecuteProgramCommand(ctx, "ping0", nil)
 	assert.NoError(t, err, "Command with nil param is out, OK")
 	assert.True(t, strings.HasPrefix(string(out), "ping0"), "Output should containt only command ")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "ping1", []string{})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping1", []string{})
 	assert.NoError(t, err, "Command with empty array param is OK")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "ping2", []string{""})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping2", []string{""})
 	assert.NoError(t, err, "Command with empty string param is OK")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "ping3", []string{"[]"})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping3", []string{"[]"})
 	assert.NoError(t, err, "Command with empty json array param is OK")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "ping3", []string{"[null]"})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping3", []string{"[null]"})
 	assert.NoError(t, err, "Command with nil array param is OK")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "ping4", []string{`["localhost"]`})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping4", []string{`["localhost"]`})
 	assert.NoError(t, err, "Command with one param is OK")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "ping5", []string{`["localhost", "-4"]`})
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping5", []string{`["localhost", "-4"]`})
 	assert.NoError(t, err, "Command with many params is OK")
 
-	_, _, err = scheduler.ExecuteShellCommand(ctx, "pong", nil)
+	_, _, err = scheduler.ExecuteProgramCommand(ctx, "pong", nil)
 	assert.IsType(t, (*exec.Error)(nil), err, "Uknown command should produce error")
 
-	retCode, _, err = scheduler.ExecuteShellCommand(ctx, "ping5", []string{`{"param1": "localhost"}`})
+	retCode, _, err = scheduler.ExecuteProgramCommand(ctx, "ping5", []string{`{"param1": "localhost"}`})
 	assert.IsType(t, (*json.UnmarshalTypeError)(nil), err, "Command should fail with mailformed json parameter")
 	assert.NotEqual(t, 0, retCode, "return code should indicate failure.")
 }
