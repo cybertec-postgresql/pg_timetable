@@ -31,7 +31,7 @@ func TestShellCommand(t *testing.T) {
 	ctx := context.Background()
 
 	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})
-	assert.EqualError(t, err, "Shell command cannot be empty", "Empty command should out, fail")
+	assert.EqualError(t, err, "Program command cannot be empty", "Empty command should out, fail")
 
 	_, out, err = scheduler.ExecuteProgramCommand(ctx, "ping0", nil)
 	assert.NoError(t, err, "Command with nil param is out, OK")
