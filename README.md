@@ -64,7 +64,7 @@ Application Options:
 
 ## 2. Installation
 
-pg_timetable is compatible with the latest supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/): 11 and 12. 
+pg_timetable is compatible with the latest supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/): 11, 12 and 13. 
 
 <details>
   <summary>If you want to use pg_timetable with older versions (9.5, 9.6 and 10)...</summary>
