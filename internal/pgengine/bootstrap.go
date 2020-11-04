@@ -30,8 +30,8 @@ var ConfigDb *sqlx.DB
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
 
-// NoShellTasks parameter disables SHELL tasks executing
-var NoShellTasks bool
+// NoProgramTasks parameter disables PROGRAM tasks executing
+var NoProgramTasks bool
 
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
@@ -137,7 +137,7 @@ func getPgxConnString(ctx context.Context, cmdOpts cmdparser.CmdOptions) string 
 // InitAndTestConfigDBConnection opens connection and creates schema
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
-	NoShellTasks = cmdOpts.NoShellTasks
+	NoProgramTasks = cmdOpts.NoShellTasks || cmdOpts.NoProgramTasks
 	VerboseLogLevel = cmdOpts.Verbose
 	Log("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime

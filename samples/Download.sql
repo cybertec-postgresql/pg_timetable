@@ -33,13 +33,13 @@ BEGIN
 	RAISE NOTICE 'Step 1 completed. DownloadFile task added';
 
 	-- Step 2. Transform Unicode characters into ASCII
-	-- Create the shell task to call 'uconv -x' and name it 'unaccent'
+	-- Create the program task to call 'uconv -x' and name it 'unaccent'
 	INSERT INTO timetable.base_task(name, kind, script)
-		VALUES ('unaccent', 'SHELL'::timetable.task_kind, 'uconv')
+		VALUES ('unaccent', 'PROGRAM'::timetable.task_kind, 'uconv')
 	RETURNING 
 		task_id INTO v_task_id;
 
-	-- Add shell task 'unaccent' to the chain
+	-- Add program task 'unaccent' to the chain
 	INSERT INTO timetable.task_chain (parent_id, task_id, ignore_error)
 		VALUES (v_head_id, v_task_id, TRUE)
 	RETURNING
@@ -53,13 +53,13 @@ BEGIN
 	RAISE NOTICE 'Step 2 completed. Unacent task added';
 
 	-- Step 3. Import ASCII file to PostgreSQL table using "psql \copy"
-	-- Create the shell task to cal 'psql' and name it 'psql'
+	-- Create the PROGRAM task to cal 'psql' and name it 'psql'
 	INSERT INTO timetable.base_task(name, kind, script)
-		VALUES ('psql', 'SHELL'::timetable.task_kind, 'psql')
+		VALUES ('psql', 'PROGRAM'::timetable.task_kind, 'psql')
 	RETURNING 
 		task_id INTO v_task_id;
 
-	-- Add shell task 'psql' to the chain
+	-- Add PROGRAM task 'psql' to the chain
 	INSERT INTO timetable.task_chain (parent_id, task_id)
 		VALUES (v_chain_id, v_task_id)
 	RETURNING

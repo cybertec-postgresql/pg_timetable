@@ -4,11 +4,11 @@ DECLARE
 	v_chain_id bigint;
 	v_chain_config_id bigint;
 BEGIN
-	-- An example for using the SHELL task.
+	-- An example for using the PROGRAM task.
 
 	-- Create the base task
 	INSERT INTO timetable.base_task(name, kind, script)
-	VALUES ('run shell with psql', 'SHELL'::timetable.task_kind, 'psql')
+	VALUES ('run psql', 'PROGRAM'::timetable.task_kind, 'psql')
 	RETURNING task_id INTO v_task_id;
 
 	-- Create the chain

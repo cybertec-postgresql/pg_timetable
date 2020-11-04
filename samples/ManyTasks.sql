@@ -1,7 +1,7 @@
 WITH
    hello_task(id) AS (
         insert into timetable.base_task (name, kind, script)
-            select 'HelloWorld'||i, 'SHELL', 'echo'
+            select 'HelloWorld'||i, 'PROGRAM', 'echo'
             from generate_series(1,500) i
             returning task_id
     ),
@@ -37,7 +37,7 @@ WITH
             RETURNING  chain_execution_config, chain_id
     )
 
--- 1 param to the shell command
+-- 1 param to the program command
 INSERT INTO timetable.chain_execution_parameters
 (chain_execution_config, chain_id, order_id, value)
             SELECT

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS timetable.dummy_log (
 -- task_name: The name of the Task
 -- task_function: The function wich will be executed.
 -- client_name: The name of worker under which this task will execute
--- task_type: Type of the function SQL,SHELL and BUILTIN
+-- task_type: Type of the function SQL, PROGRAM and BUILTIN
 -- run_at: Time Schedule in Cron Syntax
 -- max_instances: The amount of instances that this chain may have running at the same time.
 -- live: Control if the chain may be executed once it reaches its schedule.

@@ -79,6 +79,13 @@ func init() {
 				Name: "0149 Reimplement session locking",
 				Func: migration149,
 			},
+			&migrator.Migration{
+				Name: "0155 Rename SHELL task kind to PROGRAM",
+				Func: func(tx *sql.Tx) error {
+					_, err := tx.Exec("ALTER TYPE timetable.task_kind RENAME VALUE 'SHELL' TO 'PROGRAM'")
+					return err
+				},
+			},
 			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
 		),
 	)

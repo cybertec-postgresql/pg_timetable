@@ -187,12 +187,12 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 	switch chainElemExec.Kind {
 	case "SQL":
 		err = pgengine.ExecuteSQLTask(ctx, tx, chainElemExec, paramValues)
-	case "SHELL":
-		if pgengine.NoShellTasks {
-			pgengine.LogToDB(ctx, "LOG", "Shell task execution skipped: ", chainElemExec)
+	case "PROGRAM":
+		if pgengine.NoProgramTasks {
+			pgengine.LogToDB(ctx, "LOG", "Program task execution skipped: ", chainElemExec)
 			return -1
 		}
-		retCode, out, err = ExecuteShellCommand(ctx, chainElemExec.Script, paramValues)
+		retCode, out, err = ExecuteProgramCommand(ctx, chainElemExec.Script, paramValues)
 	case "BUILTIN":
 		err = tasks.ExecuteTask(ctx, chainElemExec.TaskName, paramValues)
 	}

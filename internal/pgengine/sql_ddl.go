@@ -21,7 +21,8 @@ VALUES
 	(3, '0108 Add client_name column to timetable.run_status'),
 	(4, '0122 Add autonomous tasks'),
 	(5, '0105 Add next_run function'),
-	(6, '0149 Reimplement session locking');
+	(6, '0149 Reimplement session locking'),
+	(7, '0155 Rename SHELL task kind to PROGRAM');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
@@ -38,7 +39,7 @@ CREATE TABLE timetable.database_connection (
 --      command string to be executed
 --
 -- "kind" indicates whether "script" is SQL, built-in function or external program
-CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'SHELL', 'BUILTIN');
+CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
 
 CREATE TABLE timetable.base_task (
 	task_id		BIGSERIAL  			PRIMARY KEY,
