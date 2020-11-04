@@ -20,7 +20,7 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 		return // already handled
 	}
 	notifications[*n] = struct{}{}
-	if id, err := strconv.Atoi(n.Payload); err == nil {
+	if id, err := strconv.Atoi(n.Payload); err == nil && id > 0 {
 		configIDsChan <- id
 	}
 	mutex.Unlock()
