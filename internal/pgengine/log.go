@@ -68,7 +68,7 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	if ConfigDb != nil {
 		_, err := ConfigDb.ExecContext(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
-			fmt.Printf(GetLogPrefixLn("ERROR"), "Cannot log to the database: ", err)
+			Log("ERROR", "Cannot log to the database: ", err)
 		}
 	}
 }
