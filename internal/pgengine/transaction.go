@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -58,10 +57,14 @@ func MustRollbackTransaction(ctx context.Context, tx *sqlx.Tx) {
 	}
 }
 
+func quoteIdent(s string) string {
+	return `"` + strings.Replace(s, `"`, `""`, -1) + `"`
+}
+
 // MustSavepoint creates SAVDEPOINT in transaction and log error in the case of error
 func MustSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
-	LogToDB(ctx, "DEBUG", "Define savepoint to ignore an error for the task: ", strconv.Quote(savepoint))
-	_, err := tx.ExecContext(ctx, "SAVEPOINT "+strconv.Quote(savepoint))
+	LogToDB(ctx, "DEBUG", "Define savepoint to ignore an error for the task: ", quoteIdent(savepoint))
+	_, err := tx.ExecContext(ctx, "SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
 		LogToDB(ctx, "ERROR", err)
 	}
@@ -69,8 +72,8 @@ func MustSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
 
 // MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
 func MustRollbackToSavepoint(ctx context.Context, tx *sqlx.Tx, savepoint string) {
-	LogToDB(ctx, "DEBUG", "Rollback to savepoint ignoring error for the task: ", savepoint)
-	_, err := tx.ExecContext(ctx, "ROLLBACK TO SAVEPOINT "+strconv.Quote(savepoint))
+	LogToDB(ctx, "DEBUG", "Rollback to savepoint ignoring error for the task: ", quoteIdent(savepoint))
+	_, err := tx.ExecContext(ctx, "ROLLBACK TO SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
 		LogToDB(ctx, "ERROR", err)
 	}
