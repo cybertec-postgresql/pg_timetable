@@ -4,6 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/cybertec-postgresql/pg_timetable)](https://goreportcard.com/report/github.com/cybertec-postgresql/pg_timetable)
 [![Release](https://img.shields.io/github/release/cybertec-postgresql/pg_timetable.svg)](https://github.com/cybertec-postgresql/pg_timetable/releases/latest)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
+[![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
 
 pg_timetable: Advanced scheduling for PostgreSQL
 ================================================
@@ -34,7 +35,7 @@ Application Options:
   - [1. Main features](#1-main-features)
   - [2. Installation](#2-installation)
     - [2.1. Official release packages](#21-official-release-packages)
-    - [2.2. Container installation](#22-container-installation)
+    - [2.2. Docker](#22-docker)
     - [2.3. Build from sources](#23-build-from-sources)
   - [3. Features and advanced functionality](#3-features-and-advanced-functionality)
     - [3.1. Base task](#31-base-task)
@@ -91,35 +92,32 @@ COST 5;
 
 You may find binary package for your platform on the official [Releases](https://github.com/cybertec-postgresql/pg_timetable/releases) page. Right now `Windows`, `Linux` and `macOS` packages are available.
 
-### 2.2 Container installation
+### 2.2 Docker
 
-> When using Docker, simply replace all `podman` occurrences with `docker`.
+The official docker image can be found here: https://hub.docker.com/r/cybertecpostgresql/pg_timetable
 
-1. Get the Dockerfile:
+The `latest` tag is up to date with the `master` branch thanks to [this github action](https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/docker.yml).
+
+CLI:
 
 ```sh
-wget -O pg_timetable.Dockerfile https://raw.githubusercontent.com/cybertec-postgresql/pg_timetable/master/Dockerfile
+docker run --rm \
+  cybertecpostgresql/pg_timetable:latest \
+  -h 10.0.0.3 -p 54321 -c worker001
 ```
 
-2. Build the Docker image:
+Environment variables:
 
 ```sh
-podman build -f pg_timetable.Dockerfile -t pg_timetable:latest
-```
-
-3. Run the image:
-
-```sh
-podman run --rm pg_timetable:latest
-```
-
-4. To pass additional arguments to pg_timetable, such as where your database is located, simply attach the flags to the `podman run`, like so:
-
-```sh
-podman run --rm pg_timetable:latest -h 10.0.0.3 -p 54321
+docker run --rm \
+  -e PGTT_PGHOST=10.0.0.3 \
+  -e PGTT_PGPORT=54321 \
+  cybertecpostgresql/pg_timetable:latest \
+  -c worker001
 ```
 
 ### 2.3 Build from sources
+
 1. Download and install [Go](https://golang.org/doc/install) on your system.
 2. Clone **pg_timetable** using `go get`:
 ```sh
