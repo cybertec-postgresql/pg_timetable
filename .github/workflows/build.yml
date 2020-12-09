@@ -101,7 +101,7 @@ jobs:
 
     - name: Create timetable database
       run: |
-        sudo -u postgres createdb --owner=scheduler timetable -O scheduler
+        sudo -u postgres createdb --owner=scheduler timetable
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable    
 
     - name: Check out code
@@ -113,13 +113,10 @@ jobs:
         go version
 
     - name: GolangCI-Lint
-    #   run: |
-    #     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.30.0
-    #     ./bin/golangci-lint run -v
-      uses: golangci/golangci-lint-action@v1
+      uses: golangci/golangci-lint-action@v2
       with:
         # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-        version: v1.30
+        version: v1.33        
 
     - name: Test
       run: go test -v -p 1 -coverprofile=profile.cov ./...
