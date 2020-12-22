@@ -10,8 +10,7 @@ on:
       - '**.sum'
     branches:
       - '*'
-    tags-ignore:
-      - '*'
+      
 jobs:
 
   test-postgresql-windows:
