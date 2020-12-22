@@ -5,6 +5,8 @@
 [![Release](https://img.shields.io/github/release/cybertec-postgresql/pg_timetable.svg)](https://github.com/cybertec-postgresql/pg_timetable/releases/latest)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=cybertec-postgresql/pg_timetable)](https://dependabot.com)
+
 
 pg_timetable: Advanced scheduling for PostgreSQL
 ================================================
