@@ -6,8 +6,8 @@ on:
       - '**.yaml'
       - '**.yml'
       - '**.sql'
-      - 'go.mod'
-      - 'go.sum'
+      - '**.mod'
+      - '**.sum'
     branches:
       - '*'
     tags-ignore:
