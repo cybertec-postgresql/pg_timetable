@@ -4,7 +4,9 @@ on:
     paths:
       - '**.go'
       - '**.yaml'
-      - '**.yml'    
+      - '**.yml'
+      - 'go.mod'
+      - 'go.sum'      
     branches:
       - '*'
 
