@@ -5,7 +5,9 @@ on:
       - '**.go'
       - '**.yaml'
       - '**.yml'
-      - '**.sql'      
+      - '**.sql'
+      - 'go.mod'
+      - 'go.sum'
     branches:
       - '*'
     tags-ignore:
