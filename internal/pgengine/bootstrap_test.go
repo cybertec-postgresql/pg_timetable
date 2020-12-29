@@ -21,7 +21,7 @@ func TestInitAndTestMock(t *testing.T) {
 	defer db.Close()
 
 	t.Run("Check bootstrap if everything fine", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectPing()
 		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
@@ -29,14 +29,14 @@ func TestInitAndTestMock(t *testing.T) {
 	})
 
 	t.Run("Check bootstrap if ping failed", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectPing().WillReturnError(errors.New("ping error"))
 		assert.False(t, pgengine.InitAndTestConfigDBConnection(ctx, *cmdOpts))
 	})
 
 	t.Run("Check bootstrap if executeSchemaScripts failed", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectPing()
 		mock.ExpectQuery("SELECT EXISTS").WillReturnError(errors.New("internal error"))
@@ -44,7 +44,7 @@ func TestInitAndTestMock(t *testing.T) {
 	})
 
 	t.Run("Check bootstrap if startup file doesn't exist", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectPing()
 		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
@@ -63,14 +63,14 @@ func TestExecuteSchemaScripts(t *testing.T) {
 	pgengine.ConfigDb = xdb
 
 	t.Run("Check schema scripts if error returned for SELECT EXISTS", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectQuery("SELECT EXISTS").WillReturnError(errors.New("expected"))
 		assert.False(t, pgengine.ExecuteSchemaScripts(ctx))
 	})
 
 	t.Run("Check schema scripts if error returned", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 		mock.ExpectExec("CREATE SCHEMA timetable").WillReturnError(errors.New("expected"))
@@ -79,7 +79,7 @@ func TestExecuteSchemaScripts(t *testing.T) {
 	})
 
 	t.Run("Check schema scripts if everything fine", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectQuery("SELECT EXISTS").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
 		for i := 0; i < 4; i++ {
@@ -116,7 +116,7 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 	pgengine.ConfigDb = xdb
 
 	t.Run("Check ReconnectAndFixLeftovers if everything fine", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectPing()
 		mock.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnResult(sqlmock.NewResult(0, 0))
@@ -124,7 +124,7 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 	})
 
 	t.Run("Check ReconnectAndFixLeftovers if error returned", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), (pgengine.WaitTime+2)*time.Second)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		mock.ExpectPing().WillReturnError(errors.New("expected"))
 		mock.ExpectPing().WillDelayFor(pgengine.WaitTime * time.Second * 2)
