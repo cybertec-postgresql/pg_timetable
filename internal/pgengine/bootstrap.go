@@ -19,10 +19,13 @@ import (
 )
 
 // WaitTime specifies amount of time in seconds to wait before reconnecting to DB
-const WaitTime = 5
+const WaitTime = 10
 
 // maximum wait time before reconnect attempts
 const maxWaitTime = WaitTime * 16
+
+// wait time when db is read-only (replica)
+const replicaWaitTime = 60
 
 // ConfigDb is the global database object
 var ConfigDb *sqlx.DB
@@ -143,10 +146,16 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	var wt int = WaitTime
 	var err error
 
-	db, err := OpenDB("pgx", getPgxConnString(ctx, cmdOpts))
+	db, err := OpenDB("pgx", AmIreplica(ctx, cmdOpts))
+	if err == nil {
+		err = db.Ping()
+	}
+
+	db, err = OpenDB("pgx", getPgxConnString(ctx, cmdOpts))
 	if err == nil {
 		err = db.PingContext(ctx)
 	}
+
 	for err != nil {
 		Log("ERROR", err)
 		Log("LOG", "Reconnecting in ", wt, " sec...")
@@ -249,4 +258,52 @@ func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
 	Log("LOG", "Connection reestablished...")
 	FixSchedulerCrash(ctx)
 	return true
+}
+
+func AmIreplica(ctx context.Context, cmdOpts cmdparser.CmdOptions) string {
+	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
+	Log("DEBUG", "Connection string: ", connstr)
+	connConfig, err := pgx.ParseConfig(connstr)
+	if err != nil {
+		Log("ERROR", err)
+		return ""
+	}
+	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+		LogToDB(ctx, "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+	}
+
+	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
+		if err := GetReplicaStatus(ctx, pgconn); err != nil {
+			return err
+		}
+		return pgconn.Close(ctx)
+	}
+	return stdlib.RegisterConnConfig(connConfig)
+}
+
+func GetReplicaStatus(ctx context.Context, conn *pgconn.PgConn) error {
+	for {
+		amireplica := conn.Exec(ctx, "SELECT pg_is_in_recovery()")
+		defer amireplica.Close()
+		var replicaResults []*pgconn.Result
+		replicaResults, err := amireplica.ReadAll()
+		if err != nil {
+			return err
+		}
+
+		if bytes.Equal(replicaResults[0].Rows[0][0], []byte("f")) {
+			Log("LOG", "Database is in read-write mode, moving on.")
+			return nil
+		}
+
+		Log("LOG", fmt.Sprintf("I'm in recovery! I will check if server is promoted again in %d seconds", replicaWaitTime))
+
+		select {
+		case <-time.After(time.Duration(replicaWaitTime) * time.Second):
+		case <-ctx.Done():
+			// return ctx.Err()
+			return nil
+		}
+	}
 }
