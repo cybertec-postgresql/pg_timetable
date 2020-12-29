@@ -119,9 +119,7 @@ WHERE
 	live AND (client_name = $1 or client_name IS NULL)`
 
 func qualifySQL(sql string) string {
-	if NoReplicaTasks {
-		return sql + ` AND NOT pg_is_in_recovery()`
-	}
+	// for future use
 	return sql
 }
 
