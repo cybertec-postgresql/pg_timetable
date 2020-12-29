@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -26,7 +25,9 @@ func main() {
 		pgengine.LogToDB(ctx, "PANIC", "Error parsing command line arguments: ", err)
 		os.Exit(2)
 	}
-	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+
+	connctx, cancel := context.WithCancel(ctx)
+
 	defer cancel()
 	if !pgengine.InitAndTestConfigDBConnection(connctx, *cmdOpts) {
 		os.Exit(2)
