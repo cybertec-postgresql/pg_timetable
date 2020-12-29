@@ -175,6 +175,10 @@ CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, wor
 RETURNS bool AS 
 $CODE$
 BEGIN
+	IF pg_is_in_recovery() THEN
+		RAISE NOTICE 'Cannot obtain lock on a replica. Please, use the primary node';
+		RETURN FALSE;
+	END IF;	
 	-- remove disconnected sessions
 	DELETE 
 		FROM timetable.active_session 
