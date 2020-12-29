@@ -25,6 +25,7 @@ type CmdOptions struct {
 	Upgrade        bool   `long:"upgrade" description:"Upgrade database to the latest version"`
 	NoProgramTasks bool   `long:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoShellTasks   bool   `long:"no-shell-tasks" hidden:"deprecated" env:"PGTT_NOSHELLTASKS"`
+	NoReplicaTasks bool   `long:"no-replica-tasks" description:"disables tasks executing on a REPLICA PG node" env:"PGTT_NOREPLICATASKS"`
 	NoHelpMessage  bool   `long:"no-help" hidden:"system use"`
 	Debug          bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
 	PostgresURL    DbURL  `long:"pgurl" description:"PG config DB url" env:"PGTT_URL"`

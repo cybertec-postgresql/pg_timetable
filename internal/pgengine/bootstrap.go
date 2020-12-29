@@ -33,6 +33,9 @@ var ClientName string
 // NoProgramTasks parameter disables PROGRAM tasks executing
 var NoProgramTasks bool
 
+// NoReplicaTasks parameter disables tasks executing on a REPLICA PostgreSQL node
+var NoReplicaTasks bool
+
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
@@ -138,6 +141,7 @@ func getPgxConnString(ctx context.Context, cmdOpts cmdparser.CmdOptions) string 
 func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
 	ClientName = cmdOpts.ClientName
 	NoProgramTasks = cmdOpts.NoShellTasks || cmdOpts.NoProgramTasks
+	NoReplicaTasks = cmdOpts.NoReplicaTasks
 	VerboseLogLevel = cmdOpts.Verbose
 	Log("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime

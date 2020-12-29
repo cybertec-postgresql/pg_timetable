@@ -108,3 +108,51 @@ VALUES
 		LogToDB(ctx, "ERROR", "Update Chain Status failed: ", err)
 	}
 }
+
+//Select live chains with proper client_name value
+const sqlSelectLiveChains = `
+SELECT
+	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+FROM 
+	timetable.chain_execution_config 
+WHERE 
+	live AND (client_name = $1 or client_name IS NULL)`
+
+func qualifySQL(sql string) string {
+	if NoReplicaTasks {
+		return sql + ` AND NOT pg_is_in_recovery()`
+	}
+	return sql
+}
+
+// SelectRebootChains returns a list of chains should be executed after reboot
+func SelectRebootChains(ctx context.Context, dest interface{}) error {
+	const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
+	return ConfigDb.SelectContext(ctx, dest, qualifySQL(sqlSelectRebootChains), ClientName)
+}
+
+// SelectRebootChains returns a list of chains should be executed after reboot
+func SelectChains(ctx context.Context, dest interface{}) error {
+	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
+	return ConfigDb.SelectContext(ctx, dest, qualifySQL(sqlSelectChains), ClientName)
+}
+
+// SelectIntervalChains returns list of interval chains to be executed
+func SelectIntervalChains(ctx context.Context, dest interface{}) error {
+	const sqlSelectIntervalChains = `
+SELECT
+	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
+	EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
+	starts_with(run_at, '@after') as repeat_after
+FROM 
+	timetable.chain_execution_config 
+WHERE 
+	live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
+	return ConfigDb.SelectContext(ctx, dest, qualifySQL(sqlSelectIntervalChains), ClientName)
+}
+
+// SelectChain returns the chain with the specified ID
+func SelectChain(ctx context.Context, dest interface{}, chainID int) error {
+	const sqlSelectSingleChain = sqlSelectLiveChains + ` AND chain_execution_config = $2`
+	return ConfigDb.GetContext(ctx, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
+}
