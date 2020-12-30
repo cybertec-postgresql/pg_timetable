@@ -195,6 +195,7 @@ BEGIN
 			AND s.client_name = worker_name
 		LIMIT 1;
 	IF FOUND THEN
+		RAISE NOTICE 'Another client is already connected to server with name: %', worker_name;
 		RETURN FALSE;
 	END IF;
 	-- insert current session information
