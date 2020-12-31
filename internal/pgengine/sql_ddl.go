@@ -22,7 +22,8 @@ VALUES
 	(4, '0122 Add autonomous tasks'),
 	(5, '0105 Add next_run function'),
 	(6, '0149 Reimplement session locking'),
-	(7, '0155 Rename SHELL task kind to PROGRAM');
+	(7, '0155 Rename SHELL task kind to PROGRAM'),
+	(8, '0178 Disable tasks on a REPLICA node');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
