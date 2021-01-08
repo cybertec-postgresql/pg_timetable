@@ -9,17 +9,6 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
-//Select live chains with proper client_name value
-const sqlSelectIntervalChains = `
-SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
-	EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
-	starts_with(run_at, '@after') as repeat_after
-FROM 
-	timetable.chain_execution_config 
-WHERE 
-	live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
-
 // IntervalChain structure used to represent repeated chains.
 type IntervalChain struct {
 	Chain
@@ -64,10 +53,10 @@ var intervalChainsChan chan IntervalChain = make(chan IntervalChain, workersNumb
 
 var mutex = &sync.Mutex{}
 
-func retriveIntervalChainsAndRun(ctx context.Context, sql string) {
+func retriveIntervalChainsAndRun(ctx context.Context) {
 	mutex.Lock()
 	ichains := []IntervalChain{}
-	err := pgengine.ConfigDb.SelectContext(ctx, &ichains, sql, pgengine.ClientName)
+	err := pgengine.SelectIntervalChains(ctx, &ichains)
 	if err != nil {
 		pgengine.LogToDB(ctx, "ERROR", "Could not query pending interval tasks: ", err)
 	} else {

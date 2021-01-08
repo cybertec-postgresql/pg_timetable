@@ -22,7 +22,8 @@ VALUES
 	(4, '0122 Add autonomous tasks'),
 	(5, '0105 Add next_run function'),
 	(6, '0149 Reimplement session locking'),
-	(7, '0155 Rename SHELL task kind to PROGRAM');
+	(7, '0155 Rename SHELL task kind to PROGRAM'),
+	(8, '0178 Disable tasks on a REPLICA node');
 
 -- define database connections for script execution
 CREATE TABLE timetable.database_connection (
@@ -175,6 +176,10 @@ CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, wor
 RETURNS bool AS 
 $CODE$
 BEGIN
+	IF pg_is_in_recovery() THEN
+		RAISE NOTICE 'Cannot obtain lock on a replica. Please, use the primary node';
+		RETURN FALSE;
+	END IF;	
 	-- remove disconnected sessions
 	DELETE 
 		FROM timetable.active_session 
@@ -191,6 +196,7 @@ BEGIN
 			AND s.client_name = worker_name
 		LIMIT 1;
 	IF FOUND THEN
+		RAISE NOTICE 'Another client is already connected to server with name: %', worker_name;
 		RETURN FALSE;
 	END IF;
 	-- insert current session information

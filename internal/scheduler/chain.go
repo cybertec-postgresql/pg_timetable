@@ -12,25 +12,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-//Select live chains with proper client_name value
-const sqlSelectLiveChains = `
-SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
-FROM 
-	timetable.chain_execution_config 
-WHERE 
-	live AND (client_name = $1 or client_name IS NULL)`
-
-//Select chains to be executed right now()
-const sqlSelectChains = sqlSelectLiveChains +
-	` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
-
-const sqlSelectSingleChain = sqlSelectLiveChains +
-	` AND chain_execution_config = $2`
-
-//Select chains to be executed right after reboot
-const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
-
 // Chain structure used to represent tasks chains
 type Chain struct {
 	ChainExecutionConfigID int    `db:"chain_execution_config"`
@@ -74,8 +55,7 @@ func retrieveAsyncChainsAndRun(ctx context.Context) {
 			return
 		}
 		var headChain Chain
-		err := pgengine.ConfigDb.GetContext(ctx, &headChain, sqlSelectSingleChain,
-			pgengine.ClientName, chainExecutionConfigID)
+		err := pgengine.SelectChain(ctx, &headChain, chainExecutionConfigID)
 		if err != nil {
 			pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
 		} else {
@@ -85,9 +65,14 @@ func retrieveAsyncChainsAndRun(ctx context.Context) {
 	}
 }
 
-func retriveChainsAndRun(ctx context.Context, sql string, args ...interface{}) {
+func retriveChainsAndRun(ctx context.Context, reboot bool) {
+	var err error
 	headChains := []Chain{}
-	err := pgengine.ConfigDb.SelectContext(ctx, &headChains, sql, args...)
+	if reboot {
+		err = pgengine.SelectRebootChains(ctx, &headChains)
+	} else {
+		err = pgengine.SelectChains(ctx, &headChains)
+	}
 	if err != nil {
 		pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
 		return
