@@ -259,13 +259,13 @@ Create a Job with the `timetable.job_add` function. With this function you can a
 | `live`          | `boolean` | Control if the chain may be executed once it reaches its schedule. |FALSE|
 | `self_destruct` | `boolean` | Self destruct the chain. |FALSE|
 
-#### 3.5 Usage
+### 3.5 Usage
 
 Run "MyJob" at 00:05 in August.
-```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '5 0 * 8 *');```
+```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '5 0 * 8 *', NULL, true);```
 
 Run "MyJob" at minute 23 past every 2nd hour from 0 through 20.
-```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '23 0-20/2 * * *');```
+```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '23 0-20/2 * * *', NULL, true);```
     
 ## 4. Database logging and transactions
 
