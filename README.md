@@ -265,7 +265,7 @@ Run "MyJob" at 00:05 in August.
 ```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '5 0 * 8 *', live := TRUE);```
 
 Run "MyJob" at minute 23 past every 2nd hour from 0 through 20.
-```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '23 0-20/2 * * *', NULL, true);```
+```SELECT timetable.job_add('MyJob', 'SELECT public.my_func()' , NULL, 'SQL', '23 0-20/2 * * *', live := TRUE);```
     
 ## 4. Database logging and transactions
 
