@@ -110,8 +110,7 @@ VALUES
 }
 
 //Select live chains with proper client_name value
-const sqlSelectLiveChains = `
-SELECT
+const sqlSelectLiveChains = `SELECT
 	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
 FROM 
 	timetable.chain_execution_config 
