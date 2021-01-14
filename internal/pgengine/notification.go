@@ -2,47 +2,61 @@ package pgengine
 
 import (
 	"context"
-	"strconv"
+	"encoding/json"
+	"fmt"
 	"sync"
 
 	pgconn "github.com/jackc/pgconn"
 	stdlib "github.com/jackc/pgx/v4/stdlib"
 )
 
+type ChainSignal struct {
+	ConfigID int
+	Command  string //allowed: START, STOP
+}
+
 var notifications map[pgconn.Notification]struct{} = make(map[pgconn.Notification]struct{})
-var configIDsChan chan int = make(chan int, 64)
+var chainSignalChan chan ChainSignal = make(chan ChainSignal, 64)
 var mutex = &sync.Mutex{}
 
 // NotificationHandler consumes notifications from the PostgreSQL server
 func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	mutex.Lock()
+	defer mutex.Unlock()
+	LogToDB(context.Background(), "DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
 	if _, ok := notifications[*n]; ok {
 		return // already handled
 	}
 	notifications[*n] = struct{}{}
-	if id, err := strconv.Atoi(n.Payload); err == nil && id > 0 {
-		configIDsChan <- id
+	var signal ChainSignal
+	var err error
+	if err = json.Unmarshal([]byte(n.Payload), &signal); err == nil {
+		switch signal.Command {
+		case "STOP", "START":
+			if signal.ConfigID > 0 {
+				LogToDB(context.Background(), "DEBUG", "Adding asynchronous chain to working queue: ", signal)
+				chainSignalChan <- signal
+				return
+			}
+		}
+		err = fmt.Errorf("Unknown command: %s", signal.Command)
 	}
-	mutex.Unlock()
+	LogToDB(context.Background(), "ERROR", "Syntax error in payload: ", err)
 }
 
-// WaitForAsyncChain returns configuration id from the notifications
-func WaitForAsyncChain(ctx context.Context) int {
+// WaitForChainSignal returns configuration id from the notifications
+func WaitForChainSignal(ctx context.Context) ChainSignal {
 	select {
 	case <-ctx.Done():
-		return 0
-	case id := <-configIDsChan:
-		return id
+		return ChainSignal{0, ""}
+	case signal := <-chainSignalChan:
+		return signal
 	}
 }
 
 // HandleNotifications consumes notifications in blocking mode
 func HandleNotifications(ctx context.Context) {
 	conn, err := ConfigDb.DB.Conn(ctx)
-	if err != nil {
-		LogToDB(ctx, "ERROR", err)
-	}
-	_, err = conn.ExecContext(ctx, "LISTEN "+ClientName)
 	if err != nil {
 		LogToDB(ctx, "ERROR", err)
 	}

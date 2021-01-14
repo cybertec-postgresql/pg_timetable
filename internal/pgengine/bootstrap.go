@@ -116,15 +116,17 @@ func getPgxConnString(cmdOpts cmdparser.CmdOptions) string {
 		//use background context without deadline for async notifications handler
 		LogToDB(context.Background(), "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
 	}
-	if !cmdOpts.Debug {
-		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
-			if err := TryLockClientName(ctx, pgconn); err != nil {
-				return err
-			}
-			return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+
+	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
+		if err := TryLockClientName(ctx, pgconn); err != nil {
+			return err
 		}
+		return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+	}
+	if !cmdOpts.Debug { //will handle notification in HandleNotifications directly
 		connConfig.OnNotification = NotificationHandler
 	}
+
 	connConfig.Logger = Logger{}
 	if VerboseLogLevel {
 		connConfig.LogLevel = pgx.LogLevelDebug

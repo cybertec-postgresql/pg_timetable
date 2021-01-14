@@ -19,26 +19,21 @@ func TestAsyncChains(t *testing.T) {
 	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	pgengine.ConfigDb = sqlx.NewDb(db, "sqlmock")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	n := &pgconn.Notification{Payload: `{"ConfigID": 24, "Command": "START"}`}
 
 	//add correct chain
-	pgengine.NotificationHandler(nil, &pgconn.Notification{Payload: "24"})
+	pgengine.NotificationHandler(&pgconn.PgConn{}, n)
 	mock.ExpectQuery("SELECT.+chain_execution_config").
 		WillReturnRows(sqlmock.NewRows([]string{"chain_execution_config", "chain_id", "chain_name",
 			"self_destruct", "exclusive_execution", "max_instances"}).
 			AddRow(24, 24, "foo", false, false, 16))
 	if pgengine.VerboseLogLevel {
-		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("INSERT.+log").WillReturnResult(sqlmock.NewResult(0, 1))
 	}
 	//add incorrect chaing
-	pgengine.NotificationHandler(nil, &pgconn.Notification{Payload: "42"})
+	pgengine.NotificationHandler(&pgconn.PgConn{}, n)
 	mock.ExpectQuery("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
-	mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
-	//emulate context cancellation
-	pgengine.NotificationHandler(nil, &pgconn.Notification{Payload: "0"})
-	retrieveAsyncChainsAndRun(ctx)
+	mock.ExpectExec("INSERT.+log").WillReturnResult(sqlmock.NewResult(0, 1))
 }
 
 func TestChainWorker(t *testing.T) {

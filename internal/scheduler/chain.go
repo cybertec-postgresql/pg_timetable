@@ -25,6 +25,9 @@ type Chain struct {
 //read-write mutex for running regular and exclusive chains
 var exclusiveMutex sync.RWMutex
 
+// activeChains holds the map of chain ID with context cancel() function, so we can abort chain by request
+var activeChains = map[int]func(){}
+
 func (chain Chain) String() string {
 	data, _ := json.Marshal(chain)
 	return string(data)
@@ -50,17 +53,24 @@ func (chain Chain) Unlock() {
 
 func retrieveAsyncChainsAndRun(ctx context.Context) {
 	for {
-		chainExecutionConfigID := pgengine.WaitForAsyncChain(ctx)
-		if chainExecutionConfigID == 0 {
+		chainSignal := pgengine.WaitForChainSignal(ctx)
+		if chainSignal.ConfigID == 0 {
 			return
 		}
-		var headChain Chain
-		err := pgengine.SelectChain(ctx, &headChain, chainExecutionConfigID)
-		if err != nil {
-			pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
-		} else {
-			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
-			chains <- headChain
+		switch chainSignal.Command {
+		case "START":
+			var headChain Chain
+			err := pgengine.SelectChain(ctx, &headChain, chainSignal.ConfigID)
+			if err != nil {
+				pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
+			} else {
+				pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+				chains <- headChain
+			}
+		case "STOP":
+			if cancel, ok := activeChains[chainSignal.ConfigID]; ok {
+				cancel()
+			}
 		}
 	}
 }
@@ -88,9 +98,6 @@ func retriveChainsAndRun(ctx context.Context, reboot bool) {
 		chains <- headChain
 	}
 }
-
-// activeChains holds the map of chain ID with context cancel() function, so we can abort chain by request
-var activeChains = map[int]func(){}
 
 func chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {

@@ -19,11 +19,11 @@ func TestNotifications(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	go func() {
-		_, err := pgengine.ConfigDb.ExecContext(ctx, "NOTIFY pgengine_unit_test, '42'")
+		_, err := pgengine.ConfigDb.ExecContext(ctx, `NOTIFY pgengine_unit_test, '{"ConfigID": 1234, "Command": "START"}'`)
 		assert.NoError(t, err)
 	}()
-	assert.Equal(t, 42, pgengine.WaitForAsyncChain(ctx), "Should return proper notify payload")
-	assert.Equal(t, 0, pgengine.WaitForAsyncChain(ctx), "Should return 0 due to context deadline")
+	assert.Equal(t, pgengine.ChainSignal{1234, "START"}, pgengine.WaitForChainSignal(ctx), "Should return proper notify payload")
+	assert.Equal(t, pgengine.ChainSignal{0, ""}, pgengine.WaitForChainSignal(ctx), "Should return 0 due to context deadline")
 
 }
 
@@ -36,10 +36,10 @@ func TestHandleNotifications(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	go func() {
-		_, err := pgengine.ConfigDb.ExecContext(ctx, "NOTIFY pgengine_unit_test, '42'")
+		_, err := pgengine.ConfigDb.ExecContext(ctx, `NOTIFY pgengine_unit_test, '{"ConfigID": 1234, "Command": "START"}'`)
 		assert.NoError(t, err)
 	}()
 	go pgengine.HandleNotifications(ctx)
-	assert.Equal(t, 42, pgengine.WaitForAsyncChain(ctx), "Should return proper notify payload")
-	assert.Equal(t, 0, pgengine.WaitForAsyncChain(ctx), "Should return 0 due to context deadline")
+	assert.Equal(t, pgengine.ChainSignal{1234, "START"}, pgengine.WaitForChainSignal(ctx), "Should return proper notify payload")
+	assert.Equal(t, pgengine.ChainSignal{0, ""}, pgengine.WaitForChainSignal(ctx), "Should return 0 due to context deadline")
 }
