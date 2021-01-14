@@ -39,11 +39,6 @@ func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[ %-40s ]: %%s", getColorizedPrefix(level))
 }
 
-// GetLogPrefixLn perform formatted logging with new line at the end
-func GetLogPrefixLn(level string) string {
-	return GetLogPrefix(level) + "\n"
-}
-
 const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 
 // LogToDB performs logging to standard output
