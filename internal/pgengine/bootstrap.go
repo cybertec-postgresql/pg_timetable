@@ -173,7 +173,6 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 			return false
 		}
 	}
-	_, _ = ConfigDb.ExecContext(ctx, "SELECT timetable.try_lock_client_name($1, $2)", os.Getpid(), ClientName)
 	return true
 }
 
