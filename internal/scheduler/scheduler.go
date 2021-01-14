@@ -58,13 +58,13 @@ func Run(ctx context.Context, debug bool) RunStatus {
 	}
 
 	pgengine.LogToDB(ctx, "LOG", "Checking for @reboot task chains...")
-	retriveChainsAndRun(ctx, sqlSelectRebootChains, pgengine.ClientName)
+	retriveChainsAndRun(ctx, true)
 
 	for {
 		pgengine.LogToDB(ctx, "LOG", "Checking for task chains...")
-		go retriveChainsAndRun(ctx, sqlSelectChains, pgengine.ClientName)
+		go retriveChainsAndRun(ctx, false)
 		pgengine.LogToDB(ctx, "LOG", "Checking for interval task chains...")
-		go retriveIntervalChainsAndRun(ctx, sqlSelectIntervalChains)
+		go retriveIntervalChainsAndRun(ctx)
 
 		select {
 		case <-time.After(refetchTimeout * time.Second):

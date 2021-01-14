@@ -87,7 +87,7 @@ func TryLockClientName(ctx context.Context, conn *pgconn.PgConn) error {
 			Log("ERROR", "Error occurred during client name locking: ", err)
 			return err
 		} else if !bytes.Equal(results[0].Rows[0][0], []byte("t")) {
-			Log("ERROR", "Another client is already connected to server with name: ", ClientName)
+			Log("LOG", "Cannot obtain lock for a session")
 		} else {
 			return nil
 		}
