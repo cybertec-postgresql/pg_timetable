@@ -17,13 +17,13 @@ type ChainSignal struct {
 
 var notifications map[pgconn.Notification]struct{} = make(map[pgconn.Notification]struct{})
 var chainSignalChan chan ChainSignal = make(chan ChainSignal, 64)
-var mutex = &sync.Mutex{}
+var mutex sync.Mutex
 
 // NotificationHandler consumes notifications from the PostgreSQL server
 func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	LogToDB(context.Background(), "DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
+	Log("DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
 	if _, ok := notifications[*n]; ok {
 		return // already handled
 	}
@@ -34,14 +34,14 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 		switch signal.Command {
 		case "STOP", "START":
 			if signal.ConfigID > 0 {
-				LogToDB(context.Background(), "DEBUG", "Adding asynchronous chain to working queue: ", signal)
+				Log("DEBUG", "Adding asynchronous chain to working queue: ", signal)
 				chainSignalChan <- signal
 				return
 			}
 		}
 		err = fmt.Errorf("Unknown command: %s", signal.Command)
 	}
-	LogToDB(context.Background(), "ERROR", "Syntax error in payload: ", err)
+	Log("ERROR", "Syntax error in payload: ", err)
 }
 
 // WaitForChainSignal returns configuration id from the notifications
