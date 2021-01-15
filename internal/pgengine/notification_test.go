@@ -16,14 +16,14 @@ func TestNotifications(t *testing.T) {
 	teardownTestCase := testutils.SetupTestCase(t)
 	defer teardownTestCase(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	go func() {
-		_, err := pgengine.ConfigDb.ExecContext(ctx, `NOTIFY pgengine_unit_test, '{"ConfigID": 1234, "Command": "START"}'`)
+		_, err := pgengine.ConfigDb.ExecContext(ctx, `NOTIFY pgengine_unit_test, '{"ConfigID": 1234, "Command": "START", "Ts": 123456}'`)
 		assert.NoError(t, err)
 	}()
-	assert.Equal(t, pgengine.ChainSignal{1234, "START"}, pgengine.WaitForChainSignal(ctx), "Should return proper notify payload")
-	assert.Equal(t, pgengine.ChainSignal{0, ""}, pgengine.WaitForChainSignal(ctx), "Should return 0 due to context deadline")
+	assert.Equal(t, pgengine.ChainSignal{1234, "START", 123456}, pgengine.WaitForChainSignal(ctx), "Should return proper notify payload")
+	assert.Equal(t, pgengine.ChainSignal{0, "", 0}, pgengine.WaitForChainSignal(ctx), "Should return 0 due to context deadline")
 
 }
 
@@ -33,13 +33,13 @@ func TestHandleNotifications(t *testing.T) {
 		c.Debug = true
 	})
 	defer teardownTestCase(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	go func() {
-		_, err := pgengine.ConfigDb.ExecContext(ctx, `NOTIFY pgengine_unit_test, '{"ConfigID": 1234, "Command": "START"}'`)
+		_, err := pgengine.ConfigDb.ExecContext(ctx, `NOTIFY pgengine_unit_test, '{"ConfigID": 1234, "Command": "START", "Ts": 123456}'`)
 		assert.NoError(t, err)
 	}()
 	go pgengine.HandleNotifications(ctx)
-	assert.Equal(t, pgengine.ChainSignal{1234, "START"}, pgengine.WaitForChainSignal(ctx), "Should return proper notify payload")
-	assert.Equal(t, pgengine.ChainSignal{0, ""}, pgengine.WaitForChainSignal(ctx), "Should return 0 due to context deadline")
+	assert.Equal(t, pgengine.ChainSignal{1234, "START", 123456}, pgengine.WaitForChainSignal(ctx), "Should return proper notify payload")
+	assert.Equal(t, pgengine.ChainSignal{0, "", 0}, pgengine.WaitForChainSignal(ctx), "Should return 0 due to context deadline")
 }
