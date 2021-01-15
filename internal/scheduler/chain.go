@@ -99,6 +99,8 @@ func retriveChainsAndRun(ctx context.Context, reboot bool) {
 	}
 }
 
+var activeChainMutex sync.Mutex
+
 func chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {
 		select {
@@ -114,9 +116,13 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 			}
 			chain.Lock()
 			chainContext, cancel := context.WithCancel(ctx)
+			activeChainMutex.Lock()
 			activeChains[chain.ChainID] = cancel
+			activeChainMutex.Unlock()
 			executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
+			activeChainMutex.Lock()
 			delete(activeChains, chain.ChainID)
+			activeChainMutex.Unlock()
 			cancel()
 			chain.Unlock()
 			if chain.SelfDestruct {

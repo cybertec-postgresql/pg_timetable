@@ -51,10 +51,10 @@ var intervalChains map[int]IntervalChain = make(map[int]IntervalChain)
 // create channel for passing interval chains to workers
 var intervalChainsChan chan IntervalChain = make(chan IntervalChain, workersNumber)
 
-var mutex = &sync.Mutex{}
+var intervalChainMutex sync.Mutex
 
 func retriveIntervalChainsAndRun(ctx context.Context) {
-	mutex.Lock()
+	intervalChainMutex.Lock()
 	ichains := []IntervalChain{}
 	err := pgengine.SelectIntervalChains(ctx, &ichains)
 	if err != nil {
@@ -77,7 +77,7 @@ func retriveIntervalChainsAndRun(ctx context.Context) {
 		}
 		intervalChains[ichain.ChainExecutionConfigID] = ichain
 	}
-	mutex.Unlock()
+	intervalChainMutex.Unlock()
 }
 
 func intervalChainWorker(ctx context.Context, ichains <-chan IntervalChain) {
