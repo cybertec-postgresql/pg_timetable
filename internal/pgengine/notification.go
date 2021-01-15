@@ -51,7 +51,9 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	if err = json.Unmarshal([]byte(n.Payload), &signal); err == nil {
 		mutex.Lock()
 		if _, ok := notifications[signal]; ok {
-			return // already handled
+			Log("DEBUG", "Notification already handled: ", *n, " Handled notifications: ", notifications)
+			mutex.Unlock()
+			return
 		}
 		notifications[signal] = struct{}{}
 		mutex.Unlock()
