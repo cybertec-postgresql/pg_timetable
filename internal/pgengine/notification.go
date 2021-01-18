@@ -30,7 +30,7 @@ var mutex sync.Mutex
 var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{}) {
 	m = make(map[ChainSignal]struct{})
 	go func() {
-		for now := range time.Tick(time.Duration(NotifyTTL) * time.Minute) {
+		for now := range time.Tick(time.Duration(NotifyTTL) * time.Second) {
 			mutex.Lock()
 			for k := range m {
 				if now.Unix()-k.Ts > NotifyTTL {
