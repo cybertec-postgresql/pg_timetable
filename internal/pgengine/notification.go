@@ -60,7 +60,7 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 		switch signal.Command {
 		case "STOP", "START":
 			if signal.ConfigID > 0 {
-				Log("DEBUG", "Adding asynchronous chain to working queue: ", signal)
+				Log("LOG", "Adding asynchronous chain to working queue: ", signal)
 				chainSignalChan <- signal
 				return
 			}
