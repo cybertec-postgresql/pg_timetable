@@ -25,6 +25,9 @@ type Chain struct {
 //read-write mutex for running regular and exclusive chains
 var exclusiveMutex sync.RWMutex
 
+// activeChains holds the map of chain ID with context cancel() function, so we can abort chain by request
+var activeChains = map[int]func(){}
+
 func (chain Chain) String() string {
 	data, _ := json.Marshal(chain)
 	return string(data)
@@ -50,17 +53,24 @@ func (chain Chain) Unlock() {
 
 func retrieveAsyncChainsAndRun(ctx context.Context) {
 	for {
-		chainExecutionConfigID := pgengine.WaitForAsyncChain(ctx)
-		if chainExecutionConfigID == 0 {
+		chainSignal := pgengine.WaitForChainSignal(ctx)
+		if chainSignal.ConfigID == 0 {
 			return
 		}
-		var headChain Chain
-		err := pgengine.SelectChain(ctx, &headChain, chainExecutionConfigID)
-		if err != nil {
-			pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
-		} else {
-			pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
-			chains <- headChain
+		switch chainSignal.Command {
+		case "START":
+			var headChain Chain
+			err := pgengine.SelectChain(ctx, &headChain, chainSignal.ConfigID)
+			if err != nil {
+				pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
+			} else {
+				pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+				chains <- headChain
+			}
+		case "STOP":
+			if cancel, ok := activeChains[chainSignal.ConfigID]; ok {
+				cancel()
+			}
 		}
 	}
 }
@@ -89,6 +99,8 @@ func retriveChainsAndRun(ctx context.Context, reboot bool) {
 	}
 }
 
+var activeChainMutex sync.Mutex
+
 func chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {
 		select {
@@ -103,7 +115,15 @@ func chainWorker(ctx context.Context, chains <-chan Chain) {
 				}
 			}
 			chain.Lock()
-			executeChain(ctx, chain.ChainExecutionConfigID, chain.ChainID)
+			chainContext, cancel := context.WithCancel(ctx)
+			activeChainMutex.Lock()
+			activeChains[chain.ChainID] = cancel
+			activeChainMutex.Unlock()
+			executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
+			activeChainMutex.Lock()
+			delete(activeChains, chain.ChainID)
+			activeChainMutex.Unlock()
+			cancel()
 			chain.Unlock()
 			if chain.SelfDestruct {
 				pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
@@ -141,15 +161,16 @@ func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 		pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "STARTED")
 		retCode := executeСhainElement(ctx, tx, &chainElemExec)
 		if retCode != 0 && !chainElemExec.IgnoreError {
-			pgengine.LogToDB(ctx, "ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
-			pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "CHAIN_FAILED")
-			pgengine.MustRollbackTransaction(ctx, tx)
+			// we use background context here because current one (ctx) might be cancelled
+			pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
+			pgengine.UpdateChainRunStatus(context.Background(), &chainElemExec, runStatusID, "CHAIN_FAILED")
+			pgengine.MustRollbackTransaction(context.Background(), tx)
 			return
 		}
-		pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "CHAIN_DONE")
+		pgengine.UpdateChainRunStatus(context.Background(), &chainElemExec, runStatusID, "CHAIN_DONE")
 	}
-	pgengine.LogToDB(ctx, "LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
-	pgengine.UpdateChainRunStatus(ctx,
+	pgengine.LogToDB(context.Background(), "LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
+	pgengine.UpdateChainRunStatus(context.Background(),
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
 			ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
@@ -191,8 +212,8 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 		if out == "" {
 			out = err.Error()
 		}
-		pgengine.LogChainElementExecution(ctx, chainElemExec, retCode, out)
-		pgengine.LogToDB(ctx, "ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
+		pgengine.LogChainElementExecution(context.Background(), chainElemExec, retCode, out)
+		pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
 		return retCode
 	}
 
