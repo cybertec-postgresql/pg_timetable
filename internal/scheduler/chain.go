@@ -161,15 +161,16 @@ func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 		pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "STARTED")
 		retCode := executeСhainElement(ctx, tx, &chainElemExec)
 		if retCode != 0 && !chainElemExec.IgnoreError {
-			pgengine.LogToDB(ctx, "ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
-			pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "CHAIN_FAILED")
-			pgengine.MustRollbackTransaction(ctx, tx)
+			// we use background context here because current one (ctx) might be cancelled
+			pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
+			pgengine.UpdateChainRunStatus(context.Background(), &chainElemExec, runStatusID, "CHAIN_FAILED")
+			pgengine.MustRollbackTransaction(context.Background(), tx)
 			return
 		}
-		pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "CHAIN_DONE")
+		pgengine.UpdateChainRunStatus(context.Background(), &chainElemExec, runStatusID, "CHAIN_DONE")
 	}
-	pgengine.LogToDB(ctx, "LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
-	pgengine.UpdateChainRunStatus(ctx,
+	pgengine.LogToDB(context.Background(), "LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
+	pgengine.UpdateChainRunStatus(context.Background(),
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
 			ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
@@ -211,8 +212,8 @@ func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgeng
 		if out == "" {
 			out = err.Error()
 		}
-		pgengine.LogChainElementExecution(ctx, chainElemExec, retCode, out)
-		pgengine.LogToDB(ctx, "ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
+		pgengine.LogChainElementExecution(context.Background(), chainElemExec, retCode, out)
+		pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
 		return retCode
 	}
 
