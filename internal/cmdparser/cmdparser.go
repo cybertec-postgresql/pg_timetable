@@ -12,7 +12,7 @@ import (
 
 // CmdOptions holds command line options passed
 type CmdOptions struct {
-	ClientName     string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True"`
+	ClientName     string `short:"c" long:"clientname" description:"Unique name for application instance" required:"True" env:"PGTT_CLIENTNAME"`
 	Verbose        bool   `short:"v" long:"verbose" description:"Show verbose debug information" env:"PGTT_VERBOSE"`
 	Host           string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
 	Port           string `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
