@@ -105,7 +105,7 @@ VALUES
 	_, err = ConfigDb.ExecContext(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
 		runStatusID, chainElemExec.ChainConfig, ClientName)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Update Chain Status failed: ", err)
+		LogToDB(ctx, "ERROR", "Update chain status failed: ", err)
 	}
 }
 
@@ -150,6 +150,12 @@ WHERE
 
 // SelectChain returns the chain with the specified ID
 func SelectChain(ctx context.Context, dest interface{}, chainID int) error {
-	const sqlSelectSingleChain = sqlSelectLiveChains + ` AND chain_execution_config = $2`
+	// we accept not only live chains here because we want to run them in debug mode
+	const sqlSelectSingleChain = `SELECT
+	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+FROM 
+	timetable.chain_execution_config 
+WHERE 
+	(client_name = $1 or client_name IS NULL) AND chain_execution_config = $2`
 	return ConfigDb.GetContext(ctx, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
 }
