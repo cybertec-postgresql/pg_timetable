@@ -95,7 +95,7 @@ func HandleNotifications(ctx context.Context) {
 		err = conn.Raw(func(driverConn interface{}) error {
 			c := driverConn.(*stdlib.Conn).Conn()
 			if n, err := c.WaitForNotification(ctx); err == nil {
-				NotificationHandler(c.PgConn(), n) // remove processed flag in one threaded debug mode
+				NotificationHandler(c.PgConn(), n)
 			}
 			return err
 		})
