@@ -22,7 +22,6 @@ func main() {
 	ctx := context.Background()
 	cmdOpts, err := cmdparser.Parse()
 	if err != nil {
-
 		pgengine.LogToDB(ctx, "PANIC", "Error parsing command line arguments: ", err)
 		os.Exit(2)
 	}

@@ -125,6 +125,15 @@ func TestUpdateChainRunStatus(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
+func TestSelectChain(t *testing.T) {
+	initmockdb(t)
+	pgengine.ConfigDb = xdb
+	defer db.Close()
+
+	mock.ExpectExec("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
+	assert.Error(t, pgengine.SelectChain(context.Background(), struct{}{}, 42))
+}
+
 func TestIsAlive(t *testing.T) {
 	initmockdb(t)
 	assert.False(t, pgengine.IsAlive())

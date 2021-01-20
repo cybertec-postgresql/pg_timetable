@@ -90,6 +90,10 @@ func init() {
 				Name: "0178 Disable tasks on a REPLICA node",
 				Func: migration178,
 			},
+			&migrator.Migration{
+				Name: "0195 Add notify_chain_start() and notify_chain_stop() functions",
+				Func: migration195,
+			},
 			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
 		),
 	)
@@ -99,6 +103,33 @@ func init() {
 }
 
 // below this line should appear migration funсtions only
+func migration195(tx *sql.Tx) error {
+	_, err := tx.Exec(`CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_config_id BIGINT, worker_name TEXT)
+RETURNS void AS 
+$$
+  SELECT pg_notify(
+  	worker_name, 
+	format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
+		chain_config_id, 
+		EXTRACT(epoch FROM clock_timestamp())::bigint)
+	)
+$$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(chain_config_id BIGINT, worker_name TEXT)
+RETURNS void AS 
+$$
+  SELECT pg_notify(
+  	worker_name, 
+	format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
+		chain_config_id, 
+		EXTRACT(epoch FROM clock_timestamp())::bigint)
+	)
+$$
+LANGUAGE SQL;`)
+	return err
+}
+
 func migration178(tx *sql.Tx) error {
 	_, err := tx.Exec(`
 CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)

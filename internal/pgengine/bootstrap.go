@@ -103,7 +103,7 @@ func TryLockClientName(ctx context.Context, conn *pgconn.PgConn) error {
 }
 
 // getPgxConnString transforms standard connestion string to pgx specific one with
-func getPgxConnString(ctx context.Context, cmdOpts cmdparser.CmdOptions) string {
+func getPgxConnString(cmdOpts cmdparser.CmdOptions) string {
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
 	Log("DEBUG", "Connection string: ", connstr)
@@ -113,17 +113,20 @@ func getPgxConnString(ctx context.Context, cmdOpts cmdparser.CmdOptions) string 
 		return ""
 	}
 	connConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
-		LogToDB(ctx, "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+		//use background context without deadline for async notifications handler
+		LogToDB(context.Background(), "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
 	}
-	if !cmdOpts.Debug {
-		connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
-			if err := TryLockClientName(ctx, pgconn); err != nil {
-				return err
-			}
-			return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+
+	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
+		if err := TryLockClientName(ctx, pgconn); err != nil {
+			return err
 		}
+		return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+	}
+	if !cmdOpts.Debug { //will handle notification in HandleNotifications directly
 		connConfig.OnNotification = NotificationHandler
 	}
+
 	connConfig.Logger = Logger{}
 	if VerboseLogLevel {
 		connConfig.LogLevel = pgx.LogLevelDebug
@@ -143,7 +146,7 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	var wt int = WaitTime
 	var err error
 
-	db, err := OpenDB("pgx", getPgxConnString(ctx, cmdOpts))
+	db, err := OpenDB("pgx", getPgxConnString(cmdOpts))
 	if err == nil {
 		err = db.PingContext(ctx)
 	}
@@ -172,7 +175,6 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 			return false
 		}
 	}
-	_, _ = ConfigDb.ExecContext(ctx, "SELECT timetable.try_lock_client_name($1, $2)", os.Getpid(), ClientName)
 	return true
 }
 

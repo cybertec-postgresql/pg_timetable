@@ -39,14 +39,9 @@ func GetLogPrefix(level string) string {
 	return fmt.Sprintf("[ %-40s ]: %%s", getColorizedPrefix(level))
 }
 
-// GetLogPrefixLn perform formatted logging with new line at the end
-func GetLogPrefixLn(level string) string {
-	return GetLogPrefix(level) + "\n"
-}
-
 const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 
-// LogToDB performs logging to standard output
+// Log performs logging to standard output
 func Log(level string, msg ...interface{}) {
 	if !VerboseLogLevel {
 		if level == "DEBUG" {
@@ -59,6 +54,9 @@ func Log(level string, msg ...interface{}) {
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
 func LogToDB(ctx context.Context, level string, msg ...interface{}) {
+	if ctx.Err() != nil {
+		return
+	}
 	if !VerboseLogLevel {
 		if level == "DEBUG" {
 			return
@@ -68,7 +66,7 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	if ConfigDb != nil {
 		_, err := ConfigDb.ExecContext(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
-			fmt.Printf(GetLogPrefixLn("ERROR"), "Cannot log to the database: ", err)
+			Log("ERROR", "Cannot log to the database: ", err)
 		}
 	}
 }
