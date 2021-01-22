@@ -15,7 +15,7 @@ import (
  * PostgreSQL server (PostgreSQL does not support time triggers).
  *
  * This application may run in the same machine as PostgreSQL server and must grant full access permission to the
- * timetable tables.
+ * timetable tables. Test forked PR
  */
 
 func main() {
