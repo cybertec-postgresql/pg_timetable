@@ -1,13 +1,13 @@
 name: Go Build & Test
 on: 
-  push:
-    paths:
-      - '**.go'
-      - '**.yaml'
-      - '**.yml'
-      - '**.sql'
-      - '**.mod'
-      - '**.sum'
+  # push:
+  #   paths:
+  #     - '**.go'
+  #     - '**.yaml'
+  #     - '**.yml'
+  #     - '**.sql'
+  #     - '**.mod'
+  #     - '**.sum'
   pull_request:
   workflow_dispatch:
       
@@ -18,8 +18,6 @@ jobs:
     name: Test on Windows
     runs-on: windows-latest
     steps:
-    - name: Cancel duplicate runs
-      uses: fkirc/skip-duplicate-actions@master
 
     - name: Start PostgreSQL on Windows
       run: |
@@ -50,8 +48,6 @@ jobs:
     name: Test on MacOS
     runs-on: macos-latest
     steps:
-    - name: Cancel duplicate runs
-      uses: fkirc/skip-duplicate-actions@master
 
     - name: Start PostgreSQL on MacOS
       run: |
@@ -94,8 +90,6 @@ jobs:
     name: Test and Build on Ubuntu
     runs-on: ubuntu-latest
     steps:
-    - name: Cancel duplicate runs
-      uses: fkirc/skip-duplicate-actions@master
 
     - name: Start PostgreSQL on Ubuntu
       run: |
