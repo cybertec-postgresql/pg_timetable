@@ -9,6 +9,7 @@ on:
       - '**.mod'
       - '**.sum'
   pull_request:
+  workflow_dispatch:
       
 jobs:
 
@@ -95,7 +96,7 @@ jobs:
     steps:
     - name: Cancel duplicate runs
       uses: fkirc/skip-duplicate-actions@master
-      
+
     - name: Start PostgreSQL on Ubuntu
       run: |
         sudo systemctl start postgresql.service
