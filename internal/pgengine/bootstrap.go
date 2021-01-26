@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
-	"github.com/jmoiron/sqlx"
 
 	pgconn "github.com/jackc/pgconn"
 	pgx "github.com/jackc/pgx/v4"
+	pgxpool "github.com/jackc/pgx/v4/pgxpool"
 	stdlib "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -25,7 +25,7 @@ const WaitTime = 5
 const maxWaitTime = WaitTime * 16
 
 // ConfigDb is the global database object
-var ConfigDb *sqlx.DB
+var ConfigDb *pgxpool.Pool
 
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
@@ -145,17 +145,14 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	Log("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
 	var wt int = WaitTime
 	var err error
-
-	db, err := OpenDB("pgx", getPgxConnString(cmdOpts))
-	if err == nil {
-		err = db.PingContext(ctx)
-	}
+	config := getPgxConnString(cmdOpts)
+	ConfigDb, err = pgxpool.Connect(ctx, config)
 	for err != nil {
 		Log("ERROR", err)
 		Log("LOG", "Reconnecting in ", wt, " sec...")
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
-			err = db.PingContext(ctx)
+			ConfigDb, err = pgxpool.Connect(ctx, config)
 		case <-ctx.Done():
 			Log("ERROR", "Connection request cancelled: ", ctx.Err())
 			return false
@@ -166,7 +163,6 @@ func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOpt
 	}
 	Log("LOG", "Connection established...")
 	Log("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
-	ConfigDb = sqlx.NewDb(db, "pgx")
 	if !ExecuteSchemaScripts(ctx) {
 		return false
 	}
@@ -187,7 +183,7 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 			return false
 		}
 		Log("LOG", "Executing script: ", f)
-		if _, err = ConfigDb.ExecContext(ctx, string(sql)); err != nil {
+		if _, err = ConfigDb.Exec(ctx, string(sql)); err != nil {
 			Log("PANIC", err)
 			return false
 		}
@@ -199,7 +195,7 @@ func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
 // ExecuteSchemaScripts executes initial schema scripts
 func ExecuteSchemaScripts(ctx context.Context) bool {
 	var exists bool
-	err := ConfigDb.GetContext(ctx, &exists, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')")
+	err := ConfigDb.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')").Scan(&exists)
 	if err != nil {
 		return false
 	}
@@ -207,10 +203,10 @@ func ExecuteSchemaScripts(ctx context.Context) bool {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
 			Log("LOG", "Executing script: ", sqlName)
-			if _, err = ConfigDb.ExecContext(ctx, sql); err != nil {
+			if _, err = ConfigDb.Exec(ctx, sql); err != nil {
 				Log("PANIC", err)
 				Log("PANIC", "Dropping \"timetable\" schema...")
-				_, err = ConfigDb.ExecContext(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
+				_, err = ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 				if err != nil {
 					Log("PANIC", err)
 				}
@@ -226,19 +222,26 @@ func ExecuteSchemaScripts(ctx context.Context) bool {
 // FinalizeConfigDBConnection closes session
 func FinalizeConfigDBConnection() {
 	Log("LOG", "Closing session")
-	_, err := ConfigDb.Exec("DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), ClientName)
+	_, err := ConfigDb.Exec(context.Background(), "DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), ClientName)
 	if err != nil {
 		Log("ERROR", "Cannot finalize database session: ", err)
 	}
-	if err := ConfigDb.Close(); err != nil {
-		Log("ERROR", "Error occurred during connection closing: ", err)
-	}
+	ConfigDb.Close()
 	ConfigDb = nil
+}
+
+func ping(ctx context.Context, p *pgxpool.Pool) error {
+	c, err := p.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer c.Release()
+	return c.Conn().Ping(ctx)
 }
 
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
 func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
-	for ConfigDb.PingContext(ctx) != nil {
+	for ping(ctx, ConfigDb) != nil {
 		Log("REPAIR", "Connection to the server was lost. Waiting for ", WaitTime, " sec...")
 		select {
 		case <-time.After(WaitTime * time.Second):

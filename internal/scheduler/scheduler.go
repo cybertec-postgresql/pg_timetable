@@ -40,7 +40,7 @@ func Run(ctx context.Context, debug bool) RunStatus {
 		go intervalChainWorker(workerCtx, intervalChainsChan)
 	}
 	/* set maximum connection to workersNumber + 1 for system calls */
-	pgengine.ConfigDb.SetMaxOpenConns(workersNumber)
+	//pgengine.ConfigDb.SetMaxOpenConns(workersNumber)
 	/* cleanup potential database leftovers */
 	pgengine.FixSchedulerCrash(ctx)
 

@@ -2,9 +2,9 @@ package pgengine
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
+	pgx "github.com/jackc/pgx/v4"
 )
 
 var m *migrator.Migrator
@@ -12,7 +12,12 @@ var m *migrator.Migrator
 // MigrateDb upgrades database with all migrations
 func MigrateDb(ctx context.Context) bool {
 	LogToDB(ctx, "LOG", "Upgrading database...")
-	if err := m.Migrate(ctx, ConfigDb.DB); err != nil {
+	conn, err := ConfigDb.Acquire(ctx)
+	if err != nil {
+		LogToDB(ctx, "PANIC", err)
+		return false
+	}
+	if err := m.Migrate(ctx, conn.Conn()); err != nil {
 		LogToDB(ctx, "PANIC", err)
 		return false
 	}
@@ -22,7 +27,11 @@ func MigrateDb(ctx context.Context) bool {
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
 func CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	LogToDB(ctx, "DEBUG", "Check need of upgrading database...")
-	upgrade, err := m.NeedUpgrade(ctx, ConfigDb.DB)
+	conn, err := ConfigDb.Acquire(ctx)
+	if err != nil {
+		return false, err
+	}
+	upgrade, err := m.NeedUpgrade(ctx, conn.Conn())
 	if upgrade {
 		LogToDB(ctx, "PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
 	}
@@ -42,7 +51,7 @@ func init() {
 		migrator.Migrations(
 			&migrator.Migration{
 				Name: "0051 Implement upgrade machinery",
-				Func: func(tx *sql.Tx) error {
+				Func: func(ctx context.Context, tx pgx.Tx) error {
 					// "migrations" table will be created automatically
 					return nil
 				},
@@ -53,8 +62,8 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0086 Add task output to execution_log",
-				Func: func(tx *sql.Tx) error {
-					_, err := tx.Exec("ALTER TABLE timetable.execution_log " +
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					_, err := tx.Exec(ctx, "ALTER TABLE timetable.execution_log "+
 						"ADD COLUMN output TEXT")
 					return err
 				},
@@ -65,8 +74,8 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0122 Add autonomous tasks",
-				Func: func(tx *sql.Tx) error {
-					_, err := tx.Exec("ALTER TABLE timetable.task_chain " +
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					_, err := tx.Exec(ctx, "ALTER TABLE timetable.task_chain "+
 						"ADD COLUMN autonomous BOOLEAN NOT NULL DEFAULT false")
 					return err
 				},
@@ -81,8 +90,8 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0155 Rename SHELL task kind to PROGRAM",
-				Func: func(tx *sql.Tx) error {
-					_, err := tx.Exec("ALTER TYPE timetable.task_kind RENAME VALUE 'SHELL' TO 'PROGRAM'")
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					_, err := tx.Exec(ctx, "ALTER TYPE timetable.task_kind RENAME VALUE 'SHELL' TO 'PROGRAM'")
 					return err
 				},
 			},
@@ -103,8 +112,8 @@ func init() {
 }
 
 // below this line should appear migration funсtions only
-func migration195(tx *sql.Tx) error {
-	_, err := tx.Exec(`CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_config_id BIGINT, worker_name TEXT)
+func migration195(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, `CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_config_id BIGINT, worker_name TEXT)
 RETURNS void AS 
 $$
   SELECT pg_notify(
@@ -130,9 +139,9 @@ LANGUAGE SQL;`)
 	return err
 }
 
-func migration178(tx *sql.Tx) error {
-	_, err := tx.Exec(`
-CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
+func migration178(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx,
+		`CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
 RETURNS bool AS 
 $CODE$
 BEGIN
@@ -169,9 +178,9 @@ LANGUAGE plpgsql;`)
 	return err
 }
 
-func migration149(tx *sql.Tx) error {
-	_, err := tx.Exec(`
-CREATE UNLOGGED TABLE timetable.active_session(
+func migration149(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx,
+		`CREATE UNLOGGED TABLE timetable.active_session(
 	client_pid BIGINT NOT NULL,
 	client_name TEXT NOT NULL,
 	server_pid BIGINT NOT NULL
@@ -209,10 +218,10 @@ LANGUAGE plpgsql;`)
 	return err
 }
 
-func migration105(tx *sql.Tx) error {
+func migration105(ctx context.Context, tx pgx.Tx) error {
 	// first set <unknown> for existing rows, then drop default to force application to set it
-	_, err := tx.Exec(`
-CREATE OR REPLACE FUNCTION timetable.next_run(run_at timetable.cron)
+	_, err := tx.Exec(ctx,
+		`CREATE OR REPLACE FUNCTION timetable.next_run(run_at timetable.cron)
  RETURNS timestamp without time zone
 AS $$
 DECLARE
@@ -270,10 +279,10 @@ $$ LANGUAGE plpgsql;`)
 	return err
 }
 
-func migration108(tx *sql.Tx) error {
+func migration108(ctx context.Context, tx pgx.Tx) error {
 	// first set <unknown> for existing rows, then drop default to force application to set it
-	_, err := tx.Exec(`
-ALTER TABLE timetable.execution_log
+	_, err := tx.Exec(ctx,
+		`ALTER TABLE timetable.execution_log
 	ADD COLUMN client_name TEXT NOT NULL DEFAULT '<unknown>';
 ALTER TABLE timetable.run_status
 	ADD COLUMN client_name TEXT NOT NULL DEFAULT '<unknown>';
@@ -284,9 +293,9 @@ ALTER TABLE timetable.run_status
 	return err
 }
 
-func migration70(tx *sql.Tx) error {
-	_, err := tx.Exec(`
-CREATE DOMAIN timetable.cron AS TEXT CHECK(
+func migration70(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx,
+		`CREATE DOMAIN timetable.cron AS TEXT CHECK(
 	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
 	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
 	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'

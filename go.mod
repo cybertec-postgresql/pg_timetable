@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/cavaliercoder/grab v2.0.0+incompatible
+	github.com/georgysavva/scany v0.2.7
 	github.com/jackc/pgconn v1.8.0
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jessevdk/go-flags v1.4.1-0.20181221193153-c0795c8afcf4

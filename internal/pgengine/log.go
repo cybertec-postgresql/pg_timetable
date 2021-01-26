@@ -64,7 +64,7 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	}
 	Log(level, msg...)
 	if ConfigDb != nil {
-		_, err := ConfigDb.ExecContext(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+		_, err := ConfigDb.Exec(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
 			Log("ERROR", "Cannot log to the database: ", err)
 		}
@@ -73,7 +73,7 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 
 // LogChainElementExecution will log current chain element execution status including retcode
 func LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementExecution, retCode int, output string) {
-	_, err := ConfigDb.ExecContext(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+	_, err := ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
 		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
 		"NULLIF($10, ''), $11)",

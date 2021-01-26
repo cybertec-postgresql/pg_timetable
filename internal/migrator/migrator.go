@@ -2,9 +2,10 @@ package migrator
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
+
+	pgx "github.com/jackc/pgx/v4"
 )
 
 const defaultTableName = "migrations"
@@ -69,9 +70,9 @@ func New(opts ...Option) (*Migrator, error) {
 }
 
 // Migrate applies all available migrations
-func (m *Migrator) Migrate(ctx context.Context, db *sql.DB) error {
+func (m *Migrator) Migrate(ctx context.Context, db *pgx.Conn) error {
 	// create migrations table if doesn't exist
-	_, err := db.ExecContext(ctx, fmt.Sprintf(`
+	_, err := db.Exec(ctx, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
 			id INT8 NOT NULL,
 			version TEXT	 NOT NULL,
@@ -106,7 +107,7 @@ func (m *Migrator) Migrate(ctx context.Context, db *sql.DB) error {
 }
 
 // Pending returns all pending (not yet applied) migrations and count of migration applied
-func (m *Migrator) Pending(ctx context.Context, db *sql.DB) ([]interface{}, int, error) {
+func (m *Migrator) Pending(ctx context.Context, db *pgx.Conn) ([]interface{}, int, error) {
 	count, err := countApplied(ctx, db, m.TableName)
 	if err != nil {
 		return nil, 0, err
@@ -118,7 +119,7 @@ func (m *Migrator) Pending(ctx context.Context, db *sql.DB) ([]interface{}, int,
 }
 
 // NeedUpgrade returns True if database need to be updated with migrations
-func (m *Migrator) NeedUpgrade(ctx context.Context, db *sql.DB) (bool, error) {
+func (m *Migrator) NeedUpgrade(ctx context.Context, db *pgx.Conn) (bool, error) {
 	exists, err := tableExists(ctx, db, m.TableName)
 	if !exists {
 		return true, err
@@ -127,19 +128,19 @@ func (m *Migrator) NeedUpgrade(ctx context.Context, db *sql.DB) (bool, error) {
 	return len(mm) > 0, err
 }
 
-func countApplied(ctx context.Context, db *sql.DB, tableName string) (int, error) {
+func countApplied(ctx context.Context, db *pgx.Conn, tableName string) (int, error) {
 	// count applied migrations
 	var count int
-	err := db.QueryRowContext(ctx, fmt.Sprintf("SELECT count(*) FROM %s", tableName)).Scan(&count)
+	err := db.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s", tableName)).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
 }
 
-func tableExists(ctx context.Context, db *sql.DB, tableName string) (bool, error) {
+func tableExists(ctx context.Context, db *pgx.Conn, tableName string) (bool, error) {
 	var exists bool
-	err := db.QueryRowContext(ctx, "SELECT to_regclass($1) IS NOT NULL", tableName).Scan(&exists)
+	err := db.QueryRow(ctx, "SELECT to_regclass($1) IS NOT NULL", tableName).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
@@ -149,7 +150,7 @@ func tableExists(ctx context.Context, db *sql.DB, tableName string) (bool, error
 // Migration represents a single migration
 type Migration struct {
 	Name string
-	Func func(*sql.Tx) error
+	Func func(context.Context, pgx.Tx) error
 }
 
 // String returns a string representation of the migration
@@ -160,32 +161,32 @@ func (m *Migration) String() string {
 // MigrationNoTx represents a single not transactional migration
 type MigrationNoTx struct {
 	Name string
-	Func func(context.Context, *sql.DB) error
+	Func func(context.Context, *pgx.Conn) error
 }
 
 func (m *MigrationNoTx) String() string {
 	return m.Name
 }
 
-func migrate(ctx context.Context, db *sql.DB, insertVersion string, migration *Migration, notice func(string)) error {
-	tx, err := db.BeginTx(ctx, nil)
+func migrate(ctx context.Context, db *pgx.Conn, insertVersion string, migration *Migration, notice func(string)) error {
+	tx, err := db.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		if err != nil {
-			if errRb := tx.Rollback(); errRb != nil {
+			if errRb := tx.Rollback(ctx); errRb != nil {
 				err = fmt.Errorf("Error rolling back: %s\n%s", errRb, err)
 			}
 			return
 		}
-		err = tx.Commit()
+		err = tx.Commit(ctx)
 	}()
 	notice(fmt.Sprintf("Applying migration named '%s'...", migration.Name))
-	if err = migration.Func(tx); err != nil {
+	if err = migration.Func(ctx, tx); err != nil {
 		return fmt.Errorf("Error executing golang migration: %w", err)
 	}
-	if _, err = tx.Exec(insertVersion); err != nil {
+	if _, err = tx.Exec(ctx, insertVersion); err != nil {
 		return fmt.Errorf("Error updating migration versions: %w", err)
 	}
 	notice(fmt.Sprintf("Applied migration named '%s'", migration.Name))
@@ -193,12 +194,12 @@ func migrate(ctx context.Context, db *sql.DB, insertVersion string, migration *M
 	return err
 }
 
-func migrateNoTx(ctx context.Context, db *sql.DB, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
+func migrateNoTx(ctx context.Context, db *pgx.Conn, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
 	notice(fmt.Sprintf("Applying no tx migration named '%s'...", migration.Name))
 	if err := migration.Func(ctx, db); err != nil {
 		return fmt.Errorf("Error executing golang migration: %w", err)
 	}
-	if _, err := db.ExecContext(ctx, insertVersion); err != nil {
+	if _, err := db.Exec(ctx, insertVersion); err != nil {
 		return fmt.Errorf("Error updating migration versions: %w", err)
 	}
 	notice(fmt.Sprintf("Applied no tx migration named '%s'...", migration.Name))

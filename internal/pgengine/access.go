@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/georgysavva/scany/pgxscan"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -18,7 +20,7 @@ const AppID = 0x204F04EE
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func FixSchedulerCrash(ctx context.Context) {
-	_, err := ConfigDb.ExecContext(ctx,
+	_, err := ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
 			SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
 				SELECT   start_status
@@ -36,7 +38,7 @@ func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstanc
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
 	LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
-	err := ConfigDb.GetContext(ctx, &procCount, sqlProcCount, chainConfigID)
+	err := ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
 	switch {
 	case err == sql.ErrNoRows:
 		return true
@@ -51,13 +53,12 @@ func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstanc
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 	LogToDB(ctx, "LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
-	res, err := ConfigDb.ExecContext(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
+	res, err := ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
 	if err != nil {
 		LogToDB(ctx, "ERROR", "Error occurred during deleting self destructive chains: ", err)
 		return false
 	}
-	rowsDeleted, err := res.RowsAffected()
-	return err == nil && rowsDeleted == 1
+	return err == nil && res.RowsAffected() == 1
 }
 
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
@@ -75,7 +76,7 @@ func SetupCloseHandler() {
 
 // IsAlive returns true if the connection to the database is alive
 func IsAlive() bool {
-	return ConfigDb != nil && ConfigDb.Ping() == nil
+	return ConfigDb != nil && ping(context.Background(), ConfigDb) == nil
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
@@ -87,7 +88,7 @@ VALUES
 ($1, 'STARTED', now(), $2, $3) 
 RETURNING run_status`
 	var id int
-	err := ConfigDb.GetContext(ctx, &id, sqlInsertRunStatus, chainID, chainConfigID, ClientName)
+	err := ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, chainConfigID, ClientName).Scan(&id)
 	if err != nil {
 		LogToDB(ctx, "ERROR", "Cannot save information about the chain run status: ", err)
 	}
@@ -102,7 +103,7 @@ INSERT INTO timetable.run_status
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
 	var err error
-	_, err = ConfigDb.ExecContext(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
+	_, err = ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
 		runStatusID, chainElemExec.ChainConfig, ClientName)
 	if err != nil {
 		LogToDB(ctx, "ERROR", "Update chain status failed: ", err)
@@ -125,13 +126,13 @@ func qualifySQL(sql string) string {
 // SelectRebootChains returns a list of chains should be executed after reboot
 func SelectRebootChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
-	return ConfigDb.SelectContext(ctx, dest, qualifySQL(sqlSelectRebootChains), ClientName)
+	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectRebootChains), ClientName)
 }
 
 // SelectRebootChains returns a list of chains should be executed after reboot
 func SelectChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
-	return ConfigDb.SelectContext(ctx, dest, qualifySQL(sqlSelectChains), ClientName)
+	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectChains), ClientName)
 }
 
 // SelectIntervalChains returns list of interval chains to be executed
@@ -145,7 +146,7 @@ FROM
 	timetable.chain_execution_config 
 WHERE 
 	live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
-	return ConfigDb.SelectContext(ctx, dest, qualifySQL(sqlSelectIntervalChains), ClientName)
+	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectIntervalChains), ClientName)
 }
 
 // SelectChain returns the chain with the specified ID
@@ -157,5 +158,5 @@ FROM
 	timetable.chain_execution_config 
 WHERE 
 	(client_name = $1 or client_name IS NULL) AND chain_execution_config = $2`
-	return ConfigDb.GetContext(ctx, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
+	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
 }
