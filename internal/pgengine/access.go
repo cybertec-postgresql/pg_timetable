@@ -76,7 +76,7 @@ func SetupCloseHandler() {
 
 // IsAlive returns true if the connection to the database is alive
 func IsAlive() bool {
-	return ConfigDb != nil && ping(context.Background(), ConfigDb) == nil
+	return ConfigDb != nil && ConfigDb.Ping(context.Background()) == nil
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency

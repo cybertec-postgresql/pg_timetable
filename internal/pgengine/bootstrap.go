@@ -230,18 +230,9 @@ func FinalizeConfigDBConnection() {
 	ConfigDb = nil
 }
 
-func ping(ctx context.Context, p *pgxpool.Pool) error {
-	c, err := p.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	defer c.Release()
-	return c.Conn().Ping(ctx)
-}
-
 //ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
 func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
-	for ping(ctx, ConfigDb) != nil {
+	for ConfigDb.Ping(ctx) != nil {
 		Log("REPAIR", "Connection to the server was lost. Waiting for ", WaitTime, " sec...")
 		select {
 		case <-time.After(WaitTime * time.Second):

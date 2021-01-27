@@ -7,7 +7,7 @@ require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/georgysavva/scany v0.2.7
 	github.com/jackc/pgconn v1.8.0
-	github.com/jackc/pgx/v4 v4.10.1
+	github.com/jackc/pgx/v4 v4.10.2-0.20210127024657-aa8604b5c229
 	github.com/jessevdk/go-flags v1.4.1-0.20181221193153-c0795c8afcf4
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/ory/dockertest/v3 v3.6.3
