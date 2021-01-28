@@ -159,5 +159,5 @@ FROM
 	timetable.chain_execution_config 
 WHERE 
 	(client_name = $1 or client_name IS NULL) AND chain_execution_config = $2`
-	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
+	return pgxscan.Get(ctx, ConfigDb, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
 }
