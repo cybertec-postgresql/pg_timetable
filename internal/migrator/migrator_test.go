@@ -55,8 +55,11 @@ func migrateTest() error {
 	// Migrate up
 	ctx := context.Background()
 	pgengine.InitAndTestConfigDBConnection(ctx, *cmdparser.NewCmdOptions("migrator_unit_test"))
-	pgengine.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz")
+	_, _ = pgengine.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz")
 	db, err := pgengine.ConfigDb.Acquire(ctx)
+	if err != nil {
+		return err
+	}
 	defer db.Release()
 	if err := migrator.Migrate(ctx, db.Conn()); err != nil {
 		return err
