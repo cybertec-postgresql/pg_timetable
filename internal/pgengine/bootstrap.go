@@ -2,7 +2,6 @@ package pgengine
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -75,9 +74,6 @@ func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data ma
 	fmt.Println(s)
 }
 
-// OpenDB opens connection to the database
-var OpenDB func(driverName string, dataSourceName string) (*sql.DB, error) = sql.Open
-
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func TryLockClientName(ctx context.Context, conn *pgx.Conn) error {
 	// check if the schema is available already first
@@ -149,7 +145,7 @@ func getPgxConnConfig(cmdOpts cmdparser.CmdOptions) *pgxpool.Config {
 	} else {
 		connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn
 	}
-	connConfig.ConnConfig.PreferSimpleProtocol = true
+	// connConfig.ConnConfig.PreferSimpleProtocol = true
 	return connConfig
 }
 
