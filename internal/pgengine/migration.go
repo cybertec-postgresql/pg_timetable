@@ -13,6 +13,7 @@ var m *migrator.Migrator
 func MigrateDb(ctx context.Context) bool {
 	LogToDB(ctx, "LOG", "Upgrading database...")
 	conn, err := ConfigDb.Acquire(ctx)
+	defer conn.Release()
 	if err != nil {
 		LogToDB(ctx, "PANIC", err)
 		return false

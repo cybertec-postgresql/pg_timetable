@@ -14,8 +14,8 @@ func TestMigrations(t *testing.T) {
 	defer teardownTestCase(t)
 
 	ctx := context.Background()
-	pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
-	pgengine.ConfigDb.MustExec(initialsql)
+	pgengine.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
+	pgengine.ConfigDb.Exec(ctx, initialsql)
 	ok, err := pgengine.CheckNeedMigrateDb(ctx)
 	assert.NoError(t, err)
 	assert.True(t, ok, "Should need migrations")

@@ -22,8 +22,18 @@ const WaitTime = 5
 // maximum wait time before reconnect attempts
 const maxWaitTime = WaitTime * 16
 
+type pgxpoolIface interface {
+	Acquire(ctx context.Context) (*pgxpool.Conn, error)
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Close()
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
+	Ping(ctx context.Context) error
+}
+
 // ConfigDb is the global database object
-var ConfigDb *pgxpool.Pool
+var ConfigDb pgxpoolIface
 
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
