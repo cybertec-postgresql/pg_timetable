@@ -236,7 +236,7 @@ func GetConnectionString(ctx context.Context, databaseConnection sql.NullString)
 }
 
 //GetRemoteDBTransaction create a remote db connection and returns transaction object
-func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*pgx.Conn, pgx.Tx, error) {
+func GetRemoteDBTransaction(ctx context.Context, connectionString string) (PgxConnIface, pgx.Tx, error) {
 	if strings.TrimSpace(connectionString) == "" {
 		return nil, nil, errors.New("Connection string is blank")
 	}
@@ -257,7 +257,7 @@ func GetRemoteDBTransaction(ctx context.Context, connectionString string) (*pgx.
 }
 
 // FinalizeRemoteDBConnection closes session
-func FinalizeRemoteDBConnection(ctx context.Context, remoteDb *pgx.Conn) {
+func FinalizeRemoteDBConnection(ctx context.Context, remoteDb PgxConnIface) {
 	LogToDB(ctx, "LOG", "Closing remote session")
 	if err := remoteDb.Close(ctx); err != nil {
 		LogToDB(ctx, "ERROR", "Cannot close database connection:", err)

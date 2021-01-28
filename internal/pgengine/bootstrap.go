@@ -22,18 +22,26 @@ const WaitTime = 5
 // maximum wait time before reconnect attempts
 const maxWaitTime = WaitTime * 16
 
-type pgxpoolIface interface {
-	Acquire(ctx context.Context) (*pgxpool.Conn, error)
+// PgxIface is common interface for every pgx classes
+type PgxIface interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
-	Close()
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	Ping(ctx context.Context) error
 }
+type PgxConnIface interface {
+	PgxIface
+	Close(ctx context.Context) error
+}
+type PgxPoolIface interface {
+	PgxIface
+	Acquire(ctx context.Context) (*pgxpool.Conn, error)
+	Close()
+}
 
 // ConfigDb is the global database object
-var ConfigDb pgxpoolIface
+var ConfigDb PgxPoolIface
 
 // ClientName is unique ifentifier of the scheduler application running
 var ClientName string
