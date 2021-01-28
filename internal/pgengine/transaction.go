@@ -145,7 +145,7 @@ type executor interface {
 // ExecuteSQLTask executes SQL task
 func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
 	var execTx pgx.Tx
-	var remoteDb *pgx.Conn
+	var remoteDb PgxConnIface
 	var err error
 	var executor executor
 

@@ -2,13 +2,14 @@ package pgengine
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/georgysavva/scany/pgxscan"
+	pgx "github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -40,7 +41,7 @@ func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstanc
 	LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
 	err := ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
 	switch {
-	case err == sql.ErrNoRows:
+	case errors.Is(err, pgx.ErrNoRows):
 		return true
 	case err == nil:
 		return procCount < maxInstances
