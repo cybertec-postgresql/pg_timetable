@@ -2,9 +2,12 @@ package pgengine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
+
+	pgx "github.com/jackc/pgx/v4"
 )
 
 const (
@@ -17,6 +20,29 @@ const (
 	blue    = 36
 	//gray = 37
 )
+
+// Logger incapsulates Logger interface from pgx package
+type Logger struct {
+	pgx.Logger
+}
+
+// Log prints messages using native log levels
+func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+	var s string
+	switch level {
+	case pgx.LogLevelTrace, pgx.LogLevelDebug, pgx.LogLevelInfo:
+		s = "DEBUG"
+	case pgx.LogLevelWarn:
+		s = "NOTICE"
+	case pgx.LogLevelError:
+		s = "ERROR"
+	default:
+		s = "LOG"
+	}
+	j, _ := json.Marshal(data)
+	s = fmt.Sprintf(GetLogPrefix(s), fmt.Sprint(msg, " ", string(j)))
+	fmt.Println(s)
+}
 
 var levelColors = map[string]int{
 	"PANIC":  red,

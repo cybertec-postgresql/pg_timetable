@@ -2,7 +2,6 @@ package pgengine
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -50,29 +49,6 @@ var NoProgramTasks bool
 
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
-
-// Logger incapsulates Logger interface from pgx package
-type Logger struct {
-	pgx.Logger
-}
-
-// Log prints messages using native log levels
-func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
-	var s string
-	switch level {
-	case pgx.LogLevelTrace, pgx.LogLevelDebug, pgx.LogLevelInfo:
-		s = "DEBUG"
-	case pgx.LogLevelWarn:
-		s = "NOTICE"
-	case pgx.LogLevelError:
-		s = "ERROR"
-	default:
-		s = "LOG"
-	}
-	j, _ := json.Marshal(data)
-	s = fmt.Sprintf(GetLogPrefix(s), fmt.Sprint(msg, " ", string(j)))
-	fmt.Println(s)
-}
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func TryLockClientName(ctx context.Context, conn *pgx.Conn) error {
