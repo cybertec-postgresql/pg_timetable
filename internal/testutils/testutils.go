@@ -121,7 +121,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	case <-done:
 	}
 	return func(t *testing.T) {
-		pgengine.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
+		_, _ = pgengine.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
 		pgengine.ConfigDb.Close()
 		t.Log("Test schema dropped")
 	}
