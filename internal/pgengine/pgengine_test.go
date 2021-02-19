@@ -187,9 +187,9 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.Error(t, pgengine.ExecuteSQLCommand(ctx, tx, " 	", nil), "Should error for whitespace only script")
 		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, ";", nil), "Simple query with nil as parameters argument")
 		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, ";", []string{}), "Simple query with empty slice as parameters argument")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1", []string{"[42]"}), "Simple query with non empty parameters")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1", []string{"[42]", `["hey"]`}), "Simple query with doubled parameters")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1, $2", []string{`[42, "hey"]`}), "Simple query with two parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4", []string{"[42]"}), "Simple query with non empty parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4", []string{"[42]", `[14]`}), "Simple query with doubled parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4, $2::text", []string{`[42, "hey"]`}), "Simple query with two parameters")
 
 		pgengine.MustCommitTransaction(ctx, tx)
 	})
@@ -249,7 +249,8 @@ func TestSamplesScripts(t *testing.T) {
 		ok := pgengine.ExecuteCustomScripts(ctx, "../../samples/"+f.Name())
 		assert.True(t, ok, "Sample query failed: ", f.Name())
 		assert.Equal(t, scheduler.Run(ctx, false), scheduler.ContextCancelled)
-		_, err = pgengine.ConfigDb.Exec(ctx, "TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
+		_, err = pgengine.ConfigDb.Exec(context.Background(),
+			"TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
 		assert.NoError(t, err)
 	}
 }
