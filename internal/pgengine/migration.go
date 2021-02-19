@@ -29,6 +29,7 @@ func MigrateDb(ctx context.Context) bool {
 func CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	LogToDB(ctx, "DEBUG", "Check need of upgrading database...")
 	conn, err := ConfigDb.Acquire(ctx)
+	defer conn.Release()
 	if err != nil {
 		return false, err
 	}

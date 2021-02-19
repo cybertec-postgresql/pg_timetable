@@ -85,6 +85,7 @@ func HandleNotifications(ctx context.Context) {
 	if err != nil {
 		LogToDB(ctx, "ERROR", err)
 	}
+	defer conn.Release()
 	for {
 		select {
 		case <-ctx.Done():

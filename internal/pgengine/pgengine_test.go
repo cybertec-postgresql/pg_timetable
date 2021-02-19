@@ -249,6 +249,7 @@ func TestSamplesScripts(t *testing.T) {
 		ok := pgengine.ExecuteCustomScripts(ctx, "../../samples/"+f.Name())
 		assert.True(t, ok, "Sample query failed: ", f.Name())
 		assert.Equal(t, scheduler.Run(ctx, false), scheduler.ContextCancelled)
-		_, _ = pgengine.ConfigDb.Exec(ctx, "TRUNCATE timetable.task_chain CASCADE")
+		_, err = pgengine.ConfigDb.Exec(ctx, "TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
+		assert.NoError(t, err)
 	}
 }

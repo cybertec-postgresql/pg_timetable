@@ -160,30 +160,29 @@ func TestGetChainElements(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
 
-	assert.True(t, pgengine.ChainElementExecution{}.String() > "")
 	ctx := context.Background()
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("WITH RECURSIVE").WillReturnError(errors.New("error"))
-	tx, err := mockPool.Begin(context.Background())
+	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.False(t, pgengine.GetChainElements(ctx, tx, &[]string{}, 0))
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("WITH RECURSIVE").WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
-	tx, err = mockPool.Begin(context.Background())
+	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.True(t, pgengine.GetChainElements(ctx, tx, &[]string{}, 0))
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WillReturnError(errors.New("error"))
-	tx, err = mockPool.Begin(context.Background())
+	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.False(t, pgengine.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElementExecution{}))
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0, 0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
-	tx, err = mockPool.Begin(context.Background())
+	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.True(t, pgengine.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElementExecution{}))
 }
@@ -195,13 +194,13 @@ func TestSetRole(t *testing.T) {
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
-	tx, err := mockPool.Begin(context.Background())
+	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	pgengine.SetRole(ctx, tx, pgtype.Varchar{String: "foo"})
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))
-	tx, err = mockPool.Begin(context.Background())
+	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	pgengine.ResetRole(ctx, tx)
 }
