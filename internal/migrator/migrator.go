@@ -5,8 +5,17 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgconn"
 	pgx "github.com/jackc/pgx/v4"
 )
+
+type PgxIface interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
+	Ping(ctx context.Context) error
+}
 
 const defaultTableName = "migrations"
 
@@ -70,7 +79,7 @@ func New(opts ...Option) (*Migrator, error) {
 }
 
 // Migrate applies all available migrations
-func (m *Migrator) Migrate(ctx context.Context, db *pgx.Conn) error {
+func (m *Migrator) Migrate(ctx context.Context, db PgxIface) error {
 	// create migrations table if doesn't exist
 	_, err := db.Exec(ctx, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
@@ -107,7 +116,7 @@ func (m *Migrator) Migrate(ctx context.Context, db *pgx.Conn) error {
 }
 
 // Pending returns all pending (not yet applied) migrations and count of migration applied
-func (m *Migrator) Pending(ctx context.Context, db *pgx.Conn) ([]interface{}, int, error) {
+func (m *Migrator) Pending(ctx context.Context, db PgxIface) ([]interface{}, int, error) {
 	count, err := countApplied(ctx, db, m.TableName)
 	if err != nil {
 		return nil, 0, err
@@ -119,7 +128,7 @@ func (m *Migrator) Pending(ctx context.Context, db *pgx.Conn) ([]interface{}, in
 }
 
 // NeedUpgrade returns True if database need to be updated with migrations
-func (m *Migrator) NeedUpgrade(ctx context.Context, db *pgx.Conn) (bool, error) {
+func (m *Migrator) NeedUpgrade(ctx context.Context, db PgxIface) (bool, error) {
 	exists, err := tableExists(ctx, db, m.TableName)
 	if !exists {
 		return true, err
@@ -128,7 +137,7 @@ func (m *Migrator) NeedUpgrade(ctx context.Context, db *pgx.Conn) (bool, error) 
 	return len(mm) > 0, err
 }
 
-func countApplied(ctx context.Context, db *pgx.Conn, tableName string) (int, error) {
+func countApplied(ctx context.Context, db PgxIface, tableName string) (int, error) {
 	// count applied migrations
 	var count int
 	err := db.QueryRow(ctx, fmt.Sprintf("SELECT count(*) FROM %s", tableName)).Scan(&count)
@@ -138,7 +147,7 @@ func countApplied(ctx context.Context, db *pgx.Conn, tableName string) (int, err
 	return count, nil
 }
 
-func tableExists(ctx context.Context, db *pgx.Conn, tableName string) (bool, error) {
+func tableExists(ctx context.Context, db PgxIface, tableName string) (bool, error) {
 	var exists bool
 	err := db.QueryRow(ctx, "SELECT to_regclass($1) IS NOT NULL", tableName).Scan(&exists)
 	if err != nil {
@@ -161,14 +170,14 @@ func (m *Migration) String() string {
 // MigrationNoTx represents a single not transactional migration
 type MigrationNoTx struct {
 	Name string
-	Func func(context.Context, *pgx.Conn) error
+	Func func(context.Context, PgxIface) error
 }
 
 func (m *MigrationNoTx) String() string {
 	return m.Name
 }
 
-func migrate(ctx context.Context, db *pgx.Conn, insertVersion string, migration *Migration, notice func(string)) error {
+func migrate(ctx context.Context, db PgxIface, insertVersion string, migration *Migration, notice func(string)) error {
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		return err
@@ -194,7 +203,7 @@ func migrate(ctx context.Context, db *pgx.Conn, insertVersion string, migration 
 	return err
 }
 
-func migrateNoTx(ctx context.Context, db *pgx.Conn, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
+func migrateNoTx(ctx context.Context, db PgxIface, insertVersion string, migration *MigrationNoTx, notice func(string)) error {
 	notice(fmt.Sprintf("Applying no tx migration named '%s'...", migration.Name))
 	if err := migration.Func(ctx, db); err != nil {
 		return fmt.Errorf("Error executing golang migration: %w", err)
