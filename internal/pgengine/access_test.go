@@ -2,12 +2,12 @@ package pgengine_test
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/jackc/pgx/v4"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -74,7 +74,7 @@ func TestCanProceedChainExecution(t *testing.T) {
 	t.Run("Check CanProceedChainExecution gets ErrNoRows", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectQuery("SELECT count").WillReturnError(sql.ErrNoRows)
+		mockPool.ExpectQuery("SELECT count").WillReturnError(pgx.ErrNoRows)
 		assert.True(t, pgengine.CanProceedChainExecution(ctx, 0, 0))
 	})
 

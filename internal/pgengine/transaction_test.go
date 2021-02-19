@@ -2,13 +2,13 @@ package pgengine_test
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/jackc/pgtype"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -66,25 +66,25 @@ func TestExecuteSQLTask(t *testing.T) {
 		{
 			Autonomous:  true,
 			IgnoreError: true,
-			DatabaseConnection: sql.NullString{
+			DatabaseConnection: pgtype.Varchar{
 				String: "foo",
-				Valid:  true},
+				Status: pgtype.Present},
 		},
 		{
 			Autonomous:  false,
 			IgnoreError: true,
-			DatabaseConnection: sql.NullString{
+			DatabaseConnection: pgtype.Varchar{
 				String: "foo",
-				Valid:  true},
+				Status: pgtype.Present},
 		},
 		{
 			Autonomous:  false,
 			IgnoreError: true,
-			DatabaseConnection: sql.NullString{
+			DatabaseConnection: pgtype.Varchar{
 				String: "error",
-				Valid:  true},
+				Status: pgtype.Present},
 		},
-		{RunUID: sql.NullString{String: "foo", Valid: true}},
+		{RunUID: pgtype.Varchar{String: "foo", Status: pgtype.Present}},
 		{Autonomous: false, IgnoreError: true},
 	}
 
@@ -92,7 +92,7 @@ func TestExecuteSQLTask(t *testing.T) {
 		mockPool.ExpectBegin()
 		tx, err := mockPool.Begin(context.Background())
 		assert.NoError(t, err)
-		if element.DatabaseConnection.Valid {
+		if element.DatabaseConnection.Status != pgtype.Null {
 			q := mockPool.ExpectQuery("SELECT connect_string").WithArgs(element.DatabaseConnection)
 			connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password)
@@ -197,7 +197,7 @@ func TestSetRole(t *testing.T) {
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pgengine.SetRole(ctx, tx, sql.NullString{String: "foo"})
+	pgengine.SetRole(ctx, tx, pgtype.Varchar{String: "foo"})
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))

@@ -2,7 +2,6 @@ package pgengine
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgtype"
 	pgx "github.com/jackc/pgx/v4"
 )
 
@@ -22,11 +22,11 @@ type ChainElementExecution struct {
 	TaskName           string         `db:"task_name"`
 	Script             string         `db:"script"`
 	Kind               string         `db:"kind"`
-	RunUID             sql.NullString `db:"run_uid"`
+	RunUID             pgtype.Varchar `db:"run_uid"`
 	IgnoreError        bool           `db:"ignore_error"`
 	Autonomous         bool           `db:"autonomous"`
-	DatabaseConnection sql.NullString `db:"database_connection"`
-	ConnectString      sql.NullString `db:"connect_string"`
+	DatabaseConnection pgtype.Varchar `db:"database_connection"`
+	ConnectString      pgtype.Varchar `db:"connect_string"`
 	StartedAt          time.Time
 	Duration           int64 // in microseconds
 }
@@ -157,7 +157,7 @@ func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementE
 	}
 
 	//Connect to Remote DB
-	if chainElemExec.DatabaseConnection.Valid {
+	if chainElemExec.DatabaseConnection.Status != pgtype.Null {
 		connectionString := GetConnectionString(ctx, chainElemExec.DatabaseConnection)
 		remoteDb, execTx, err = GetRemoteDBTransaction(ctx, connectionString)
 		if err != nil {
@@ -174,7 +174,7 @@ func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementE
 	}
 
 	// Set Role
-	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
+	if chainElemExec.RunUID.Status != pgtype.Null && !chainElemExec.Autonomous {
 		SetRole(ctx, execTx, chainElemExec.RunUID)
 	}
 
@@ -189,12 +189,12 @@ func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementE
 	}
 
 	//Reset The Role
-	if chainElemExec.RunUID.Valid && !chainElemExec.Autonomous {
+	if chainElemExec.RunUID.Status != pgtype.Null && !chainElemExec.Autonomous {
 		ResetRole(ctx, execTx)
 	}
 
 	// Commit changes on remote server
-	if chainElemExec.DatabaseConnection.Valid && !chainElemExec.Autonomous {
+	if chainElemExec.DatabaseConnection.Status != pgtype.Null && !chainElemExec.Autonomous {
 		MustCommitTransaction(ctx, execTx)
 	}
 
@@ -226,7 +226,7 @@ func ExecuteSQLCommand(ctx context.Context, executor executor, script string, pa
 }
 
 //GetConnectionString of database_connection
-func GetConnectionString(ctx context.Context, databaseConnection sql.NullString) (connectionString string) {
+func GetConnectionString(ctx context.Context, databaseConnection pgtype.Varchar) (connectionString string) {
 	err := ConfigDb.QueryRow(ctx, "SELECT connect_string "+
 		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection).Scan(&connectionString)
 	if err != nil {
@@ -266,7 +266,7 @@ func FinalizeRemoteDBConnection(ctx context.Context, remoteDb PgxConnIface) {
 }
 
 // SetRole - set the current user identifier of the current session
-func SetRole(ctx context.Context, tx pgx.Tx, runUID sql.NullString) {
+func SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varchar) {
 	LogToDB(ctx, "LOG", "Setting Role to ", runUID.String)
 	_, err := tx.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
 	if err != nil {

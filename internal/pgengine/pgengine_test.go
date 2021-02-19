@@ -2,12 +2,12 @@ package pgengine_test
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgtype"
 	pgx "github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,7 +173,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check Remote DB Connection string", func(t *testing.T) {
-		var databaseConnection sql.NullString
+		var databaseConnection pgtype.Varchar
 		tx, err := pgengine.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.NotNil(t, pgengine.GetConnectionString(ctx, databaseConnection), "Should no error in clean database")
@@ -224,7 +224,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	})
 
 	t.Run("Check set role function", func(t *testing.T) {
-		var runUID sql.NullString
+		var runUID pgtype.Varchar
 		runUID.String = cmdOpts.User
 		assert.NotPanics(t, func() { pgengine.SetRole(ctx, tx, runUID) }, "Set Role failed")
 	})
