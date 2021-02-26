@@ -12,7 +12,7 @@ require (
 	github.com/ory/dockertest/v3 v3.6.3
 	github.com/pashagolub/pgxmock v0.0.0-20210218151508-87e32f023488
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20210218145245-beda7e5e158e // indirect
+	golang.org/x/sys v0.0.0-20210220050731-9a76102bfb43 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
