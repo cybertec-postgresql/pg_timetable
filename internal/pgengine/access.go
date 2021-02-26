@@ -115,7 +115,9 @@ const sqlSelectLiveChains = `SELECT
 FROM 
 	timetable.chain_execution_config 
 WHERE 
-	live AND (client_name = $1 or client_name IS NULL)`
+	live 
+	AND chain_id IS NOT NULL 
+	AND (client_name = $1 or client_name IS NULL)`
 
 func qualifySQL(sql string) string {
 	// for future use
@@ -156,6 +158,8 @@ func SelectChain(ctx context.Context, dest interface{}, chainID int) error {
 FROM 
 	timetable.chain_execution_config 
 WHERE 
-	(client_name = $1 or client_name IS NULL) AND chain_execution_config = $2`
+	chain_id IS NOT NULL
+	AND (client_name = $1 or client_name IS NULL) 
+	AND chain_execution_config = $2`
 	return ConfigDb.GetContext(ctx, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
 }
