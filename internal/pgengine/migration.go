@@ -2,10 +2,14 @@ package pgengine
 
 import (
 	"context"
+	"embed"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	pgx "github.com/jackc/pgx/v4"
 )
+
+//go:embed sql/migrations/*.sql
+var migrations embed.FS
 
 var m *migrator.Migrator
 
@@ -43,6 +47,14 @@ func CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	return upgrade, err
 }
 
+func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
+	sql, err := migrations.ReadFile(fname)
+	if err != nil {
+		_, err = tx.Exec(ctx, string(sql))
+	}
+	return err
+}
+
 func init() {
 	var err error
 	m, err = migrator.New(
@@ -60,7 +72,9 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0070 Interval scheduling and cron only syntax",
-				Func: migration70,
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					return executeMigrationScript(ctx, tx, "00070.sql")
+				},
 			},
 			&migrator.Migration{
 				Name: "0086 Add task output to execution_log",
@@ -72,7 +86,9 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0108 Add client_name column to timetable.run_status",
-				Func: migration108,
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					return executeMigrationScript(ctx, tx, "00108.sql")
+				},
 			},
 			&migrator.Migration{
 				Name: "0122 Add autonomous tasks",
@@ -84,11 +100,15 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0105 Add next_run function",
-				Func: migration105,
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					return executeMigrationScript(ctx, tx, "00105.sql")
+				},
 			},
 			&migrator.Migration{
 				Name: "0149 Reimplement session locking",
-				Func: migration149,
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					return executeMigrationScript(ctx, tx, "00149.sql")
+				},
 			},
 			&migrator.Migration{
 				Name: "0155 Rename SHELL task kind to PROGRAM",
@@ -99,11 +119,15 @@ func init() {
 			},
 			&migrator.Migration{
 				Name: "0178 Disable tasks on a REPLICA node",
-				Func: migration178,
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					return executeMigrationScript(ctx, tx, "00178.sql")
+				},
 			},
 			&migrator.Migration{
 				Name: "0195 Add notify_chain_start() and notify_chain_stop() functions",
-				Func: migration195,
+				Func: func(ctx context.Context, tx pgx.Tx) error {
+					return executeMigrationScript(ctx, tx, "00195.sql")
+				},
 			},
 			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
 		),
@@ -111,282 +135,4 @@ func init() {
 	if err != nil {
 		LogToDB(context.TODO(), "ERROR", err)
 	}
-}
-
-// below this line should appear migration funсtions only
-func migration195(ctx context.Context, tx pgx.Tx) error {
-	_, err := tx.Exec(ctx, `CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_config_id BIGINT, worker_name TEXT)
-RETURNS void AS 
-$$
-  SELECT pg_notify(
-  	worker_name, 
-	format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
-		chain_config_id, 
-		EXTRACT(epoch FROM clock_timestamp())::bigint)
-	)
-$$
-LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(chain_config_id BIGINT, worker_name TEXT)
-RETURNS void AS 
-$$
-  SELECT pg_notify(
-  	worker_name, 
-	format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
-		chain_config_id, 
-		EXTRACT(epoch FROM clock_timestamp())::bigint)
-	)
-$$
-LANGUAGE SQL;`)
-	return err
-}
-
-func migration178(ctx context.Context, tx pgx.Tx) error {
-	_, err := tx.Exec(ctx,
-		`CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
-RETURNS bool AS 
-$CODE$
-BEGIN
-	IF pg_is_in_recovery() THEN
-		RAISE NOTICE 'Cannot obtain lock on a replica. Please, use the primary node';
-		RETURN FALSE;
-	END IF;	
-	-- remove disconnected sessions
-	DELETE 
-		FROM timetable.active_session 
-		WHERE server_pid NOT IN (
-			SELECT pid 
-			FROM pg_catalog.pg_stat_activity 
-			WHERE application_name = 'pg_timetable'
-		);
-	-- check if there any active sessions with the client name but different client pid
-	PERFORM 1 
-		FROM timetable.active_session s 
-		WHERE 
-			s.client_pid <> worker_pid
-			AND s.client_name = worker_name
-		LIMIT 1;
-	IF FOUND THEN
-		RAISE NOTICE 'Another client is already connected to server with name: %', worker_name;
-		RETURN FALSE;
-	END IF;
-	-- insert current session information
-	INSERT INTO timetable.active_session VALUES (worker_pid, worker_name, pg_backend_pid());
-	RETURN TRUE;
-END;	
-$CODE$
-STRICT
-LANGUAGE plpgsql;`)
-	return err
-}
-
-func migration149(ctx context.Context, tx pgx.Tx) error {
-	_, err := tx.Exec(ctx,
-		`CREATE UNLOGGED TABLE timetable.active_session(
-	client_pid BIGINT NOT NULL,
-	client_name TEXT NOT NULL,
-	server_pid BIGINT NOT NULL
-);
-
-CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
-RETURNS bool AS 
-$CODE$
-BEGIN
-	-- remove disconnected sessions
-	DELETE 
-		FROM timetable.active_session 
-		WHERE server_pid NOT IN (
-			SELECT pid 
-			FROM pg_catalog.pg_stat_activity 
-			WHERE application_name = 'pg_timetable'
-		);
-	-- check if there any active sessions with the client name but different client pid
-	PERFORM 1 
-		FROM timetable.active_session s 
-		WHERE 
-			s.client_pid <> worker_pid
-			AND s.client_name = worker_name
-		LIMIT 1;
-	IF FOUND THEN
-		RETURN FALSE;
-	END IF;
-	-- insert current session information
-	INSERT INTO timetable.active_session VALUES (worker_pid, worker_name, pg_backend_pid());
-	RETURN TRUE;
-END;	
-$CODE$
-STRICT
-LANGUAGE plpgsql;`)
-	return err
-}
-
-func migration105(ctx context.Context, tx pgx.Tx) error {
-	// first set <unknown> for existing rows, then drop default to force application to set it
-	_, err := tx.Exec(ctx,
-		`CREATE OR REPLACE FUNCTION timetable.next_run(run_at timetable.cron)
- RETURNS timestamp without time zone
-AS $$
-DECLARE
-    a_by_minute integer[];
-    a_by_hour integer[];
-    a_by_day integer[];
-    a_by_month integer[];
-    a_by_day_of_week integer[];
-    m_minutes integer[];
-    m_hours integer[];
-    m_days integer[];
-    m_months integer[];
-    time timestamp;
-    dates timestamp[];
-    now timestamp := now();
-BEGIN
-    IF starts_with(run_at :: text, '@') THEN
-        RETURN NULL;
-    END IF;
-    a_by_minute := timetable.cron_element_to_array(run_at, 'minute');
-    a_by_hour := timetable.cron_element_to_array(run_at, 'hour');
-    a_by_day := timetable.cron_element_to_array(run_at, 'day');
-    a_by_month := timetable.cron_element_to_array(run_at, 'month');
-    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week');
-
-    m_minutes := ARRAY_AGG(minute) from (
-        select CASE WHEN minute IS NULL THEN date_part('minute', now + interval '1 minute') ELSE minute END  as minute from (select minute from (select unnest(a_by_minute) as minute) as p1 where minute > date_part('minute', now) or minute is null order by minute limit 1) as p2 union
-        select CASE WHEN minute IS NULL THEN 0 ELSE minute END as minute from (select min(minute) as minute from (select unnest(a_by_minute) as minute) as p3) p4) p5;
-
-    m_hours := ARRAY_AGG(hour) from (
-        select CASE WHEN hour IS NULL THEN date_part('hour', now) ELSE hour END  as hour from (select hour from (select unnest(a_by_hour) as hour) as p1 where hour = date_part('hour', now) or hour is null order by hour limit 1) as p2 union
-        select CASE WHEN hour IS NULL THEN date_part('hour', now + interval '1 hour') ELSE hour END  as hour from (select hour from (select unnest(a_by_hour) as hour) as p1 where hour > date_part('hour', now) or hour is null order by hour limit 1) as p2 union
-        select CASE WHEN hour IS NULL THEN 0 ELSE hour END as hour from (select min(hour) as hour from (select unnest(a_by_hour) as hour) as p3) p4) p5;
-
-    m_days := ARRAY_AGG(day) from (
-        select CASE WHEN day IS NULL THEN date_part('day', now) ELSE day END  as day from (select day from (select unnest(a_by_day) as day) as p1 where day = date_part('day', now) or day is null order by day limit 1) as p2 union
-        select CASE WHEN day IS NULL THEN date_part('day', now + interval '1 day') ELSE day END  as day from (select day from (select unnest(a_by_day) as day) as p1 where day > date_part('day', now) or day is null order by day limit 1) as p2 union
-        select CASE WHEN day IS NULL THEN 1 ELSE day END as day from (select min(day) as day from (select unnest(a_by_day) as day) as p3) p4) p5;
-
-    m_months := ARRAY_AGG(month) from (
-        select CASE WHEN month IS NULL THEN date_part('month', now) ELSE month END  as month from (select month from (select unnest(a_by_month) as month) as p1 where month = date_part('month', now) or month is null order by month limit 1) as p2 union
-        select CASE WHEN month IS NULL THEN date_part('month', now + interval '1 month') ELSE month END  as month from (select month from (select unnest(a_by_month) as month) as p1 where month > date_part('month', now) or month is null order by month limit 1) as p2 union
-        select CASE WHEN month IS NULL THEN 1 ELSE month END as month from (select min(month) as month from (select unnest(a_by_month) as month) as p3) p4) p5;
-
-    IF -1 = ANY(a_by_day_of_week) IS NULL THEN
-            time := min(date) from (select to_timestamp((year::text || '-' || month::text || '-' || day::text || ' ' || hour::text || ':' || minute::text)::text, 'YYYY-MM-DD HH24:MI') as date from (select  unnest(m_days) as day) as days CROSS JOIN (select unnest(m_months) as month) as months CROSS JOIN (select date_part('year', now) as year union select date_part('year', now + interval '1 year') as year) as years CROSS JOIN (select unnest(m_hours) as hour) as hours CROSS JOIN (select unnest(m_minutes) as minute) as minutes) as dates where date > date_trunc('minute', now);
-    ELSE
-        dates := array_agg(date) from (select generate_series((date || '-01')::timestamp, ((date || '-01')::timestamp + interval '1 month' - interval '1 day'), '1 day'::interval) date from (select (year::text || '-' || month::text) as date from (select  unnest(m_days) as day) as days CROSS JOIN (select unnest(m_months) as month) as months CROSS JOIN (select date_part('year', now) as year union select date_part('year', now + interval '1 year') as year) as years CROSS JOIN (select unnest(m_hours) as hour) as hours CROSS JOIN (select unnest(m_minutes) as minute) as minutes) as dates) dates where date_part('dow', date) = ANY(a_by_day_of_week) or date_part('day', date) = ANY(m_days);
-            time := min(date) from (select (date + (hour || ' hour')::interval + (minute || ' minute')::interval) as date from (select  unnest(dates) as date) as dates CROSS JOIN (select unnest(m_hours) as hour) as hours CROSS JOIN (select unnest(m_minutes) as minute) as minutes) as dates where date > date_trunc('minute', now);
-    END IF;
-
-    RETURN time;
-END;
-$$ LANGUAGE plpgsql;`)
-	return err
-}
-
-func migration108(ctx context.Context, tx pgx.Tx) error {
-	// first set <unknown> for existing rows, then drop default to force application to set it
-	_, err := tx.Exec(ctx,
-		`ALTER TABLE timetable.execution_log
-	ADD COLUMN client_name TEXT NOT NULL DEFAULT '<unknown>';
-ALTER TABLE timetable.run_status
-	ADD COLUMN client_name TEXT NOT NULL DEFAULT '<unknown>';
-ALTER TABLE timetable.execution_log
-	ALTER COLUMN client_name DROP DEFAULT;
-ALTER TABLE timetable.run_status
-	ALTER COLUMN client_name DROP DEFAULT;`)
-	return err
-}
-
-func migration70(ctx context.Context, tx pgx.Tx) error {
-	_, err := tx.Exec(ctx,
-		`CREATE DOMAIN timetable.cron AS TEXT CHECK(
-	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
-	OR VALUE IN ('@annually', '@yearly', '@monthly', '@weekly', '@daily', '@hourly', '@reboot')
-	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
-);
-
-ALTER TABLE timetable.chain_execution_config
-	ADD COLUMN run_at timetable.cron;
-
-UPDATE timetable.chain_execution_config 
-	SET run_at = format('%s %s %s %s %s', 
-		COALESCE(run_at_minute :: TEXT, '*'),
-		COALESCE(run_at_hour :: TEXT, '*'),
-		COALESCE(run_at_day :: TEXT, '*'),
-		COALESCE(run_at_month :: TEXT, '*'),
-		COALESCE(run_at_day_of_week :: TEXT, '*')
-	);
-
-ALTER TABLE timetable.chain_execution_config
-	DROP COLUMN run_at_minute,
-	DROP COLUMN run_at_hour,
-	DROP COLUMN run_at_day,
-	DROP COLUMN run_at_month,
-	DROP COLUMN run_at_day_of_week;
-
-CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(run_at timetable.cron, ts timestamptz) RETURNS BOOLEAN AS
-$$
-DECLARE 
-    a_by_minute integer[];
-    a_by_hour integer[];
-    a_by_day integer[];
-    a_by_month integer[];
-    a_by_day_of_week integer[]; 
-BEGIN
-    IF run_at IS NULL
-    THEN
-        RETURN TRUE;
-    END IF;
-    a_by_minute := timetable.cron_element_to_array(run_at, 'minute');
-    a_by_hour := timetable.cron_element_to_array(run_at, 'hour');
-    a_by_day := timetable.cron_element_to_array(run_at, 'day');
-    a_by_month := timetable.cron_element_to_array(run_at, 'month');
-    a_by_day_of_week := timetable.cron_element_to_array(run_at, 'day_of_week'); 
-    RETURN  (a_by_month[1]       IS NULL OR date_part('month', ts) = ANY(a_by_month))
-        AND (a_by_day_of_week[1] IS NULL OR date_part('dow', ts) = ANY(a_by_day_of_week))
-        AND (a_by_day[1]         IS NULL OR date_part('day', ts) = ANY(a_by_day))
-        AND (a_by_hour[1]        IS NULL OR date_part('hour', ts) = ANY(a_by_hour))
-        AND (a_by_minute[1]      IS NULL OR date_part('minute', ts) = ANY(a_by_minute));    
-END;
-$$ LANGUAGE 'plpgsql';
-
-DROP FUNCTION IF EXISTS timetable.job_add;
-
-CREATE OR REPLACE FUNCTION timetable.job_add(
-    task_name        TEXT,
-    task_function    TEXT,
-    client_name      TEXT,
-    task_type        timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
-    run_at           timetable.cron DEFAULT NULL,
-    max_instances    INTEGER DEFAULT NULL,
-    live             BOOLEAN DEFAULT false,
-    self_destruct    BOOLEAN DEFAULT false
-) RETURNS BIGINT AS
-'WITH 
-    cte_task(v_task_id) AS ( --Create task
-        INSERT INTO timetable.base_task 
-        VALUES (DEFAULT, task_name, task_type, task_function)
-        RETURNING task_id
-    ),
-    cte_chain(v_chain_id) AS ( --Create chain
-        INSERT INTO timetable.task_chain (task_id, ignore_error)
-        SELECT v_task_id, TRUE FROM cte_task
-        RETURNING chain_id
-    )
-INSERT INTO timetable.chain_execution_config (
-    chain_id, 
-    chain_name, 
-    run_at, 
-    max_instances, 
-    live,
-    self_destruct 
-) SELECT 
-    v_chain_id, 
-    ''chain_'' || v_chain_id, 
-    run_at,
-    max_instances, 
-    live, 
-    self_destruct
-FROM cte_chain
-RETURNING chain_execution_config 
-' LANGUAGE 'sql';`)
-	return err
 }
