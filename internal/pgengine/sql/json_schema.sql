@@ -1,6 +1,4 @@
-package pgengine
-
-const sqlJSONSchema = `-- json validation from:
+-- json validation from:
 -- https://github.com/gavinwahl/postgres-json-schema
 
 CREATE OR REPLACE FUNCTION timetable._validate_json_schema_type(type text, data jsonb) 
@@ -266,4 +264,3 @@ BEGIN
   RETURN true;
 END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
-`

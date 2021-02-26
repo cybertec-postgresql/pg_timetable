@@ -19,10 +19,16 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
+    - name: Set up Golang
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.16'
+
     # despite the fact docker will build binary internally 
     # we want to stop workflow in case of any error before pushing to registry 
     - name: Get dependencies and Build
       run: |
+        go version
         go mod download
         go build
 
