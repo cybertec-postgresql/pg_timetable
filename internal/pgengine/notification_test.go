@@ -9,26 +9,22 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
-	stdlib "github.com/jackc/pgx/v4/stdlib"
 	"github.com/stretchr/testify/assert"
 )
 
 // notify sends NOTIFY each second until context is available
 func notify(ctx context.Context, t *testing.T, channel string, msg string) {
+	conn, err := pgengine.ConfigDb.Acquire(ctx)
+	if ctx.Err() == nil {
+		assert.NoError(t, err)
+	}
+	defer conn.Release()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-time.Tick(time.Second):
-			conn, err := pgengine.ConfigDb.DB.Conn(ctx)
-			if ctx.Err() == nil {
-				assert.NoError(t, err)
-			}
-			err = conn.Raw(func(driverConn interface{}) error {
-				c := driverConn.(*stdlib.Conn).Conn()
-				_, err = c.Exec(ctx, "SELECT pg_notify($1, $2)", channel, msg)
-				return err
-			})
+			_, err = conn.Exec(ctx, "SELECT pg_notify($1, $2)", channel, msg)
 			if ctx.Err() == nil {
 				assert.NoError(t, err)
 			}

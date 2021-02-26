@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/jmoiron/sqlx"
+	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIntervalChain(t *testing.T) {
-	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
-	pgengine.ConfigDb = sqlx.NewDb(db, "sqlmock")
+	pgengine.ConfigDb = mock
 	pgengine.VerboseLogLevel = false
 
 	ichain := IntervalChain{Interval: 42}
@@ -25,8 +24,8 @@ func TestIntervalChain(t *testing.T) {
 	assert.True(t, ichain.isValid())
 
 	t.Run("Check reschedule if self destructive", func(t *testing.T) {
-		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectExec("DELETE").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
+		mock.ExpectExec("DELETE").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		ichain.SelfDestruct = true
 		ichain.reschedule(context.Background())
 	})

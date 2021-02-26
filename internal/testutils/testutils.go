@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	pgxpool "github.com/jackc/pgx/v4/pgxpool"
 )
 
 // setup environment variable runDocker to true to run testcases using postgres docker images
@@ -85,12 +85,9 @@ func TestMain(m *testing.M) {
 
 		pool.MaxWait = 10 * time.Second
 		err = pool.Retry(func() error {
-			db, err := sqlx.Open("postgres", fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
+			_, err := pgxpool.Connect(context.Background(), fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password))
-			if err != nil {
-				return err
-			}
-			return db.Ping()
+			return err
 		})
 		if err != nil {
 			panic("Could not connect to postgres server")
@@ -124,7 +121,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	case <-done:
 	}
 	return func(t *testing.T) {
-		pgengine.ConfigDb.MustExec("DROP SCHEMA IF EXISTS timetable CASCADE")
+		_, _ = pgengine.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
 		pgengine.ConfigDb.Close()
 		t.Log("Test schema dropped")
 	}

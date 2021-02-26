@@ -2,13 +2,13 @@ package pgengine_test
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgtype"
+	pgx "github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 }
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
-var setupTestRemoteDBFunc = func() (*sqlx.DB, *sqlx.Tx, error) {
+var setupTestRemoteDBFunc = func() (pgengine.PgxConnIface, pgx.Tx, error) {
 	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password)
 	return pgengine.GetRemoteDBTransaction(context.Background(), connstr)
@@ -46,7 +46,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"chain_execution_config", "chain_execution_parameters",
 			"log", "execution_log", "run_status"}
 		for _, tableName := range tableNames {
-			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName))
+			err := pgengine.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName)).Scan(&oid)
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", tableName))
 			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", tableName))
 		}
@@ -60,7 +60,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"trig_chain_fixer()",
 			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
-			err := pgengine.ConfigDb.Get(&oid, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName))
+			err := pgengine.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName)).Scan(&oid)
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", funcName))
 			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", funcName))
 		}
@@ -82,7 +82,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"SELECT '@every 1 sec' ::  timetable.cron",
 			"SELECT '@after 1 sec' ::  timetable.cron"}
 		for _, stmt := range stmts {
-			_, err := pgengine.ConfigDb.Exec(stmt)
+			_, err := pgengine.ConfigDb.Exec(ctx, stmt)
 			assert.NoError(t, err, fmt.Sprintf("Wrong input cron format: %s", stmt))
 		}
 	})
@@ -91,7 +91,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		var count int
 		logLevels := []string{"DEBUG", "NOTICE", "LOG", "ERROR", "PANIC"}
 		for _, pgengine.VerboseLogLevel = range []bool{true, false} {
-			pgengine.ConfigDb.MustExec("TRUNCATE timetable.log")
+			_, _ = pgengine.ConfigDb.Exec(ctx, "TRUNCATE timetable.log")
 			for _, logLevel := range logLevels {
 				assert.NotPanics(t, func() {
 					pgengine.LogToDB(ctx, logLevel, logLevel)
@@ -103,8 +103,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 						continue
 					}
 				}
-				err := pgengine.ConfigDb.Get(&count, "SELECT count(1) FROM timetable.log WHERE log_level = $1 AND message = $2",
-					logLevel, logLevel)
+				err := pgengine.ConfigDb.QueryRow(ctx, "SELECT count(1) FROM timetable.log WHERE log_level = $1 AND message = $2",
+					logLevel, logLevel).Scan(&count)
 				assert.NoError(t, err, fmt.Sprintf("Query for %s log entry failed", logLevel))
 				assert.Equal(t, 1, count, fmt.Sprintf("%s log entry doesn't exist", logLevel))
 			}
@@ -173,7 +173,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check Remote DB Connection string", func(t *testing.T) {
-		var databaseConnection sql.NullString
+		var databaseConnection pgtype.Varchar
 		tx, err := pgengine.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.NotNil(t, pgengine.GetConnectionString(ctx, databaseConnection), "Should no error in clean database")
@@ -187,9 +187,9 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.Error(t, pgengine.ExecuteSQLCommand(ctx, tx, " 	", nil), "Should error for whitespace only script")
 		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, ";", nil), "Simple query with nil as parameters argument")
 		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, ";", []string{}), "Simple query with empty slice as parameters argument")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1", []string{"[42]"}), "Simple query with non empty parameters")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1", []string{"[42]", `["hey"]`}), "Simple query with doubled parameters")
-		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1, $2", []string{`[42, "hey"]`}), "Simple query with two parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4", []string{"[42]"}), "Simple query with non empty parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4", []string{"[42]", `[14]`}), "Simple query with doubled parameters")
+		assert.NoError(t, pgengine.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4, $2::text", []string{`[42, "hey"]`}), "Simple query with two parameters")
 
 		pgengine.MustCommitTransaction(ctx, tx)
 	})
@@ -201,7 +201,7 @@ func TestBuiltInTasks(t *testing.T) {
 	defer teardownTestCase(t)
 	t.Run("Check built-in tasks number", func(t *testing.T) {
 		var num int
-		err := pgengine.ConfigDb.Get(&num, "SELECT count(1) FROM timetable.base_task WHERE kind = 'BUILTIN'")
+		err := pgengine.ConfigDb.QueryRow(context.Background(), "SELECT count(1) FROM timetable.base_task WHERE kind = 'BUILTIN'").Scan(&num)
 		assert.NoError(t, err, "Query for built-in tasks existence failed")
 		assert.Equal(t, len(tasks.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
@@ -224,7 +224,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	})
 
 	t.Run("Check set role function", func(t *testing.T) {
-		var runUID sql.NullString
+		var runUID pgtype.Varchar
 		runUID.String = cmdOpts.User
 		assert.NotPanics(t, func() { pgengine.SetRole(ctx, tx, runUID) }, "Set Role failed")
 	})
@@ -249,6 +249,8 @@ func TestSamplesScripts(t *testing.T) {
 		ok := pgengine.ExecuteCustomScripts(ctx, "../../samples/"+f.Name())
 		assert.True(t, ok, "Sample query failed: ", f.Name())
 		assert.Equal(t, scheduler.Run(ctx, false), scheduler.ContextCancelled)
-		_, _ = pgengine.ConfigDb.Exec("TRUNCATE timetable.task_chain CASCADE")
+		_, err = pgengine.ConfigDb.Exec(context.Background(),
+			"TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
+		assert.NoError(t, err)
 	}
 }

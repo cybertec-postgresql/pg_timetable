@@ -8,7 +8,6 @@ import (
 	"time"
 
 	pgconn "github.com/jackc/pgconn"
-	stdlib "github.com/jackc/pgx/v4/stdlib"
 )
 
 // NotifyTTL specifies how long processed NOTIFY messages should be stored
@@ -82,23 +81,21 @@ func WaitForChainSignal(ctx context.Context) ChainSignal {
 
 // HandleNotifications consumes notifications in blocking mode
 func HandleNotifications(ctx context.Context) {
-	conn, err := ConfigDb.DB.Conn(ctx)
+	conn, err := ConfigDb.Acquire(ctx)
 	if err != nil {
 		LogToDB(ctx, "ERROR", err)
 	}
+	defer conn.Release()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
 		}
-		err = conn.Raw(func(driverConn interface{}) error {
-			c := driverConn.(*stdlib.Conn).Conn()
-			if n, err := c.WaitForNotification(ctx); err == nil {
-				NotificationHandler(c.PgConn(), n)
-			}
-			return err
-		})
+		c := conn.Conn()
+		if n, err := c.WaitForNotification(ctx); err == nil {
+			NotificationHandler(c.PgConn(), n)
+		}
 		if err != nil {
 			LogToDB(ctx, "ERROR", err)
 		}

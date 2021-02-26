@@ -9,7 +9,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
-	"github.com/jmoiron/sqlx"
+	pgx "github.com/jackc/pgx/v4"
 )
 
 // Chain structure used to represent tasks chains
@@ -177,7 +177,7 @@ func executeChain(ctx context.Context, chainConfigID int, chainID int) {
 	pgengine.MustCommitTransaction(ctx, tx)
 }
 
-func executeСhainElement(ctx context.Context, tx *sqlx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
+func executeСhainElement(ctx context.Context, tx pgx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
 	var paramValues []string
 	var err error
 	var out string
