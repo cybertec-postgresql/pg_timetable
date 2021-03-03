@@ -182,7 +182,7 @@ CREATE OR REPLACE FUNCTION timetable.job_add(
     live             BOOLEAN DEFAULT false,
     self_destruct    BOOLEAN DEFAULT false
 ) RETURNS BIGINT AS
-'WITH 
+$$WITH 
     cte_task(v_task_id) AS ( --Create task
         INSERT INTO timetable.base_task 
         VALUES (DEFAULT, task_name, task_type, task_function)
@@ -211,7 +211,7 @@ INSERT INTO timetable.chain_execution_config (
     client_name
 FROM cte_chain
 RETURNING chain_execution_config 
-' LANGUAGE 'sql';
+$$ LANGUAGE 'sql';
 
 CREATE OR REPLACE FUNCTION timetable.next_run(run_at timetable.cron)
  RETURNS timestamp without time zone
