@@ -121,7 +121,9 @@ func getPgxConnString(cmdOpts cmdparser.CmdOptions) string {
 		if err := TryLockClientName(ctx, pgconn); err != nil {
 			return err
 		}
-		return pgconn.Exec(ctx, "LISTEN "+ClientName).Close()
+		sql := "LISTEN " + quoteIdent(ClientName)
+		Log("DEBUG", "Exec: ", sql)
+		return pgconn.Exec(ctx, sql).Close()
 	}
 	if !cmdOpts.Debug { //will handle notification in HandleNotifications directly
 		connConfig.OnNotification = NotificationHandler
