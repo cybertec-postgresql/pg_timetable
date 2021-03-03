@@ -203,7 +203,7 @@ INSERT INTO timetable.chain_execution_config (
     client_name
 ) SELECT 
     v_chain_id, 
-    ''chain_'' || v_chain_id, 
+    'chain_' || v_chain_id, 
     run_at,
     max_instances, 
     live, 

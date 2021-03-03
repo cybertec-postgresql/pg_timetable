@@ -108,7 +108,7 @@ func getPgxConnConfig(cmdOpts cmdparser.CmdOptions) *pgxpool.Config {
 		if err = TryLockClientName(ctx, pgconn); err != nil {
 			return err
 		}
-		_, err = pgconn.Exec(ctx, "LISTEN "+ClientName)
+		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(ClientName))
 		return err
 	}
 	if !cmdOpts.Debug { //will handle notification in HandleNotifications directly
