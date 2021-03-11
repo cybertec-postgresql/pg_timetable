@@ -6,9 +6,11 @@ on:
       - '**.yaml'
       - '**.yml'
       - 'go.mod'
-      - 'go.sum'      
+      - 'go.sum'
+      - 'Dockerfile'  
     branches:
       - '*'
+  workflow_dispatch:
 
 jobs:
   docker:
