@@ -4,21 +4,21 @@ import (
 	"context"
 	"testing"
 
+	gomail "github.com/ory/mail/v3"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/gomail.v2"
 )
 
 type fakeDialer struct {
 	Dialer
 }
 
-func (d *fakeDialer) DialAndSend(m ...*gomail.Message) error {
+func (d *fakeDialer) DialAndSend(ctx context.Context, m ...*gomail.Message) error {
 	return nil
 }
 
 func TestTaskSendMail(t *testing.T) {
-	assert.NotNil(t, getNewDialer("", 0, "", ""), "Default dialer should be created")
-	getNewDialer = func(host string, port int, username, password string) Dialer {
+	assert.NotNil(t, NewDialer("", 0, "", ""), "Default dialer should be created")
+	NewDialer = func(host string, port int, username, password string) Dialer {
 		return &fakeDialer{}
 	}
 	ctx := context.Background()
@@ -42,4 +42,17 @@ func TestTaskSendMail(t *testing.T) {
 		"SenderAddr":"abc@example.com","ToAddr":["to@example.com"],"CcAddr":["cc@example.com"],"BccAddr":["bcc@example.com"],
 		"Attachment": ["mail.go"]}`),
 		"Sending email with required json input should succeed")
+	assert.NoError(taskSendMail(ctx, `{
+				"username":	"XXX",
+				"password":	"XXX",
+				"serverhost":	"XXX.XXX.XXX",
+				"serverport":	587,
+				"senderaddr":	"XXX.XXX.XXX",
+				"ccaddr":	[],
+				"bccaddr":	[],
+				"attachment":	[],
+				"toaddr":	["v_email"],
+				"subject": 	"v_subject",
+				"msgbody":	"v_msgbody"
+				}`))
 }

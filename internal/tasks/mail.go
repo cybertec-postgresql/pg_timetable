@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"gopkg.in/gomail.v2"
+	gomail "github.com/ory/mail/v3"
 )
 
 type emailConn struct {
@@ -24,10 +24,10 @@ type emailConn struct {
 
 // Dialer implements DialAndSend function for mailer
 type Dialer interface {
-	DialAndSend(m ...*gomail.Message) error
+	DialAndSend(ctx context.Context, m ...*gomail.Message) error
 }
 
-var getNewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
+var NewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
 	return gomail.NewDialer(host, port, username, password)
 }
 
@@ -55,42 +55,15 @@ func taskSendMail(ctx context.Context, paramValues string) error {
 		return errors.New("Recipient address not specified")
 	}
 
-	return sendMail(conn)
-}
-
-func sendMail(conn emailConn) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", conn.SenderAddr)
-
-	//Multiple Recipients addresses
-	torecipients := make([]string, len(conn.ToAddr))
-	for i, toAddr := range conn.ToAddr {
-		torecipients[i] = mail.FormatAddress(toAddr, " ")
-	}
-	mail.SetHeader("To", torecipients...)
-
-	// Multiple CC Addresses
-	ccrecipients := make([]string, len(conn.CcAddr))
-	for i, ccaddr := range conn.CcAddr {
-		ccrecipients[i] = mail.FormatAddress(ccaddr, " ")
-	}
-	mail.SetHeader("Cc", ccrecipients...)
-
-	// Multiple bCC Addresses
-	bccrecipients := make([]string, len(conn.BccAddr))
-	for i, bccaddr := range conn.BccAddr {
-		bccrecipients[i] = mail.FormatAddress(bccaddr, " ")
-	}
-	mail.SetHeader("Bcc", bccrecipients...)
-
+	mail.SetHeader("To", conn.ToAddr...)
+	mail.SetHeader("Cc", conn.CcAddr...)
+	mail.SetHeader("Bcc", conn.BccAddr...)
 	mail.SetHeader("Subject", conn.Subject)
 	mail.SetBody("text/html", conn.MsgBody)
-
-	//attach multiple documents
 	for _, attachment := range conn.Attachments {
 		mail.Attach(attachment)
 	}
-	// Send Mail
-	dialer := getNewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
-	return dialer.DialAndSend(mail)
+	return NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password).DialAndSend(ctx, mail)
 }
