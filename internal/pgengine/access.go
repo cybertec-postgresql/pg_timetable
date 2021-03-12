@@ -54,7 +54,7 @@ func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstanc
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 	LogToDB(ctx, "LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
-	res, err := ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1 ", chainConfigID)
+	res, err := ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1", chainConfigID)
 	if err != nil {
 		LogToDB(ctx, "ERROR", "Error occurred during deleting self destructive chains: ", err)
 		return false

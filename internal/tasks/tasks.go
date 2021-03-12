@@ -12,25 +12,25 @@ import (
 
 // Tasks maps builtin task names with event handlers
 var Tasks = map[string](func(context.Context, string) error){
-	"NoOp":     taskNoOp,
-	"Sleep":    taskSleep,
-	"Log":      taskLog,
-	"SendMail": taskSendMail,
-	"Download": taskDownloadFile}
+	"NoOp":         taskNoOp,
+	"Sleep":        taskSleep,
+	"Log":          taskLog,
+	"SendMail":     taskSendMail,
+	"Download":     taskDownloadFile,
+	"CopyFromFile": taskCopyFromFile}
 
 // ExecuteTask executes built-in task depending on task name and returns err result
 func ExecuteTask(ctx context.Context, name string, paramValues []string) error {
-	pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
-	if len(paramValues) == 0 {
-		paramValues = append(paramValues, "")
-	}
 	f := Tasks[name]
 	if f == nil {
 		return errors.New("No built-in task found: " + name)
 	}
+	pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
+	if len(paramValues) == 0 {
+		return f(ctx, "")
+	}
 	for _, val := range paramValues {
-		err := f(ctx, val)
-		if err != nil {
+		if err := f(ctx, val); err != nil {
 			return err
 		}
 	}
