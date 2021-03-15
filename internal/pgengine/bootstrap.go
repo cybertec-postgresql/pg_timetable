@@ -91,7 +91,7 @@ func TryLockClientName(ctx context.Context, conn *pgx.Conn) error {
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
 func getPgxConnConfig(cmdOpts cmdparser.CmdOptions) *pgxpool.Config {
-	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s'",
+	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
 		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
 	Log("DEBUG", "Connection string: ", connstr)
 	connConfig, err := pgxpool.ParseConfig(connstr)

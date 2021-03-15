@@ -30,7 +30,7 @@ BEGIN
 					"destpath": "."
 				}'::jsonb);
 	
-	RAISE NOTICE 'Step 1 completed. DownloadFile task added';
+	RAISE NOTICE 'Step 1 completed. DownloadFile task added with ID: %', v_chain_config_id;
 
 	-- Step 2. Transform Unicode characters into ASCII
 	-- Create the program task to call 'uconv -x' and name it 'unaccent'
@@ -46,22 +46,17 @@ BEGIN
 	    chain_id INTO v_chain_id;
 
 	-- Create the parameters for the 'unaccent' base task. Input and output files in this case
+	-- Under Windows we should call PowerShell instead of "uconv" with command:
+	-- Set-content "orte_ansi.txt" ((Get-content "orte.txt").Normalize("FormD") -replace '\p{M}', '')
 	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-	    VALUES (v_chain_config_id, v_chain_id, 2, 
-	    	'["-x", "Latin-ASCII", "-o", "orte_ansi.txt", "orte.txt"]'::jsonb);
+	    VALUES (v_chain_config_id, v_chain_id, 1, '["-x", "Latin-ASCII", "-o", "orte_ansi.txt", "orte.txt"]'::jsonb);
 
 	RAISE NOTICE 'Step 2 completed. Unacent task added';
 
 	-- Step 3. Import ASCII file to PostgreSQL table using "psql \copy"
-	-- Create the PROGRAM task to cal 'psql' and name it 'psql'
-	INSERT INTO timetable.base_task(name, kind, script)
-		VALUES ('psql', 'PROGRAM'::timetable.task_kind, 'psql')
-	RETURNING 
-		task_id INTO v_task_id;
-
 	-- Add PROGRAM task 'psql' to the chain
 	INSERT INTO timetable.task_chain (parent_id, task_id)
-		VALUES (v_chain_id, v_task_id)
+		VALUES (v_chain_id, timetable.get_task_id ('CopyFromFile'))
 	RETURNING
 	    chain_id INTO v_chain_id;
 
@@ -70,14 +65,7 @@ BEGIN
 
 	-- Add the parameters for the 'psql' base task. Execute client side \copy to 'location' from 'orte_ansi.txt'
 	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-	    VALUES (v_chain_config_id, v_chain_id, 3, ('[
-			"-h", "' || host(inet_server_addr()) || '",
-			"-p", "' || inet_server_port() || '",
-			"-d", "' || current_database() || '",
-			"-U", "' || current_user || '",
-			"-c", "TRUNCATE location", 
-			"-c", "\\copy location FROM orte_ansi.txt"
-		]')::jsonb);
+	    VALUES (v_chain_config_id, v_chain_id, 1, '{"sql": "COPY location FROM STDIN", "filename": "orte_ansi.txt" }'::jsonb);
 
 	RAISE NOTICE 'Step 3 completed. Import task added';
 END;
