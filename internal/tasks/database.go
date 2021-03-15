@@ -25,7 +25,7 @@ func taskCopyFromFile(ctx context.Context, val string) error {
 	}
 	count, err := pgengine.CopyFromFile(ctx, ct.Filename, ct.SQL)
 	if err == nil {
-		pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("%d rows copied from %s", count, ct.Filename))
+		pgengine.LogToDB(ctx, "LOG", fmt.Sprintf("%d rows copied from %s", count, ct.Filename))
 	}
 	return err
 }
