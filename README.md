@@ -1,3 +1,6 @@
+#### We are actively developing **pg_timetable v4**. Please refer to the [v3 branch](https://github.com/cybertec-postgresql/pg_timetable/tree/master) for previous version documentation and sources.
+--------
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=master&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
@@ -6,7 +9,6 @@
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=cybertec-postgresql/pg_timetable)](https://dependabot.com)
-
 
 pg_timetable: Advanced scheduling for PostgreSQL
 ================================================
