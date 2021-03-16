@@ -37,25 +37,25 @@ func (chainElem ChainElementExecution) String() string {
 }
 
 // StartTransaction return transaction object and panic in the case of error
-func StartTransaction(ctx context.Context) (pgx.Tx, error) {
-	return ConfigDb.Begin(ctx)
+func (pge *PgEngine) StartTransaction(ctx context.Context) (pgx.Tx, error) {
+	return pge.ConfigDb.Begin(ctx)
 }
 
 // MustCommitTransaction commits transaction and log error in the case of error
-func MustCommitTransaction(ctx context.Context, tx pgx.Tx) {
-	LogToDB(ctx, "DEBUG", "Commit transaction for successful chain execution")
+func (pge *PgEngine) MustCommitTransaction(ctx context.Context, tx pgx.Tx) {
+	pge.LogToDB(ctx, "DEBUG", "Commit transaction for successful chain execution")
 	err := tx.Commit(ctx)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Application cannot commit after job finished: ", err)
+		pge.LogToDB(ctx, "ERROR", "Application cannot commit after job finished: ", err)
 	}
 }
 
 // MustRollbackTransaction rollbacks transaction and log error in the case of error
-func MustRollbackTransaction(ctx context.Context, tx pgx.Tx) {
-	LogToDB(ctx, "DEBUG", "Rollback transaction for failed chain execution")
+func (pge *PgEngine) MustRollbackTransaction(ctx context.Context, tx pgx.Tx) {
+	pge.LogToDB(ctx, "DEBUG", "Rollback transaction for failed chain execution")
 	err := tx.Rollback(ctx)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Application cannot rollback after job failed: ", err)
+		pge.LogToDB(ctx, "ERROR", "Application cannot rollback after job failed: ", err)
 	}
 }
 
@@ -64,25 +64,25 @@ func quoteIdent(s string) string {
 }
 
 // MustSavepoint creates SAVDEPOINT in transaction and log error in the case of error
-func MustSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	LogToDB(ctx, "DEBUG", "Define savepoint to ignore an error for the task: ", quoteIdent(savepoint))
+func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
+	pge.LogToDB(ctx, "DEBUG", "Define savepoint to ignore an error for the task: ", quoteIdent(savepoint))
 	_, err := tx.Exec(ctx, "SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
-		LogToDB(ctx, "ERROR", err)
+		pge.LogToDB(ctx, "ERROR", err)
 	}
 }
 
 // MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
-func MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	LogToDB(ctx, "DEBUG", "Rollback to savepoint ignoring error for the task: ", quoteIdent(savepoint))
+func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
+	pge.LogToDB(ctx, "DEBUG", "Rollback to savepoint ignoring error for the task: ", quoteIdent(savepoint))
 	_, err := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
-		LogToDB(ctx, "ERROR", err)
+		pge.LogToDB(ctx, "ERROR", err)
 	}
 }
 
 // GetChainElements returns all elements for a given chain
-func GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, chainID int) bool {
+func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, chainID int) bool {
 	const sqlSelectChains = `
 WITH RECURSIVE x
 (chain_id, task_id, task_name, script, kind, run_uid, ignore_error, autonomous, database_connection) AS 
@@ -116,14 +116,14 @@ WITH RECURSIVE x
 	err := pgxscan.Select(ctx, tx, chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Recursive queries to fetch chain tasks failed: ", err)
+		pge.LogToDB(ctx, "ERROR", "Recursive queries to fetch chain tasks failed: ", err)
 		return false
 	}
 	return true
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
+func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, chainElemExec *ChainElementExecution) bool {
 	const sqlGetParamValues = `
 SELECT value
 FROM  timetable.chain_execution_parameters
@@ -132,7 +132,7 @@ WHERE chain_execution_config = $1
 ORDER BY order_id ASC`
 	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "cannot fetch parameters values for chain: ", err)
+		pge.LogToDB(ctx, "ERROR", "cannot fetch parameters values for chain: ", err)
 		return false
 	}
 	return true
@@ -143,7 +143,7 @@ type executor interface {
 }
 
 // ExecuteSQLTask executes SQL task
-func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
+func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
 	var execTx pgx.Tx
 	var remoteDb PgxConnIface
 	var err error
@@ -151,15 +151,15 @@ func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementE
 
 	execTx = tx
 	if chainElemExec.Autonomous {
-		executor = ConfigDb
+		executor = pge.ConfigDb
 	} else {
 		executor = tx
 	}
 
 	//Connect to Remote DB
 	if chainElemExec.DatabaseConnection.Status != pgtype.Null {
-		connectionString := GetConnectionString(ctx, chainElemExec.DatabaseConnection)
-		remoteDb, execTx, err = GetRemoteDBTransaction(ctx, connectionString)
+		connectionString := pge.GetConnectionString(ctx, chainElemExec.DatabaseConnection)
+		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, connectionString)
 		if err != nil {
 			return err
 		}
@@ -170,39 +170,39 @@ func ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementE
 			executor = execTx
 		}
 
-		defer FinalizeRemoteDBConnection(ctx, remoteDb)
+		defer pge.FinalizeRemoteDBConnection(ctx, remoteDb)
 	}
 
 	// Set Role
 	if chainElemExec.RunUID.Status != pgtype.Null && !chainElemExec.Autonomous {
-		SetRole(ctx, execTx, chainElemExec.RunUID)
+		pge.SetRole(ctx, execTx, chainElemExec.RunUID)
 	}
 
 	if chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		MustSavepoint(ctx, execTx, chainElemExec.TaskName)
+		pge.MustSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
-	err = ExecuteSQLCommand(ctx, executor, chainElemExec.Script, paramValues)
+	err = pge.ExecuteSQLCommand(ctx, executor, chainElemExec.Script, paramValues)
 
 	if err != nil && chainElemExec.IgnoreError && !chainElemExec.Autonomous {
-		MustRollbackToSavepoint(ctx, execTx, chainElemExec.TaskName)
+		pge.MustRollbackToSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
 	//Reset The Role
 	if chainElemExec.RunUID.Status != pgtype.Null && !chainElemExec.Autonomous {
-		ResetRole(ctx, execTx)
+		pge.ResetRole(ctx, execTx)
 	}
 
 	// Commit changes on remote server
 	if chainElemExec.DatabaseConnection.Status != pgtype.Null && !chainElemExec.Autonomous {
-		MustCommitTransaction(ctx, execTx)
+		pge.MustCommitTransaction(ctx, execTx)
 	}
 
 	return err
 }
 
 // ExecuteSQLCommand executes chain script with parameters inside transaction
-func ExecuteSQLCommand(ctx context.Context, executor executor, script string, paramValues []string) error {
+func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, script string, paramValues []string) error {
 	var err error
 	var params []interface{}
 
@@ -217,7 +217,7 @@ func ExecuteSQLCommand(ctx context.Context, executor executor, script string, pa
 				if err := json.Unmarshal([]byte(val), &params); err != nil {
 					return err
 				}
-				LogToDB(ctx, "DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
+				pge.LogToDB(ctx, "DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
 				_, err = executor.Exec(ctx, script, params...)
 			}
 		}
@@ -226,30 +226,30 @@ func ExecuteSQLCommand(ctx context.Context, executor executor, script string, pa
 }
 
 //GetConnectionString of database_connection
-func GetConnectionString(ctx context.Context, databaseConnection pgtype.Varchar) (connectionString string) {
-	err := ConfigDb.QueryRow(ctx, "SELECT connect_string "+
+func (pge *PgEngine) GetConnectionString(ctx context.Context, databaseConnection pgtype.Varchar) (connectionString string) {
+	err := pge.ConfigDb.QueryRow(ctx, "SELECT connect_string "+
 		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection).Scan(&connectionString)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Issue while fetching connection string:", err)
+		pge.LogToDB(ctx, "ERROR", "Issue while fetching connection string:", err)
 	}
 	return connectionString
 }
 
 //GetRemoteDBTransaction create a remote db connection and returns transaction object
-func GetRemoteDBTransaction(ctx context.Context, connectionString string) (PgxConnIface, pgx.Tx, error) {
+func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionString string) (PgxConnIface, pgx.Tx, error) {
 	if strings.TrimSpace(connectionString) == "" {
 		return nil, nil, errors.New("Connection string is blank")
 	}
 	remoteDb, err := pgx.Connect(ctx, connectionString)
 	if err != nil {
-		LogToDB(ctx, "ERROR",
+		pge.LogToDB(ctx, "ERROR",
 			fmt.Sprintf("Error in remote connection (%s): %v", connectionString, err))
 		return nil, nil, err
 	}
-	LogToDB(ctx, "LOG", "Remote Connection established...")
+	pge.LogToDB(ctx, "LOG", "Remote Connection established...")
 	remoteTx, err := remoteDb.Begin(ctx)
 	if err != nil {
-		LogToDB(ctx, "ERROR",
+		pge.LogToDB(ctx, "ERROR",
 			fmt.Sprintf("Error during start of remote transaction (%s): %v", connectionString, err))
 		return nil, nil, err
 	}
@@ -257,29 +257,29 @@ func GetRemoteDBTransaction(ctx context.Context, connectionString string) (PgxCo
 }
 
 // FinalizeRemoteDBConnection closes session
-func FinalizeRemoteDBConnection(ctx context.Context, remoteDb PgxConnIface) {
-	LogToDB(ctx, "LOG", "Closing remote session")
+func (pge *PgEngine) FinalizeRemoteDBConnection(ctx context.Context, remoteDb PgxConnIface) {
+	pge.LogToDB(ctx, "LOG", "Closing remote session")
 	if err := remoteDb.Close(ctx); err != nil {
-		LogToDB(ctx, "ERROR", "Cannot close database connection:", err)
+		pge.LogToDB(ctx, "ERROR", "Cannot close database connection:", err)
 	}
 	remoteDb = nil
 }
 
 // SetRole - set the current user identifier of the current session
-func SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varchar) {
-	LogToDB(ctx, "LOG", "Setting Role to ", runUID.String)
+func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varchar) {
+	pge.LogToDB(ctx, "LOG", "Setting Role to ", runUID.String)
 	_, err := tx.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Error in Setting role", err)
+		pge.LogToDB(ctx, "ERROR", "Error in Setting role", err)
 	}
 }
 
 //ResetRole - RESET forms reset the current user identifier to be the current session user identifier
-func ResetRole(ctx context.Context, tx pgx.Tx) {
-	LogToDB(ctx, "LOG", "Resetting Role")
+func (pge *PgEngine) ResetRole(ctx context.Context, tx pgx.Tx) {
+	pge.LogToDB(ctx, "LOG", "Resetting Role")
 	const sqlResetRole = `RESET ROLE`
 	_, err := tx.Exec(ctx, sqlResetRole)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Error in ReSetting role", err)
+		pge.LogToDB(ctx, "ERROR", "Error in ReSetting role", err)
 	}
 }

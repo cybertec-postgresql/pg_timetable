@@ -29,7 +29,7 @@ func TestShellCommand(t *testing.T) {
 	var retCode int
 
 	ctx := context.Background()
-
+	scheduler := &scheduler.Scheduler{}
 	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})
 	assert.EqualError(t, err, "Program command cannot be empty", "Empty command should out, fail")
 

@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-func CopyFromFile(ctx context.Context, filename string, sql string) (int64, error) {
-	dbconn, err := ConfigDb.Acquire(ctx)
+func (pge *PgEngine) CopyFromFile(ctx context.Context, filename string, sql string) (int64, error) {
+	dbconn, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
 		return -1, err
 	}

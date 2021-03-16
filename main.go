@@ -17,34 +17,36 @@ import (
  * This application may run in the same machine as PostgreSQL server and must grant full access permission to the
  * timetable tables.
  */
+var pge *pgengine.PgEngine
 
 func main() {
 	ctx := context.Background()
 	cmdOpts, err := cmdparser.Parse()
 	if err != nil {
-		pgengine.LogToDB(ctx, "PANIC", "Error parsing command line arguments: ", err)
+		pgengine.Log("PANIC", "Error parsing command line arguments: ", err)
 		os.Exit(2)
 	}
 	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
-	if !pgengine.InitAndTestConfigDBConnection(connctx, *cmdOpts) {
+	if pge, err = pgengine.New(connctx, *cmdOpts); err != nil {
 		os.Exit(2)
 	}
-	defer pgengine.FinalizeConfigDBConnection()
+	defer pge.Finalize()
 	if cmdOpts.Upgrade {
-		if !pgengine.MigrateDb(ctx) {
+		if !pge.MigrateDb(ctx) {
 			os.Exit(3)
 		}
 	} else {
-		if upgrade, err := pgengine.CheckNeedMigrateDb(ctx); upgrade || err != nil {
+		if upgrade, err := pge.CheckNeedMigrateDb(ctx); upgrade || err != nil {
 			os.Exit(3)
 		}
 	}
 	if cmdOpts.Init {
 		os.Exit(0)
 	}
-	pgengine.SetupCloseHandler()
-	for scheduler.Run(ctx, cmdOpts.Debug) == scheduler.ConnectionDroppped {
-		pgengine.ReconnectDbAndFixLeftovers(ctx)
+	pge.SetupCloseHandler()
+	sch := scheduler.New(pge)
+	for sch.Run(ctx, cmdOpts.Debug) == scheduler.ConnectionDroppped {
+		pge.ReconnectAndFixLeftovers(ctx)
 	}
 }

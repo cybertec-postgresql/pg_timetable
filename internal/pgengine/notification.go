@@ -19,9 +19,6 @@ type ChainSignal struct {
 	Ts       int64  // timestamp NOTIFY sent
 }
 
-// NOTIFY messages passed verification are pushed to this channel
-var chainSignalChan chan ChainSignal = make(chan ChainSignal, 64)
-
 //  Since there are usually multiple opened connections to the database, all of them will receive NOTIFY messages.
 //  To process each NOTIFY message only once we store each message with TTL 1 minute because the max idle period for a
 //  a connection is the main loop period of 1 minute.
@@ -43,7 +40,7 @@ var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{})
 }()
 
 // NotificationHandler consumes notifications from the PostgreSQL server
-func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
+func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 	Log("DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
 	var signal ChainSignal
 	var err error
@@ -60,7 +57,7 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 		case "STOP", "START":
 			if signal.ConfigID > 0 {
 				Log("LOG", "Adding asynchronous chain to working queue: ", signal)
-				chainSignalChan <- signal
+				pge.chainSignalChan <- signal
 				return
 			}
 		}
@@ -70,20 +67,20 @@ func NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
 }
 
 // WaitForChainSignal returns configuration id from the notifications
-func WaitForChainSignal(ctx context.Context) ChainSignal {
+func (pge *PgEngine) WaitForChainSignal(ctx context.Context) ChainSignal {
 	select {
 	case <-ctx.Done():
 		return ChainSignal{0, "", 0}
-	case signal := <-chainSignalChan:
+	case signal := <-pge.chainSignalChan:
 		return signal
 	}
 }
 
 // HandleNotifications consumes notifications in blocking mode
-func HandleNotifications(ctx context.Context) {
-	conn, err := ConfigDb.Acquire(ctx)
+func (pge *PgEngine) HandleNotifications(ctx context.Context) {
+	conn, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
-		LogToDB(ctx, "ERROR", err)
+		pge.LogToDB(ctx, "ERROR", err)
 	}
 	defer conn.Release()
 	for {
@@ -94,10 +91,10 @@ func HandleNotifications(ctx context.Context) {
 		}
 		c := conn.Conn()
 		if n, err := c.WaitForNotification(ctx); err == nil {
-			NotificationHandler(c.PgConn(), n)
+			pge.NotificationHandler(c.PgConn(), n)
 		}
 		if err != nil {
-			LogToDB(ctx, "ERROR", err)
+			pge.LogToDB(ctx, "ERROR", err)
 		}
 	}
 }

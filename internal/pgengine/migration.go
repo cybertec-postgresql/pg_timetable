@@ -14,35 +14,35 @@ var migrations embed.FS
 var m *migrator.Migrator
 
 // MigrateDb upgrades database with all migrations
-func MigrateDb(ctx context.Context) bool {
-	LogToDB(ctx, "LOG", "Upgrading database...")
-	conn, err := ConfigDb.Acquire(ctx)
+func (pge *PgEngine) MigrateDb(ctx context.Context) bool {
+	pge.LogToDB(ctx, "LOG", "Upgrading database...")
+	conn, err := pge.ConfigDb.Acquire(ctx)
 	defer conn.Release()
 	if err != nil {
-		LogToDB(ctx, "PANIC", err)
+		pge.LogToDB(ctx, "PANIC", err)
 		return false
 	}
 	if err := m.Migrate(ctx, conn.Conn()); err != nil {
-		LogToDB(ctx, "PANIC", err)
+		pge.LogToDB(ctx, "PANIC", err)
 		return false
 	}
 	return true
 }
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
-func CheckNeedMigrateDb(ctx context.Context) (bool, error) {
-	LogToDB(ctx, "DEBUG", "Check need of upgrading database...")
-	conn, err := ConfigDb.Acquire(ctx)
+func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
+	pge.LogToDB(ctx, "DEBUG", "Check need of upgrading database...")
+	conn, err := pge.ConfigDb.Acquire(ctx)
 	defer conn.Release()
 	if err != nil {
 		return false, err
 	}
 	upgrade, err := m.NeedUpgrade(ctx, conn.Conn())
 	if upgrade {
-		LogToDB(ctx, "PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
+		pge.LogToDB(ctx, "PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
 	}
 	if err != nil {
-		LogToDB(ctx, "PANIC", err)
+		pge.LogToDB(ctx, "PANIC", err)
 	}
 	return upgrade, err
 }
@@ -60,7 +60,7 @@ func init() {
 	m, err = migrator.New(
 		migrator.TableName("timetable.migrations"),
 		migrator.SetNotice(func(s string) {
-			LogToDB(context.TODO(), "LOG", s)
+			Log("LOG", s)
 		}),
 		migrator.Migrations(
 			&migrator.Migration{
@@ -133,6 +133,6 @@ func init() {
 		),
 	)
 	if err != nil {
-		LogToDB(context.TODO(), "ERROR", err)
+		Log("ERROR", err)
 	}
 }

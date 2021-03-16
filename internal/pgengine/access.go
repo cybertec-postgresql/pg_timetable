@@ -20,43 +20,43 @@ const AppID = 0x204F04EE
 
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
-func FixSchedulerCrash(ctx context.Context) {
-	_, err := ConfigDb.Exec(ctx,
+func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
+	_, err := pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
 			SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
 				SELECT   start_status
 				FROM   timetable.run_status
 				WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
 				GROUP BY 1
-				HAVING count(*) < 2 ) AS abc`, ClientName)
+				HAVING count(*) < 2 ) AS abc`, pge.ClientName)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Error occurred during reverting from the scheduler crash: ", err)
+		pge.LogToDB(ctx, "ERROR", "Error occurred during reverting from the scheduler crash: ", err)
 	}
 }
 
 // CanProceedChainExecution checks if particular chain can be exeuted in parallel
-func CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstances int) bool {
+func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstances int) bool {
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
-	LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
-	err := ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
+	pge.LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
+	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return true
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		LogToDB(ctx, "ERROR", "Cannot read information about concurrent running jobs: ", err)
+		pge.LogToDB(ctx, "ERROR", "Cannot read information about concurrent running jobs: ", err)
 		return false
 	}
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
-func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
-	LogToDB(ctx, "LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
-	res, err := ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1", chainConfigID)
+func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
+	pge.LogToDB(ctx, "LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
+	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1", chainConfigID)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Error occurred during deleting self destructive chains: ", err)
+		pge.LogToDB(ctx, "ERROR", "Error occurred during deleting self destructive chains: ", err)
 		return false
 	}
 	return err == nil && res.RowsAffected() == 1
@@ -65,23 +65,23 @@ func DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
 // program if it receives an interrupt from the OS. We then handle this by calling
 // our clean up procedure and exiting the program.
-func SetupCloseHandler() {
+func (pge *PgEngine) SetupCloseHandler() {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		FinalizeConfigDBConnection()
+		pge.Finalize()
 		os.Exit(0)
 	}()
 }
 
 // IsAlive returns true if the connection to the database is alive
-func IsAlive() bool {
-	return ConfigDb != nil && ConfigDb.Ping(context.Background()) == nil
+func (pge *PgEngine) IsAlive() bool {
+	return pge.ConfigDb != nil && pge.ConfigDb.Ping(context.Background()) == nil
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
+func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
 	const sqlInsertRunStatus = `
 INSERT INTO timetable.run_status 
 (chain_id, execution_status, started, chain_execution_config, client_name) 
@@ -89,25 +89,25 @@ VALUES
 ($1, 'STARTED', now(), $2, $3) 
 RETURNING run_status`
 	var id int
-	err := ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, chainConfigID, ClientName).Scan(&id)
+	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, chainConfigID, pge.ClientName).Scan(&id)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Cannot save information about the chain run status: ", err)
+		pge.LogToDB(ctx, "ERROR", "Cannot save information about the chain run status: ", err)
 	}
 	return id
 }
 
 // UpdateChainRunStatus inserts status information about running chain elements
-func UpdateChainRunStatus(ctx context.Context, chainElemExec *ChainElementExecution, runStatusID int, status string) {
+func (pge *PgEngine) UpdateChainRunStatus(ctx context.Context, chainElemExec *ChainElementExecution, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `
 INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config, client_name)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
 	var err error
-	_, err = ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
-		runStatusID, chainElemExec.ChainConfig, ClientName)
+	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
+		runStatusID, chainElemExec.ChainConfig, pge.ClientName)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Update chain status failed: ", err)
+		pge.LogToDB(ctx, "ERROR", "Update chain status failed: ", err)
 	}
 }
 
@@ -127,19 +127,19 @@ func qualifySQL(sql string) string {
 }
 
 // SelectRebootChains returns a list of chains should be executed after reboot
-func SelectRebootChains(ctx context.Context, dest interface{}) error {
+func (pge *PgEngine) SelectRebootChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
-	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectRebootChains), ClientName)
+	return pgxscan.Select(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectRebootChains), pge.ClientName)
 }
 
 // SelectRebootChains returns a list of chains should be executed after reboot
-func SelectChains(ctx context.Context, dest interface{}) error {
+func (pge *PgEngine) SelectChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
-	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectChains), ClientName)
+	return pgxscan.Select(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectChains), pge.ClientName)
 }
 
 // SelectIntervalChains returns list of interval chains to be executed
-func SelectIntervalChains(ctx context.Context, dest interface{}) error {
+func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectIntervalChains = `
 SELECT
 	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
@@ -149,11 +149,11 @@ FROM
 	timetable.chain_execution_config 
 WHERE 
 	live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
-	return pgxscan.Select(ctx, ConfigDb, dest, qualifySQL(sqlSelectIntervalChains), ClientName)
+	return pgxscan.Select(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectIntervalChains), pge.ClientName)
 }
 
 // SelectChain returns the chain with the specified ID
-func SelectChain(ctx context.Context, dest interface{}, chainID int) error {
+func (pge *PgEngine) SelectChain(ctx context.Context, dest interface{}, chainID int) error {
 	// we accept not only live chains here because we want to run them in debug mode
 	const sqlSelectSingleChain = `SELECT
 	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
@@ -163,5 +163,5 @@ WHERE
 	chain_id IS NOT NULL
 	AND (client_name = $1 or client_name IS NULL) 
 	AND chain_execution_config = $2`
-	return pgxscan.Get(ctx, ConfigDb, dest, qualifySQL(sqlSelectSingleChain), ClientName, chainID)
+	return pgxscan.Get(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectSingleChain), pge.ClientName, chainID)
 }

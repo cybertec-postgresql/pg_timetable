@@ -79,7 +79,7 @@ func Log(level string, msg ...interface{}) {
 }
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
-func LogToDB(ctx context.Context, level string, msg ...interface{}) {
+func (pge *PgEngine) LogToDB(ctx context.Context, level string, msg ...interface{}) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -89,8 +89,8 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 		}
 	}
 	Log(level, msg...)
-	if ConfigDb != nil {
-		_, err := ConfigDb.Exec(ctx, logTemplate, os.Getpid(), ClientName, level, fmt.Sprint(msg...))
+	if pge.ConfigDb != nil {
+		_, err := pge.ConfigDb.Exec(ctx, logTemplate, os.Getpid(), pge.ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
 			Log("ERROR", "Cannot log to the database: ", err)
 		}
@@ -98,16 +98,16 @@ func LogToDB(ctx context.Context, level string, msg ...interface{}) {
 }
 
 // LogChainElementExecution will log current chain element execution status including retcode
-func LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementExecution, retCode int, output string) {
-	_, err := ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementExecution, retCode int, output string) {
+	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
 		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
 		"NULLIF($10, ''), $11)",
 		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
 		chainElemExec.Script, chainElemExec.Kind,
 		fmt.Sprintf("%f seconds", float64(chainElemExec.Duration)/1000000),
-		retCode, os.Getpid(), output, ClientName)
+		retCode, os.Getpid(), output, pge.ClientName)
 	if err != nil {
-		LogToDB(ctx, "ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
+		pge.LogToDB(ctx, "ERROR", "Error occurred during logging current chain element execution status including retcode: ", err)
 	}
 }

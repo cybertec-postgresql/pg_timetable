@@ -4,22 +4,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMigrations(t *testing.T) {
-	teardownTestCase := testutils.SetupTestCase(t)
+	teardownTestCase := SetupTestCase(t)
 	defer teardownTestCase(t)
 
 	ctx := context.Background()
-	_, _ = pgengine.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
-	_, _ = pgengine.ConfigDb.Exec(ctx, initialsql)
-	ok, err := pgengine.CheckNeedMigrateDb(ctx)
+	_, _ = pge.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
+	_, _ = pge.ConfigDb.Exec(ctx, initialsql)
+	ok, err := pge.CheckNeedMigrateDb(ctx)
 	assert.NoError(t, err)
 	assert.True(t, ok, "Should need migrations")
-	assert.True(t, pgengine.MigrateDb(ctx), "Migrations should be applied")
+	assert.True(t, pge.MigrateDb(ctx), "Migrations should be applied")
 
 }
 

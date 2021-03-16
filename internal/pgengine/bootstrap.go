@@ -38,20 +38,87 @@ type PgxPoolIface interface {
 	Close()
 }
 
-// ConfigDb is the global database object
-var ConfigDb PgxPoolIface
-
-// ClientName is unique ifentifier of the scheduler application running
-var ClientName string
-
-// NoProgramTasks parameter disables PROGRAM tasks executing
-var NoProgramTasks bool
+// PgEngine is responsible for every database-related action
+type PgEngine struct {
+	ConfigDb PgxPoolIface
+	cmdparser.CmdOptions
+	// NOTIFY messages passed verification are pushed to this channel
+	chainSignalChan chan ChainSignal
+}
 
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
+// New opens connection and creates schema
+func New(ctx context.Context, cmdOpts cmdparser.CmdOptions) (*PgEngine, error) {
+	Log("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
+	var wt int = WaitTime
+	var err error
+	pge := &PgEngine{nil, cmdOpts, make(chan ChainSignal, 64)}
+	config := pge.getPgxConnConfig()
+	pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
+	for err != nil {
+		Log("ERROR", err)
+		Log("LOG", "Reconnecting in ", wt, " sec...")
+		select {
+		case <-time.After(time.Duration(wt) * time.Second):
+			pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
+		case <-ctx.Done():
+			Log("ERROR", "Connection request cancelled: ", ctx.Err())
+			return nil, ctx.Err()
+		}
+		if wt < maxWaitTime {
+			wt = wt * 2
+		}
+	}
+	Log("LOG", "Connection established...")
+	Log("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", cmdOpts.ClientName, os.Getpid()))
+	if err := pge.ExecuteSchemaScripts(ctx); err != nil {
+		return nil, err
+	}
+	if cmdOpts.File != "" {
+		if err := pge.ExecuteCustomScripts(ctx, cmdOpts.File); err != nil {
+			return nil, err
+		}
+	}
+	return pge, nil
+}
+
+// getPgxConnConfig transforms standard connestion string to pgx specific one with
+func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
+	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
+		pge.Host, pge.Port, pge.Dbname, pge.SSLMode, pge.User, pge.Password)
+	Log("DEBUG", "Connection string: ", connstr)
+	connConfig, err := pgxpool.ParseConfig(connstr)
+	if err != nil {
+		Log("ERROR", err)
+		return nil
+	}
+	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+		//use background context without deadline for async notifications handler
+		Log("USER", "Severity: ", n.Severity, "; Message: ", n.Message)
+	}
+	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
+		if err = TryLockClientName(ctx, pge.ClientName, pgconn); err != nil {
+			return err
+		}
+		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(pge.ClientName))
+		return err
+	}
+	if !pge.Debug { //will handle notification in HandleNotifications directly
+		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
+	}
+	connConfig.ConnConfig.Logger = Logger{}
+	if VerboseLogLevel {
+		connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
+	} else {
+		connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn
+	}
+	return connConfig
+}
+
 // TryLockClientName obtains lock on the server to prevent another client with the same name
-func TryLockClientName(ctx context.Context, conn *pgx.Conn) error {
+func TryLockClientName(ctx context.Context, clientName string, conn *pgx.Conn) error {
 	// check if the schema is available already first
 	var procoid int
 	err := conn.QueryRow(ctx, "SELECT COALESCE(to_regproc('timetable.try_lock_client_name')::int4, 0)").Scan(&procoid)
@@ -66,8 +133,8 @@ func TryLockClientName(ctx context.Context, conn *pgx.Conn) error {
 
 	var wt int = WaitTime
 	for {
-		Log("DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d, server pid %d", ClientName, os.Getpid(), conn.PgConn().PID()))
-		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), ClientName)
+		Log("DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d, server pid %d", clientName, os.Getpid(), conn.PgConn().PID()))
+		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), clientName)
 		var locked bool
 		err = conn.QueryRow(ctx, sql).Scan(&locked)
 		if err != nil {
@@ -89,137 +156,64 @@ func TryLockClientName(ctx context.Context, conn *pgx.Conn) error {
 	}
 }
 
-// getPgxConnConfig transforms standard connestion string to pgx specific one with
-func getPgxConnConfig(cmdOpts cmdparser.CmdOptions) *pgxpool.Config {
-	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
-		cmdOpts.Host, cmdOpts.Port, cmdOpts.Dbname, cmdOpts.SSLMode, cmdOpts.User, cmdOpts.Password)
-	Log("DEBUG", "Connection string: ", connstr)
-	connConfig, err := pgxpool.ParseConfig(connstr)
-	if err != nil {
-		Log("ERROR", err)
-		return nil
-	}
-	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
-		//use background context without deadline for async notifications handler
-		LogToDB(context.Background(), "USER", "Severity: ", n.Severity, "; Message: ", n.Message)
-	}
-
-	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
-		if err = TryLockClientName(ctx, pgconn); err != nil {
-			return err
-		}
-		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(ClientName))
-		return err
-	}
-	if !cmdOpts.Debug { //will handle notification in HandleNotifications directly
-		connConfig.ConnConfig.OnNotification = NotificationHandler
-	}
-
-	connConfig.ConnConfig.Logger = Logger{}
-	if VerboseLogLevel {
-		connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
-	} else {
-		connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn
-	}
-	// connConfig.ConnConfig.PreferSimpleProtocol = true
-	return connConfig
-}
-
-// InitAndTestConfigDBConnection opens connection and creates schema
-func InitAndTestConfigDBConnection(ctx context.Context, cmdOpts cmdparser.CmdOptions) bool {
-	ClientName = cmdOpts.ClientName
-	NoProgramTasks = cmdOpts.NoShellTasks || cmdOpts.NoProgramTasks
-	VerboseLogLevel = cmdOpts.Verbose
-	Log("DEBUG", fmt.Sprintf("Starting new session... %s", &cmdOpts))
-	var wt int = WaitTime
-	var err error
-	config := getPgxConnConfig(cmdOpts)
-	ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
-	for err != nil {
-		Log("ERROR", err)
-		Log("LOG", "Reconnecting in ", wt, " sec...")
-		select {
-		case <-time.After(time.Duration(wt) * time.Second):
-			ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
-		case <-ctx.Done():
-			Log("ERROR", "Connection request cancelled: ", ctx.Err())
-			return false
-		}
-		if wt < maxWaitTime {
-			wt = wt * 2
-		}
-	}
-	Log("LOG", "Connection established...")
-	Log("LOG", fmt.Sprintf("Proceeding as '%s' with client PID %d", ClientName, os.Getpid()))
-	if !ExecuteSchemaScripts(ctx) {
-		return false
-	}
-	if cmdOpts.File != "" {
-		if !ExecuteCustomScripts(ctx, cmdOpts.File) {
-			return false
-		}
-	}
-	return true
-}
-
 // ExecuteCustomScripts executes SQL scripts in files
-func ExecuteCustomScripts(ctx context.Context, filename ...string) bool {
+func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error {
 	for _, f := range filename {
 		sql, err := ioutil.ReadFile(f)
 		if err != nil {
 			Log("PANIC", err)
-			return false
+			return err
 		}
 		Log("LOG", "Executing script: ", f)
-		if _, err = ConfigDb.Exec(ctx, string(sql)); err != nil {
+		if _, err = pge.ConfigDb.Exec(ctx, string(sql)); err != nil {
 			Log("PANIC", err)
-			return false
+			return err
 		}
 		Log("LOG", "Script file executed: ", f)
 	}
-	return true
+	return nil
 }
 
 // ExecuteSchemaScripts executes initial schema scripts
-func ExecuteSchemaScripts(ctx context.Context) bool {
+func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
 	var exists bool
-	err := ConfigDb.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')").Scan(&exists)
+	err := pge.ConfigDb.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'timetable')").Scan(&exists)
 	if err != nil {
-		return false
+		return err
 	}
 	if !exists {
 		for i, sql := range sqls {
 			sqlName := sqlNames[i]
 			Log("LOG", "Executing script: ", sqlName)
-			if _, err = ConfigDb.Exec(ctx, sql); err != nil {
+			if _, err = pge.ConfigDb.Exec(ctx, sql); err != nil {
 				Log("PANIC", err)
 				Log("PANIC", "Dropping \"timetable\" schema...")
-				_, err = ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
+				_, err = pge.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 				if err != nil {
 					Log("PANIC", err)
 				}
-				return false
+				return err
 			}
 			Log("LOG", "Schema file executed: "+sqlName)
 		}
 		Log("LOG", "Configuration schema created...")
 	}
-	return true
+	return nil
 }
 
-// FinalizeConfigDBConnection closes session
-func FinalizeConfigDBConnection() {
+// Finalize closes session
+func (pge *PgEngine) Finalize() {
 	Log("LOG", "Closing session")
-	_, err := ConfigDb.Exec(context.Background(), "DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), ClientName)
+	_, err := pge.ConfigDb.Exec(context.Background(), "DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), pge.ClientName)
 	if err != nil {
 		Log("ERROR", "Cannot finalize database session: ", err)
 	}
-	ConfigDb = nil
+	pge.ConfigDb = nil
 }
 
-//ReconnectDbAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
-func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
-	for ConfigDb.Ping(ctx) != nil {
+//ReconnectAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
+func (pge *PgEngine) ReconnectAndFixLeftovers(ctx context.Context) bool {
+	for pge.ConfigDb.Ping(ctx) != nil {
 		Log("REPAIR", "Connection to the server was lost. Waiting for ", WaitTime, " sec...")
 		select {
 		case <-time.After(WaitTime * time.Second):
@@ -230,6 +224,6 @@ func ReconnectDbAndFixLeftovers(ctx context.Context) bool {
 		}
 	}
 	Log("LOG", "Connection reestablished...")
-	FixSchedulerCrash(ctx)
+	pge.FixSchedulerCrash(ctx)
 	return true
 }

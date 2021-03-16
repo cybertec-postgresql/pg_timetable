@@ -12,33 +12,34 @@ import (
 func TestIntervalChain(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
-	pgengine.ConfigDb = mock
-	pgengine.VerboseLogLevel = false
+	pge := &pgengine.PgEngine{ConfigDb: mock}
+	pge.Verbose = false
+	sch := New(pge)
 
 	ichain := IntervalChain{Interval: 42}
 	assert.True(t, ichain.isListed([]IntervalChain{ichain}))
 	assert.False(t, ichain.isListed([]IntervalChain{}))
 
-	assert.False(t, ichain.isValid())
-	intervalChains[ichain.ChainExecutionConfigID] = ichain
-	assert.True(t, ichain.isValid())
+	assert.False(t, sch.isValid(ichain))
+	sch.intervalChains[ichain.ChainExecutionConfigID] = ichain
+	assert.True(t, sch.isValid(ichain))
 
 	t.Run("Check reschedule if self destructive", func(t *testing.T) {
 		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mock.ExpectExec("DELETE").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		ichain.SelfDestruct = true
-		ichain.reschedule(context.Background())
+		sch.reschedule(context.Background(), ichain)
 	})
 
 	t.Run("Check reschedule if context cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		ichain.SelfDestruct = false
-		ichain.reschedule(ctx)
+		sch.reschedule(ctx, ichain)
 	})
 
 	t.Run("Check reschedule if everything fine", func(t *testing.T) {
 		ichain.Interval = 1
-		ichain.reschedule(context.Background())
+		sch.reschedule(context.Background(), ichain)
 	})
 }

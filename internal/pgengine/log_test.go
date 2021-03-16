@@ -12,25 +12,25 @@ import (
 
 func TestLogError(t *testing.T) {
 	initmockdb(t)
-	pgengine.ConfigDb = mockPool
+	pge := pgengine.PgEngine{ConfigDb: mockPool}
 	mockPool.ExpectExec(`INSERT INTO timetable.*`).WillReturnError(errors.New("error"))
-	pgengine.LogToDB(context.TODO(), "LOG", "Should fail")
+	pge.LogToDB(context.TODO(), "LOG", "Should fail")
 }
 
 func TestLogToDb(t *testing.T) {
 	initmockdb(t)
-	pgengine.ConfigDb = mockPool
+	pge := pgengine.PgEngine{ConfigDb: mockPool}
 	defer mockPool.Close()
 
 	t.Run("Check LogToDB in terse mode", func(t *testing.T) {
-		pgengine.VerboseLogLevel = false
-		pgengine.LogToDB(context.TODO(), "DEBUG", "Test DEBUG message")
+		pge.Verbose = false
+		pge.LogToDB(context.TODO(), "DEBUG", "Test DEBUG message")
 	})
 
 	t.Run("Check LogToDB in verbose mode", func(t *testing.T) {
-		pgengine.VerboseLogLevel = true
+		pge.Verbose = true
 		mockPool.ExpectExec("INSERT INTO timetable.*").WillReturnError(errors.New("error"))
-		pgengine.LogToDB(context.TODO(), "DEBUG", "Test DEBUG message")
+		pge.LogToDB(context.TODO(), "DEBUG", "Test DEBUG message")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
@@ -38,13 +38,13 @@ func TestLogToDb(t *testing.T) {
 
 func TestLogChainElementExecution(t *testing.T) {
 	initmockdb(t)
-	pgengine.ConfigDb = mockPool
+	pge := pgengine.PgEngine{ConfigDb: mockPool}
 	defer mockPool.Close()
 
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
 		mockPool.ExpectExec("INSERT INTO .*execution_log").WillReturnError(errors.New("error"))
 		mockPool.ExpectExec("INSERT INTO .*log").WillReturnResult(pgxmock.NewResult("INSERT", 1))
-		pgengine.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
+		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")

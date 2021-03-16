@@ -57,9 +57,12 @@ func migrateTest() error {
 
 	// Migrate up
 	ctx := context.Background()
-	pgengine.InitAndTestConfigDBConnection(ctx, *cmdparser.NewCmdOptions("migrator_unit_test"))
-	_, _ = pgengine.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz")
-	db, err := pgengine.ConfigDb.Acquire(ctx)
+	pge, err := pgengine.New(ctx, *cmdparser.NewCmdOptions("migrator_unit_test"))
+	if err != nil {
+		return err
+	}
+	_, _ = pge.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz")
+	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
 		return err
 	}
@@ -85,9 +88,12 @@ func TestPostgres(t *testing.T) {
 }
 
 func TestBadMigrations(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
+	pge, err := pgengine.New(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := context.Background()
-	db, err := pgengine.ConfigDb.Acquire(ctx)
+	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,9 +145,12 @@ func TestBadMigrations(t *testing.T) {
 }
 
 func TestBadMigrationNumber(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
+	pge, err := pgengine.New(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := context.Background()
-	db, err := pgengine.ConfigDb.Acquire(ctx)
+	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,9 +172,12 @@ func TestBadMigrationNumber(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
-	pgengine.InitAndTestConfigDBConnection(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
+	pge, err := pgengine.New(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx := context.Background()
-	db, err := pgengine.ConfigDb.Acquire(ctx)
+	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

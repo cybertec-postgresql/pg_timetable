@@ -59,13 +59,13 @@ import (
 func TestExecuteSchemaScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	pgengine.ConfigDb = mockPool
+	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
 
 	t.Run("Check schema scripts if error returned for SELECT EXISTS", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		mockPool.ExpectQuery("SELECT EXISTS").WillReturnError(errors.New("expected"))
-		assert.False(t, pgengine.ExecuteSchemaScripts(ctx))
+		assert.Error(t, mockpge.ExecuteSchemaScripts(ctx))
 	})
 
 	t.Run("Check schema scripts if error returned", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestExecuteSchemaScripts(t *testing.T) {
 		mockPool.ExpectQuery("SELECT EXISTS").WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(false))
 		mockPool.ExpectExec("CREATE SCHEMA timetable").WillReturnError(errors.New("expected"))
 		mockPool.ExpectExec("DROP SCHEMA IF EXISTS timetable CASCADE").WillReturnError(errors.New("expected"))
-		assert.False(t, pgengine.ExecuteSchemaScripts(ctx))
+		assert.Error(t, mockpge.ExecuteSchemaScripts(ctx))
 	})
 
 	t.Run("Check schema scripts if everything fine", func(t *testing.T) {
@@ -84,42 +84,40 @@ func TestExecuteSchemaScripts(t *testing.T) {
 		for i := 0; i < 4; i++ {
 			mockPool.ExpectExec(".*").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		}
-		assert.True(t, pgengine.ExecuteSchemaScripts(ctx))
+		assert.NoError(t, mockpge.ExecuteSchemaScripts(ctx))
 	})
 }
 
 func TestExecuteCustomScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	pgengine.ConfigDb = mockPool
-
+	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
 	t.Run("Check ExecuteCustomScripts for non-existent file", func(t *testing.T) {
-		assert.False(t, pgengine.ExecuteCustomScripts(context.Background(), "foo.bar"))
+		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), "foo.bar"))
 	})
 
 	t.Run("Check ExecuteCustomScripts if error returned", func(t *testing.T) {
 		mockPool.ExpectExec("WITH").WillReturnError(errors.New("expected"))
-		assert.False(t, pgengine.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql"))
+		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql"))
 	})
 
 	t.Run("Check ExecuteCustomScripts if everything fine", func(t *testing.T) {
 		mockPool.ExpectExec("WITH").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
-		assert.True(t, pgengine.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql"))
+		assert.NoError(t, mockpge.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql"))
 	})
 }
 
 func TestReconnectAndFixLeftovers(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	pgengine.ConfigDb = mockPool
-
+	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
 	t.Run("Check ReconnectAndFixLeftovers if everything fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		mockPool.ExpectPing()
 		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-		assert.True(t, pgengine.ReconnectDbAndFixLeftovers(ctx))
+		assert.True(t, mockpge.ReconnectAndFixLeftovers(ctx))
 	})
 
 	t.Run("Check ReconnectAndFixLeftovers if error returned", func(t *testing.T) {
@@ -127,7 +125,7 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 		defer cancel()
 		mockPool.ExpectPing().WillReturnError(errors.New("expected"))
 		mockPool.ExpectPing().WillDelayFor(pgengine.WaitTime * time.Second * 2)
-		assert.False(t, pgengine.ReconnectDbAndFixLeftovers(ctx))
+		assert.False(t, mockpge.ReconnectAndFixLeftovers(ctx))
 	})
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
@@ -141,7 +139,7 @@ func TestLogger(t *testing.T) {
 
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
-	pgengine.ConfigDb = mockPool
+	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
 	mockPool.ExpectClose().WillReturnError(errors.New("expected"))
-	pgengine.FinalizeConfigDBConnection()
+	mockpge.Finalize()
 }
