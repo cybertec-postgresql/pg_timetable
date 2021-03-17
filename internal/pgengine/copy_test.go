@@ -17,7 +17,7 @@ func TestCopyFromFile(t *testing.T) {
 	_, err = pge.ConfigDb.Exec(ctx, "CREATE TEMP TABLE csv_test(id integer, val text)")
 	assert.NoError(t, err, "Should create temporary table")
 	assert.NoError(t, os.WriteFile("test.csv", []byte("1,foo\n2,bar"), 0666), "Should create source CSV file")
-	cnt, err := pge.CopyFromFile(ctx, "test.csv", "COPY location FROM STDIN")
+	cnt, err := pge.CopyFromFile(ctx, "test.csv", "COPY csv_test FROM STDIN (FORMAT csv)")
 	assert.NoError(t, err, "Should copy from file")
 	assert.True(t, cnt == 2, "Should copy exactly 2 rows")
 	assert.NoError(t, os.RemoveAll("test.csv"), "Test output should be removed")
