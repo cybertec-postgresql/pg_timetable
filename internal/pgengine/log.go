@@ -53,9 +53,6 @@ var levelColors = map[string]int{
 	"NOTICE": magenta,
 	"DEBUG":  blue}
 
-// VerboseLogLevel specifies if log messages with level LOG should be logged
-var VerboseLogLevel = true
-
 func getColorizedPrefix(level string) string {
 	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", levelColors[level], time.Now().Format("2006-01-02 15:04:05.000")+" | "+level)
 }
@@ -69,11 +66,6 @@ const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, mess
 
 // Log performs logging to standard output
 func Log(level string, msg ...interface{}) {
-	if !VerboseLogLevel {
-		if level == "DEBUG" {
-			return
-		}
-	}
 	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
 	fmt.Println(s)
 }
@@ -83,7 +75,7 @@ func (pge *PgEngine) LogToDB(ctx context.Context, level string, msg ...interface
 	if ctx.Err() != nil {
 		return
 	}
-	if !VerboseLogLevel {
+	if !pge.Verbose {
 		if level == "DEBUG" {
 			return
 		}

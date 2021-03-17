@@ -115,14 +115,14 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	t.Run("Check log facility", func(t *testing.T) {
 		var count int
 		logLevels := []string{"DEBUG", "NOTICE", "LOG", "ERROR", "PANIC"}
-		for _, pgengine.VerboseLogLevel = range []bool{true, false} {
+		for _, pge.Verbose = range []bool{true, false} {
 			_, _ = pge.ConfigDb.Exec(ctx, "TRUNCATE timetable.log")
 			for _, logLevel := range logLevels {
 				assert.NotPanics(t, func() {
 					pge.LogToDB(ctx, logLevel, logLevel)
 				}, "LogToDB panicked")
 
-				if !pgengine.VerboseLogLevel {
+				if !pge.Verbose {
 					switch logLevel {
 					case "DEBUG", "NOTICE", "LOG":
 						continue
