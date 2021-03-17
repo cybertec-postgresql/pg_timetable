@@ -84,6 +84,13 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions) (*PgEngine, error) {
 	return pge, nil
 }
 
+// NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.
+// We assume here all checks for proper schema validation are done beforehannd
+func NewDB(DB PgxPoolIface, ClientName string) *PgEngine {
+	return &PgEngine{DB, *cmdparser.NewCmdOptions(ClientName), make(chan ChainSignal, 64)}
+
+}
+
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
 func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
