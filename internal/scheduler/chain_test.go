@@ -7,37 +7,15 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAsyncChains(t *testing.T) {
-	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
-	assert.NoError(t, err)
-	pge := pgengine.PgEngine{ConfigDb: mock}
-	n := &pgconn.Notification{Payload: `{"ConfigID": 24, "Command": "START"}`}
-
-	//add correct chain
-	pge.NotificationHandler(&pgconn.PgConn{}, n)
-	mock.ExpectQuery("SELECT.+chain_execution_config").
-		WillReturnRows(pgxmock.NewRows([]string{"chain_execution_config", "chain_id", "chain_name",
-			"self_destruct", "exclusive_execution", "max_instances"}).
-			AddRow(24, 24, "foo", false, false, 16))
-	if pgengine.VerboseLogLevel {
-		mock.ExpectExec("INSERT.+log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
-	}
-	//add incorrect chaing
-	pge.NotificationHandler(&pgconn.PgConn{}, n)
-	mock.ExpectQuery("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
-	mock.ExpectExec("INSERT.+log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
-}
-
 func TestChainWorker(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
-	pge := &pgengine.PgEngine{ConfigDb: mock}
+	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	pge.Verbose = false
 	sch := New(pge)
 	chains := make(chan Chain, workersNumber)

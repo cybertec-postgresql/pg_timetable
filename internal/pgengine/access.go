@@ -36,6 +36,9 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 
 // CanProceedChainExecution checks if particular chain can be exeuted in parallel
 func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstances int) bool {
+	if ctx.Err() != nil {
+		return false
+	}
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
 	pge.LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
