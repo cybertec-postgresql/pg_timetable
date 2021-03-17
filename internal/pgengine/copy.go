@@ -12,6 +12,7 @@ func (pge *PgEngine) CopyFromFile(ctx context.Context, filename string, sql stri
 	}
 	defer dbconn.Release()
 	f, err := os.Open(filename)
+	defer func() { _ = f.Close() }()
 	if err != nil {
 		return -1, err
 	}
