@@ -8,7 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
+	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,8 +30,13 @@ func TestShellCommand(t *testing.T) {
 	var out string
 	var retCode int
 
+	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
+	assert.NoError(t, err)
+	pge := pgengine.NewDB(mock, "scheduler_unit_test")
+	pge.Verbose = false
+	scheduler := scheduler.New(pge)
 	ctx := context.Background()
-	scheduler := &scheduler.Scheduler{}
+
 	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})
 	assert.EqualError(t, err, "Program command cannot be empty", "Empty command should out, fail")
 

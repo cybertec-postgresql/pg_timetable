@@ -53,6 +53,11 @@ func taskSleep(ctx context.Context, sch *Scheduler, val string) (err error) {
 	return nil
 }
 
+func taskLog(ctx context.Context, sch *Scheduler, val string) error {
+	sch.pgengine.LogToDB(ctx, "USER", val)
+	return nil
+}
+
 func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) error {
 	var conn tasks.EmailConn
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
@@ -78,11 +83,6 @@ func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) error
 	}
 
 	return tasks.SendMail(conn)
-}
-
-func taskLog(ctx context.Context, sch *Scheduler, val string) error {
-	sch.pgengine.LogToDB(ctx, "USER", val)
-	return nil
 }
 
 func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) error {

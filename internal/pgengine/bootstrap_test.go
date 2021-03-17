@@ -12,50 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestInitAndTestMock(t *testing.T) {
-// 	initmockdb(t)
-// 	pgengine.OpenDB = func(driverName string, dataSourceName string) (*sql.DB, error) {
-// 		return db, nil
-// 	}
-// 	defer mockPool.Close()
-
-// 	t.Run("Check bootstrap if everything fine", func(t *testing.T) {
-// 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-// 		defer cancel()
-// 		mockPool.ExpectPing()
-// 		mockPool.ExpectQuery("SELECT EXISTS").WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(true))
-// 		assert.True(t, pgengine.InitAndTestConfigDBConnection(ctx, *cmdOpts))
-// 	})
-
-// 	t.Run("Check bootstrap if ping failed", func(t *testing.T) {
-// 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-// 		defer cancel()
-// 		mockPool.ExpectPing().WillReturnError(errors.New("ping error"))
-// 		assert.False(t, pgengine.InitAndTestConfigDBConnection(ctx, *cmdOpts))
-// 	})
-
-// 	t.Run("Check bootstrap if executeSchemaScripts failed", func(t *testing.T) {
-// 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-// 		defer cancel()
-// 		mockPool.ExpectPing()
-// 		mockPool.ExpectQuery("SELECT EXISTS").WillReturnError(errors.New("internal error"))
-// 		assert.False(t, pgengine.InitAndTestConfigDBConnection(ctx, *cmdOpts))
-// 	})
-
-// 	t.Run("Check bootstrap if startup file doesn't exist", func(t *testing.T) {
-// 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-// 		defer cancel()
-// 		mockPool.ExpectPing()
-// 		mockPool.ExpectQuery("SELECT EXISTS").WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(true))
-// 		cmdOpts.File = "foo"
-// 		assert.False(t, pgengine.InitAndTestConfigDBConnection(ctx, *cmdOpts))
-// 	})
-
-// 	pgengine.OpenDB = sql.Open
-
-// 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
-// }
-
 func TestExecuteSchemaScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()

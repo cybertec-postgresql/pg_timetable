@@ -12,7 +12,7 @@ import (
 func TestIntervalChain(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
-	pge := &pgengine.PgEngine{ConfigDb: mock}
+	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	pge.Verbose = false
 	sch := New(pge)
 
