@@ -29,4 +29,9 @@ func TestExecuteTask(t *testing.T) {
 	assert.Error(t, mocksch.executeTask(context.TODO(), "CopyFromFile", []string{"foo"}), "Invalid json")
 	assert.Error(t, mocksch.executeTask(context.TODO(), "CopyFromFile",
 		[]string{`{"sql": "COPY foo from STDIN", "filename": "foo"}`}), "Acquire() should fail")
+
+	assert.Error(t, mocksch.executeTask(context.TODO(), "SendMail", []string{"foo"}), "Invalid json")
+	assert.Error(t, mocksch.executeTask(context.TODO(), "SendMail",
+		[]string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user","Password":"pwd","SenderAddr":""}`}))
+
 }
