@@ -217,13 +217,17 @@ func TestSchedulerFunctions(t *testing.T) {
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
 		tx, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.Error(t, pge.ExecuteSQLCommand(ctx, tx, "", nil), "Should error for empty script")
-		assert.Error(t, pge.ExecuteSQLCommand(ctx, tx, " 	", nil), "Should error for whitespace only script")
-		assert.NoError(t, pge.ExecuteSQLCommand(ctx, tx, ";", nil), "Simple query with nil as parameters argument")
-		assert.NoError(t, pge.ExecuteSQLCommand(ctx, tx, ";", []string{}), "Simple query with empty slice as parameters argument")
-		assert.NoError(t, pge.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4", []string{"[42]"}), "Simple query with non empty parameters")
-		assert.NoError(t, pge.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4", []string{"[42]", `[14]`}), "Simple query with doubled parameters")
-		assert.NoError(t, pge.ExecuteSQLCommand(ctx, tx, "SELECT $1::int4, $2::text", []string{`[42, "hey"]`}), "Simple query with two parameters")
+		f := func(sql string, params []string) error {
+			_, err := pge.ExecuteSQLCommand(ctx, tx, sql, params)
+			return err
+		}
+		assert.Error(t, f("", nil), "Should error for empty script")
+		assert.Error(t, f(" 	", nil), "Should error for whitespace only script")
+		assert.NoError(t, f(";", nil), "Simple query with nil as parameters argument")
+		assert.NoError(t, f(";", []string{}), "Simple query with empty slice as parameters argument")
+		assert.NoError(t, f("SELECT $1::int4", []string{"[42]"}), "Simple query with non empty parameters")
+		assert.NoError(t, f("SELECT $1::int4", []string{"[42]", `[14]`}), "Simple query with doubled parameters")
+		assert.NoError(t, f("SELECT $1::int4, $2::text", []string{`[42, "hey"]`}), "Simple query with two parameters")
 
 		pge.MustCommitTransaction(ctx, tx)
 	})

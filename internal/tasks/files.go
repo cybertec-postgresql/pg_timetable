@@ -8,13 +8,14 @@ import (
 )
 
 // DownloadUrls function implemented using grab library
-func DownloadUrls(ctx context.Context, urls []string, dest string, workers int) error {
+func DownloadUrls(ctx context.Context, urls []string, dest string, workers int) (out string, err error) {
+	var req *grab.Request
 	// create multiple download requests
 	reqs := make([]*grab.Request, 0)
 	for _, url := range urls {
-		req, err := grab.NewRequest(dest, url)
+		req, err = grab.NewRequest(dest, url)
 		if err != nil {
-			return err
+			return
 		}
 		req = req.WithContext(ctx)
 		reqs = append(reqs, req)
@@ -25,15 +26,14 @@ func DownloadUrls(ctx context.Context, urls []string, dest string, workers int) 
 	// check each response
 	var errstrings []string
 	for resp := range respch {
-		if err := resp.Err(); err != nil {
+		if err = resp.Err(); err != nil {
 			errstrings = append(errstrings, err.Error())
 		} else {
-			fmt.Println("LOG", fmt.Sprintf("Downloaded %s to %s", resp.Request.URL(), resp.Filename))
-			// TODO: loggin pgengine.LogToDB(ctx, "LOG", fmt.Sprintf("Downloaded %s to %s", resp.Request.URL(), resp.Filename))
+			out = out + fmt.Sprintf("Downloaded %s to %s\n", resp.Request.URL(), resp.Filename)
 		}
 	}
 	if len(errstrings) > 0 {
-		return fmt.Errorf("download failed: %v", errstrings)
+		err = fmt.Errorf("download failed: %v", errstrings)
 	}
-	return nil
+	return
 }

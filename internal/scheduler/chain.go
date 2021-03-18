@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -190,7 +191,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 	chainElemExec.StartedAt = time.Now()
 	switch chainElemExec.Kind {
 	case "SQL":
-		err = sch.pgengine.ExecuteSQLTask(ctx, tx, chainElemExec, paramValues)
+		out, err = sch.pgengine.ExecuteSQLTask(ctx, tx, chainElemExec, paramValues)
 	case "PROGRAM":
 		if sch.pgengine.NoProgramTasks {
 			sch.pgengine.LogToDB(ctx, "LOG", "Program task execution skipped: ", chainElemExec)
@@ -198,24 +199,19 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 		}
 		retCode, out, err = sch.ExecuteProgramCommand(ctx, chainElemExec.Script, paramValues)
 	case "BUILTIN":
-		err = sch.executeTask(ctx, chainElemExec.TaskName, paramValues)
+		out, err = sch.executeTask(ctx, chainElemExec.TaskName, paramValues)
 	}
-
 	chainElemExec.Duration = time.Since(chainElemExec.StartedAt).Microseconds()
 
 	if err != nil {
 		if retCode == 0 {
 			retCode = -1
 		}
-		if out == "" {
-			out = err.Error()
-		}
-		sch.pgengine.LogChainElementExecution(context.Background(), chainElemExec, retCode, out)
+		out = strings.Join([]string{out, err.Error()}, "\n")
 		sch.pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
-		return retCode
+	} else {
+		sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
 	}
-
-	sch.pgengine.LogChainElementExecution(ctx, chainElemExec, retCode, out)
-	sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
+	sch.pgengine.LogChainElementExecution(context.Background(), chainElemExec, retCode, out)
 	return 0
 }

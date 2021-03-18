@@ -12,7 +12,7 @@ import (
 )
 
 // Tasks maps builtin task names with event handlers
-var Tasks = map[string](func(context.Context, *Scheduler, string) error){
+var Tasks = map[string](func(context.Context, *Scheduler, string) (string, error)){
 	"NoOp":         taskNoOp,
 	"Sleep":        taskSleep,
 	"Log":          taskLog,
@@ -20,68 +20,69 @@ var Tasks = map[string](func(context.Context, *Scheduler, string) error){
 	"Download":     taskDownload,
 	"CopyFromFile": taskCopyFromFile}
 
-func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues []string) error {
+func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
+	var s string
 	f := Tasks[name]
 	if f == nil {
-		return errors.New("No built-in task found: " + name)
+		return "", errors.New("No built-in task found: " + name)
 	}
 	sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
 	if len(paramValues) == 0 {
 		return f(ctx, sch, "")
 	}
 	for _, val := range paramValues {
-		if err := f(ctx, sch, val); err != nil {
-			return err
+		if s, err = f(ctx, sch, val); err != nil {
+			return
 		}
+		stdout = stdout + fmt.Sprintln(s)
 	}
-	return nil
+	return
 }
 
-func taskNoOp(ctx context.Context, sch *Scheduler, val string) error {
-	sch.pgengine.LogToDB(ctx, "DEBUG", "NoOp task called with value: ", val)
-	return nil
+func taskNoOp(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+	return "NoOp task called with value: " + val, nil
 }
 
-func taskSleep(ctx context.Context, sch *Scheduler, val string) (err error) {
+func taskSleep(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
 	var d int
 	if d, err = strconv.Atoi(val); err != nil {
-		return err
+		return "", err
 	}
-	sch.pgengine.LogToDB(ctx, "DEBUG", "Sleep task called for ", d, " seconds")
-	time.Sleep(time.Duration(d) * time.Second)
-	return nil
+	dur := time.Duration(d) * time.Second
+	time.Sleep(dur)
+	return "Sleep task called for " + dur.String(), nil
 }
 
-func taskLog(ctx context.Context, sch *Scheduler, val string) error {
+func taskLog(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
 	sch.pgengine.LogToDB(ctx, "USER", val)
-	return nil
+	return "Logged: " + val, nil
 }
 
-func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) error {
+func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error) {
 	var conn tasks.EmailConn
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
-		return err
+		return "", err
 	}
-	return tasks.SendMail(conn)
+	return "", tasks.SendMail(conn)
 }
 
-func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) error {
+func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
 	type copyFrom struct {
 		SQL      string `json:"sql"`
 		Filename string `json:"filename"`
 	}
 	var ct copyFrom
 	if err := json.Unmarshal([]byte(val), &ct); err != nil {
-		return err
+		return "", err
 	}
 	count, err := sch.pgengine.CopyFromFile(ctx, ct.Filename, ct.SQL)
 	if err == nil {
-		sch.pgengine.LogToDB(ctx, "LOG", fmt.Sprintf("%d rows copied from %s", count, ct.Filename))
+		stdout = fmt.Sprintf("%d rows copied from %s", count, ct.Filename)
 	}
-	return err
+	return stdout, err
 }
 
-func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) error {
+func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error) {
 	type downloadOpts struct {
 		WorkersNum int      `json:"workersnum"`
 		FileUrls   []string `json:"fileurls"`
@@ -89,10 +90,10 @@ func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) error
 	}
 	var opts downloadOpts
 	if err := json.Unmarshal([]byte(paramValues), &opts); err != nil {
-		return err
+		return "", err
 	}
 	if len(opts.FileUrls) == 0 {
-		return errors.New("Files to download are not specified")
+		return "", errors.New("Files to download are not specified")
 	}
 	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
 }

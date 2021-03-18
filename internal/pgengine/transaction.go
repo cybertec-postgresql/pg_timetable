@@ -143,10 +143,9 @@ type executor interface {
 }
 
 // ExecuteSQLTask executes SQL task
-func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementExecution, paramValues []string) error {
+func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExec *ChainElementExecution, paramValues []string) (out string, err error) {
 	var execTx pgx.Tx
 	var remoteDb PgxConnIface
-	var err error
 	var executor executor
 
 	execTx = tx
@@ -161,7 +160,7 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExe
 		connectionString := pge.GetConnectionString(ctx, chainElemExec.DatabaseConnection)
 		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, connectionString)
 		if err != nil {
-			return err
+			return
 		}
 		if chainElemExec.Autonomous {
 			executor = remoteDb
@@ -182,7 +181,7 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExe
 		pge.MustSavepoint(ctx, execTx, chainElemExec.TaskName)
 	}
 
-	err = pge.ExecuteSQLCommand(ctx, executor, chainElemExec.Script, paramValues)
+	out, err = pge.ExecuteSQLCommand(ctx, executor, chainElemExec.Script, paramValues)
 
 	if err != nil && chainElemExec.IgnoreError && !chainElemExec.Autonomous {
 		pge.MustRollbackToSavepoint(ctx, execTx, chainElemExec.TaskName)
@@ -198,31 +197,33 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExe
 		pge.MustCommitTransaction(ctx, execTx)
 	}
 
-	return err
+	return
 }
 
 // ExecuteSQLCommand executes chain script with parameters inside transaction
-func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, script string, paramValues []string) error {
-	var err error
+func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, script string, paramValues []string) (out string, err error) {
+	var ct pgconn.CommandTag
 	var params []interface{}
 
 	if strings.TrimSpace(script) == "" {
-		return errors.New("SQL script cannot be empty")
+		return "", errors.New("SQL script cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		_, err = executor.Exec(ctx, script)
+		ct, err = executor.Exec(ctx, script)
+		out = string(ct)
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
-				if err := json.Unmarshal([]byte(val), &params); err != nil {
-					return err
+				if err = json.Unmarshal([]byte(val), &params); err != nil {
+					return
 				}
 				pge.LogToDB(ctx, "DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
-				_, err = executor.Exec(ctx, script, params...)
+				ct, err = executor.Exec(ctx, script, params...)
+				out = out + string(ct) + "\n"
 			}
 		}
 	}
-	return err
+	return
 }
 
 //GetConnectionString of database_connection
