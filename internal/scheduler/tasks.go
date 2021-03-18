@@ -59,7 +59,7 @@ func taskLog(ctx context.Context, sch *Scheduler, val string) (stdout string, er
 }
 
 func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error) {
-	var conn tasks.EmailConn
+	conn := tasks.EmailConn{ServerPort: 587, ContentType: "text/plain"}
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
 		return "", err
 	}
