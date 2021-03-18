@@ -103,7 +103,7 @@ func TestExecuteSQLTask(t *testing.T) {
 				q.WillReturnRows(pgxmock.NewRows([]string{"connect_string"}).AddRow(connstr))
 			}
 		}
-		_ = pge.ExecuteSQLTask(context.Background(), tx, &element, []string{})
+		_, _ = pge.ExecuteSQLTask(context.Background(), tx, &element, []string{})
 	}
 }
 
@@ -153,7 +153,8 @@ func TestExecuteSQLCommand(t *testing.T) {
 		if res.sql != "" {
 			mockPool.ExpectExec(res.sql).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
 		}
-		assert.Equal(t, res.err, pge.ExecuteSQLCommand(ctx, mockPool, res.sql, res.params))
+		_, err := pge.ExecuteSQLCommand(ctx, mockPool, res.sql, res.params)
+		assert.Equal(t, res.err, err)
 	}
 }
 

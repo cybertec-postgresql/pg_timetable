@@ -28,11 +28,11 @@ var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http
 
 func TestDownloadFile(t *testing.T) {
 	ctx := context.Background()
-	assert.Error(t, DownloadUrls(ctx, []string{ts.URL + `?filename=nonexistent.txt`}, "", 0),
-		"Downlod with non-existent directory or insufficient rights should fail")
-	assert.NoError(t, DownloadUrls(ctx, []string{ts.URL + `?filename=test.txt`}, ".", 0),
-		"Downlod with correct json input should succeed")
+	_, err := DownloadUrls(ctx, []string{ts.URL + `?filename=nonexistent.txt`}, "", 0)
+	assert.Error(t, err, "Downlod with non-existent directory or insufficient rights should fail")
+	_, err = DownloadUrls(ctx, []string{ts.URL + `?filename=test.txt`}, ".", 0)
+	assert.NoError(t, err, "Downlod with correct json input should succeed")
 	assert.NoError(t, os.RemoveAll("test.txt"), "Test output should be removed")
-
-	assert.Error(t, DownloadUrls(ctx, []string{"\t"}, "", 1), "Download with incorrect URL should fail")
+	_, err = DownloadUrls(ctx, []string{"\t"}, "", 1)
+	assert.Error(t, err, "Download with incorrect URL should fail")
 }

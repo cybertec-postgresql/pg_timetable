@@ -16,30 +16,31 @@ func TestExecuteTask(t *testing.T) {
 	pge.Verbose = false
 	mocksch := New(pge)
 
-	assert.Error(t, mocksch.executeTask(context.TODO(), "foo", []string{}))
+	et := func(task string, params []string) (err error) {
+		_, err = mocksch.executeTask(context.TODO(), task, params)
+		return
+	}
 
-	assert.Error(t, mocksch.executeTask(context.TODO(), "Sleep", []string{"foo"}))
-	assert.NoError(t, mocksch.executeTask(context.TODO(), "Sleep", []string{"1"}))
+	assert.Error(t, et("foo", []string{}))
 
-	assert.NoError(t, mocksch.executeTask(context.TODO(), "NoOp", []string{}))
-	assert.NoError(t, mocksch.executeTask(context.TODO(), "NoOp", []string{"foo", "bar"}))
+	assert.Error(t, et("Sleep", []string{"foo"}))
+	assert.NoError(t, et("Sleep", []string{"1"}))
 
-	assert.NoError(t, mocksch.executeTask(context.TODO(), "Log", []string{"foo"}))
+	assert.NoError(t, et("NoOp", []string{}))
+	assert.NoError(t, et("NoOp", []string{"foo", "bar"}))
 
-	assert.Error(t, mocksch.executeTask(context.TODO(), "CopyFromFile", []string{"foo"}), "Invalid json")
-	assert.Error(t, mocksch.executeTask(context.TODO(), "CopyFromFile",
-		[]string{`{"sql": "COPY foo from STDIN", "filename": "foo"}`}), "Acquire() should fail")
+	assert.NoError(t, et("Log", []string{"foo"}))
 
-	assert.Error(t, mocksch.executeTask(context.TODO(), "SendMail", []string{"foo"}), "Invalid json")
-	assert.Error(t, mocksch.executeTask(context.TODO(), "SendMail",
-		[]string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user","Password":"pwd","SenderAddr":""}`}))
+	assert.Error(t, et("CopyFromFile", []string{"foo"}), "Invalid json")
+	assert.Error(t, et("CopyFromFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
 
-	assert.Error(t, mocksch.executeTask(context.TODO(), "Download", []string{"foo"}), "Invalid json")
-	assert.EqualError(t, mocksch.executeTask(context.TODO(), "Download",
-		[]string{`{"workersnum": 0, "fileurls": [] }`}),
+	assert.Error(t, et("SendMail", []string{"foo"}), "Invalid json")
+	assert.Error(t, et("SendMail", []string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user"}`}))
+
+	assert.Error(t, et("Download", []string{"foo"}), "Invalid json")
+	assert.EqualError(t, et("Download", []string{`{"workersnum": 0, "fileurls": [] }`}),
 		"Files to download are not specified", "Download with empty files should fail")
-	assert.Error(t, mocksch.executeTask(context.TODO(), "Download",
-		[]string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "non-existent" }`}),
+	assert.Error(t, et("Download", []string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "" }`}),
 		"Downlod incorrect url should fail")
 
 }
