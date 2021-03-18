@@ -15,7 +15,7 @@ import (
 func TestExecuteSchemaScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	t.Run("Check schema scripts if error returned for SELECT EXISTS", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -47,7 +47,7 @@ func TestExecuteSchemaScripts(t *testing.T) {
 func TestExecuteCustomScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	t.Run("Check ExecuteCustomScripts for non-existent file", func(t *testing.T) {
 		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), "foo.bar"))
 	})
@@ -67,7 +67,7 @@ func TestExecuteCustomScripts(t *testing.T) {
 func TestReconnectAndFixLeftovers(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	t.Run("Check ReconnectAndFixLeftovers if everything fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -95,7 +95,7 @@ func TestLogger(t *testing.T) {
 
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectClose().WillReturnError(errors.New("expected"))
 	mockpge.Finalize()
 }
