@@ -34,4 +34,12 @@ func TestExecuteTask(t *testing.T) {
 	assert.Error(t, mocksch.executeTask(context.TODO(), "SendMail",
 		[]string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user","Password":"pwd","SenderAddr":""}`}))
 
+	assert.Error(t, mocksch.executeTask(context.TODO(), "Download", []string{"foo"}), "Invalid json")
+	assert.EqualError(t, mocksch.executeTask(context.TODO(), "Download",
+		[]string{`{"workersnum": 0, "fileurls": [] }`}),
+		"Files to download are not specified", "Download with empty files should fail")
+	assert.Error(t, mocksch.executeTask(context.TODO(), "Download",
+		[]string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "non-existent" }`}),
+		"Downlod incorrect url should fail")
+
 }
