@@ -20,6 +20,7 @@ type emailConn struct {
 	Subject     string   `json:"subject"`
 	MsgBody     string   `json:"msgbody"`
 	Attachments []string `json:"attachment"`
+	ContentType string   `json:"contenttype"`
 }
 
 // Dialer implements DialAndSend function for mailer
@@ -32,7 +33,7 @@ var getNewDialer func(host string, port int, username, password string) Dialer =
 }
 
 func taskSendMail(ctx context.Context, paramValues string) error {
-	var conn emailConn
+	conn := emailConn{ServerPort: 587, ContentType: "text/plain"}
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func sendMail(conn emailConn) error {
 	mail.SetHeader("Bcc", bccrecipients...)
 
 	mail.SetHeader("Subject", conn.Subject)
-	mail.SetBody("text/html", conn.MsgBody)
+	mail.SetBody(conn.ContentType, conn.MsgBody)
 
 	//attach multiple documents
 	for _, attachment := range conn.Attachments {
