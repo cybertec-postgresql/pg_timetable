@@ -124,8 +124,12 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	return connConfig
 }
 
+type QueryRowIface interface {
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
+}
+
 // TryLockClientName obtains lock on the server to prevent another client with the same name
-func TryLockClientName(ctx context.Context, clientName string, conn *pgx.Conn) error {
+func TryLockClientName(ctx context.Context, clientName string, conn QueryRowIface) error {
 	// check if the schema is available already first
 	var procoid int
 	err := conn.QueryRow(ctx, "SELECT COALESCE(to_regproc('timetable.try_lock_client_name')::int4, 0)").Scan(&procoid)
@@ -134,13 +138,13 @@ func TryLockClientName(ctx context.Context, clientName string, conn *pgx.Conn) e
 	}
 	if procoid == 0 {
 		//there is no schema yet, will lock after bootstrapping
-		Log("DEBUG", "There is no schema yet, will lock after bootstrapping, server pid ", conn.PgConn().PID())
+		Log("DEBUG", "There is no schema yet, will lock after bootstrapping")
 		return nil
 	}
 
 	var wt int = WaitTime
 	for {
-		Log("DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d, server pid %d", clientName, os.Getpid(), conn.PgConn().PID()))
+		Log("DEBUG", fmt.Sprintf("Trying to get lock for '%s', client pid %d", clientName, os.Getpid()))
 		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), clientName)
 		var locked bool
 		err = conn.QueryRow(ctx, sql).Scan(&locked)

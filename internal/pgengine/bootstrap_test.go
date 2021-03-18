@@ -3,6 +3,8 @@ package pgengine_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -98,4 +100,80 @@ func TestFinalizeConnection(t *testing.T) {
 	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectClose().WillReturnError(errors.New("expected"))
 	mockpge.Finalize()
+}
+
+type mockpgrow struct {
+	results []interface{}
+}
+
+func (r *mockpgrow) Scan(dest ...interface{}) error {
+	if len(r.results) > 0 {
+		if err, ok := r.results[0].(error); ok {
+			r.results = r.results[1:]
+			return err
+		}
+		destv := reflect.ValueOf(dest[0])
+		typ := destv.Type()
+		if typ.Kind() != reflect.Ptr {
+			return fmt.Errorf("dest must be pointer; got %T", destv)
+		}
+		destv.Elem().Set(reflect.ValueOf(r.results[0]))
+		r.results = r.results[1:]
+		return nil
+	}
+	return errors.New("mockpgrow error")
+}
+
+type mockpgconn struct {
+	r pgx.Row
+}
+
+func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
+	return m.r
+}
+
+func TestTryLockClientName(t *testing.T) {
+	t.Run("query error", func(t *testing.T) {
+		r := &mockpgrow{}
+		m := mockpgconn{r}
+		assert.Error(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("no schema yet", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			0, //procoid
+		}}
+		m := mockpgconn{r}
+		assert.NoError(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("locking error", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			1,                           //procoid
+			errors.New("locking error"), //error
+		}}
+		m := mockpgconn{r}
+		assert.Error(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("locking successful", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			1,    //procoid
+			true, //locked
+		}}
+		m := mockpgconn{r}
+		assert.NoError(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("retry locking", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			1,     //procoid
+			false, //locked
+			false, //locked
+		}}
+		m := mockpgconn{r}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
+		defer cancel()
+		assert.ErrorIs(t, pgengine.TryLockClientName(ctx, "", m), ctx.Err())
+	})
 }
