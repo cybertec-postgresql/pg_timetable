@@ -1,13 +1,5 @@
 name: Go Build & Test
 on: 
-  # push:
-  #   paths:
-  #     - '**.go'
-  #     - '**.yaml'
-  #     - '**.yml'
-  #     - '**.sql'
-  #     - '**.mod'
-  #     - '**.sum'
   pull_request:
   workflow_dispatch:
       

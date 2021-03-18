@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
@@ -18,7 +17,7 @@ var Tasks = map[string](func(context.Context, *Scheduler, string) error){
 	"Sleep":        taskSleep,
 	"Log":          taskLog,
 	"SendMail":     taskSendMail,
-	"Download":     taskDownloadFile,
+	"Download":     taskDownload,
 	"CopyFromFile": taskCopyFromFile}
 
 func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues []string) error {
@@ -82,7 +81,7 @@ func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) error {
 	return err
 }
 
-func taskDownloadFile(ctx context.Context, sch *Scheduler, paramValues string) error {
+func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) error {
 	type downloadOpts struct {
 		WorkersNum int      `json:"workersnum"`
 		FileUrls   []string `json:"fileurls"`
@@ -94,9 +93,6 @@ func taskDownloadFile(ctx context.Context, sch *Scheduler, paramValues string) e
 	}
 	if len(opts.FileUrls) == 0 {
 		return errors.New("Files to download are not specified")
-	}
-	if _, err := os.Stat(opts.DestPath); err != nil {
-		return err
 	}
 	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
 }

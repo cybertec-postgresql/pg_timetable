@@ -153,6 +153,15 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 }
 
+func TestFailedConnect(t *testing.T) {
+	c := cmdparser.NewCmdOptions("pgengine_unit_test")
+	c.Host = "foo"
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
+	defer cancel()
+	_, err := pgengine.New(ctx, *c)
+	assert.ErrorIs(t, err, ctx.Err())
+}
+
 func TestSchedulerFunctions(t *testing.T) {
 	teardownTestCase := SetupTestCase(t)
 	defer teardownTestCase(t)

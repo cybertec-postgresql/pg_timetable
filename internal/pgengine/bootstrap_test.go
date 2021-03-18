@@ -3,6 +3,8 @@ package pgengine_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -15,7 +17,7 @@ import (
 func TestExecuteSchemaScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	t.Run("Check schema scripts if error returned for SELECT EXISTS", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -47,7 +49,7 @@ func TestExecuteSchemaScripts(t *testing.T) {
 func TestExecuteCustomScripts(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	t.Run("Check ExecuteCustomScripts for non-existent file", func(t *testing.T) {
 		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), "foo.bar"))
 	})
@@ -67,7 +69,7 @@ func TestExecuteCustomScripts(t *testing.T) {
 func TestReconnectAndFixLeftovers(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	t.Run("Check ReconnectAndFixLeftovers if everything fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -95,7 +97,83 @@ func TestLogger(t *testing.T) {
 
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
-	mockpge := pgengine.PgEngine{ConfigDb: mockPool}
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectClose().WillReturnError(errors.New("expected"))
 	mockpge.Finalize()
+}
+
+type mockpgrow struct {
+	results []interface{}
+}
+
+func (r *mockpgrow) Scan(dest ...interface{}) error {
+	if len(r.results) > 0 {
+		if err, ok := r.results[0].(error); ok {
+			r.results = r.results[1:]
+			return err
+		}
+		destv := reflect.ValueOf(dest[0])
+		typ := destv.Type()
+		if typ.Kind() != reflect.Ptr {
+			return fmt.Errorf("dest must be pointer; got %T", destv)
+		}
+		destv.Elem().Set(reflect.ValueOf(r.results[0]))
+		r.results = r.results[1:]
+		return nil
+	}
+	return errors.New("mockpgrow error")
+}
+
+type mockpgconn struct {
+	r pgx.Row
+}
+
+func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
+	return m.r
+}
+
+func TestTryLockClientName(t *testing.T) {
+	t.Run("query error", func(t *testing.T) {
+		r := &mockpgrow{}
+		m := mockpgconn{r}
+		assert.Error(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("no schema yet", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			0, //procoid
+		}}
+		m := mockpgconn{r}
+		assert.NoError(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("locking error", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			1,                           //procoid
+			errors.New("locking error"), //error
+		}}
+		m := mockpgconn{r}
+		assert.Error(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("locking successful", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			1,    //procoid
+			true, //locked
+		}}
+		m := mockpgconn{r}
+		assert.NoError(t, pgengine.TryLockClientName(context.Background(), "", m))
+	})
+
+	t.Run("retry locking", func(t *testing.T) {
+		r := &mockpgrow{results: []interface{}{
+			1,     //procoid
+			false, //locked
+			false, //locked
+		}}
+		m := mockpgconn{r}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
+		defer cancel()
+		assert.ErrorIs(t, pgengine.TryLockClientName(ctx, "", m), ctx.Err())
+	})
 }
