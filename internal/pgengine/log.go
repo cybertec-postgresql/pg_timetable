@@ -21,13 +21,13 @@ const (
 	//gray = 37
 )
 
-// Logger incapsulates Logger interface from pgx package
-type Logger struct {
+// PgxLogger incapsulates PgxLogger interface from pgx package
+type PgxLogger struct {
 	pgx.Logger
 }
 
 // Log prints messages using native log levels
-func (l Logger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+func (l PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	var s string
 	switch level {
 	case pgx.LogLevelTrace, pgx.LogLevelDebug, pgx.LogLevelInfo:
@@ -65,9 +65,10 @@ func GetLogPrefix(level string) string {
 const logTemplate = `INSERT INTO timetable.log(pid, client_name, log_level, message) VALUES ($1, $2, $3, $4)`
 
 // Log performs logging to standard output
-func Log(level string, msg ...interface{}) {
-	s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
-	fmt.Println(s)
+func (pge *PgEngine) Log(level string, msg ...interface{}) {
+	//s := fmt.Sprintf(GetLogPrefix(level), fmt.Sprint(msg...))
+	//fmt.Println(s)
+	pge.l.Info(msg...)
 }
 
 // LogToDB performs logging to configuration database ConfigDB initiated during bootstrap
@@ -80,11 +81,11 @@ func (pge *PgEngine) LogToDB(ctx context.Context, level string, msg ...interface
 			return
 		}
 	}
-	Log(level, msg...)
+	pge.Log(level, msg...)
 	if pge.ConfigDb != nil {
 		_, err := pge.ConfigDb.Exec(ctx, logTemplate, os.Getpid(), pge.ClientName, level, fmt.Sprint(msg...))
 		if err != nil {
-			Log("ERROR", "Cannot log to the database: ", err)
+			pge.Log("ERROR", "Cannot log to the database: ", err)
 		}
 	}
 }

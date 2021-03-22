@@ -55,7 +55,7 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 			var headChain Chain
 			err := sch.pgengine.SelectChain(ctx, &headChain, chainSignal.ConfigID)
 			if err != nil {
-				sch.pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
+				sch.l.WithError(err).Error("Could not query pending tasks")
 			} else {
 				sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
 				sch.chains <- headChain
@@ -77,11 +77,11 @@ func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 		err = sch.pgengine.SelectChains(ctx, &headChains)
 	}
 	if err != nil {
-		sch.pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
+		sch.l.WithError(err).Error("Could not query pending tasks")
 		return
 	}
 	headChainsCount := len(headChains)
-	sch.pgengine.LogToDB(ctx, "LOG", "Number of chains to be executed: ", headChainsCount)
+	sch.l.WithField("count", headChainsCount).Info("Retrieve chains to run")
 	/* now we can loop through so chains */
 	for _, headChain := range headChains {
 		if headChainsCount > maxChainsThreshold {

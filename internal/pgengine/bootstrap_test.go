@@ -89,7 +89,7 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 }
 
 func TestLogger(t *testing.T) {
-	l := pgengine.Logger{}
+	l := pgengine.PgxLogger{}
 	for level := pgx.LogLevelNone; level <= pgx.LogLevelTrace; level++ {
 		l.Log(context.Background(), pgx.LogLevel(level), "", nil)
 	}
@@ -133,10 +133,11 @@ func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
 }
 
 func TestTryLockClientName(t *testing.T) {
+	pge := pgengine.NewDB(nil, "pgengine_unit_test")
 	t.Run("query error", func(t *testing.T) {
 		r := &mockpgrow{}
 		m := mockpgconn{r}
-		assert.Error(t, pgengine.TryLockClientName(context.Background(), "", m))
+		assert.Error(t, pge.TryLockClientName(context.Background(), m))
 	})
 
 	t.Run("no schema yet", func(t *testing.T) {
@@ -144,7 +145,7 @@ func TestTryLockClientName(t *testing.T) {
 			0, //procoid
 		}}
 		m := mockpgconn{r}
-		assert.NoError(t, pgengine.TryLockClientName(context.Background(), "", m))
+		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
 	})
 
 	t.Run("locking error", func(t *testing.T) {
@@ -153,7 +154,7 @@ func TestTryLockClientName(t *testing.T) {
 			errors.New("locking error"), //error
 		}}
 		m := mockpgconn{r}
-		assert.Error(t, pgengine.TryLockClientName(context.Background(), "", m))
+		assert.Error(t, pge.TryLockClientName(context.Background(), m))
 	})
 
 	t.Run("locking successful", func(t *testing.T) {
@@ -162,7 +163,7 @@ func TestTryLockClientName(t *testing.T) {
 			true, //locked
 		}}
 		m := mockpgconn{r}
-		assert.NoError(t, pgengine.TryLockClientName(context.Background(), "", m))
+		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
 	})
 
 	t.Run("retry locking", func(t *testing.T) {
@@ -174,6 +175,6 @@ func TestTryLockClientName(t *testing.T) {
 		m := mockpgconn{r}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
 		defer cancel()
-		assert.ErrorIs(t, pgengine.TryLockClientName(ctx, "", m), ctx.Err())
+		assert.ErrorIs(t, pge.TryLockClientName(ctx, m), ctx.Err())
 	})
 }

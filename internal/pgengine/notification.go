@@ -41,13 +41,13 @@ var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{})
 
 // NotificationHandler consumes notifications from the PostgreSQL server
 func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
-	Log("DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
+	pge.Log("DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
 	var signal ChainSignal
 	var err error
 	if err = json.Unmarshal([]byte(n.Payload), &signal); err == nil {
 		mutex.Lock()
 		if _, ok := notifications[signal]; ok {
-			Log("DEBUG", "Notification already handled: ", *n, " Handled notifications: ", notifications)
+			pge.Log("DEBUG", "Notification already handled: ", *n, " Handled notifications: ", notifications)
 			mutex.Unlock()
 			return
 		}
@@ -56,14 +56,14 @@ func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notificatio
 		switch signal.Command {
 		case "STOP", "START":
 			if signal.ConfigID > 0 {
-				Log("LOG", "Adding asynchronous chain to working queue: ", signal)
+				pge.Log("LOG", "Adding asynchronous chain to working queue: ", signal)
 				pge.chainSignalChan <- signal
 				return
 			}
 		}
 		err = fmt.Errorf("Unknown command: %s", signal.Command)
 	}
-	Log("ERROR", "Syntax error in payload: ", err)
+	pge.Log("ERROR", "Syntax error in payload: ", err)
 }
 
 // WaitForChainSignal returns configuration id from the notifications

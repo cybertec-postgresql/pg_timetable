@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -33,7 +32,7 @@ func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 		sch.pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
 		return
 	}
-	sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Sleeping before next execution for %ds for chain %s", ichain.Interval, ichain))
+	sch.l.WithField("chain", ichain).Debug("Sleeping before next execution of interval chain")
 	select {
 	case <-time.After(time.Duration(ichain.Interval) * time.Second):
 		if sch.isValid(ichain) {
@@ -49,9 +48,9 @@ func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 	ichains := []IntervalChain{}
 	err := sch.pgengine.SelectIntervalChains(ctx, &ichains)
 	if err != nil {
-		sch.pgengine.LogToDB(ctx, "ERROR", "Could not query pending interval tasks: ", err)
+		sch.l.WithError(err).Error("Could not query pending interval tasks")
 	} else {
-		sch.pgengine.LogToDB(ctx, "LOG", "Number of active interval chains: ", len(ichains))
+		sch.l.WithField("count", len(ichains)).Info("Retrieve interval chains to run")
 	}
 
 	// delete chains that are not returned from the database
@@ -78,16 +77,16 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 			if !sch.isValid(ichain) { // chain not in the list of active chains
 				continue
 			}
-			sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process interval chain for %s", ichain))
+			sch.l.WithField("chain", ichain).Debug("Calling process interval chain")
 			if !ichain.RepeatAfter {
 				go sch.reschedule(ctx, ichain)
 			}
 			for !sch.pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
-				sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", ichain))
+				sch.l.WithField("chain", ichain).Debug("Cannot proceed with interval chain. Sleeping...")
 				select {
 				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
 				case <-ctx.Done():
-					sch.pgengine.LogToDB(ctx, "ERROR", "request cancelled")
+					sch.l.WithError(ctx.Err()).Error("request cancelled")
 					return
 				}
 			}

@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 )
@@ -23,12 +25,13 @@ func main() {
 	ctx := context.Background()
 	cmdOpts, err := cmdparser.Parse()
 	if err != nil {
-		pgengine.Log("PANIC", "Error parsing command line arguments: ", err)
+		fmt.Println("Error parsing command line arguments: ", err)
 		os.Exit(2)
 	}
+	logger := log.Init(cmdOpts.LogLevel())
 	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
-	if pge, err = pgengine.New(connctx, *cmdOpts); err != nil {
+	if pge, err = pgengine.New(connctx, *cmdOpts, logger); err != nil {
 		os.Exit(2)
 	}
 	defer pge.Finalize()
@@ -45,7 +48,7 @@ func main() {
 		os.Exit(0)
 	}
 	pge.SetupCloseHandler()
-	sch := scheduler.New(pge)
+	sch := scheduler.New(pge, logger)
 	for sch.Run(ctx, cmdOpts.Debug) == scheduler.ConnectionDroppped {
 		pge.ReconnectAndFixLeftovers(ctx)
 	}

@@ -15,11 +15,11 @@ var m *migrator.Migrator
 
 // MigrateDb upgrades database with all migrations
 func (pge *PgEngine) MigrateDb(ctx context.Context) bool {
-	pge.LogToDB(ctx, "LOG", "Upgrading database...")
+	pge.l.Info("Upgrading database...")
 	conn, err := pge.ConfigDb.Acquire(ctx)
 	defer conn.Release()
 	if err != nil {
-		pge.LogToDB(ctx, "PANIC", err)
+		pge.l.WithError(err).Error("Cannot acquire database")
 		return false
 	}
 	if err := m.Migrate(ctx, conn.Conn()); err != nil {
@@ -31,7 +31,10 @@ func (pge *PgEngine) MigrateDb(ctx context.Context) bool {
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
 func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
-	pge.LogToDB(ctx, "DEBUG", "Check need of upgrading database...")
+	if err := pge.initMigrator(); err != nil {
+		return false, err
+	}
+	pge.l.Debug("Check need of upgrading database...")
 	conn, err := pge.ConfigDb.Acquire(ctx)
 	defer conn.Release()
 	if err != nil {
@@ -39,10 +42,10 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	}
 	upgrade, err := m.NeedUpgrade(ctx, conn.Conn())
 	if upgrade {
-		pge.LogToDB(ctx, "PANIC", "You need to upgrade your database before proceeding, use --upgrade option")
+		pge.l.Error("You need to upgrade your database before proceeding, use --upgrade option")
 	}
 	if err != nil {
-		pge.LogToDB(ctx, "PANIC", err)
+		pge.l.WithError(err).Error("Migration check failed")
 	}
 	return upgrade, err
 }
@@ -55,12 +58,15 @@ func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error 
 	return err
 }
 
-func init() {
+func (pge *PgEngine) initMigrator() error {
+	if m != nil {
+		return nil
+	}
 	var err error
 	m, err = migrator.New(
 		migrator.TableName("timetable.migrations"),
 		migrator.SetNotice(func(s string) {
-			Log("LOG", s)
+			pge.l.Info(s)
 		}),
 		migrator.Migrations(
 			&migrator.Migration{
@@ -133,6 +139,7 @@ func init() {
 		),
 	)
 	if err != nil {
-		Log("ERROR", err)
+		pge.l.WithError(err).Error("Cannot initialize migration")
 	}
+	return err
 }

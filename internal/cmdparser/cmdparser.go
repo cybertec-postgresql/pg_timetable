@@ -46,6 +46,13 @@ func (c *CmdOptions) String() string {
 	return s
 }
 
+func (c *CmdOptions) LogLevel() string {
+	if c.Verbose {
+		return "DEBUG"
+	}
+	return "INFO"
+}
+
 //DbURL PostgreSQL connection URL
 type DbURL struct {
 	pgurl *url.URL
