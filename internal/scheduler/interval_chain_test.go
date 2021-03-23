@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ func TestIntervalChain(t *testing.T) {
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	pge.Verbose = false
-	sch := New(pge)
+	sch := New(pge, log.Init("debug"))
 
 	ichain := IntervalChain{Interval: 42}
 	assert.True(t, ichain.isListed([]IntervalChain{ichain}))

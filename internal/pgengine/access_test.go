@@ -14,7 +14,7 @@ import (
 
 func TestDeleteChainConfig(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -41,7 +41,7 @@ func TestDeleteChainConfig(t *testing.T) {
 
 func TestFixSchedulerCrash(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -59,7 +59,7 @@ func TestFixSchedulerCrash(t *testing.T) {
 
 func TestCanProceedChainExecution(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -91,7 +91,7 @@ func TestCanProceedChainExecution(t *testing.T) {
 
 func TestInsertChainRunStatus(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -109,7 +109,7 @@ func TestInsertChainRunStatus(t *testing.T) {
 
 func TestUpdateChainRunStatus(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 	pge.Verbose = false
 
@@ -126,7 +126,7 @@ func TestUpdateChainRunStatus(t *testing.T) {
 
 func TestSelectChain(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	mockPool.ExpectExec("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
@@ -135,7 +135,7 @@ func TestSelectChain(t *testing.T) {
 
 func TestIsAlive(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 	mockPool.ExpectPing()
 	assert.True(t, pge.IsAlive())

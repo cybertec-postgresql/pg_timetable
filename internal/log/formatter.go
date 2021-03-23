@@ -206,11 +206,11 @@ func (f *Formatter) writeField(b *bytes.Buffer, entry *logrus.Entry, field strin
 
 const (
 	colorRed     = 31
-	colorYellow  = 33
 	colorBlue    = 36
-	colorGray    = 37
 	colorMagenta = 35
 	colorGreen   = 32
+	// colorYellow  = 33
+	// colorGray    = 37
 )
 
 func getColorByLevel(level logrus.Level) int {

@@ -11,5 +11,5 @@ import (
 func TestInit(t *testing.T) {
 	assert.NotNil(t, log.Init("debug"))
 	l := log.Init("foobar")
-	assert.Equal(t, l.Level, logrus.InfoLevel)
+	assert.Equal(t, l.(*logrus.Logger).Level, logrus.InfoLevel)
 }

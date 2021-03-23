@@ -182,7 +182,7 @@ func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...strin
 	for _, f := range filename {
 		sql, err := ioutil.ReadFile(f)
 		if err != nil {
-			pge.l.WithError(err).Fatal("Cannot read script file")
+			pge.l.WithError(err).Error("Cannot read script file")
 			return err
 		}
 		pge.l.Info("Executing script: ", f)

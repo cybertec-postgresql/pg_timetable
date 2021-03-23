@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 )
@@ -35,7 +36,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts)
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("debug"))
 		done <- true
 	}()
 	select {
@@ -140,7 +141,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		pge.Finalize()
 		assert.Nil(t, pge.ConfigDb, "Connection isn't closed properly")
 		// reinit connection to execute teardown actions
-		pge, _ = pgengine.New(context.Background(), *cmdOpts)
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("debug"))
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
@@ -158,7 +159,7 @@ func TestFailedConnect(t *testing.T) {
 	c.Host = "foo"
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
 	defer cancel()
-	_, err := pgengine.New(ctx, *c)
+	_, err := pgengine.New(ctx, *c, log.Init("debug"))
 	assert.ErrorIs(t, err, ctx.Err())
 }
 
@@ -280,13 +281,14 @@ func TestSamplesScripts(t *testing.T) {
 
 	files, err := ioutil.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
+	l := log.Init("debug")
 
 	for _, f := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),
 			"Sample query failed: ", f.Name())
-		assert.Equal(t, scheduler.New(pge).Run(ctx, false), scheduler.ContextCancelled)
+		assert.Equal(t, scheduler.New(pge, l).Run(ctx, false), scheduler.ContextCancelled, l)
 		_, err = pge.ConfigDb.Exec(context.Background(),
 			"TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
 		assert.NoError(t, err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ func TestExecuteTask(t *testing.T) {
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	pge.Verbose = false
-	mocksch := New(pge)
+	mocksch := New(pge, log.Init("debug"))
 
 	et := func(task string, params []string) (err error) {
 		_, err = mocksch.executeTask(context.TODO(), task, params)

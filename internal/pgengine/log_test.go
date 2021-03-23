@@ -12,14 +12,14 @@ import (
 
 func TestLogError(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectExec(`INSERT INTO timetable.*`).WillReturnError(errors.New("error"))
 	pge.LogToDB(context.TODO(), "LOG", "Should fail")
 }
 
 func TestLogToDb(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	t.Run("Check LogToDB in terse mode", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestLogToDb(t *testing.T) {
 
 func TestLogChainElementExecution(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {

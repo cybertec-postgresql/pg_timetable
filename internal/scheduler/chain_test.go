@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -17,7 +18,7 @@ func TestAsyncChains(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	sch := New(pge)
+	sch := New(pge, log.Init("debug"))
 	n1 := &pgconn.Notification{Payload: `{"ConfigID": 1, "Command": "START"}`}
 	n2 := &pgconn.Notification{Payload: `{"ConfigID": 2, "Command": "START"}`}
 	ns := &pgconn.Notification{Payload: `{"ConfigID": 24, "Command": "STOP"}`}
@@ -49,7 +50,7 @@ func TestChainWorker(t *testing.T) {
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	pge.Verbose = false
-	sch := New(pge)
+	sch := New(pge, log.Init("debug"))
 	chains := make(chan Chain, workersNumber)
 
 	t.Run("Check chainWorker if context cancelled", func(t *testing.T) {
