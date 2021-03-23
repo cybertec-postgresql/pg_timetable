@@ -41,18 +41,18 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string,
 		out, err := Cmd.CombinedOutput(ctx, command, params...) // #nosec
 		cmdLine := fmt.Sprintf("%s %v: ", command, params)
 		stdout = strings.TrimSpace(string(out))
-		if len(out) > 0 {
-			sch.pgengine.LogToDB(ctx, "DEBUG", "Output for command ", cmdLine, string(out))
-		}
+		l := sch.l.WithField("command", cmdLine).
+			WithField("output", string(out))
 		if err != nil {
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {
 				exitCode := exitError.ProcessState.ExitCode()
-				sch.pgengine.LogToDB(ctx, "DEBUG", "Return value of the command ", cmdLine, exitCode)
+				l.WithField("retcode", exitCode).Debug("Program run", cmdLine, exitCode)
 				return exitCode, stdout, exitError
 			}
 			return -1, stdout, err
 		}
+		l.WithField("retcode", 0).Debug("Program run")
 	}
 	return 0, stdout, nil
 }

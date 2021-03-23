@@ -3,16 +3,24 @@ package log
 import (
 	"context"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
 )
 
 type (
-	Logger    logrus.FieldLogger
-	loggerKey struct{}
+	LoggerIface logrus.FieldLogger
+	loggerKey   struct{}
 )
 
+type PgxLogger struct {
+}
+
+func NewPgxLogger() *PgxLogger {
+	return &PgxLogger{}
+}
+
 // Init creates logging facilities for the application
-func Init(level string) Logger {
+func Init(level string) LoggerIface {
 	var err error
 	l := logrus.New()
 	l.Level, err = logrus.ParseLevel(level)
@@ -21,7 +29,7 @@ func Init(level string) Logger {
 	}
 	l.SetFormatter(&Formatter{
 		HideKeys:        false,
-		FieldsOrder:     []string{"module", "chain"},
+		FieldsOrder:     []string{"chain", "task", "sql", "params"},
 		TimestampFormat: "2006-01-02 15:04:05.000",
 		ShowFullLevel:   true,
 	})
@@ -29,9 +37,30 @@ func Init(level string) Logger {
 	return l
 }
 
+func (l *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+	var logger logrus.FieldLogger
+	if data != nil {
+		logger = GetLogger(ctx).WithFields(data)
+	} else {
+		logger = GetLogger(ctx)
+	}
+	switch level {
+	case pgx.LogLevelTrace:
+		logger.WithField("PGX_LOG_LEVEL", level).Debug(msg)
+	case pgx.LogLevelDebug, pgx.LogLevelInfo: //pgx is way too chatty on INFO level
+		logger.Debug(msg)
+	case pgx.LogLevelWarn:
+		logger.Warn(msg)
+	case pgx.LogLevelError:
+		logger.Error(msg)
+	default:
+		logger.WithField("INVALID_PGX_LOG_LEVEL", level).Error(msg)
+	}
+}
+
 // WithLogger returns a new context with the provided logger. Use in
 // combination with logger.WithField(s) for great effect
-func WithLogger(ctx context.Context, logger Logger) context.Context {
+func WithLogger(ctx context.Context, logger LoggerIface) context.Context {
 	return context.WithValue(ctx, loggerKey{}, logger)
 }
 
@@ -40,10 +69,10 @@ var L = logrus.NewEntry(logrus.StandardLogger())
 
 // GetLogger retrieves the current logger from the context. If no logger is
 // available, the default logger is returned
-func GetLogger(ctx context.Context) Logger {
+func GetLogger(ctx context.Context) LoggerIface {
 	logger := ctx.Value(loggerKey{})
 	if logger == nil {
 		return L
 	}
-	return logger.(Logger)
+	return logger.(LoggerIface)
 }

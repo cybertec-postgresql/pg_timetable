@@ -23,7 +23,7 @@ func (pge *PgEngine) MigrateDb(ctx context.Context) bool {
 		return false
 	}
 	if err := m.Migrate(ctx, conn.Conn()); err != nil {
-		pge.LogToDB(ctx, "PANIC", err)
+		pge.l.WithError(err).Error()
 		return false
 	}
 	return true

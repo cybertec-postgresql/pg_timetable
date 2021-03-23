@@ -28,7 +28,7 @@ const (
 )
 
 type Scheduler struct {
-	l             log.Logger
+	l             log.LoggerIface
 	chains        chan Chain // channel for passing chains to workers
 	pgengine      *pgengine.PgEngine
 	WorkersNumber int
@@ -46,9 +46,9 @@ type Scheduler struct {
 	intervalChainMutex sync.Mutex
 }
 
-func New(pge *pgengine.PgEngine, logger log.Logger) *Scheduler {
+func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
-		l:                  logger.WithField("module", "scheduler"),
+		l:                  logger,
 		WorkersNumber:      workersNumber,
 		chains:             make(chan Chain, workersNumber),
 		pgengine:           pge,
@@ -69,8 +69,6 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 		defer cancel()
 		go sch.intervalChainWorker(workerCtx, sch.intervalChainsChan)
 	}
-	/* set maximum connection to workersNumber + 1 for system calls */
-	//pgengine.ConfigDb.SetMaxOpenConns(workersNumber)
 	/* cleanup potential database leftovers */
 	sch.pgengine.FixSchedulerCrash(ctx)
 
@@ -87,7 +85,7 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 		return ContextCancelled
 	}
 
-	sch.l.Info("Checking for @reboot task chains...")
+	sch.l.Debug("Checking for @reboot task chains...")
 	sch.retrieveChainsAndRun(ctx, true)
 
 	for {

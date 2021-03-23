@@ -140,3 +140,17 @@ func TestIsAlive(t *testing.T) {
 	mockPool.ExpectPing()
 	assert.True(t, pge.IsAlive())
 }
+
+func TestLogChainElementExecution(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	defer mockPool.Close()
+
+	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
+		mockPool.ExpectExec("INSERT INTO .*execution_log").WillReturnError(errors.New("error"))
+		mockPool.ExpectExec("INSERT INTO .*log").WillReturnResult(pgxmock.NewResult("INSERT", 1))
+		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
+	})
+
+	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
+}

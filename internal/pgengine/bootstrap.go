@@ -41,7 +41,7 @@ type PgxPoolIface interface {
 
 // PgEngine is responsible for every database-related action
 type PgEngine struct {
-	l        log.Logger
+	l        log.LoggerIface
 	ConfigDb PgxPoolIface
 	cmdparser.CmdOptions
 	// NOTIFY messages passed verification are pushed to this channel
@@ -52,16 +52,16 @@ var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // New opens connection and creates schema
-func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.Logger) (*PgEngine, error) {
+func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerIface) (*PgEngine, error) {
 	var wt int = WaitTime
 	var err error
 	pge := &PgEngine{
-		logger.WithField("module", "pgengine"),
+		logger,
 		nil,
 		cmdOpts,
 		make(chan ChainSignal, 64),
 	}
-	pge.l.Debugf("Starting new session... %s", &cmdOpts)
+	pge.l.WithField("PID", os.Getpid()).Debugf("Starting new session... %s", &cmdOpts)
 	config := pge.getPgxConnConfig()
 	pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
 	for err != nil {
@@ -78,7 +78,7 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.Logger) (
 			wt = wt * 2
 		}
 	}
-	pge.l.WithField("PID", os.Getpid()).Info("Connection established...")
+	pge.l.Info("Database connection established")
 	if err := pge.ExecuteSchemaScripts(ctx); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.Logger) (
 // NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.
 // We assume here all checks for proper schema validation are done beforehannd
 func NewDB(DB PgxPoolIface, ClientName string) *PgEngine {
-	return &PgEngine{log.Init("DEUBG"), DB, *cmdparser.NewCmdOptions(ClientName), make(chan ChainSignal, 64)}
+	return &PgEngine{log.Init("DEBUG"), DB, *cmdparser.NewCmdOptions(ClientName), make(chan ChainSignal, 64)}
 
 }
 
@@ -114,6 +114,9 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 			Info("Notice received")
 	}
 	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
+		pge.l.WithField("ConnPID", pgconn.PgConn().PID()).
+			WithField("client", pge.ClientName).
+			Debug("Trying to get lock for the session")
 		if err = pge.TryLockClientName(ctx, pgconn); err != nil {
 			return err
 		}
@@ -123,12 +126,12 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	if !pge.Debug { //will handle notification in HandleNotifications directly
 		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
 	}
-	// connConfig.ConnConfig.Logger = PgxLogger{}
-	// if pge.Verbose {
-	// 	connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
-	// } else {
-	// 	connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn
-	// }
+	connConfig.ConnConfig.Logger = log.NewPgxLogger()
+	if pge.Verbose {
+		connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
+	} else {
+		connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn
+	}
 	return connConfig
 }
 
@@ -152,9 +155,6 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 
 	var wt int = WaitTime
 	for {
-		pge.l.WithField("pid", os.Getpid()).
-			WithField("client", pge.ClientName).
-			Debug("Trying to get lock for the session")
 		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), pge.ClientName)
 		var locked bool
 		err = conn.QueryRow(ctx, sql).Scan(&locked)

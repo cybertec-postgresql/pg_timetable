@@ -113,30 +113,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		}
 	})
 
-	t.Run("Check log facility", func(t *testing.T) {
-		var count int
-		logLevels := []string{"DEBUG", "NOTICE", "LOG", "ERROR", "PANIC"}
-		for _, pge.Verbose = range []bool{true, false} {
-			_, _ = pge.ConfigDb.Exec(ctx, "TRUNCATE timetable.log")
-			for _, logLevel := range logLevels {
-				assert.NotPanics(t, func() {
-					pge.LogToDB(ctx, logLevel, logLevel)
-				}, "LogToDB panicked")
-
-				if !pge.Verbose {
-					switch logLevel {
-					case "DEBUG", "NOTICE", "LOG":
-						continue
-					}
-				}
-				err := pge.ConfigDb.QueryRow(ctx, "SELECT count(1) FROM timetable.log WHERE log_level = $1 AND message = $2",
-					logLevel, logLevel).Scan(&count)
-				assert.NoError(t, err, fmt.Sprintf("Query for %s log entry failed", logLevel))
-				assert.Equal(t, 1, count, fmt.Sprintf("%s log entry doesn't exist", logLevel))
-			}
-		}
-	})
-
 	t.Run("Check connection closing", func(t *testing.T) {
 		pge.Finalize()
 		assert.Nil(t, pge.ConfigDb, "Connection isn't closed properly")

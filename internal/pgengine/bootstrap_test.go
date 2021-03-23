@@ -88,13 +88,6 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
 
-func TestLogger(t *testing.T) {
-	l := pgengine.PgxLogger{}
-	for level := pgx.LogLevelNone; level <= pgx.LogLevelTrace; level++ {
-		l.Log(context.Background(), pgx.LogLevel(level), "", nil)
-	}
-}
-
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
 	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")

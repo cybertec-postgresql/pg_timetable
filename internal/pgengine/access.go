@@ -30,7 +30,7 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 				GROUP BY 1
 				HAVING count(*) < 2 ) AS abc`, pge.ClientName)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Error occurred during reverting from the scheduler crash: ", err)
+		pge.l.WithError(err).Error("Failed to revert from the scheduler crash")
 	}
 }
 
@@ -41,7 +41,6 @@ func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID
 	}
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
-	pge.LogToDB(ctx, "DEBUG", fmt.Sprintf("Checking if can proceed with chaing config ID: %d", chainConfigID))
 	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
@@ -49,17 +48,17 @@ func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID
 	case err == nil:
 		return procCount < maxInstances
 	default:
-		pge.LogToDB(ctx, "ERROR", "Cannot read information about concurrent running jobs: ", err)
+		pge.l.WithError(err).Error("Cannot read information about concurrent running jobs")
 		return false
 	}
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
-	pge.LogToDB(ctx, "LOG", "Deleting self destructive chain configuration ID: ", chainConfigID)
+	pge.l.WithField("chain", chainConfigID).Info("Deleting self destructive chain configuration")
 	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1", chainConfigID)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Error occurred during deleting self destructive chains: ", err)
+		pge.l.WithError(err).Error("Failed to delete self destructive chain")
 		return false
 	}
 	return err == nil && res.RowsAffected() == 1
@@ -83,6 +82,21 @@ func (pge *PgEngine) IsAlive() bool {
 	return pge.ConfigDb != nil && pge.ConfigDb.Ping(context.Background()) == nil
 }
 
+// LogChainElementExecution will log current chain element execution status including retcode
+func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementExecution, retCode int, output string) {
+	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+		"kind, last_run, finished, returncode, pid, output, client_name) "+
+		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
+		"NULLIF($10, ''), $11)",
+		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
+		chainElemExec.Script, chainElemExec.Kind,
+		fmt.Sprintf("%f seconds", float64(chainElemExec.Duration)/1000000),
+		retCode, os.Getpid(), output, pge.ClientName)
+	if err != nil {
+		pge.l.WithError(err).Error("Failed to log chain element execution status")
+	}
+}
+
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
 func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
 	const sqlInsertRunStatus = `
@@ -94,7 +108,7 @@ RETURNING run_status`
 	var id int
 	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, chainConfigID, pge.ClientName).Scan(&id)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Cannot save information about the chain run status: ", err)
+		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
 	return id
 }
@@ -110,7 +124,7 @@ VALUES
 	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
 		runStatusID, chainElemExec.ChainConfig, pge.ClientName)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Update chain status failed: ", err)
+		pge.l.WithError(err).Error("Update chain status failed")
 	}
 }
 

@@ -41,13 +41,14 @@ var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{})
 
 // NotificationHandler consumes notifications from the PostgreSQL server
 func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
-	pge.Log("DEBUG", "Notification received: ", *n, " Connection PID: ", c.PID())
+	l := pge.l.WithField("ConnPID", c.PID()).WithField("notification", *n)
+	l.Debug("Notification received")
 	var signal ChainSignal
 	var err error
 	if err = json.Unmarshal([]byte(n.Payload), &signal); err == nil {
 		mutex.Lock()
 		if _, ok := notifications[signal]; ok {
-			pge.Log("DEBUG", "Notification already handled: ", *n, " Handled notifications: ", notifications)
+			l.WithField("handled", notifications).Debug("Notification already handled")
 			mutex.Unlock()
 			return
 		}
@@ -56,14 +57,14 @@ func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notificatio
 		switch signal.Command {
 		case "STOP", "START":
 			if signal.ConfigID > 0 {
-				pge.Log("LOG", "Adding asynchronous chain to working queue: ", signal)
+				l.WithField("signal", signal).Info("Adding asynchronous chain to working queue")
 				pge.chainSignalChan <- signal
 				return
 			}
 		}
 		err = fmt.Errorf("Unknown command: %s", signal.Command)
 	}
-	pge.Log("ERROR", "Syntax error in payload: ", err)
+	l.WithError(err).Error("Syntax error in payload")
 }
 
 // WaitForChainSignal returns configuration id from the notifications
@@ -80,7 +81,7 @@ func (pge *PgEngine) WaitForChainSignal(ctx context.Context) ChainSignal {
 func (pge *PgEngine) HandleNotifications(ctx context.Context) {
 	conn, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", err)
+		pge.l.WithError(err).Error()
 	}
 	defer conn.Release()
 	for {
@@ -94,7 +95,7 @@ func (pge *PgEngine) HandleNotifications(ctx context.Context) {
 			pge.NotificationHandler(c.PgConn(), n)
 		}
 		if err != nil {
-			pge.LogToDB(ctx, "ERROR", err)
+			pge.l.WithError(err).Error()
 		}
 	}
 }

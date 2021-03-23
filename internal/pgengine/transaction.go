@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
@@ -43,19 +44,17 @@ func (pge *PgEngine) StartTransaction(ctx context.Context) (pgx.Tx, error) {
 
 // MustCommitTransaction commits transaction and log error in the case of error
 func (pge *PgEngine) MustCommitTransaction(ctx context.Context, tx pgx.Tx) {
-	pge.LogToDB(ctx, "DEBUG", "Commit transaction for successful chain execution")
 	err := tx.Commit(ctx)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Application cannot commit after job finished: ", err)
+		log.GetLogger(ctx).WithError(err).Error("Application cannot commit after job finished")
 	}
 }
 
 // MustRollbackTransaction rollbacks transaction and log error in the case of error
 func (pge *PgEngine) MustRollbackTransaction(ctx context.Context, tx pgx.Tx) {
-	pge.LogToDB(ctx, "DEBUG", "Rollback transaction for failed chain execution")
 	err := tx.Rollback(ctx)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Application cannot rollback after job failed: ", err)
+		log.GetLogger(ctx).WithError(err).Error("Application cannot rollback after job failed")
 	}
 }
 
@@ -65,19 +64,17 @@ func quoteIdent(s string) string {
 
 // MustSavepoint creates SAVDEPOINT in transaction and log error in the case of error
 func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	pge.LogToDB(ctx, "DEBUG", "Define savepoint to ignore an error for the task: ", quoteIdent(savepoint))
 	_, err := tx.Exec(ctx, "SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", err)
+		log.GetLogger(ctx).WithError(err).Error("Savepoint failed")
 	}
 }
 
 // MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
 func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	pge.LogToDB(ctx, "DEBUG", "Rollback to savepoint ignoring error for the task: ", quoteIdent(savepoint))
 	_, err := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", err)
+		log.GetLogger(ctx).WithError(err).Error("Rollback to savepoint failed")
 	}
 }
 
@@ -116,7 +113,7 @@ WITH RECURSIVE x
 	err := pgxscan.Select(ctx, tx, chains, sqlSelectChains, chainID)
 
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Recursive queries to fetch chain tasks failed: ", err)
+		log.GetLogger(ctx).WithError(err).Error("Failed to retrieve chain elements")
 		return false
 	}
 	return true
@@ -132,7 +129,7 @@ WHERE chain_execution_config = $1
 ORDER BY order_id ASC`
 	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, chainElemExec.ChainConfig, chainElemExec.ChainID)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "cannot fetch parameters values for chain: ", err)
+		log.GetLogger(ctx).WithError(err).Error("cannot fetch parameters values for chain: ", err)
 		return false
 	}
 	return true
@@ -217,7 +214,6 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, s
 				if err = json.Unmarshal([]byte(val), &params); err != nil {
 					return
 				}
-				pge.LogToDB(ctx, "DEBUG", "Executing the command: ", script, fmt.Sprintf("; With parameters: %+v", params))
 				ct, err = executor.Exec(ctx, script, params...)
 				out = out + string(ct) + "\n"
 			}
@@ -231,7 +227,7 @@ func (pge *PgEngine) GetConnectionString(ctx context.Context, databaseConnection
 	err := pge.ConfigDb.QueryRow(ctx, "SELECT connect_string "+
 		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection).Scan(&connectionString)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Issue while fetching connection string:", err)
+		log.GetLogger(ctx).WithError(err).Error("Issue while fetching connection string:", err)
 	}
 	return connectionString
 }
@@ -241,17 +237,26 @@ func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionStrin
 	if strings.TrimSpace(connectionString) == "" {
 		return nil, nil, errors.New("Connection string is blank")
 	}
-	remoteDb, err := pgx.Connect(ctx, connectionString)
+	connConfig, err := pgx.ParseConfig(connectionString)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR",
-			fmt.Sprintf("Error in remote connection (%s): %v", connectionString, err))
 		return nil, nil, err
 	}
-	pge.LogToDB(ctx, "LOG", "Remote Connection established...")
+	connConfig.Logger = log.NewPgxLogger()
+	if pge.Verbose {
+		connConfig.LogLevel = pgx.LogLevelDebug
+	} else {
+		connConfig.LogLevel = pgx.LogLevelWarn
+	}
+	l := log.GetLogger(ctx)
+	remoteDb, err := pgx.ConnectConfig(ctx, connConfig)
+	if err != nil {
+		l.WithError(err).Error("Failed to establish remote connection")
+		return nil, nil, err
+	}
+	l.Info("Remote connection established...")
 	remoteTx, err := remoteDb.Begin(ctx)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR",
-			fmt.Sprintf("Error during start of remote transaction (%s): %v", connectionString, err))
+		l.WithError(err).Error("Failed to start remote transaction")
 		return nil, nil, err
 	}
 	return remoteDb, remoteTx, nil
@@ -259,28 +264,31 @@ func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionStrin
 
 // FinalizeRemoteDBConnection closes session
 func (pge *PgEngine) FinalizeRemoteDBConnection(ctx context.Context, remoteDb PgxConnIface) {
-	pge.LogToDB(ctx, "LOG", "Closing remote session")
+	l := log.GetLogger(ctx)
+	l.Info("Closing remote session")
 	if err := remoteDb.Close(ctx); err != nil {
-		pge.LogToDB(ctx, "ERROR", "Cannot close database connection:", err)
+		l.WithError(err).Error("Cannot close database connection:", err)
 	}
 	remoteDb = nil
 }
 
 // SetRole - set the current user identifier of the current session
 func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varchar) {
-	pge.LogToDB(ctx, "LOG", "Setting Role to ", runUID.String)
+	l := log.GetLogger(ctx)
+	l.Info("Setting Role to ", runUID.String)
 	_, err := tx.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Error in Setting role", err)
+		l.WithError(err).Error("Error in Setting role", err)
 	}
 }
 
 //ResetRole - RESET forms reset the current user identifier to be the current session user identifier
 func (pge *PgEngine) ResetRole(ctx context.Context, tx pgx.Tx) {
-	pge.LogToDB(ctx, "LOG", "Resetting Role")
+	l := log.GetLogger(ctx)
+	l.Info("Resetting Role")
 	const sqlResetRole = `RESET ROLE`
 	_, err := tx.Exec(ctx, sqlResetRole)
 	if err != nil {
-		pge.LogToDB(ctx, "ERROR", "Error in ReSetting role", err)
+		l.WithError(err).Error("Error in ReSetting role", err)
 	}
 }
