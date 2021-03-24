@@ -21,16 +21,9 @@ const AppID = 0x204F04EE
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
-	_, err := pge.ConfigDb.Exec(ctx,
-		`INSERT INTO timetable.run_status (execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
-			SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
-				SELECT   start_status
-				FROM   timetable.run_status
-				WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
-				GROUP BY 1
-				HAVING count(*) < 2 ) AS abc`, pge.ClientName)
+	_, err := pge.ConfigDb.Exec(ctx, `SELECT timetable.health_check($1)`, pge.ClientName)
 	if err != nil {
-		pge.l.WithError(err).Error("Failed to revert from the scheduler crash")
+		pge.l.WithError(err).Error("Failed to perform health check")
 	}
 }
 

@@ -206,6 +206,20 @@ $CODE$
 STRICT
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) 
+RETURNS void AS
+$CODE$
+	INSERT INTO timetable.run_status
+		(execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
+	SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
+		SELECT   start_status
+		FROM   timetable.run_status
+		WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
+		GROUP BY 1
+		HAVING count(*) < 2 ) AS abc
+$CODE$
+STRICT LANGUAGE sql;
+
 CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 	DECLARE
 		tmp_parent_id BIGINT;
