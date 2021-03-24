@@ -41,7 +41,7 @@ chain_config(id, chain_name) as (
         DEFAULT, -- chain_execution_config, 
         (SELECT chain_id FROM chain_insert), -- chain_id, 
         'run sleepy task every 10 sec', -- chain_name, 
-        '@every 10 seconds', -- run_at, 
+        '@after 10 seconds', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,

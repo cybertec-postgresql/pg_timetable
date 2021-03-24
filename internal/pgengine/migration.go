@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	pgx "github.com/jackc/pgx/v4"
 )
@@ -35,6 +36,7 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	pge.l.Debug("Check need of upgrading database...")
+	ctx = log.WithLogger(ctx, pge.l)
 	conn, err := pge.ConfigDb.Acquire(ctx)
 	defer conn.Release()
 	if err != nil {

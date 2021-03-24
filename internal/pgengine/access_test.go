@@ -22,7 +22,6 @@ func TestDeleteChainConfig(t *testing.T) {
 	t.Run("Check DeleteChainConfig if everyhing fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain_execution_config").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.True(t, pge.DeleteChainConfig(ctx, 0))
 	})
@@ -30,9 +29,7 @@ func TestDeleteChainConfig(t *testing.T) {
 	t.Run("Check DeleteChainConfig if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain_execution_config").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.False(t, pge.DeleteChainConfig(ctx, 0))
 	})
 
@@ -49,8 +46,7 @@ func TestFixSchedulerCrash(t *testing.T) {
 	t.Run("Check FixSchedulerCrash if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
+		mockPool.ExpectExec(`SELECT timetable\.health_check`).WillReturnError(errors.New("error"))
 		pge.FixSchedulerCrash(ctx)
 	})
 
@@ -82,7 +78,6 @@ func TestCanProceedChainExecution(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectQuery("SELECT count").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.False(t, pge.CanProceedChainExecution(ctx, 0, 0))
 	})
 
@@ -100,7 +95,6 @@ func TestInsertChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectQuery("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		pge.InsertChainRunStatus(ctx, 0, 0)
 	})
 
@@ -117,7 +111,6 @@ func TestUpdateChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		pge.UpdateChainRunStatus(ctx, &pgengine.ChainElementExecution{}, 0, "STATUS")
 	})
 
@@ -148,7 +141,6 @@ func TestLogChainElementExecution(t *testing.T) {
 
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
 		mockPool.ExpectExec("INSERT INTO .*execution_log").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO .*log").WillReturnResult(pgxmock.NewResult("INSERT", 1))
 		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
 	})
 

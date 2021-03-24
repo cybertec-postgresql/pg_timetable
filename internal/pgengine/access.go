@@ -108,8 +108,7 @@ RETURNING run_status`
 
 // UpdateChainRunStatus inserts status information about running chain elements
 func (pge *PgEngine) UpdateChainRunStatus(ctx context.Context, chainElemExec *ChainElementExecution, runStatusID int, status string) {
-	const sqlInsertFinishStatus = `
-INSERT INTO timetable.run_status 
+	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
 (chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config, client_name)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
@@ -150,8 +149,7 @@ func (pge *PgEngine) SelectChains(ctx context.Context, dest interface{}) error {
 
 // SelectIntervalChains returns list of interval chains to be executed
 func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest interface{}) error {
-	const sqlSelectIntervalChains = `
-SELECT
+	const sqlSelectIntervalChains = `SELECT
 	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
 	EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
 	starts_with(run_at, '@after') as repeat_after

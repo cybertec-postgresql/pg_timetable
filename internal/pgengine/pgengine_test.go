@@ -36,7 +36,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("debug"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("info"))
 		done <- true
 	}()
 	select {
@@ -257,14 +257,14 @@ func TestSamplesScripts(t *testing.T) {
 
 	files, err := ioutil.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
-	l := log.Init("debug")
+	l := log.Init("info")
 
 	for _, f := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),
 			"Sample query failed: ", f.Name())
-		assert.Equal(t, scheduler.New(pge, l).Run(ctx, false), scheduler.ContextCancelled, l)
+		assert.Equal(t, scheduler.New(pge, l).Run(ctx, false), scheduler.ContextCancelled)
 		_, err = pge.ConfigDb.Exec(context.Background(),
 			"TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
 		assert.NoError(t, err)

@@ -69,6 +69,7 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 		defer cancel()
 		go sch.intervalChainWorker(workerCtx, sch.intervalChainsChan)
 	}
+	ctx = log.WithLogger(ctx, sch.l)
 	/* cleanup potential database leftovers */
 	sch.pgengine.FixSchedulerCrash(ctx)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
@@ -32,7 +33,7 @@ func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 		sch.pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
 		return
 	}
-	sch.l.WithField("chain", ichain).Debug("Sleeping before next execution of interval chain")
+	log.GetLogger(ctx).Debug("Sleeping before next execution of interval chain")
 	select {
 	case <-time.After(time.Duration(ichain.Interval) * time.Second):
 		if sch.isValid(ichain) {
@@ -77,12 +78,14 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 			if !sch.isValid(ichain) { // chain not in the list of active chains
 				continue
 			}
-			sch.l.WithField("chain", ichain).Debug("Calling process interval chain")
+			chainL := sch.l.WithField("chain", ichain.ChainExecutionConfigID)
+			chainContext := log.WithLogger(ctx, chainL)
+			chainL.Info("Starting chain...")
 			if !ichain.RepeatAfter {
-				go sch.reschedule(ctx, ichain)
+				go sch.reschedule(chainContext, ichain)
 			}
-			for !sch.pgengine.CanProceedChainExecution(ctx, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
-				sch.l.WithField("chain", ichain).Debug("Cannot proceed with interval chain. Sleeping...")
+			for !sch.pgengine.CanProceedChainExecution(chainContext, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
+				chainL.Debug("Cannot proceed. Sleeping...")
 				select {
 				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
 				case <-ctx.Done():
@@ -91,10 +94,10 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 				}
 			}
 			sch.Lock(ichain.ExclusiveExecution)
-			sch.executeChain(ctx, ichain.ChainExecutionConfigID, ichain.ChainID)
+			sch.executeChain(chainContext, ichain.ChainExecutionConfigID, ichain.ChainID)
 			sch.Unlock(ichain.ExclusiveExecution)
 			if ichain.RepeatAfter {
-				go sch.reschedule(ctx, ichain)
+				go sch.reschedule(chainContext, ichain)
 			}
 		case <-ctx.Done():
 			return
