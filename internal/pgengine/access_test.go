@@ -14,7 +14,7 @@ import (
 
 func TestDeleteChainConfig(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -22,7 +22,6 @@ func TestDeleteChainConfig(t *testing.T) {
 	t.Run("Check DeleteChainConfig if everyhing fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain_execution_config").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.True(t, pge.DeleteChainConfig(ctx, 0))
 	})
@@ -30,9 +29,7 @@ func TestDeleteChainConfig(t *testing.T) {
 	t.Run("Check DeleteChainConfig if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain_execution_config").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.False(t, pge.DeleteChainConfig(ctx, 0))
 	})
 
@@ -41,7 +38,7 @@ func TestDeleteChainConfig(t *testing.T) {
 
 func TestFixSchedulerCrash(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -49,8 +46,7 @@ func TestFixSchedulerCrash(t *testing.T) {
 	t.Run("Check FixSchedulerCrash if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
+		mockPool.ExpectExec(`SELECT timetable\.health_check`).WillReturnError(errors.New("error"))
 		pge.FixSchedulerCrash(ctx)
 	})
 
@@ -59,7 +55,7 @@ func TestFixSchedulerCrash(t *testing.T) {
 
 func TestCanProceedChainExecution(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -82,7 +78,6 @@ func TestCanProceedChainExecution(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectQuery("SELECT count").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.False(t, pge.CanProceedChainExecution(ctx, 0, 0))
 	})
 
@@ -91,7 +86,7 @@ func TestCanProceedChainExecution(t *testing.T) {
 
 func TestInsertChainRunStatus(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	pge.Verbose = false
@@ -100,7 +95,6 @@ func TestInsertChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectQuery("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		pge.InsertChainRunStatus(ctx, 0, 0)
 	})
 
@@ -109,7 +103,7 @@ func TestInsertChainRunStatus(t *testing.T) {
 
 func TestUpdateChainRunStatus(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 	pge.Verbose = false
 
@@ -117,7 +111,6 @@ func TestUpdateChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		pge.UpdateChainRunStatus(ctx, &pgengine.ChainElementExecution{}, 0, "STATUS")
 	})
 
@@ -126,7 +119,7 @@ func TestUpdateChainRunStatus(t *testing.T) {
 
 func TestSelectChain(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	mockPool.ExpectExec("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
@@ -135,8 +128,21 @@ func TestSelectChain(t *testing.T) {
 
 func TestIsAlive(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 	mockPool.ExpectPing()
 	assert.True(t, pge.IsAlive())
+}
+
+func TestLogChainElementExecution(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	defer mockPool.Close()
+
+	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
+		mockPool.ExpectExec("INSERT INTO .*execution_log").WillReturnError(errors.New("error"))
+		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
+	})
+
+	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }

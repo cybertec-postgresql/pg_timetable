@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 )
 
@@ -26,7 +27,8 @@ func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues 
 	if f == nil {
 		return "", errors.New("No built-in task found: " + name)
 	}
-	sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Executing builtin task %s with parameters %v", name, paramValues))
+	l := log.GetLogger(ctx)
+	l.WithField("name", name).Debugf("Executing builtin task with parameters %+q", paramValues)
 	if len(paramValues) == 0 {
 		return f(ctx, sch, "")
 	}
@@ -54,7 +56,7 @@ func taskSleep(ctx context.Context, sch *Scheduler, val string) (stdout string, 
 }
 
 func taskLog(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
-	sch.pgengine.LogToDB(ctx, "USER", val)
+	log.GetLogger(ctx).Print(val)
 	return "Logged: " + val, nil
 }
 

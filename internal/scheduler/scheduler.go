@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
@@ -27,6 +28,7 @@ const (
 )
 
 type Scheduler struct {
+	l             log.LoggerIface
 	chains        chan Chain // channel for passing chains to workers
 	pgengine      *pgengine.PgEngine
 	WorkersNumber int
@@ -44,8 +46,9 @@ type Scheduler struct {
 	intervalChainMutex sync.Mutex
 }
 
-func New(pge *pgengine.PgEngine) *Scheduler {
+func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
+		l:                  logger,
 		WorkersNumber:      workersNumber,
 		chains:             make(chan Chain, workersNumber),
 		pgengine:           pge,
@@ -66,8 +69,7 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 		defer cancel()
 		go sch.intervalChainWorker(workerCtx, sch.intervalChainsChan)
 	}
-	/* set maximum connection to workersNumber + 1 for system calls */
-	//pgengine.ConfigDb.SetMaxOpenConns(workersNumber)
+	ctx = log.WithLogger(ctx, sch.l)
 	/* cleanup potential database leftovers */
 	sch.pgengine.FixSchedulerCrash(ctx)
 
@@ -76,7 +78,7 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 		First loop fetches notifications.
 		Main loop works every refetchTimeout seconds and runs chains.
 	*/
-	sch.pgengine.LogToDB(ctx, "LOG", "Accepting asynchronous chains execution requests...")
+	sch.l.Info("Accepting asynchronous chains execution requests...")
 	go sch.retrieveAsyncChainsAndRun(ctx)
 
 	if debug { //run blocking notifications receiving
@@ -84,13 +86,13 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 		return ContextCancelled
 	}
 
-	sch.pgengine.LogToDB(ctx, "LOG", "Checking for @reboot task chains...")
+	sch.l.Debug("Checking for @reboot task chains...")
 	sch.retrieveChainsAndRun(ctx, true)
 
 	for {
-		sch.pgengine.LogToDB(ctx, "LOG", "Checking for task chains...")
+		sch.l.Debug("Checking for task chains...")
 		go sch.retrieveChainsAndRun(ctx, false)
-		sch.pgengine.LogToDB(ctx, "LOG", "Checking for interval task chains...")
+		sch.l.Debug("Checking for interval task chains...")
 		go sch.retrieveIntervalChainsAndRun(ctx)
 
 		select {

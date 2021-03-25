@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 	"github.com/pashagolub/pgxmock"
@@ -34,7 +35,7 @@ func TestShellCommand(t *testing.T) {
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	pge.Verbose = false
-	scheduler := scheduler.New(pge)
+	scheduler := scheduler.New(pge, log.Init("debug"))
 	ctx := context.Background()
 
 	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})

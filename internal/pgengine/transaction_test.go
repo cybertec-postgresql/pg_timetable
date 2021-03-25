@@ -30,7 +30,7 @@ func TestMustTransaction(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
 	ctx := context.Background()
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectCommit().WillReturnError(errors.New("error"))
@@ -61,7 +61,7 @@ func TestMustTransaction(t *testing.T) {
 
 func TestExecuteSQLTask(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	elements := []pgengine.ChainElementExecution{
 		{
@@ -109,7 +109,7 @@ func TestExecuteSQLTask(t *testing.T) {
 
 func TestExpectedCloseError(t *testing.T) {
 	initmockdb(t)
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockConn.ExpectClose().WillReturnError(errors.New("Close failed"))
 	pge.FinalizeRemoteDBConnection(context.TODO(), mockConn)
 
@@ -119,7 +119,7 @@ func TestExpectedCloseError(t *testing.T) {
 func TestExecuteSQLCommand(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	sqlresults := []struct {
 		sql    string
 		params []string
@@ -161,7 +161,7 @@ func TestExecuteSQLCommand(t *testing.T) {
 func TestGetChainElements(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	ctx := context.Background()
 
 	mockPool.ExpectBegin()
@@ -193,7 +193,7 @@ func TestSetRole(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
 	ctx := context.Background()
-	pge := pgengine.PgEngine{ConfigDb: mockPool}
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(ctx)

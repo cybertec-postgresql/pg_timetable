@@ -3,10 +3,10 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	pgx "github.com/jackc/pgx/v4"
 )
@@ -55,9 +55,10 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 			var headChain Chain
 			err := sch.pgengine.SelectChain(ctx, &headChain, chainSignal.ConfigID)
 			if err != nil {
-				sch.pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
+				sch.l.WithError(err).Error("Could not query pending tasks")
 			} else {
-				sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+				sch.l.WithField("chain", headChain.ChainExecutionConfigID).
+					Debug("Putting head chain to the execution channel")
 				sch.chains <- headChain
 			}
 		case "STOP":
@@ -70,6 +71,10 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 
 func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 	var err error
+	msg := "Retrieve scheduled chains to run"
+	if reboot {
+		msg = msg + " @reboot"
+	}
 	headChains := []Chain{}
 	if reboot {
 		err = sch.pgengine.SelectRebootChains(ctx, &headChains)
@@ -77,17 +82,18 @@ func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 		err = sch.pgengine.SelectChains(ctx, &headChains)
 	}
 	if err != nil {
-		sch.pgengine.LogToDB(ctx, "ERROR", "Could not query pending tasks: ", err)
+		sch.l.WithError(err).Error("Could not query pending tasks")
 		return
 	}
 	headChainsCount := len(headChains)
-	sch.pgengine.LogToDB(ctx, "LOG", "Number of chains to be executed: ", headChainsCount)
+	sch.l.WithField("count", headChainsCount).Info(msg)
 	/* now we can loop through so chains */
 	for _, headChain := range headChains {
 		if headChainsCount > maxChainsThreshold {
 			time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
 		}
-		sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Putting head chain %s to the execution channel", headChain))
+		sch.l.WithField("chain", headChain.ChainExecutionConfigID).
+			Debug("Putting head chain to the execution channel")
 		sch.chains <- headChain
 	}
 }
@@ -107,45 +113,47 @@ func (sch *Scheduler) deleteActiveChain(id int) {
 func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {
 		select {
-		case chain := <-chains:
-			sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Calling process chain for %s", chain))
-			for !sch.pgengine.CanProceedChainExecution(ctx, chain.ChainExecutionConfigID, chain.MaxInstances) {
-				sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Cannot proceed with chain %s. Sleeping...", chain))
-				select {
-				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
-				case <-ctx.Done():
-					return
-				}
-			}
-			sch.Lock(chain.ExclusiveExecution)
-			chainContext, cancel := context.WithCancel(ctx)
-			sch.addActiveChain(chain.ChainID, cancel)
-			sch.executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
-			sch.deleteActiveChain(chain.ChainID)
-			cancel()
-			sch.Unlock(chain.ExclusiveExecution)
-			if chain.SelfDestruct {
-				sch.pgengine.DeleteChainConfig(ctx, chain.ChainExecutionConfigID)
-			}
-
-		case <-ctx.Done():
+		case <-ctx.Done(): //check context with high priority
 			return
-		}
+		default:
+			select {
+			case chain := <-chains:
+				chainL := sch.l.WithField("chain", chain.ChainExecutionConfigID)
+				chainContext := log.WithLogger(ctx, chainL)
+				chainL.Info("Starting chain")
+				if !sch.pgengine.CanProceedChainExecution(chainContext, chain.ChainExecutionConfigID, chain.MaxInstances) {
+					chainL.Debug("Cannot proceed. Sleeping")
+					continue
+				}
+				sch.Lock(chain.ExclusiveExecution)
+				chainContext, cancel := context.WithCancel(chainContext)
+				sch.addActiveChain(chain.ChainID, cancel)
+				sch.executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
+				if chain.SelfDestruct {
+					sch.pgengine.DeleteChainConfig(chainContext, chain.ChainExecutionConfigID)
+				}
+				sch.deleteActiveChain(chain.ChainID)
+				cancel()
+				sch.Unlock(chain.ExclusiveExecution)
+			case <-ctx.Done():
+				return
+			}
 
+		}
 	}
 }
 
 /* execute a chain of tasks */
 func (sch *Scheduler) executeChain(ctx context.Context, chainConfigID int, chainID int) {
 	var ChainElements []pgengine.ChainElementExecution
+	var bctx context.Context
+	chainL := sch.l.WithField("chain", chainConfigID)
 
 	tx, err := sch.pgengine.StartTransaction(ctx)
 	if err != nil {
-		sch.pgengine.LogToDB(ctx, "ERROR", fmt.Sprint("Cannot start transaction: ", err))
+		chainL.WithError(err).Error("Cannot start transaction")
 		return
 	}
-
-	sch.pgengine.LogToDB(ctx, "LOG", fmt.Sprintf("Starting chain ID: %d; configuration ID: %d", chainID, chainConfigID))
 
 	if !sch.pgengine.GetChainElements(ctx, tx, &ChainElements, chainID) {
 		sch.pgengine.MustRollbackTransaction(ctx, tx)
@@ -157,23 +165,29 @@ func (sch *Scheduler) executeChain(ctx context.Context, chainConfigID int, chain
 	/* now we can loop through every element of the task chain */
 	for _, chainElemExec := range ChainElements {
 		chainElemExec.ChainConfig = chainConfigID
+		l := chainL.WithField("task", chainElemExec.TaskID)
+		l.Info("Starting task")
+		ctx = log.WithLogger(ctx, l)
 		sch.pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "STARTED")
 		retCode := sch.executeСhainElement(ctx, tx, &chainElemExec)
+
+		// we use background context here because current one (ctx) might be cancelled
+		bctx = log.WithLogger(context.Background(), l)
 		if retCode != 0 && !chainElemExec.IgnoreError {
-			// we use background context here because current one (ctx) might be cancelled
-			sch.pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Chain ID: %d failed", chainID))
-			sch.pgengine.UpdateChainRunStatus(context.Background(), &chainElemExec, runStatusID, "CHAIN_FAILED")
-			sch.pgengine.MustRollbackTransaction(context.Background(), tx)
+			chainL.Error("Chain failed")
+			sch.pgengine.UpdateChainRunStatus(bctx, &chainElemExec, runStatusID, "CHAIN_FAILED")
+			sch.pgengine.MustRollbackTransaction(bctx, tx)
 			return
 		}
-		sch.pgengine.UpdateChainRunStatus(context.Background(), &chainElemExec, runStatusID, "CHAIN_DONE")
+		sch.pgengine.UpdateChainRunStatus(bctx, &chainElemExec, runStatusID, "CHAIN_DONE")
 	}
-	sch.pgengine.LogToDB(context.Background(), "LOG", fmt.Sprintf("Executed successfully chain ID: %d; configuration ID: %d", chainID, chainConfigID))
-	sch.pgengine.UpdateChainRunStatus(context.Background(),
+	chainL.Info("Chain executed successfully")
+	bctx = log.WithLogger(context.Background(), chainL)
+	sch.pgengine.UpdateChainRunStatus(bctx,
 		&pgengine.ChainElementExecution{
 			ChainID:     chainID,
 			ChainConfig: chainConfigID}, runStatusID, "CHAIN_DONE")
-	sch.pgengine.MustCommitTransaction(ctx, tx)
+	sch.pgengine.MustCommitTransaction(bctx, tx)
 }
 
 func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chainElemExec *pgengine.ChainElementExecution) int {
@@ -181,9 +195,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 	var err error
 	var out string
 	var retCode int
-
-	sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Executing task: %s", chainElemExec))
-
+	l := log.GetLogger(ctx)
 	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, chainElemExec) {
 		return -1
 	}
@@ -194,7 +206,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 		out, err = sch.pgengine.ExecuteSQLTask(ctx, tx, chainElemExec, paramValues)
 	case "PROGRAM":
 		if sch.pgengine.NoProgramTasks {
-			sch.pgengine.LogToDB(ctx, "LOG", "Program task execution skipped: ", chainElemExec)
+			l.Info("Program task execution skipped")
 			return -1
 		}
 		retCode, out, err = sch.ExecuteProgramCommand(ctx, chainElemExec.Script, paramValues)
@@ -208,9 +220,9 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 			retCode = -1
 		}
 		out = strings.Join([]string{out, err.Error()}, "\n")
-		sch.pgengine.LogToDB(context.Background(), "ERROR", fmt.Sprintf("Task execution failed: %s; Error: %s", chainElemExec, err))
+		l.WithError(err).Error("Task execution failed")
 	} else {
-		sch.pgengine.LogToDB(ctx, "DEBUG", fmt.Sprintf("Task executed successfully: %s", chainElemExec))
+		l.Info("Task executed successfully")
 	}
 	sch.pgengine.LogChainElementExecution(context.Background(), chainElemExec, retCode, out)
 	return 0

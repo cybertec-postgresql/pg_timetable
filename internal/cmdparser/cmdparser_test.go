@@ -38,6 +38,13 @@ func DbURLFromString(s string) DbURL {
 	return dburl
 }
 
+func TestLogLevel(t *testing.T) {
+	c := &CmdOptions{Verbose: true}
+	assert.True(t, c.LogLevel() == "DEBUG")
+	c.Verbose = false
+	assert.True(t, c.LogLevel() == "INFO")
+}
+
 func TestParseSuccessful(t *testing.T) {
 	tests := []data{
 		{
