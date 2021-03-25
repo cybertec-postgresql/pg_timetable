@@ -113,28 +113,33 @@ func (sch *Scheduler) deleteActiveChain(id int) {
 func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {
 		select {
-		case chain := <-chains:
-			chainL := sch.l.WithField("chain", chain.ChainExecutionConfigID)
-			chainContext := log.WithLogger(ctx, chainL)
-			chainL.Info("Starting chain")
-			for !sch.pgengine.CanProceedChainExecution(chainContext, chain.ChainExecutionConfigID, chain.MaxInstances) {
-				chainL.Debug("Cannot proceed. Sleeping")
-				continue
-			}
-			sch.Lock(chain.ExclusiveExecution)
-			chainContext, cancel := context.WithCancel(chainContext)
-			sch.addActiveChain(chain.ChainID, cancel)
-			sch.executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
-			if chain.SelfDestruct {
-				sch.pgengine.DeleteChainConfig(chainContext, chain.ChainExecutionConfigID)
-			}
-			sch.deleteActiveChain(chain.ChainID)
-			cancel()
-			sch.Unlock(chain.ExclusiveExecution)
-		case <-ctx.Done():
+		case <-ctx.Done(): //check context with high priority
 			return
-		}
+		default:
+			select {
+			case chain := <-chains:
+				chainL := sch.l.WithField("chain", chain.ChainExecutionConfigID)
+				chainContext := log.WithLogger(ctx, chainL)
+				chainL.Info("Starting chain")
+				if !sch.pgengine.CanProceedChainExecution(chainContext, chain.ChainExecutionConfigID, chain.MaxInstances) {
+					chainL.Debug("Cannot proceed. Sleeping")
+					continue
+				}
+				sch.Lock(chain.ExclusiveExecution)
+				chainContext, cancel := context.WithCancel(chainContext)
+				sch.addActiveChain(chain.ChainID, cancel)
+				sch.executeChain(chainContext, chain.ChainExecutionConfigID, chain.ChainID)
+				if chain.SelfDestruct {
+					sch.pgengine.DeleteChainConfig(chainContext, chain.ChainExecutionConfigID)
+				}
+				sch.deleteActiveChain(chain.ChainID)
+				cancel()
+				sch.Unlock(chain.ExclusiveExecution)
+			case <-ctx.Done():
+				return
+			}
 
+		}
 	}
 }
 
