@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
-	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
 // IntervalChain structure used to represent repeated chains.
@@ -84,14 +83,12 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 			if !ichain.RepeatAfter {
 				go sch.reschedule(chainContext, ichain)
 			}
-			for !sch.pgengine.CanProceedChainExecution(chainContext, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
+			if !sch.pgengine.CanProceedChainExecution(chainContext, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
 				chainL.Debug("Cannot proceed. Sleeping...")
-				select {
-				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
-				case <-ctx.Done():
-					sch.l.WithError(ctx.Err()).Error("request cancelled")
-					return
+				if ichain.RepeatAfter {
+					go sch.reschedule(chainContext, ichain)
 				}
+				continue
 			}
 			sch.Lock(ichain.ExclusiveExecution)
 			sch.executeChain(chainContext, ichain.ChainExecutionConfigID, ichain.ChainID)
