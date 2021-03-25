@@ -118,12 +118,8 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 			chainContext := log.WithLogger(ctx, chainL)
 			chainL.Info("Starting chain")
 			for !sch.pgengine.CanProceedChainExecution(chainContext, chain.ChainExecutionConfigID, chain.MaxInstances) {
-				chainL.Debug("Cannot proceed. Sleeping...")
-				select {
-				case <-time.After(time.Duration(pgengine.WaitTime) * time.Second):
-				case <-ctx.Done():
-					return
-				}
+				chainL.Debug("Cannot proceed. Sleeping")
+				continue
 			}
 			sch.Lock(chain.ExclusiveExecution)
 			chainContext, cancel := context.WithCancel(chainContext)
