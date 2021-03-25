@@ -12,6 +12,7 @@ import (
 )
 
 // Formatter - logrus formatter, implements logrus.Formatter
+// Forked from "github.com/antonfisher/nested-logrus-formatter"
 type Formatter struct {
 	// FieldsOrder - default: fields sorted alphabetically
 	FieldsOrder []string

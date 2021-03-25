@@ -42,7 +42,7 @@ func NewPgxLogger(l LoggerIface) *PgxLogger {
 
 func (pgxlogger *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	logger := GetLogger(ctx)
-	if logger == L { //switch from standard to specified
+	if logger == FallbackLogger { //switch from standard to specified
 		logger = pgxlogger.l
 	}
 	if data != nil {
@@ -68,15 +68,15 @@ func WithLogger(ctx context.Context, logger LoggerIface) context.Context {
 	return context.WithValue(ctx, loggerKey{}, logger)
 }
 
-// L is an alias for the standard logger
-var L = logrus.NewEntry(logrus.StandardLogger())
+// FallbackLogger is an alias for the standard logger
+var FallbackLogger = logrus.NewEntry(logrus.StandardLogger())
 
 // GetLogger retrieves the current logger from the context. If no logger is
 // available, the default logger is returned
 func GetLogger(ctx context.Context) LoggerIface {
 	logger := ctx.Value(loggerKey{})
 	if logger == nil {
-		return L
+		return FallbackLogger
 	}
 	return logger.(LoggerIface)
 }
