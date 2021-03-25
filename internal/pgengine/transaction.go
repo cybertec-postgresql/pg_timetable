@@ -241,7 +241,7 @@ func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionStrin
 	if err != nil {
 		return nil, nil, err
 	}
-	connConfig.Logger = log.NewPgxLogger()
+	connConfig.Logger = log.NewPgxLogger(pge.l)
 	if pge.Verbose {
 		connConfig.LogLevel = pgx.LogLevelDebug
 	} else {

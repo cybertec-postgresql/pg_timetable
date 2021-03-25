@@ -2,6 +2,7 @@ package log
 
 import (
 	"context"
+	"os"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
@@ -12,17 +13,11 @@ type (
 	loggerKey   struct{}
 )
 
-type PgxLogger struct {
-}
-
-func NewPgxLogger() *PgxLogger {
-	return &PgxLogger{}
-}
-
 // Init creates logging facilities for the application
 func Init(level string) LoggerIface {
 	var err error
 	l := logrus.New()
+	l.Out = os.Stdout
 	l.Level, err = logrus.ParseLevel(level)
 	if err != nil {
 		l.Level = logrus.InfoLevel
@@ -37,12 +32,21 @@ func Init(level string) LoggerIface {
 	return l
 }
 
-func (l *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
-	var logger logrus.FieldLogger
+type PgxLogger struct {
+	l LoggerIface
+}
+
+func NewPgxLogger(l LoggerIface) *PgxLogger {
+	return &PgxLogger{l}
+}
+
+func (pgxlogger *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+	logger := GetLogger(ctx)
+	if logger == L { //switch from standard to specified
+		logger = pgxlogger.l
+	}
 	if data != nil {
-		logger = GetLogger(ctx).WithFields(data)
-	} else {
-		logger = GetLogger(ctx)
+		logger = logger.WithFields(data)
 	}
 	switch level {
 	case pgx.LogLevelTrace:

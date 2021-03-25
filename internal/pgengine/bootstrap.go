@@ -126,7 +126,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	if !pge.Debug { //will handle notification in HandleNotifications directly
 		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
 	}
-	connConfig.ConnConfig.Logger = log.NewPgxLogger()
+	connConfig.ConnConfig.Logger = log.NewPgxLogger(pge.l)
 	if pge.Verbose {
 		connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
 	} else {

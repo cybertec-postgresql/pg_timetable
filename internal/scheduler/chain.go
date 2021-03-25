@@ -71,7 +71,7 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 
 func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 	var err error
-	msg := "Retrieve chains to run"
+	msg := "Retrieve scheduled chains to run"
 	if reboot {
 		msg = msg + " @reboot"
 	}
@@ -116,7 +116,7 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 		case chain := <-chains:
 			chainL := sch.l.WithField("chain", chain.ChainExecutionConfigID)
 			chainContext := log.WithLogger(ctx, chainL)
-			chainL.Info("Starting chain...")
+			chainL.Info("Starting chain")
 			for !sch.pgengine.CanProceedChainExecution(chainContext, chain.ChainExecutionConfigID, chain.MaxInstances) {
 				chainL.Debug("Cannot proceed. Sleeping...")
 				select {
@@ -165,7 +165,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chainConfigID int, chain
 	for _, chainElemExec := range ChainElements {
 		chainElemExec.ChainConfig = chainConfigID
 		l := chainL.WithField("task", chainElemExec.TaskID)
-		l.Debug("Starting task")
+		l.Info("Starting task")
 		ctx = log.WithLogger(ctx, l)
 		sch.pgengine.UpdateChainRunStatus(ctx, &chainElemExec, runStatusID, "STARTED")
 		retCode := sch.executeСhainElement(ctx, tx, &chainElemExec)
@@ -221,7 +221,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 		out = strings.Join([]string{out, err.Error()}, "\n")
 		l.WithError(err).Error("Task execution failed")
 	} else {
-		l.Debug("Task executed successfully")
+		l.Info("Task executed successfully")
 	}
 	sch.pgengine.LogChainElementExecution(context.Background(), chainElemExec, retCode, out)
 	return 0
