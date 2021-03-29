@@ -92,8 +92,7 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElemExec
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
 func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
-	const sqlInsertRunStatus = `
-INSERT INTO timetable.run_status 
+	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
 (chain_id, execution_status, started, chain_execution_config, client_name) 
 VALUES 
 ($1, 'STARTED', now(), $2, $3) 

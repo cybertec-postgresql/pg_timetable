@@ -280,6 +280,8 @@ github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIw
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pashagolub/pgxmock v0.0.0-20210326160028-45946b086413 h1:R8BgtrnH2LNhhfaL2qCI4v82kofS5hXYBFn9n01TExQ=
 github.com/pashagolub/pgxmock v0.0.0-20210326160028-45946b086413/go.mod h1:2kltwVNXtornEj9kWr68QrS5yNhDY2PzeCAVdMnPFqc=
+github.com/pashagolub/pgxmock v0.0.0-20210329125448-d2e8b19a1746 h1:6XFIVysfnfY9lzajCIBeo9YsZikKMKrFaQBuat6lByI=
+github.com/pashagolub/pgxmock v0.0.0-20210329125448-d2e8b19a1746/go.mod h1:4DYtbprXlK4/F7P63ROWrOl7+fjmpi9kmqRmOCz5t0U=
 github.com/pashagolub/pgxstruct v0.0.0-20210217101842-40d357eec200/go.mod h1:fOTLLi1PtVUDXx28olVT/D2UMFCmBEYpnY5QIzghmDc=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/performancecopilot/speed v3.0.0+incompatible/go.mod h1:/CLtqpZ5gBg1M9iaPbIdPPGyKcA8hKdoy6hAWba7Yac=
