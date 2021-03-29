@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -67,21 +66,21 @@ func TestExecuteSQLTask(t *testing.T) {
 		{
 			Autonomous:  true,
 			IgnoreError: true,
-			DatabaseConnection: pgtype.Varchar{
+			ConnectString: pgtype.Varchar{
 				String: "foo",
 				Status: pgtype.Present},
 		},
 		{
 			Autonomous:  false,
 			IgnoreError: true,
-			DatabaseConnection: pgtype.Varchar{
+			ConnectString: pgtype.Varchar{
 				String: "foo",
 				Status: pgtype.Present},
 		},
 		{
 			Autonomous:  false,
 			IgnoreError: true,
-			DatabaseConnection: pgtype.Varchar{
+			ConnectString: pgtype.Varchar{
 				String: "error",
 				Status: pgtype.Present},
 		},
@@ -93,16 +92,6 @@ func TestExecuteSQLTask(t *testing.T) {
 		mockPool.ExpectBegin()
 		tx, err := mockPool.Begin(context.Background())
 		assert.NoError(t, err)
-		if element.DatabaseConnection.Status != pgtype.Null {
-			q := mockPool.ExpectQuery("SELECT connect_string").WithArgs(element.DatabaseConnection)
-			connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-				cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password)
-			if element.DatabaseConnection.String == "error" {
-				q.WillReturnError(errors.New("database connection error"))
-			} else {
-				q.WillReturnRows(pgxmock.NewRows([]string{"connect_string"}).AddRow(connstr))
-			}
-		}
 		_, _ = pge.ExecuteSQLTask(context.Background(), tx, &element, []string{})
 	}
 }

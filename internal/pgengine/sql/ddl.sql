@@ -24,14 +24,6 @@ VALUES
 	(8, '0178 Disable tasks on a REPLICA node'),
 	(9, '0195 Add notify_chain_start() and notify_chain_stop() functions');
 
--- define database connections for script execution
-CREATE TABLE timetable.database_connection (
-	database_connection BIGSERIAL,
-	connect_string 		TEXT		NOT NULL,
-	comment 			TEXT,
-	PRIMARY KEY (database_connection)
-);
-
 -- base tasks: these are the tasks our system actually knows.
 -- tasks will be organized in task chains.
 --
@@ -68,9 +60,7 @@ CREATE TABLE timetable.task_chain (
 									ON UPDATE CASCADE
 									ON DELETE CASCADE,
 	run_uid				TEXT,
-	database_connection	BIGINT		REFERENCES timetable.database_connection(database_connection)
-									ON UPDATE CASCADE
-									ON DELETE CASCADE,
+	database_connection	TEXT,
 	ignore_error		BOOLEAN		NOT NULL DEFAULT false,
 	autonomous			BOOLEAN		NOT NULL DEFAULT false
 );

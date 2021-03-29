@@ -24,23 +24,15 @@ BEGIN
     RETURNING
         task_id INTO v_task_id;
 
-	--remote DB details
-    INSERT INTO timetable.database_connection (database_connection, connect_string, comment)
-    VALUES (DEFAULT,
-            format('host=%s port=%s dbname=%I user=%I password=strongone', 
+
+    -- attach task to a chain
+    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+    VALUES (DEFAULT, NULL, v_task_id, NULL, format('host=%s port=%s dbname=%I user=%I password=strongone', 
                     inet_server_addr(), 
                     inet_server_port(),
                     current_database(),
                     session_user
-                    ),
-            current_database() || '@' || inet_server_addr())
-    RETURNING
-        database_connection INTO v_database_connection;
-
-
-    -- attach task to a chain
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES (DEFAULT, NULL, v_task_id, NULL, v_database_connection, TRUE)
+                    ), TRUE)
     RETURNING
         chain_id INTO v_chain_id;
 

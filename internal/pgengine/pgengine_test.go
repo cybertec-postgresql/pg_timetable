@@ -68,7 +68,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 
 	t.Run("Check timetable tables", func(t *testing.T) {
 		var oid int
-		tableNames := []string{"database_connection", "base_task", "task_chain",
+		tableNames := []string{"base_task", "task_chain",
 			"chain_execution_config", "chain_execution_parameters",
 			"log", "execution_log", "run_status"}
 		for _, tableName := range tableNames {
@@ -181,14 +181,6 @@ func TestSchedulerFunctions(t *testing.T) {
 		var id int
 		assert.NotPanics(t, func() { id = pge.InsertChainRunStatus(ctx, 0, 0) }, "Should no error in clean database")
 		assert.NotZero(t, id, "Run status id should be greater then 0")
-	})
-
-	t.Run("Check Remote DB Connection string", func(t *testing.T) {
-		var databaseConnection pgtype.Varchar
-		tx, err := pge.StartTransaction(ctx)
-		assert.NoError(t, err, "Should start transaction")
-		assert.NotNil(t, pge.GetConnectionString(ctx, databaseConnection), "Should no error in clean database")
-		pge.MustCommitTransaction(ctx, tx)
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {

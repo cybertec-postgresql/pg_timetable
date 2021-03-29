@@ -17,19 +17,18 @@ import (
 
 // ChainElementExecution structure describes each chain execution process
 type ChainElementExecution struct {
-	ChainConfig        int            `db:"chain_config"`
-	ChainID            int            `db:"chain_id"`
-	TaskID             int            `db:"task_id"`
-	TaskName           string         `db:"task_name"`
-	Script             string         `db:"script"`
-	Kind               string         `db:"kind"`
-	RunUID             pgtype.Varchar `db:"run_uid"`
-	IgnoreError        bool           `db:"ignore_error"`
-	Autonomous         bool           `db:"autonomous"`
-	DatabaseConnection pgtype.Varchar `db:"database_connection"`
-	ConnectString      pgtype.Varchar `db:"connect_string"`
-	StartedAt          time.Time
-	Duration           int64 // in microseconds
+	ChainConfig   int            `db:"chain_config"`
+	ChainID       int            `db:"chain_id"`
+	TaskID        int            `db:"task_id"`
+	TaskName      string         `db:"task_name"`
+	Script        string         `db:"script"`
+	Kind          string         `db:"kind"`
+	RunUID        pgtype.Varchar `db:"run_uid"`
+	IgnoreError   bool           `db:"ignore_error"`
+	Autonomous    bool           `db:"autonomous"`
+	ConnectString pgtype.Varchar `db:"connect_string"`
+	StartedAt     time.Time
+	Duration      int64 // in microseconds
 }
 
 func (chainElem ChainElementExecution) String() string {
@@ -80,9 +79,8 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 
 // GetChainElements returns all elements for a given chain
 func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, chainID int) bool {
-	const sqlSelectChains = `
-WITH RECURSIVE x
-(chain_id, task_id, task_name, script, kind, run_uid, ignore_error, autonomous, database_connection) AS 
+	const sqlSelectChains = `WITH RECURSIVE x
+(chain_id, task_id, task_name, script, kind, run_uid, ignore_error, autonomous, connect_string) AS 
 (
 	SELECT tc.chain_id, tc.task_id, bt.name, 
 	bt.script, bt.kind, 
@@ -104,11 +102,7 @@ WITH RECURSIVE x
 	timetable.base_task bt USING (task_id) JOIN 
 	x ON (x.chain_id = tc.parent_id) 
 ) 
-	SELECT *, (
-		SELECT connect_string 
-		FROM   timetable.database_connection AS a 
-		WHERE a.database_connection = x.database_connection) 
-	FROM x`
+	SELECT * FROM x`
 
 	err := pgxscan.Select(ctx, tx, chains, sqlSelectChains, chainID)
 
@@ -153,9 +147,8 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExe
 	}
 
 	//Connect to Remote DB
-	if chainElemExec.DatabaseConnection.Status != pgtype.Null {
-		connectionString := pge.GetConnectionString(ctx, chainElemExec.DatabaseConnection)
-		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, connectionString)
+	if chainElemExec.ConnectString.Status != pgtype.Null {
+		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, chainElemExec.ConnectString.String)
 		if err != nil {
 			return
 		}
@@ -190,7 +183,7 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElemExe
 	}
 
 	// Commit changes on remote server
-	if chainElemExec.DatabaseConnection.Status != pgtype.Null && !chainElemExec.Autonomous {
+	if chainElemExec.ConnectString.Status != pgtype.Null && !chainElemExec.Autonomous {
 		pge.MustCommitTransaction(ctx, execTx)
 	}
 
@@ -220,16 +213,6 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, s
 		}
 	}
 	return
-}
-
-//GetConnectionString of database_connection
-func (pge *PgEngine) GetConnectionString(ctx context.Context, databaseConnection pgtype.Varchar) (connectionString string) {
-	err := pge.ConfigDb.QueryRow(ctx, "SELECT connect_string "+
-		"FROM timetable.database_connection WHERE database_connection = $1", databaseConnection).Scan(&connectionString)
-	if err != nil {
-		log.GetLogger(ctx).WithError(err).Error("Issue while fetching connection string:", err)
-	}
-	return connectionString
 }
 
 //GetRemoteDBTransaction create a remote db connection and returns transaction object
