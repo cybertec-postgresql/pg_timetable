@@ -28,6 +28,7 @@ type PgxIface interface {
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	Ping(ctx context.Context) error
+	CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error)
 }
 type PgxConnIface interface {
 	PgxIface
@@ -41,7 +42,7 @@ type PgxPoolIface interface {
 
 // PgEngine is responsible for every database-related action
 type PgEngine struct {
-	l        log.LoggerIface
+	l        log.LoggerHookerIface
 	ConfigDb PgxPoolIface
 	cmdparser.CmdOptions
 	// NOTIFY messages passed verification are pushed to this channel
@@ -52,7 +53,7 @@ var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
 
 // New opens connection and creates schema
-func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerIface) (*PgEngine, error) {
+func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
 	var wt int = WaitTime
 	var err error
 	pge := &PgEngine{
@@ -82,6 +83,7 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerIfa
 	if err := pge.ExecuteSchemaScripts(ctx); err != nil {
 		return nil, err
 	}
+	pge.AddLogHook(ctx) //schema exists, we can log now
 	if cmdOpts.File != "" {
 		if err := pge.ExecuteCustomScripts(ctx, cmdOpts.File); err != nil {
 			return nil, err
@@ -135,6 +137,10 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	return connConfig
 }
 
+func (pge *PgEngine) AddLogHook(ctx context.Context) {
+	pge.l.AddHook(NewHook(ctx, pge.ConfigDb))
+}
+
 type QueryRowIface interface {
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }
@@ -152,7 +158,6 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 		pge.l.Debug("There is no schema yet, will lock after bootstrapping")
 		return nil
 	}
-
 	var wt int = WaitTime
 	for {
 		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), pge.ClientName)

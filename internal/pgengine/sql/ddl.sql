@@ -110,18 +110,29 @@ CREATE TABLE timetable.chain_execution_parameters(
 	PRIMARY KEY (chain_execution_config, chain_id, order_id)
 );
 
+CREATE UNLOGGED TABLE timetable.active_session(
+	client_pid BIGINT NOT NULL,
+	client_name TEXT NOT NULL,
+	server_pid BIGINT NOT NULL
+);
 
--- log client application related actions
 CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
+
+CREATE OR REPLACE FUNCTION timetable.get_client_name(integer) RETURNS TEXT AS
+$$
+	SELECT client_name FROM timetable.active_session WHERE server_pid = $1 LIMIT 1
+$$
+LANGUAGE sql;
 
 CREATE TABLE timetable.log
 (
 	id					BIGSERIAL			PRIMARY KEY,
 	ts					TIMESTAMPTZ			DEFAULT now(),
-	client_name	        TEXT,
+	client_name	        TEXT				DEFAULT timetable.get_client_name(pg_backend_pid()),
 	pid					INTEGER 			NOT NULL,
 	log_level			timetable.log_type	NOT NULL,
-	message				TEXT
+	message				TEXT,
+	message_data		jsonb
 );
 
 -- log timetable related action
@@ -153,12 +164,6 @@ CREATE TABLE timetable.run_status (
 	chain_execution_config 		BIGINT,
 	client_name					TEXT	NOT NULL,
 	PRIMARY KEY (run_status)
-);
-
-CREATE UNLOGGED TABLE timetable.active_session(
-	client_pid BIGINT NOT NULL,
-	client_name TEXT NOT NULL,
-	server_pid BIGINT NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)

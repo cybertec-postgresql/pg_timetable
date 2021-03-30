@@ -9,12 +9,17 @@ import (
 )
 
 type (
-	LoggerIface logrus.FieldLogger
-	loggerKey   struct{}
+	LoggerIface       logrus.FieldLogger
+	LoggerHookerIface interface {
+		LoggerIface
+		AddHook(hook logrus.Hook)
+	}
+
+	loggerKey struct{}
 )
 
 // Init creates logging facilities for the application
-func Init(level string) LoggerIface {
+func Init(level string) LoggerHookerIface {
 	var err error
 	l := logrus.New()
 	l.Out = os.Stdout
@@ -69,7 +74,7 @@ func WithLogger(ctx context.Context, logger LoggerIface) context.Context {
 }
 
 // FallbackLogger is an alias for the standard logger
-var FallbackLogger = logrus.NewEntry(logrus.StandardLogger())
+var FallbackLogger = logrus.StandardLogger()
 
 // GetLogger retrieves the current logger from the context. If no logger is
 // available, the default logger is returned
