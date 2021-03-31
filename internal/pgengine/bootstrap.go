@@ -138,7 +138,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 }
 
 func (pge *PgEngine) AddLogHook(ctx context.Context) {
-	pge.l.AddHook(NewHook(ctx, pge.ConfigDb))
+	pge.l.AddHook(NewHook(ctx, pge.ConfigDb, pge.ClientName, 500))
 }
 
 type QueryRowIface interface {

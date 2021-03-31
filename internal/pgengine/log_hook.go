@@ -10,35 +10,51 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	CacheLimit   = 100
-	CacheTimeout = 5 * time.Second
-)
-
 type LogHook struct {
-	Extra     map[string]interface{}
-	db        PgxPoolIface
-	input     chan logrus.Entry
-	ctx       context.Context
-	lastError error
+	cacheLimit      int           // hold this number of entries before flush to database
+	cacheTimeout    time.Duration // wait this amount of time before flush to database
+	highLoadTimeout time.Duration // wait this amount of time before skip log entry
+	db              PgxPoolIface
+	input           chan logrus.Entry
+	ctx             context.Context
+	lastError       chan error
+	pid             int
+	client          string
 }
 
 // NewHook creates a LogHook to be added to an instance of logger
-func NewHook(ctx context.Context, db PgxPoolIface) *LogHook {
+func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int) *LogHook {
 	l := &LogHook{
-		db:    db,
-		input: make(chan logrus.Entry, CacheLimit*2),
-		ctx:   ctx,
+		cacheLimit:      cacheLimit,
+		cacheTimeout:    5 * time.Second,
+		highLoadTimeout: 200 * time.Millisecond,
+		db:              db,
+		input:           make(chan logrus.Entry, cacheLimit),
+		lastError:       make(chan error),
+		ctx:             ctx,
+		pid:             os.Getpid(),
+		client:          client,
 	}
 	go l.poll(l.input)
 	return l
 }
 
-func (hook *LogHook) Fire(entry *logrus.Entry) (err error) {
-	hook.input <- *entry
-	err = hook.lastError
-	hook.lastError = nil
-	return
+func (hook *LogHook) Fire(entry *logrus.Entry) error {
+	if hook.ctx.Err() != nil {
+		return hook.ctx.Err()
+	}
+	select {
+	case hook.input <- *entry:
+		// entry sent
+	case <-time.After(hook.highLoadTimeout):
+		// entry dropped due to a huge load, check stdout or file for detailed log
+	}
+	select {
+	case err := <-hook.lastError:
+		return err
+	default:
+		return nil
+	}
 }
 
 // Levels returns the available logging levels
@@ -49,8 +65,8 @@ func (hook *LogHook) Levels() []logrus.Level {
 // poll checks for incoming messages and caches them internally
 // until either a maximum amount is reached, or a timeout occurs.
 func (hook *LogHook) poll(input <-chan logrus.Entry) {
-	cache := make([]logrus.Entry, 0, CacheLimit)
-	tick := time.NewTicker(CacheTimeout)
+	cache := make([]logrus.Entry, 0, hook.cacheLimit)
+	tick := time.NewTicker(hook.cacheTimeout)
 
 	for {
 		select {
@@ -60,13 +76,13 @@ func (hook *LogHook) poll(input <-chan logrus.Entry) {
 			select {
 			case entry := <-input:
 				cache = append(cache, entry)
-				if len(cache) < CacheLimit {
+				if len(cache) < hook.cacheLimit {
 					break
 				}
 				tick.Stop()
 				hook.send(cache)
 				cache = cache[:0]
-				tick = time.NewTicker(CacheTimeout)
+				tick = time.NewTicker(hook.cacheTimeout)
 			case <-tick.C:
 				hook.send(cache)
 				cache = cache[:0]
@@ -99,7 +115,7 @@ func (hook *LogHook) send(cache []logrus.Entry) {
 	_, err := hook.db.CopyFrom(
 		hook.ctx,
 		pgx.Identifier{"timetable", "log"},
-		[]string{"ts", "pid", "log_level", "message", "message_data"},
+		[]string{"ts", "client_name", "pid", "log_level", "message", "message_data"},
 		pgx.CopyFromSlice(len(cache),
 			func(i int) ([]interface{}, error) {
 				jsonData, err := json.Marshal(cache[i].Data)
@@ -107,14 +123,19 @@ func (hook *LogHook) send(cache []logrus.Entry) {
 					return nil, err
 				}
 				return []interface{}{cache[i].Time,
-					os.Getpid(),
+					hook.client,
+					hook.pid,
 					adaptEntryLevel(cache[i].Level),
 					cache[i].Message,
 					jsonData}, nil
 			}),
 	)
 	if err != nil {
-		hook.lastError = err
+		select {
+		case hook.lastError <- err:
+			//error sent to the logger
+		default:
+			//there is unprocessed error already
+		}
 	}
-
 }
