@@ -8,6 +8,9 @@ import (
 //go:embed sql/ddl.sql
 var sqlDDL string
 
+//go:embed sql/cron_functions.sql
+var sqlCronFunctions string
+
 //go:embed sql/job_functions.sql
 var sqlJobFunctions string
 

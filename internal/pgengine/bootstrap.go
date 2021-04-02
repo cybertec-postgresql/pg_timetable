@@ -49,8 +49,8 @@ type PgEngine struct {
 	chainSignalChan chan ChainSignal
 }
 
-var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlJobFunctions}
-var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Job Functions"}
+var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlCronFunctions, sqlJobFunctions}
+var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Cron Functions", "Job Functions"}
 
 // New opens connection and creates schema
 func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
