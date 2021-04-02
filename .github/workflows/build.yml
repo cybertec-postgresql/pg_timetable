@@ -127,7 +127,7 @@ jobs:
         version: v1.33        
 
     - name: Test
-      run: go test -v -p 1 -coverprofile=profile.cov ./...
+      run: go test -failfast -v -timeout=300s -p 1 -coverprofile=profile.cov ./...
 
     - name: Convert coverage to lcov
       uses: jandelgado/gcov2lcov-action@v1.0.2
