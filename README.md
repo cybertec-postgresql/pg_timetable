@@ -20,7 +20,7 @@ It is completely database driven and provides a couple of advanced concepts.
 # ./pg_timetable
 
 Application Options:
-  -c, --clientname=               Unique name for application instance
+  -c, --clientname=               Unique name for application instance [$PGTT_CLIENTNAME]
   -v, --verbose                   Show verbose debug information [$PGTT_VERBOSE]
   -h, --host=                     PG config DB host (default: localhost) [$PGTT_PGHOST]
   -p, --port=                     PG config DB port (default: 5432) [$PGTT_PGPORT]
