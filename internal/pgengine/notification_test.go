@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/stretchr/testify/assert"
 )
@@ -43,8 +43,8 @@ func TestNotifications(t *testing.T) {
 }
 
 func TestHandleNotifications(t *testing.T) {
-	teardownTestCase := SetupTestCaseEx(t, func(c *cmdparser.CmdOptions) {
-		c.Debug = true
+	teardownTestCase := SetupTestCaseEx(t, func(c *config.CmdOptions) {
+		c.Start.Debug = true
 	})
 	defer teardownTestCase(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

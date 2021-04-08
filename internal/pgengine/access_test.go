@@ -17,8 +17,6 @@ func TestDeleteChainConfig(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	pge.Verbose = false
-
 	t.Run("Check DeleteChainConfig if everyhing fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
@@ -41,8 +39,6 @@ func TestFixSchedulerCrash(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	pge.Verbose = false
-
 	t.Run("Check FixSchedulerCrash if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
@@ -57,8 +53,6 @@ func TestCanProceedChainExecution(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
-
-	pge.Verbose = false
 
 	t.Run("Check CanProceedChainExecution if everything fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
@@ -89,8 +83,6 @@ func TestInsertChainRunStatus(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	pge.Verbose = false
-
 	t.Run("Check InsertChainRunStatus if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
@@ -105,7 +97,6 @@ func TestUpdateChainRunStatus(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
-	pge.Verbose = false
 
 	t.Run("Check UpdateChainRunStatus if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)

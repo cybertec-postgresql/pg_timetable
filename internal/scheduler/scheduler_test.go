@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
@@ -17,8 +17,7 @@ var pge *pgengine.PgEngine
 
 //SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
-	cmdOpts := cmdparser.NewCmdOptions("pgengine_unit_test")
-	cmdOpts.Verbose = testing.Verbose()
+	cmdOpts := config.NewCmdOptions("pgengine_unit_test")
 	t.Log("Setup test case")
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
@@ -56,6 +55,6 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	assert.Equal(t, New(pge, log.Init("debug")).Run(ctx, false), ContextCancelled)
+	assert.Equal(t, New(pge, log.Init("debug")).Run(ctx), ContextCancelled)
 
 }

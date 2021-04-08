@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 
 	pgconn "github.com/jackc/pgconn"
@@ -44,7 +44,7 @@ type PgxPoolIface interface {
 type PgEngine struct {
 	l        log.LoggerHookerIface
 	ConfigDb PgxPoolIface
-	cmdparser.CmdOptions
+	config.CmdOptions
 	// NOTIFY messages passed verification are pushed to this channel
 	chainSignalChan chan ChainSignal
 }
@@ -53,7 +53,7 @@ var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlCronFunctions, sqlJobFun
 var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Cron Functions", "Job Functions"}
 
 // New opens connection and creates schema
-func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
+func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
 	var wt int = WaitTime
 	var err error
 	pge := &PgEngine{
@@ -62,7 +62,7 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerHoo
 		cmdOpts,
 		make(chan ChainSignal, 64),
 	}
-	pge.l.WithField("PID", os.Getpid()).Debugf("Starting new session... %s", &cmdOpts)
+	pge.l.WithField("PID", os.Getpid()).Debugf("Starting new session... %+v", &cmdOpts)
 	config := pge.getPgxConnConfig()
 	pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
 	for err != nil {
@@ -84,8 +84,8 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerHoo
 		return nil, err
 	}
 	pge.AddLogHook(ctx) //schema exists, we can log now
-	if cmdOpts.File != "" {
-		if err := pge.ExecuteCustomScripts(ctx, cmdOpts.File); err != nil {
+	if cmdOpts.Start.File != "" {
+		if err := pge.ExecuteCustomScripts(ctx, cmdOpts.Start.File); err != nil {
 			return nil, err
 		}
 	}
@@ -95,14 +95,14 @@ func New(ctx context.Context, cmdOpts cmdparser.CmdOptions, logger log.LoggerHoo
 // NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.
 // We assume here all checks for proper schema validation are done beforehannd
 func NewDB(DB PgxPoolIface, ClientName string) *PgEngine {
-	return &PgEngine{log.Init("DEBUG"), DB, *cmdparser.NewCmdOptions(ClientName), make(chan ChainSignal, 64)}
+	return &PgEngine{log.Init("DEBUG"), DB, *config.NewCmdOptions(ClientName), make(chan ChainSignal, 64)}
 
 }
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
 func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
-	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%s' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
-		pge.Host, pge.Port, pge.Dbname, pge.SSLMode, pge.User, pge.Password)
+	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%d' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
+		pge.Connection.Host, pge.Connection.Port, pge.Connection.DBName, pge.Connection.SSLMode, pge.Connection.User, pge.Connection.Password)
 	pge.l.Debug("Connection string: ", connstr)
 	connConfig, err := pgxpool.ParseConfig(connstr)
 	if err != nil {
@@ -125,11 +125,11 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(pge.ClientName))
 		return err
 	}
-	if !pge.Debug { //will handle notification in HandleNotifications directly
+	if !pge.Start.Debug { //will handle notification in HandleNotifications directly
 		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
 	}
 	connConfig.ConnConfig.Logger = log.NewPgxLogger(pge.l)
-	if pge.Verbose {
+	if pge.Verbose() {
 		connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
 	} else {
 		connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn

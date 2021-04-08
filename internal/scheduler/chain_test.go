@@ -30,7 +30,7 @@ func TestAsyncChains(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"chain_execution_config", "chain_id", "chain_name",
 			"self_destruct", "exclusive_execution", "max_instances"}).
 			AddRow(24, 24, "foo", false, false, 16))
-	if pge.Verbose {
+	if pge.Verbose() {
 		mock.ExpectExec("INSERT.+log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
@@ -49,7 +49,6 @@ func TestChainWorker(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	pge.Verbose = false
 	sch := New(pge, log.Init("debug"))
 	chains := make(chan Chain, workersNumber)
 

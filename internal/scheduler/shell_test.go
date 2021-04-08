@@ -34,7 +34,6 @@ func TestShellCommand(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	pge.Verbose = false
 	scheduler := scheduler.New(pge, log.Init("debug"))
 	ctx := context.Background()
 

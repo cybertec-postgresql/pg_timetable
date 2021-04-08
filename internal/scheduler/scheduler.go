@@ -59,7 +59,7 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 }
 
 //Run executes jobs. Returns Fa
-func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
+func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= workersNumber; w++ {
 		workerCtx, cancel := context.WithCancel(ctx)
@@ -81,7 +81,7 @@ func (sch *Scheduler) Run(ctx context.Context, debug bool) RunStatus {
 	sch.l.Info("Accepting asynchronous chains execution requests...")
 	go sch.retrieveAsyncChainsAndRun(ctx)
 
-	if debug { //run blocking notifications receiving
+	if sch.pgengine.Start.Debug { //run blocking notifications receiving
 		sch.pgengine.HandleNotifications(ctx)
 		return ContextCancelled
 	}

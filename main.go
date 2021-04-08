@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
@@ -23,19 +23,19 @@ var pge *pgengine.PgEngine
 
 func main() {
 	ctx := context.Background()
-	cmdOpts, err := cmdparser.Parse()
+	cmdOpts, err := config.NewConfig(os.Stdout)
 	if err != nil {
-		fmt.Println("Error parsing command line arguments: ", err)
+		fmt.Println("Configuration error: ", err)
 		os.Exit(2)
 	}
-	logger := log.Init(cmdOpts.LogLevel())
+	logger := log.Init(cmdOpts.Logging.LogLevel)
 	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
 	defer cancel()
 	if pge, err = pgengine.New(connctx, *cmdOpts, logger); err != nil {
 		os.Exit(2)
 	}
 	defer pge.Finalize()
-	if cmdOpts.Upgrade {
+	if cmdOpts.Start.Upgrade {
 		if !pge.MigrateDb(ctx) {
 			os.Exit(3)
 		}
@@ -44,12 +44,12 @@ func main() {
 			os.Exit(3)
 		}
 	}
-	if cmdOpts.Init {
+	if cmdOpts.Start.Init {
 		os.Exit(0)
 	}
 	pge.SetupCloseHandler()
 	sch := scheduler.New(pge, logger)
-	for sch.Run(ctx, cmdOpts.Debug) == scheduler.ConnectionDroppped {
+	for sch.Run(ctx) == scheduler.ConnectionDroppped {
 		pge.ReconnectAndFixLeftovers(ctx)
 	}
 }
