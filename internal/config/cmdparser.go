@@ -31,6 +31,11 @@ type StartOpts struct {
 	Debug   bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
 }
 
+type ResourceOpts struct {
+	CronWorkers     int `long:"cronworkers" description:"Number of parallel workers for scheduled chains" default:"16"`
+	IntervalWorkers int `long:"intervalworkers" description:"Number of parallel workers for interval chains" default:"16"`
+}
+
 // CmdOptions holds command line options passed
 type CmdOptions struct {
 	ClientName     string         `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
@@ -38,6 +43,7 @@ type CmdOptions struct {
 	Connection     ConnectionOpts `group:"Connection" mapstructure:"Connection"`
 	Logging        LoggingOpts    `group:"Logging" mapstructure:"Logging"`
 	Start          StartOpts      `group:"Start" mapstructure:"Start"`
+	Resource       ResourceOpts   `group:"Resource" mapstructure:"Resource"`
 	NoProgramTasks bool           `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
 }

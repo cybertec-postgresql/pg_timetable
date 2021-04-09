@@ -46,7 +46,11 @@ Start:
       --init                          Initialize database schema to the latest version and exit. Can
                                       be used with --upgrade
       --upgrade                       Upgrade database to the latest version
-      --debug                         Run in debug mode. Only asynchronous chains will be executed  
+      --debug                         Run in debug mode. Only asynchronous chains will be executed
+
+Resource:
+      --cronworkers=                  Number of parallel workers for scheduled chains (default: 16)
+      --intervalworkers=              Number of parallel workers for interval chains (default: 16)      
 ```      
 
 ## Table of Contents

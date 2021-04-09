@@ -5,17 +5,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
-const workersNumber = 16
-
 //the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes
 const refetchTimeout = 60
-
-// if the number of chains pulled for execution is higher than this value, try to spread execution to avoid spikes
-const maxChainsThreshold = workersNumber * refetchTimeout
 
 // RunStatus specifies the current status of execution
 type RunStatus int
@@ -28,10 +24,9 @@ const (
 )
 
 type Scheduler struct {
-	l             log.LoggerIface
-	chains        chan Chain // channel for passing chains to workers
-	pgengine      *pgengine.PgEngine
-	WorkersNumber int
+	l          log.LoggerIface
+	chainsChan chan Chain // channel for passing chains to workers
+	pgengine   *pgengine.PgEngine
 
 	exclusiveMutex sync.RWMutex //read-write mutex for running regular and exclusive chains
 
@@ -49,23 +44,28 @@ type Scheduler struct {
 func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
 		l:                  logger,
-		WorkersNumber:      workersNumber,
-		chains:             make(chan Chain, workersNumber),
 		pgengine:           pge,
-		activeChains:       make(map[int]func()),
+		chainsChan:         make(chan Chain, pge.Resource.CronWorkers),
+		intervalChainsChan: make(chan IntervalChain, pge.Resource.IntervalWorkers),
+		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains:     make(map[int]IntervalChain),
-		intervalChainsChan: make(chan IntervalChain, workersNumber),
 	}
+}
+
+func (sch *Scheduler) Config() config.CmdOptions {
+	return sch.pgengine.CmdOptions
 }
 
 //Run executes jobs. Returns Fa
 func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	// create sleeping workers waiting data on channel
-	for w := 1; w <= workersNumber; w++ {
+	for w := 1; w <= sch.Config().Resource.CronWorkers; w++ {
 		workerCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
-		go sch.chainWorker(workerCtx, sch.chains)
-		workerCtx, cancel = context.WithCancel(ctx)
+		go sch.chainWorker(workerCtx, sch.chainsChan)
+	}
+	for w := 1; w <= sch.Config().Resource.IntervalWorkers; w++ {
+		workerCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		go sch.intervalChainWorker(workerCtx, sch.intervalChainsChan)
 	}
@@ -81,7 +81,7 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	sch.l.Info("Accepting asynchronous chains execution requests...")
 	go sch.retrieveAsyncChainsAndRun(ctx)
 
-	if sch.pgengine.Start.Debug { //run blocking notifications receiving
+	if sch.Config().Start.Debug { //run blocking notifications receiving
 		sch.pgengine.HandleNotifications(ctx)
 		return ContextCancelled
 	}

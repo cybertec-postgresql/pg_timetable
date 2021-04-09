@@ -42,3 +42,9 @@ start:
   init: false
   # upgrade:                       Upgrade database to the latest version
   upgrade: true
+
+# - Resource Settings -
+  # cronworkers:                   Number of parallel workers for scheduled chains (default: 16)
+  CronWorkers: 10
+  # intervalworkers:               Number of parallel workers for interval chains (default: 16)
+  IntervalWorkers: 6
