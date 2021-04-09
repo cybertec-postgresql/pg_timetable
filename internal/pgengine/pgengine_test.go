@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
@@ -21,22 +21,21 @@ import (
 // this instance used for all engine tests
 var pge *pgengine.PgEngine
 
-var cmdOpts *cmdparser.CmdOptions = cmdparser.NewCmdOptions("pgengine_unit_test")
+var cmdOpts *config.CmdOptions = config.NewCmdOptions("--clientname=pgengine_unit_test", "--password=somestrong")
 
 // SetupTestCaseEx allows to configure the test case before execution
-func SetupTestCaseEx(t *testing.T, fc func(c *cmdparser.CmdOptions)) func(t *testing.T) {
+func SetupTestCaseEx(t *testing.T, fc func(c *config.CmdOptions)) func(t *testing.T) {
 	fc(cmdOpts)
 	return SetupTestCase(t)
 }
 
 //SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
-	cmdOpts.Verbose = testing.Verbose()
 	t.Log("Setup test case")
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("info"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 		done <- true
 	}()
 	select {
@@ -53,8 +52,9 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
 var setupTestRemoteDBFunc = func() (pgengine.PgxConnIface, pgx.Tx, error) {
-	connstr := fmt.Sprintf("host='%s' port='%s' sslmode='%s' dbname='%s' user='%s' password='%s'",
-		cmdOpts.Host, cmdOpts.Port, cmdOpts.SSLMode, cmdOpts.Dbname, cmdOpts.User, cmdOpts.Password)
+	c := cmdOpts.Connection
+	connstr := fmt.Sprintf("host='%s' port='%d' sslmode='%s' dbname='%s' user='%s' password='%s'",
+		c.Host, c.Port, c.SSLMode, c.DBName, c.User, c.Password)
 	return pge.GetRemoteDBTransaction(context.Background(), connstr)
 }
 
@@ -117,7 +117,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		pge.Finalize()
 		assert.Nil(t, pge.ConfigDb, "Connection isn't closed properly")
 		// reinit connection to execute teardown actions
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("debug"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
@@ -131,11 +131,10 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 }
 
 func TestFailedConnect(t *testing.T) {
-	c := cmdparser.NewCmdOptions("pgengine_unit_test")
-	c.Host = "foo"
+	c := config.NewCmdOptions("-h", "fake", "-c", "pgengine_test")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
 	defer cancel()
-	_, err := pgengine.New(ctx, *c, log.Init("debug"))
+	_, err := pgengine.New(ctx, *c, log.Init("error"))
 	assert.ErrorIs(t, err, ctx.Err())
 }
 
@@ -232,7 +231,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 
 	t.Run("Check set role function", func(t *testing.T) {
 		var runUID pgtype.Varchar
-		runUID.String = cmdOpts.User
+		runUID.String = cmdOpts.Connection.User
 		assert.NotPanics(t, func() { pge.SetRole(ctx, tx, runUID) }, "Set Role failed")
 	})
 
@@ -249,14 +248,14 @@ func TestSamplesScripts(t *testing.T) {
 
 	files, err := ioutil.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
-	l := log.Init("info")
+	l := log.Init("error")
 
 	for _, f := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),
 			"Sample query failed: ", f.Name())
-		assert.Equal(t, scheduler.New(pge, l).Run(ctx, false), scheduler.ContextCancelled)
+		assert.Equal(t, scheduler.New(pge, l).Run(ctx), scheduler.ContextCancelled)
 		_, err = pge.ConfigDb.Exec(context.Background(),
 			"TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
 		assert.NoError(t, err)

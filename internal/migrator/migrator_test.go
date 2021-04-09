@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/cmdparser"
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -16,6 +16,8 @@ import (
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
+
+var cmdOpts = config.NewCmdOptions("-c", "migrator_unit_test", "--password=somestrong")
 
 var migrations = []interface{}{
 	&migrator.Migration{
@@ -58,7 +60,7 @@ func migrateTest() error {
 
 	// Migrate up
 	ctx := context.Background()
-	pge, err := pgengine.New(ctx, *cmdparser.NewCmdOptions("migrator_unit_test"), log.Init("debug"))
+	pge, err := pgengine.New(ctx, *cmdOpts, log.Init("error"))
 	if err != nil {
 		return err
 	}
@@ -89,7 +91,7 @@ func TestPostgres(t *testing.T) {
 }
 
 func TestBadMigrations(t *testing.T) {
-	pge, err := pgengine.New(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"), log.Init("debug"))
+	pge, err := pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +148,7 @@ func TestBadMigrations(t *testing.T) {
 }
 
 func TestBadMigrationNumber(t *testing.T) {
-	pge, err := pgengine.New(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"), log.Init("debug"))
+	pge, err := pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +175,7 @@ func TestBadMigrationNumber(t *testing.T) {
 }
 
 func TestPending(t *testing.T) {
-	pge, err := pgengine.New(context.Background(), *cmdparser.NewCmdOptions("migrator_unit_test"), log.Init("debug"))
+	pge, err := pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 	if err != nil {
 		t.Fatal(err)
 	}

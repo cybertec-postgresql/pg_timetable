@@ -18,7 +18,7 @@ func TestAsyncChains(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	sch := New(pge, log.Init("debug"))
+	sch := New(pge, log.Init("error"))
 	n1 := &pgconn.Notification{Payload: `{"ConfigID": 1, "Command": "START"}`}
 	n2 := &pgconn.Notification{Payload: `{"ConfigID": 2, "Command": "START"}`}
 	ns := &pgconn.Notification{Payload: `{"ConfigID": 24, "Command": "STOP"}`}
@@ -30,7 +30,7 @@ func TestAsyncChains(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"chain_execution_config", "chain_id", "chain_name",
 			"self_destruct", "exclusive_execution", "max_instances"}).
 			AddRow(24, 24, "foo", false, false, 16))
-	if pge.Verbose {
+	if pge.Verbose() {
 		mock.ExpectExec("INSERT.+log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
@@ -49,8 +49,7 @@ func TestChainWorker(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	pge.Verbose = false
-	sch := New(pge, log.Init("debug"))
+	sch := New(pge, log.Init("error"))
 	chains := make(chan Chain, workersNumber)
 
 	t.Run("Check chainWorker if context cancelled", func(t *testing.T) {

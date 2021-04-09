@@ -1,0 +1,44 @@
+# clientname:                    Unique name for application instance
+clientname: brave_worker
+
+# no-program-tasks:              Disable executing of PROGRAM tasks
+no-program-tasks: true
+
+# - PostgreSQL Connection Credentials -
+connection:
+  # dbname:                        PG config DB dbname (default: timetable)
+  dbname: my_database
+  # host:                          PG config DB host (default: localhost)
+  host: my_host
+  # user:                          PG config DB user (default: scheduler)
+  user: scheduler_role
+  # password:                      PG config DB password
+  password: very_strong_one
+  # pgurl:                         PostgreSQL connection URL (optional, will override any conflicting command line options)
+  pgurl: postgres://scheduler_role@my_host/my_database
+  # port:                          PG config DB port (default: 5432) 
+  port: 5433
+  # sslmode:[disable|require]      What SSL priority use for connection
+  sslmode: require
+
+# - Logging Settings -
+logging:
+  # loglevel:[debug|info|error]    Verbosity level for stdout and log file (default: info)
+  loglevel: debug
+  # logdblevel:[debug|info|error]  Verbosity level for database storing (default: info)
+  logdblevel: debug
+  # logfile:                       File name to store logs
+  logfile: session.log
+  # logfileformat:[json|text]      Format of file logs (default: json)
+  logfileformat: text
+
+# - Bootstrap Settings -
+start:
+  # debug                          Run in debug mode. Only asynchronous chains will be executed
+  debug: false
+  # file:                          SQL script file to execute during startup
+  file: ""
+  # init:                          Initialize database schema to the latest version and exit
+  init: false
+  # upgrade:                       Upgrade database to the latest version
+  upgrade: true

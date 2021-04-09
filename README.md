@@ -18,21 +18,35 @@ It is completely database driven and provides a couple of advanced concepts.
 
 ```terminal
 # ./pg_timetable
+Udage
+  pg_timetable
 
 Application Options:
-  -c, --clientname=               Unique name for application instance [$PGTT_CLIENTNAME]
-  -v, --verbose                   Show verbose debug information [$PGTT_VERBOSE]
-  -h, --host=                     PG config DB host (default: localhost) [$PGTT_PGHOST]
-  -p, --port=                     PG config DB port (default: 5432) [$PGTT_PGPORT]
-  -d, --dbname=                   PG config DB dbname (default: timetable) [$PGTT_PGDATABASE]
-  -u, --user=                     PG config DB user (default: scheduler) [$PGTT_PGUSER]
-  -f, --file=                     SQL script file to execute during startup
-      --password=                 PG config DB password (default: somestrong) [$PGTT_PGPASSWORD]
-      --sslmode=[disable|require] What SSL priority use for connection (default: disable)
-      --pgurl=                    PG config DB url [$PGTT_URL]
-      --init                      Initialize database schema and exit. Can be used with --upgrade
-      --upgrade                   Upgrade database to the latest version
-      --no-program-tasks            Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
+  -c, --clientname=                   Unique name for application instance [$PGTT_CLIENTNAME]
+      --config=                       YAML configuration file
+      --no-program-tasks              Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
+
+Connection:
+  -h, --host=                         PostgreSQL host (default: localhost) [$PGTT_PGHOST]
+  -p, --port=                         PostgreSQL port (default: 5432) [$PGTT_PGPORT]
+  -d, --dbname=                       PostgreSQL database name (default: timetable) [$PGTT_PGDATABASE]
+  -u, --user=                         PostgreSQL user (default: scheduler) [$PGTT_PGUSER]
+      --password=                     PostgreSQL user password [$PGTT_PGPASSWORD]
+      --sslmode=[disable|require]     What SSL priority use for connection (default: disable)
+      --pgurl=                        PostgreSQL connection URL [$PGTT_URL]
+
+Logging:
+      --loglevel=[debug|info|error]   Verbosity level for stdout and log file (default: info)
+      --logdblevel=[debug|info|error] Verbosity level for database storing (default: info)
+      --logfile=                      File name to store logs
+      --logfileformat=[json|text]     Format of file logs (default: json)
+
+Start:
+  -f, --file=                         SQL script file to execute during startup
+      --init                          Initialize database schema to the latest version and exit. Can
+                                      be used with --upgrade
+      --upgrade                       Upgrade database to the latest version
+      --debug                         Run in debug mode. Only asynchronous chains will be executed  
 ```      
 
 ## Table of Contents
