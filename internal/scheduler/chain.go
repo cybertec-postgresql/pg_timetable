@@ -59,7 +59,7 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 			} else {
 				sch.l.WithField("chain", headChain.ChainExecutionConfigID).
 					Debug("Putting head chain to the execution channel")
-				sch.chains <- headChain
+				sch.chainsChan <- headChain
 			}
 		case "STOP":
 			if cancel, ok := sch.activeChains[chainSignal.ConfigID]; ok {
@@ -87,14 +87,15 @@ func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 	}
 	headChainsCount := len(headChains)
 	sch.l.WithField("count", headChainsCount).Info(msg)
-	/* now we can loop through so chains */
+	// now we can loop through so chains
 	for _, headChain := range headChains {
-		if headChainsCount > maxChainsThreshold {
+		// if the number of chains pulled for execution is high, try to spread execution to avoid spikes
+		if headChainsCount > sch.Config().Resource.CronWorkers*refetchTimeout {
 			time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
 		}
 		sch.l.WithField("chain", headChain.ChainExecutionConfigID).
 			Debug("Putting head chain to the execution channel")
-		sch.chains <- headChain
+		sch.chainsChan <- headChain
 	}
 }
 

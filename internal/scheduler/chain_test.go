@@ -48,9 +48,9 @@ func TestAsyncChains(t *testing.T) {
 func TestChainWorker(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
-	pge := pgengine.NewDB(mock, "scheduler_unit_test")
+	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init("error"))
-	chains := make(chan Chain, workersNumber)
+	chains := make(chan Chain, 16)
 
 	t.Run("Check chainWorker if context cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
