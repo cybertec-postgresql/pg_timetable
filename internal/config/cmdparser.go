@@ -8,11 +8,11 @@ import (
 )
 
 type ConnectionOpts struct {
-	Host     string `short:"h" long:"host" description:"PG config DB host" default:"localhost" env:"PGTT_PGHOST"`
-	Port     int    `short:"p" long:"port" description:"PG config DB port" default:"5432" env:"PGTT_PGPORT"`
-	DBName   string `short:"d" long:"dbname" description:"PG config DB dbname" default:"timetable" env:"PGTT_PGDATABASE"`
-	User     string `short:"u" long:"user" description:"PG config DB user" default:"scheduler" env:"PGTT_PGUSER"`
-	Password string `long:"password" description:"PG config DB password" env:"PGTT_PGPASSWORD"`
+	Host     string `short:"h" long:"host" description:"PostgreSQL host" default:"localhost" env:"PGTT_PGHOST"`
+	Port     int    `short:"p" long:"port" description:"PostgreSQL port" default:"5432" env:"PGTT_PGPORT"`
+	DBName   string `short:"d" long:"dbname" description:"PostgreSQL database name" default:"timetable" env:"PGTT_PGDATABASE"`
+	User     string `short:"u" long:"user" description:"PostgreSQL user" default:"scheduler" env:"PGTT_PGUSER"`
+	Password string `long:"password" description:"PostgreSQL user password" env:"PGTT_PGPASSWORD"`
 	SSLMode  string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
 	PgURL    string `long:"pgurl" description:"PostgreSQL connection URL" env:"PGTT_URL"`
 }

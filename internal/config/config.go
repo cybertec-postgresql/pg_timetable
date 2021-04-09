@@ -75,27 +75,29 @@ func (cmdSet cmdArgSet) setDefaults(v *viper.Viper) {
 }
 
 func NewConfig(writer io.Writer) (*CmdOptions, error) {
+	v := viper.New()
 	p, err := Parse(writer)
 	if err != nil {
 		return nil, err
 	}
 	flagSet := cmdArgSet{p}
-	if err = viper.BindFlagValues(flagSet); err != nil {
-		panic("cannot bind command-line flag values with viper")
+	if err = v.BindFlagValues(flagSet); err != nil {
+		return nil, fmt.Errorf("cannot bind command-line flag values with viper: %w", err)
 	}
-	flagSet.setDefaults(viper.GetViper())
-	if viper.IsSet("config") {
-		viper.SetConfigFile(viper.GetString("config"))
-		err := viper.ReadInConfig() // Find and read the config file
-		if err != nil {             // Handle errors reading the config file
+	flagSet.setDefaults(v)
+	if v.IsSet("config") {
+		v.SetConfigFile(v.GetString("config"))
+		err := v.ReadInConfig() // Find and read the config file
+		if err != nil {         // Handle errors reading the config file
 			return nil, fmt.Errorf("Fatal error reading config file: %w", err)
 		}
 	}
 	conf := &CmdOptions{}
-	if err = viper.Unmarshal(conf); err != nil {
+	if err = v.Unmarshal(conf); err != nil {
 		return nil, fmt.Errorf("Fatal error unmarshalling config file: %w", err)
 	}
-	if !viper.IsSet("clientname") {
+	if !v.IsSet("clientname") {
+		p.WriteHelp(writer)
 		return nil, errors.New("The required flag `-c, --clientname` was not specified")
 	}
 	return conf, nil
