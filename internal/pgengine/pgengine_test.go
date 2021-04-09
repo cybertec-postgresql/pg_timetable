@@ -21,7 +21,7 @@ import (
 // this instance used for all engine tests
 var pge *pgengine.PgEngine
 
-var cmdOpts *config.CmdOptions = config.NewCmdOptions("pgengine_unit_test")
+var cmdOpts *config.CmdOptions = config.NewCmdOptions("--clientname=pgengine_unit_test", "--password=somestrong")
 
 // SetupTestCaseEx allows to configure the test case before execution
 func SetupTestCaseEx(t *testing.T, fc func(c *config.CmdOptions)) func(t *testing.T) {
@@ -35,7 +35,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("info"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 		done <- true
 	}()
 	select {
@@ -117,7 +117,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		pge.Finalize()
 		assert.Nil(t, pge.ConfigDb, "Connection isn't closed properly")
 		// reinit connection to execute teardown actions
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("debug"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
@@ -131,11 +131,10 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 }
 
 func TestFailedConnect(t *testing.T) {
-	c := config.NewCmdOptions("pgengine_unit_test")
-	c.Connection.Host = "foo"
+	c := config.NewCmdOptions("-h", "fake", "-c", "pgengine_test")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
 	defer cancel()
-	_, err := pgengine.New(ctx, *c, log.Init("debug"))
+	_, err := pgengine.New(ctx, *c, log.Init("error"))
 	assert.ErrorIs(t, err, ctx.Err())
 }
 
@@ -249,7 +248,7 @@ func TestSamplesScripts(t *testing.T) {
 
 	files, err := ioutil.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
-	l := log.Init("info")
+	l := log.Init("error")
 
 	for _, f := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

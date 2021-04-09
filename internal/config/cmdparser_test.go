@@ -38,6 +38,6 @@ func TestLogLevel(t *testing.T) {
 }
 
 func TestNewCmdOptions(t *testing.T) {
-	c := NewCmdOptions("config_unit_test")
+	c := NewCmdOptions("-c", "config_unit_test", "--password=somestrong")
 	assert.NotNil(t, c)
 }

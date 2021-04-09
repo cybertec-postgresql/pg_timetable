@@ -17,12 +17,12 @@ var pge *pgengine.PgEngine
 
 //SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
-	cmdOpts := config.NewCmdOptions("pgengine_unit_test")
+	cmdOpts := config.NewCmdOptions("-c", "pgengine_unit_test", "--password=somestrong")
 	t.Log("Setup test case")
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("debug"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
 		done <- true
 	}()
 	select {
@@ -55,6 +55,6 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	assert.Equal(t, New(pge, log.Init("debug")).Run(ctx), ContextCancelled)
+	assert.Equal(t, New(pge, log.Init("error")).Run(ctx), ContextCancelled)
 
 }

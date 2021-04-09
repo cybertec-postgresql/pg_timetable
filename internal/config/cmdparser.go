@@ -34,7 +34,7 @@ type StartOpts struct {
 // CmdOptions holds command line options passed
 type CmdOptions struct {
 	ClientName     string         `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
-	Config         string         `long:"config" description:"INI configuration file"`
+	Config         string         `long:"config" description:"YAML configuration file"`
 	Connection     ConnectionOpts `group:"Connection" mapstructure:"Connection"`
 	Logging        LoggingOpts    `group:"Logging" mapstructure:"Logging"`
 	Start          StartOpts      `group:"Start" mapstructure:"Start"`
@@ -47,9 +47,9 @@ func (c CmdOptions) Verbose() bool {
 }
 
 // NewCmdOptions returns a new instance of CmdOptions with default values
-func NewCmdOptions(ClientName string) *CmdOptions {
+func NewCmdOptions(args ...string) *CmdOptions {
 	cmdOpts := new(CmdOptions)
-	_, _ = flags.NewParser(cmdOpts, flags.Default).ParseArgs([]string{"-c", ClientName})
+	_, _ = flags.NewParser(cmdOpts, flags.PrintErrors).ParseArgs(args)
 	return cmdOpts
 }
 
