@@ -1,4 +1,4 @@
-INSERT INTO timetable.base_task(task_id, name, script, kind) VALUES
+INSERT INTO timetable.command(command_id, name, script, kind) VALUES
 	(DEFAULT, 'NoOp', 'NoOp', 'BUILTIN'),
 	(DEFAULT, 'Sleep', 'Sleep', 'BUILTIN'),
 	(DEFAULT, 'Log', 'Log', 'BUILTIN'),
@@ -6,8 +6,8 @@ INSERT INTO timetable.base_task(task_id, name, script, kind) VALUES
 	(DEFAULT, 'Download', 'Download', 'BUILTIN'),
 	(DEFAULT, 'CopyFromFile', 'CopyFromFile', 'BUILTIN');
 
-CREATE OR REPLACE FUNCTION timetable.get_task_id(task_name TEXT) 
+CREATE OR REPLACE FUNCTION timetable.get_command_id(command_name TEXT) 
 RETURNS BIGINT AS $$
-	SELECT task_id FROM timetable.base_task WHERE name = $1;
+	SELECT command_id FROM timetable.command WHERE name = $1;
 $$ LANGUAGE 'sql'
 STRICT;

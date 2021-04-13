@@ -10,61 +10,58 @@ $BODY$;
 
 WITH 
 sql_task(id) AS (
-    INSERT INTO timetable.base_task VALUES (
-        DEFAULT,                     -- task_id
+    INSERT INTO timetable.command VALUES (
+        DEFAULT,                     -- command_id
         'execute sleepy functions',  -- name
-        DEFAULT,                     -- 'SQL' :: timetable.task_kind
+        DEFAULT,                     -- 'SQL' :: timetable.command_kind
         'SELECT sleepy_func($1)'     -- task script
     )
-    RETURNING task_id
+    RETURNING command_id
 ),
-chain_insert(chain_id) AS (
-    INSERT INTO timetable.task_chain 
-        (task_id, ignore_error)
+chain_insert(task_id) AS (
+    INSERT INTO timetable.task 
+        (command_id, ignore_error)
     SELECT 
         id, TRUE
     FROM sql_task
-    RETURNING chain_id
+    RETURNING task_id
 ),
 chain_config(id, run_at) as (
-    INSERT INTO timetable.chain_execution_config (
-        chain_execution_config, 
+    INSERT INTO timetable.chain (
         chain_id, 
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
         live,
         self_destruct, 
-        exclusive_execution, 
-        excluded_execution_configs
+        exclusive_execution
     )  VALUES (
-        DEFAULT, -- chain_execution_config, 
-        (SELECT chain_id FROM chain_insert), -- chain_id, 
+        DEFAULT, -- chain_id, 
+        (SELECT task_id FROM chain_insert), -- task_id, 
         'run sleepy task every 10 sec', -- chain_name, 
         '@every 10 seconds', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,
-        FALSE, -- exclusive_execution, 
-        NULL -- excluded_execution_configs
+        FALSE -- exclusive_execution, 
     ), (
-        DEFAULT, -- chain_execution_config, 
-        (SELECT chain_id FROM chain_insert), -- chain_id, 
+        DEFAULT, -- chain_id, 
+        (SELECT task_id FROM chain_insert), -- task_id, 
         'run sleepy task every 10 sec after previous', -- chain_name, 
         '@after 10 seconds', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,
-        FALSE, -- exclusive_execution, 
-        NULL -- excluded_execution_configs
+        FALSE -- exclusive_execution, 
     ) 
-    RETURNING  chain_execution_config, run_at
+    RETURNING  chain_id, run_at
 )
-INSERT INTO timetable.chain_execution_parameters 
-    (chain_execution_config, chain_id, order_id, value)
+INSERT INTO timetable.parameter 
+    (chain_id, task_id, order_id, value)
 SELECT 
     chain_config.id,
-    chain_insert.chain_id,
+    chain_insert.task_id,
     1,
     format('[ "Configuration %s" ]', chain_config.run_at) :: jsonb
 FROM chain_config, chain_insert;

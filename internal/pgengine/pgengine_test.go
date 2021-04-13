@@ -45,7 +45,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	}
 	return func(t *testing.T) {
 		_, _ = pge.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
-		pge.Finalize()
+		pge.ConfigDb.Close()
 		t.Log("Test schema dropped")
 	}
 }
@@ -68,13 +68,13 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 
 	t.Run("Check timetable tables", func(t *testing.T) {
 		var oid int
-		tableNames := []string{"base_task", "task_chain",
-			"chain_execution_config", "chain_execution_parameters",
+		tableNames := []string{"command", "task",
+			"chain", "parameter",
 			"log", "execution_log", "run_status"}
 		for _, tableName := range tableNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName)).Scan(&oid)
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", tableName))
-			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s function doesn't exist", tableName))
+			assert.NotEqual(t, pgengine.InvalidOid, oid, fmt.Sprintf("timetable.%s table doesn't exist", tableName))
 		}
 	})
 
@@ -157,7 +157,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
-		var chains []pgengine.ChainElementExecution
+		var chains []pgengine.ChainElement
 		tx, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pge.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
@@ -169,9 +169,9 @@ func TestSchedulerFunctions(t *testing.T) {
 		var paramVals []string
 		tx, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.True(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainElementExecution{
-			ChainID:     0,
-			ChainConfig: 0}), "Should no error in clean database")
+		assert.True(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainElement{
+			TaskID:  0,
+			ChainID: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")
 		pge.MustCommitTransaction(ctx, tx)
 	})
@@ -207,7 +207,7 @@ func TestBuiltInTasks(t *testing.T) {
 	defer teardownTestCase(t)
 	t.Run("Check built-in tasks number", func(t *testing.T) {
 		var num int
-		err := pge.ConfigDb.QueryRow(context.Background(), "SELECT count(1) FROM timetable.base_task WHERE kind = 'BUILTIN'").Scan(&num)
+		err := pge.ConfigDb.QueryRow(context.Background(), "SELECT count(1) FROM timetable.command WHERE kind = 'BUILTIN'").Scan(&num)
 		assert.NoError(t, err, "Query for built-in tasks existence failed")
 		assert.Equal(t, len(scheduler.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
 	})
@@ -257,7 +257,7 @@ func TestSamplesScripts(t *testing.T) {
 			"Sample query failed: ", f.Name())
 		assert.Equal(t, scheduler.New(pge, l).Run(ctx), scheduler.ContextCancelled)
 		_, err = pge.ConfigDb.Exec(context.Background(),
-			"TRUNCATE timetable.task_chain, timetable.chain_execution_config CASCADE")
+			"TRUNCATE timetable.task, timetable.chain CASCADE")
 		assert.NoError(t, err)
 	}
 }

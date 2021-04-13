@@ -62,7 +62,7 @@ func TestExecuteSQLTask(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
-	elements := []pgengine.ChainElementExecution{
+	elements := []pgengine.ChainElement{
 		{
 			Autonomous:  true,
 			IgnoreError: true,
@@ -84,7 +84,7 @@ func TestExecuteSQLTask(t *testing.T) {
 				String: "error",
 				Status: pgtype.Present},
 		},
-		{RunUID: pgtype.Varchar{String: "foo", Status: pgtype.Present}},
+		{RunAs: pgtype.Varchar{String: "foo", Status: pgtype.Present}},
 		{Autonomous: false, IgnoreError: true},
 	}
 
@@ -169,13 +169,13 @@ func TestGetChainElements(t *testing.T) {
 	mockPool.ExpectQuery("SELECT").WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	assert.False(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElementExecution{}))
+	assert.False(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElement{}))
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0, 0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	assert.True(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElementExecution{}))
+	assert.True(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElement{}))
 }
 
 func TestSetRole(t *testing.T) {

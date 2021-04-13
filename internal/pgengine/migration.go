@@ -42,14 +42,7 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	upgrade, err := m.NeedUpgrade(ctx, conn.Conn())
-	if upgrade {
-		pge.l.Error("You need to upgrade your database before proceeding, use --upgrade option")
-	}
-	if err != nil {
-		pge.l.WithError(err).Error("Migration check failed")
-	}
-	return upgrade, err
+	return m.NeedUpgrade(ctx, conn.Conn())
 }
 
 func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
@@ -66,7 +59,7 @@ func (pge *PgEngine) initMigrator() error {
 	}
 	var err error
 	m, err = migrator.New(
-		migrator.TableName("timetable.migrations"),
+		migrator.TableName("timetable.migration"),
 		migrator.SetNotice(func(s string) {
 			pge.l.Info(s)
 		}),

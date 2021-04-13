@@ -1,15 +1,15 @@
 DO $$
 
     -- In order to create chain of tasks, We will create few base tasks and 
-    -- each task_id will be associated with a chain_id.
+    -- each command_id will be associated with a task_id.
     -- There will be only one HEAD chain (parent_id = null).
-    -- chain_id of HEAD chain will be parent_id of other chains.
+    -- task_id of HEAD chain will be parent_id of other chains.
 
 DECLARE
-    v_child_task_id     bigint;
-    v_parent_task_id    bigint;
+    v_child_command_id     bigint;
+    v_parent_command_id    bigint;
     v_parent_id         bigint;
-    v_chain_id          bigint;
+    v_task_id          bigint;
     v_chain_config_id   bigint;
 BEGIN
 
@@ -25,72 +25,70 @@ BEGIN
 
     --Add a Task
 
-    INSERT INTO timetable.base_task VALUES (
-	    DEFAULT, 						                                                -- task_id
+    INSERT INTO timetable.command VALUES (
+	    DEFAULT, 						                                                -- command_id
 	    'insert in chain log task',	                                                    -- name
-	    DEFAULT, 						                                                -- 'SQL' :: timetable.task_kind
+	    DEFAULT, 						                                                -- 'SQL' :: timetable.command_kind
 	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'	-- task script
 	    )
-    RETURNING task_id INTO v_parent_task_id;
+    RETURNING command_id INTO v_parent_command_id;
 	
     -- attach task to a chain, This chain will be HEAD chain
 
-    INSERT INTO timetable.task_chain 
-            (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+    INSERT INTO timetable.task 
+            (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
         VALUES 
-            (DEFAULT, NULL, v_parent_task_id, NULL, NULL, TRUE)
-    RETURNING chain_id INTO v_parent_id;
+            (DEFAULT, NULL, v_parent_command_id, NULL, NULL, TRUE)
+    RETURNING task_id INTO v_parent_id;
 
 
-    -- Add few nore tasks and chains, these chains will keep parent_id value which is chain_id of HEAD node
-    INSERT INTO timetable.base_task VALUES (
-	    DEFAULT, 						                                                    -- task_id
+    -- Add few nore tasks and chains, these chains will keep parent_id value which is task_id of HEAD node
+    INSERT INTO timetable.command VALUES (
+	    DEFAULT, 						                                                    -- command_id
 	    'Update Chain_log child task',				                                        -- name
-	    DEFAULT, 						                                                    -- 'SQL' :: timetable.task_kind
+	    DEFAULT, 						                                                    -- 'SQL' :: timetable.command_kind
 	    'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP);'		-- task script
 	    )
-    RETURNING task_id into v_child_task_id;
+    RETURNING command_id into v_child_command_id;
 	
-    INSERT INTO timetable.task_chain 
-            (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+    INSERT INTO timetable.task 
+            (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
         VALUES 
             (                                      
-            DEFAULT,                --Chain_id
+            DEFAULT,                --task_id
             v_parent_id,            --parent_id
-            v_child_task_id,        --task_id
-            NULL,                   --run_uid   
+            v_child_command_id,        --command_id
+            NULL,                   --run_as   
             NULL,                   --database_connection
             TRUE                    --ignore_error
             )
-    RETURNING chain_id INTO v_chain_id;
+    RETURNING task_id INTO v_task_id;
 
-    INSERT INTO timetable.chain_execution_config (
-        chain_execution_config, 
+    INSERT INTO timetable.chain (
         chain_id, 
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
         live,
         self_destruct, 
-        exclusive_execution, 
-        excluded_execution_configs
+        exclusive_execution
     ) VALUES (
-        DEFAULT, -- chain_execution_config, 
-        v_parent_id, -- chain_id, 
+        DEFAULT, -- chain_id, 
+        v_parent_id, -- task_id, 
         'chain operation', -- chain_name
         '* * * * *', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,
-        FALSE, -- exclusive_execution, 
-        NULL -- excluded_execution_configs
+        FALSE -- exclusive_execution, 
         )
-    RETURNING  chain_execution_config INTO v_chain_config_id;
+    RETURNING  chain_id INTO v_chain_config_id;
 
     --Paremeter for HEAD(Parent) Chain
-    INSERT INTO timetable.chain_execution_parameters(
-        chain_execution_config, 
+    INSERT INTO timetable.parameter(
         chain_id, 
+        task_id, 
         order_id, 
         value
         )
@@ -103,15 +101,15 @@ BEGIN
   
 
     --Parameter for child  chains
-    INSERT INTO timetable.chain_execution_parameters (
-        chain_execution_config,
-        chain_id, 
+    INSERT INTO timetable.parameter (
+        chain_id,
+        task_id, 
         order_id, 
         value
         )
         VALUES (
             v_chain_config_id,
-            v_chain_id,
+            v_task_id,
             1,
             '["Updated"]' :: jsonb
         );

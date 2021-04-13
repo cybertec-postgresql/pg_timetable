@@ -20,14 +20,14 @@ func TestDeleteChainConfig(t *testing.T) {
 	t.Run("Check DeleteChainConfig if everyhing fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("DELETE FROM timetable\\.chain_execution_config").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
+		mockPool.ExpectExec("DELETE FROM timetable\\.chain").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.True(t, pge.DeleteChainConfig(ctx, 0))
 	})
 
 	t.Run("Check DeleteChainConfig if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectExec("DELETE FROM timetable\\.chain_execution_config").WillReturnError(errors.New("error"))
+		mockPool.ExpectExec("DELETE FROM timetable\\.chain").WillReturnError(errors.New("error"))
 		assert.False(t, pge.DeleteChainConfig(ctx, 0))
 	})
 
@@ -102,7 +102,7 @@ func TestUpdateChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		pge.UpdateChainRunStatus(ctx, &pgengine.ChainElementExecution{}, 0, "STATUS")
+		pge.UpdateChainRunStatus(ctx, &pgengine.ChainElement{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
@@ -113,7 +113,7 @@ func TestSelectChain(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	mockPool.ExpectExec("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
+	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
 	assert.Error(t, pge.SelectChain(context.Background(), struct{}{}, 42))
 }
 
@@ -132,7 +132,7 @@ func TestLogChainElementExecution(t *testing.T) {
 
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
 		mockPool.ExpectExec("INSERT INTO .*execution_log").WillReturnError(errors.New("error"))
-		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElementExecution{}, 0, "STATUS")
+		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElement{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")

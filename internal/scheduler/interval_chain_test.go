@@ -21,7 +21,7 @@ func TestIntervalChain(t *testing.T) {
 	assert.False(t, ichain.isListed([]IntervalChain{}))
 
 	assert.False(t, sch.isValid(ichain))
-	sch.intervalChains[ichain.ChainExecutionConfigID] = ichain
+	sch.intervalChains[ichain.ChainID] = ichain
 	assert.True(t, sch.isValid(ichain))
 
 	t.Run("Check reschedule if self destructive", func(t *testing.T) {

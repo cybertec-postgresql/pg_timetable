@@ -87,7 +87,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  0 as time,\n  count(*)\nFROM\n  timetable.task_chain\n  JOIN\n  timetable.chain_execution_config USING (chain_id)\nWHERE\n  run_at IS NOT NULL\n\n",
+          "rawSql": "SELECT\n  0 as time,\n  count(*)\nFROM\n  timetable.task\n  JOIN\n  timetable.chain USING (task_id)\nWHERE\n  run_at IS NOT NULL\n\n",
           "refId": "A",
           "select": [
             [
@@ -193,7 +193,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  0 as time,\n  count(*)\nFROM\n  timetable.task_chain\n\n",
+          "rawSql": "SELECT\n  0 as time,\n  count(*)\nFROM\n  timetable.task\n\n",
           "refId": "A",
           "select": [
             [
@@ -842,7 +842,7 @@
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT\n  -- $__timeGroup(last_run, $__interval),\n  -- 0 as time,\n  extract(epoch from now() - finished)::int as finished_seconds_ago,\n  last_run as started_on,\n  chain_id::text,\n  returncode,\n  output\nFROM\n  timetable.execution_log\nWHERE\n  $__timeFilter(last_run)\n  AND returncode != 0\nORDER BY\n  finished DESC\nLIMIT\n  10\n  ",
+          "rawSql": "SELECT\n  -- $__timeGroup(last_run, $__interval),\n  -- 0 as time,\n  extract(epoch from now() - finished)::int as finished_seconds_ago,\n  last_run as started_on,\n  task_id::text,\n  returncode,\n  output\nFROM\n  timetable.execution_log\nWHERE\n  $__timeFilter(last_run)\n  AND returncode != 0\nORDER BY\n  finished DESC\nLIMIT\n  10\n  ",
           "refId": "A",
           "select": [
             [

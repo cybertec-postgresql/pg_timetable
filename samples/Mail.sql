@@ -1,17 +1,17 @@
 DO $$
 	-- An example for using the SendMail task.
 DECLARE
-	v_chain_id bigint;
+	v_task_id bigint;
 	v_chain_config_id bigint;
 BEGIN
 
 	-- Get the chain id
-	v_chain_id := timetable.insert_base_task('SendMail', NULL);
+	v_task_id := timetable.add_task('SendMail', NULL);
 
-	INSERT INTO timetable.chain_execution_config (chain_id, chain_name, max_instances, live)
-		VALUES (v_chain_id, 'Send Mail', 1, TRUE)
+	INSERT INTO timetable.chain (task_id, chain_name, max_instances, live)
+		VALUES (v_task_id, 'Send Mail', 1, TRUE)
 	RETURNING
-		chain_execution_config INTO v_chain_config_id;
+		chain_id INTO v_chain_config_id;
 
 	-- Create the parameters for the chain configuration
 		-- "username":	  The username used for authenticating on the mail server
@@ -26,8 +26,8 @@ BEGIN
 		-- "attachment":  String array of the attachments
 		-- "msgbody":	  The body of the email
 
-	INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-		VALUES (v_chain_config_id, v_chain_id, 1, '{
+	INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
+		VALUES (v_chain_config_id, v_task_id, 1, '{
 				"username":     "user@example.com",
 				"password":		"password",
 				"serverhost":	"smtp.example.com",

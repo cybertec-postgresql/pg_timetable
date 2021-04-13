@@ -1,36 +1,36 @@
 WITH 
 noop(id) AS (
-    SELECT task_id FROM timetable.base_task WHERE name = 'Sleep'
+    SELECT command_id FROM timetable.command WHERE name = 'Sleep'
 ),
-chain_insert(chain_id) AS (
-    INSERT INTO timetable.task_chain 
-        (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+chain_insert(task_id) AS (
+    INSERT INTO timetable.task 
+        (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
     VALUES 
         (DEFAULT, NULL, (SELECT id FROM noop), NULL, NULL, TRUE)
-    RETURNING chain_id
+    RETURNING task_id
 ),
 chain_config(id) as (
-    INSERT INTO timetable.chain_execution_config (
-        chain_execution_config, 
+    INSERT INTO timetable.chain (
         chain_id, 
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
         live
     ) VALUES ( 
-        DEFAULT, -- chain_execution_config, 
-        (SELECT chain_id FROM chain_insert), -- chain_id, 
+        DEFAULT, -- chain_id, 
+        (SELECT task_id FROM chain_insert), -- task_id, 
         'sleep every minute', -- chain_name, 
         '* * * * *', -- run_at, 
         1, -- max_instances, 
         TRUE
     )
-    RETURNING  chain_execution_config
+    RETURNING  chain_id
 )
-INSERT INTO timetable.chain_execution_parameters 
-    (chain_execution_config, chain_id, order_id, value)
+INSERT INTO timetable.parameter 
+    (chain_id, task_id, order_id, value)
 VALUES (
     (SELECT id FROM chain_config),
-    (SELECT chain_id FROM chain_insert),
+    (SELECT task_id FROM chain_insert),
     1,
     '5' :: jsonb)

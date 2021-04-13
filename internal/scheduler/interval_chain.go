@@ -16,7 +16,7 @@ type IntervalChain struct {
 
 func (ichain IntervalChain) isListed(ichains []IntervalChain) bool {
 	for _, ic := range ichains {
-		if ichain.ChainExecutionConfigID == ic.ChainExecutionConfigID {
+		if ichain.ChainID == ic.ChainID {
 			return true
 		}
 	}
@@ -24,12 +24,12 @@ func (ichain IntervalChain) isListed(ichains []IntervalChain) bool {
 }
 
 func (sch *Scheduler) isValid(ichain IntervalChain) bool {
-	return (IntervalChain{}) != sch.intervalChains[ichain.ChainExecutionConfigID]
+	return (IntervalChain{}) != sch.intervalChains[ichain.ChainID]
 }
 
 func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 	if ichain.SelfDestruct {
-		sch.pgengine.DeleteChainConfig(ctx, ichain.ChainExecutionConfigID)
+		sch.pgengine.DeleteChainConfig(ctx, ichain.ChainID)
 		return
 	}
 	log.GetLogger(ctx).Debug("Sleeping before next execution of interval chain")
@@ -62,10 +62,10 @@ func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 
 	// update chains from the database and send to working channel new one
 	for _, ichain := range ichains {
-		if (IntervalChain{}) == sch.intervalChains[ichain.ChainExecutionConfigID] {
+		if (IntervalChain{}) == sch.intervalChains[ichain.ChainID] {
 			sch.intervalChainsChan <- ichain
 		}
-		sch.intervalChains[ichain.ChainExecutionConfigID] = ichain
+		sch.intervalChains[ichain.ChainID] = ichain
 	}
 	sch.intervalChainMutex.Unlock()
 }
@@ -81,13 +81,13 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 				if !sch.isValid(ichain) { // chain not in the list of active chains
 					continue
 				}
-				chainL := sch.l.WithField("chain", ichain.ChainExecutionConfigID)
+				chainL := sch.l.WithField("chain", ichain.ChainID)
 				chainContext := log.WithLogger(ctx, chainL)
 				chainL.Info("Starting chain")
 				if !ichain.RepeatAfter {
 					go sch.reschedule(chainContext, ichain)
 				}
-				if !sch.pgengine.CanProceedChainExecution(chainContext, ichain.ChainExecutionConfigID, ichain.MaxInstances) {
+				if !sch.pgengine.CanProceedChainExecution(chainContext, ichain.ChainID, ichain.MaxInstances) {
 					chainL.Debug("Cannot proceed. Sleeping")
 					if ichain.RepeatAfter {
 						go sch.reschedule(chainContext, ichain)
@@ -95,7 +95,7 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 					continue
 				}
 				sch.Lock(ichain.ExclusiveExecution)
-				sch.executeChain(chainContext, ichain.ChainExecutionConfigID, ichain.ChainID)
+				sch.executeChain(chainContext, ichain.ChainID, ichain.TaskID)
 				sch.Unlock(ichain.ExclusiveExecution)
 				if ichain.RepeatAfter {
 					go sch.reschedule(chainContext, ichain)

@@ -8,49 +8,47 @@ $BODY$;
 
 WITH 
 sql_task(id) AS (
-    INSERT INTO timetable.base_task VALUES (
-		DEFAULT, 					-- task_id
+    INSERT INTO timetable.command VALUES (
+		DEFAULT, 					-- command_id
 		'self destruct task',	    -- name
-		DEFAULT, 					-- 'SQL' :: timetable.task_kind
+		DEFAULT, 					-- 'SQL' :: timetable.command_kind
 		'SELECT raise_func($1)'		-- task script
 	)
-	RETURNING task_id
+	RETURNING command_id
 ),
-chain_insert(chain_id) AS (
-    INSERT INTO timetable.task_chain 
-        (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+chain_insert(task_id) AS (
+    INSERT INTO timetable.task 
+        (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
     VALUES 
         (DEFAULT, NULL, (SELECT id FROM sql_task), NULL, NULL, TRUE)
-    RETURNING chain_id
+    RETURNING task_id
 ),
 chain_config(id) as (
-    INSERT INTO timetable.chain_execution_config (
-        chain_execution_config, 
+    INSERT INTO timetable.chain (
         chain_id, 
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
         live,
         self_destruct, 
-        exclusive_execution, 
-        excluded_execution_configs
+        exclusive_execution 
     ) VALUES ( 
-        DEFAULT, -- chain_execution_config, 
-        (SELECT chain_id FROM chain_insert), -- chain_id, 
+        DEFAULT, -- chain_id, 
+        (SELECT task_id FROM chain_insert), -- task_id, 
         'notify then destruct', -- chain_name, 
         '* * * * *', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         TRUE, -- self_destruct,
-        FALSE, -- exclusive_execution, 
-        NULL -- excluded_execution_configs
+        FALSE -- exclusive_execution, 
     )
-    RETURNING  chain_execution_config
+    RETURNING  chain_id
 )
-INSERT INTO timetable.chain_execution_parameters 
-    (chain_execution_config, chain_id, order_id, value)
+INSERT INTO timetable.parameter 
+    (chain_id, task_id, order_id, value)
 VALUES (
     (SELECT id FROM chain_config),
-    (SELECT chain_id FROM chain_insert),
+    (SELECT task_id FROM chain_insert),
     1,
     '[ "Ahoj from self destruct task" ]' :: jsonb) 

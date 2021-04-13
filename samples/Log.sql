@@ -1,52 +1,50 @@
 DO $$
 	-- An example for using the Log task.
 DECLARE
+	v_command_id bigint;
 	v_task_id bigint;
-	v_chain_id bigint;
 	v_chain_config_id bigint;
 BEGIN
 	-- Get the base task id
-	SELECT task_id INTO v_task_id FROM timetable.base_task WHERE name = 'Log';
+	SELECT command_id INTO v_command_id FROM timetable.command WHERE name = 'Log';
 	
 	-- Create the chain
-	INSERT INTO timetable.task_chain(task_id)
-	VALUES (v_task_id)
-	RETURNING chain_id INTO v_chain_id;
+	INSERT INTO timetable.task(command_id)
+	VALUES (v_command_id)
+	RETURNING task_id INTO v_task_id;
 
 	-- Create the chain execution configuration
-	INSERT INTO timetable.chain_execution_config  (
-        chain_execution_config, 
+	INSERT INTO timetable.chain  (
         chain_id, 
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
         live,
         self_destruct, 
-        exclusive_execution, 
-        excluded_execution_configs
+        exclusive_execution 
     ) VALUES (
-        DEFAULT, -- chain_execution_config, 
-        v_chain_id, -- chain_id, 
+        DEFAULT, -- chain_id, 
+        v_task_id, -- task_id, 
         'Builtin-in Log', -- chain_name
         '* * * * *', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
         FALSE, -- self_destruct,
-        FALSE, -- exclusive_execution, 
-        NULL -- excluded_execution_configs
+        FALSE -- exclusive_execution, 
     	)
-    RETURNING  chain_execution_config INTO v_chain_config_id;
+    RETURNING  chain_id INTO v_chain_config_id;
 
 
 	-- Chain Execution Parameters
-	INSERT INTO timetable.chain_execution_parameters (
-		chain_execution_config,
+	INSERT INTO timetable.parameter (
 		chain_id,
+		task_id,
 		order_id,
 		value
 	) VALUES (
 		v_chain_config_id,
-		v_chain_id, 
+		v_task_id, 
 		1, 
         '{"Description":"Logs Execution"}'::jsonb
 	);

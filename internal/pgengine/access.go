@@ -49,7 +49,7 @@ func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
 	pge.l.WithField("chain", chainConfigID).Info("Deleting self destructive chain configuration")
-	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain_execution_config WHERE chain_execution_config = $1", chainConfigID)
+	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain WHERE chain_id = $1", chainConfigID)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to delete self destructive chain")
 		return false
@@ -76,14 +76,14 @@ func (pge *PgEngine) IsAlive() bool {
 }
 
 // LogChainElementExecution will log current chain element execution status including retcode
-func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElemExec *ChainElementExecution, retCode int, output string) {
-	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_execution_config, chain_id, task_id, name, script, "+
+func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *ChainElement, retCode int, output string) {
+	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_id, task_id, command_id, name, script, "+
 		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
 		"NULLIF($10, ''), $11)",
-		chainElemExec.ChainConfig, chainElemExec.ChainID, chainElemExec.TaskID, chainElemExec.TaskName,
-		chainElemExec.Script, chainElemExec.Kind,
-		fmt.Sprintf("%f seconds", float64(chainElemExec.Duration)/1000000),
+		chainElem.ChainID, chainElem.TaskID, chainElem.CommandID, chainElem.CommandName,
+		chainElem.Script, chainElem.Kind,
+		fmt.Sprintf("%f seconds", float64(chainElem.Duration)/1000000),
 		retCode, os.Getpid(), output, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to log chain element execution status")
@@ -93,7 +93,7 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElemExec
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
 func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
 	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(chain_id, execution_status, started, chain_execution_config, client_name) 
+(task_id, execution_status, started, chain_id, client_name) 
 VALUES 
 ($1, 'STARTED', now(), $2, $3) 
 RETURNING run_status`
@@ -106,14 +106,14 @@ RETURNING run_status`
 }
 
 // UpdateChainRunStatus inserts status information about running chain elements
-func (pge *PgEngine) UpdateChainRunStatus(ctx context.Context, chainElemExec *ChainElementExecution, runStatusID int, status string) {
+func (pge *PgEngine) UpdateChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(chain_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_execution_config, client_name)
+(task_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_id, client_name)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
 	var err error
-	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElemExec.ChainID, status, chainElemExec.TaskID,
-		runStatusID, chainElemExec.ChainConfig, pge.ClientName)
+	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElem.TaskID, status, chainElem.CommandID,
+		runStatusID, chainElem.ChainID, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Update chain status failed")
 	}
@@ -121,12 +121,12 @@ VALUES
 
 //Select live chains with proper client_name value
 const sqlSelectLiveChains = `SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+	chain_id, task_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
 FROM 
-	timetable.chain_execution_config 
+	timetable.chain 
 WHERE 
 	live 
-	AND chain_id IS NOT NULL 
+	AND task_id IS NOT NULL 
 	AND (client_name = $1 or client_name IS NULL)`
 
 func qualifySQL(sql string) string {
@@ -149,11 +149,11 @@ func (pge *PgEngine) SelectChains(ctx context.Context, dest interface{}) error {
 // SelectIntervalChains returns list of interval chains to be executed
 func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectIntervalChains = `SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
+	chain_id, task_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
 	EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
 	starts_with(run_at, '@after') as repeat_after
 FROM 
-	timetable.chain_execution_config 
+	timetable.chain 
 WHERE 
 	live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
 	return pgxscan.Select(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectIntervalChains), pge.ClientName)
@@ -163,12 +163,12 @@ WHERE
 func (pge *PgEngine) SelectChain(ctx context.Context, dest interface{}, chainID int) error {
 	// we accept not only live chains here because we want to run them in debug mode
 	const sqlSelectSingleChain = `SELECT
-	chain_execution_config, chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+	chain_id, task_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
 FROM 
-	timetable.chain_execution_config 
+	timetable.chain 
 WHERE 
-	chain_id IS NOT NULL
+	task_id IS NOT NULL
 	AND (client_name = $1 or client_name IS NULL) 
-	AND chain_execution_config = $2`
+	AND chain_id = $2`
 	return pgxscan.Get(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectSingleChain), pge.ClientName, chainID)
 }

@@ -1,8 +1,8 @@
 DO $$
 
 DECLARE 
+    v_command_id bigint;
     v_task_id bigint;
-    v_chain_id bigint;
     v_chain_config_id bigint;
     v_database_connection bigint;
 BEGIN
@@ -15,55 +15,53 @@ BEGIN
         PRIMARY KEY (remote_log));
 
     --Add a Task
-    INSERT INTO timetable.base_task
-    VALUES (DEFAULT, -- task_id
+    INSERT INTO timetable.command
+    VALUES (DEFAULT, -- command_id
         'insert in remote log task', -- name
-        DEFAULT, -- 'SQL' :: timetable.task_kind
+        DEFAULT, -- 'SQL' :: timetable.command_kind
         'INSERT INTO timetable.remote_log (remote_event, timestmp) VALUES ($1, CURRENT_TIMESTAMP);' -- task script
     )
     RETURNING
-        task_id INTO v_task_id;
+        command_id INTO v_command_id;
 
 
     -- attach task to a chain
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES (DEFAULT, NULL, v_task_id, NULL, format('host=%s port=%s dbname=%I user=%I password=strongone', 
+    INSERT INTO timetable.task (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
+    VALUES (DEFAULT, NULL, v_command_id, NULL, format('host=%s port=%s dbname=%I user=%I password=strongone', 
                     inet_server_addr(), 
                     inet_server_port(),
                     current_database(),
                     session_user
                     ), TRUE)
     RETURNING
-        chain_id INTO v_chain_id;
+        task_id INTO v_task_id;
 
     --chain configuration
-    INSERT INTO timetable.chain_execution_config (
-        chain_execution_config, 
+    INSERT INTO timetable.chain (
         chain_id, 
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
         live,
         self_destruct, 
-        exclusive_execution, 
-        excluded_execution_configs
+        exclusive_execution
     ) VALUES (
-        DEFAULT, -- chain_execution_config,
-        v_chain_id, -- chain_id,
+        DEFAULT, -- chain_id,
+        v_task_id, -- task_id,
         'remote db', -- chain_name
         '* * * * *', -- run_at,
         1, -- max_instances,
         TRUE, -- live,
         FALSE, -- self_destruct,
-        FALSE, -- exclusive_execution,
-        NULL -- excluded_execution_configs
+        FALSE -- exclusive_execution,
     )
     RETURNING
-        chain_execution_config INTO v_chain_config_id;
+        chain_id INTO v_chain_config_id;
 
     --Paremeter for task
-    INSERT INTO timetable.chain_execution_parameters (chain_execution_config, chain_id, order_id, value)
-        VALUES (v_chain_config_id, v_chain_id, 1, '["Added"]'::jsonb);
+    INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
+        VALUES (v_chain_config_id, v_task_id, 1, '["Added"]'::jsonb);
  
 END;
 $$
