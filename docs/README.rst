@@ -5,7 +5,7 @@ Introduction
 It is completely database driven and provides a couple of advanced concepts.
 
 Main features
--------------
+--------------
 
 - Tasks can be arranged in chains
 - A chain can consist of built-int commands, SQL and executables
@@ -19,30 +19,70 @@ Main features
 - Optional concurrency protection
 
 Quick Start
------------
+------------
 
 1. Download pg_timetable executable
-2. Make sure your PostgreSQL server is up and running and has a role with `CREATE` privilege
+2. Make sure your PostgreSQL server is up and running and has a role with ``CREATE`` privilege 
+   for a target database, e.g.
 
-::
+    .. code-block:: SQL
+
+      my_database=> CREATE ROLE scheduler PASSWORD 'somestrong';
+      my_database=> GRANT CREATE ON my_database TO scheduler;
+
+3. Create a new job, e.g. run ``VACUUM`` each night at 00:30
+
+    .. code-block:: SQL
+
+      my_database=> select timetable.add_job('frequent-vacuum', '30 * * * *', 'VACUUM');
+      add_job
+      ---------
+            3
+      (1 row)
+
+4. Run the ``pg_timetable``::
+
+    # pg_timetable postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
+
+5. PROFIT!
+
+Command line options
+------------------------
+.. code-block::
 
   # ./pg_timetable
 
   Application Options:
-    -c, --clientname=               Unique name for application instance
-    -v, --verbose                   Show verbose debug information [$PGTT_VERBOSE]
-    -h, --host=                     PG config DB host (default: localhost) [$PGTT_PGHOST]
-    -p, --port=                     PG config DB port (default: 5432) [$PGTT_PGPORT]
-    -d, --dbname=                   PG config DB dbname (default: timetable) [$PGTT_PGDATABASE]
-    -u, --user=                     PG config DB user (default: scheduler) [$PGTT_PGUSER]
-    -f, --file=                     SQL script file to execute during startup
-        --password=                 PG config DB password (default: somestrong) [$PGTT_PGPASSWORD]
-        --sslmode=[disable|require] What SSL priority use for connection (default: disable)
-        --pgurl=                    PG config DB url [$PGTT_URL]
-        --init                      Initialize database schema and exit. Can be used with --upgrade
-        --upgrade                   Upgrade database to the latest version
-        --no-program-tasks            Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
- 
+    -c, --clientname=                   Unique name for application instance [$PGTT_CLIENTNAME]
+        --config=                       YAML configuration file
+        --no-program-tasks              Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
+
+  Connection:
+    -h, --host=                         PostgreSQL host (default: localhost) [$PGTT_PGHOST]
+    -p, --port=                         PostgreSQL port (default: 5432) [$PGTT_PGPORT]
+    -d, --dbname=                       PostgreSQL database name (default: timetable) [$PGTT_PGDATABASE]
+    -u, --user=                         PostgreSQL user (default: scheduler) [$PGTT_PGUSER]
+        --password=                     PostgreSQL user password [$PGTT_PGPASSWORD]
+        --sslmode=[disable|require]     What SSL priority use for connection (default: disable)
+        --pgurl=                        PostgreSQL connection URL [$PGTT_URL]
+
+  Logging:
+        --loglevel=[debug|info|error]   Verbosity level for stdout and log file (default: info)
+        --logdblevel=[debug|info|error] Verbosity level for database storing (default: info)
+        --logfile=                      File name to store logs
+        --logfileformat=[json|text]     Format of file logs (default: json)
+
+  Start:
+    -f, --file=                         SQL script file to execute during startup
+        --init                          Initialize database schema to the latest version and exit. Can
+                                        be used with --upgrade
+        --upgrade                       Upgrade database to the latest version
+        --debug                         Run in debug mode. Only asynchronous chains will be executed
+
+  Resource:
+        --cronworkers=                  Number of parallel workers for scheduled chains (default: 16)
+        --intervalworkers=              Number of parallel workers for interval chains (default: 16)   
+
 
 
 Contributing
@@ -60,5 +100,6 @@ For professional support, please contact `Cybertec <https://www.cybertec-postgre
 
 Authors
 ---------
+Implementation:                `Pavlo Golub <https://github.com/pashagolub>`_ 
 
-`Pavlo Golub <https://github.com/pashagolub>`_ and `Hans-Jürgen Schönig <https://github.com/postgresql007>`_.
+Initial idea and draft design: `Hans-Jürgen Schönig <https://github.com/postgresql007>`_
