@@ -100,12 +100,7 @@ UNION ALL
 
 // GetChainParamValues returns parameter values to pass for task being executed
 func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, chainElem *ChainElement) bool {
-	const sqlGetParamValues = `
-SELECT value
-FROM  timetable.parameter
-WHERE chain_id = $1
-  AND task_id = $2
-ORDER BY order_id ASC`
+	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE chain_id = $1 AND task_id = $2 ORDER BY order_id ASC`
 	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, chainElem.ChainID, chainElem.TaskID)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("cannot fetch parameters values for chain: ", err)

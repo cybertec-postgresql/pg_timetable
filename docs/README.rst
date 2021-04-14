@@ -40,9 +40,11 @@ Quick Start
             3
       (1 row)
 
-4. Run the ``pg_timetable``::
+4. Run the **pg_timetable**
 
-    # pg_timetable postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
+    .. code-block::
+
+      # pg_timetable postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
 
 5. PROFIT!
 

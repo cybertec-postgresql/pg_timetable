@@ -1,0 +1,162 @@
+Components
+================================================
+
+The scheduling in **pg_timetable** encompasses three different stages to facilitate the reuse with other parameters or additional schedules.
+
+:Command: The first level, **command**, defines *what* to do.
+:Task: The second level, **task**, represents a chain element (step) to run one of the commands. With **tasks** we define order of commands, arguments passed (if any), and how errors are handled.
+:Chain: The third level represents a connected tasks forming a chain of tasks. **Chain** defines *if*, *when*, and *how often* a job should be executed.
+
+Command
+------------------------------------------------
+
+Currently, there are three different kinds of commands:
+
+
+.. csv-table:: Command Kinds
+    :header: "Description", "Kind", "Example"
+    :widths: 20, 10, 80
+
+    "SQL snippet", "``SQL``", "Starting a cleanup, refreshing a materialized view or processing data."
+    "External Command", "``PROGRAM``", "Anything that can be called as an external binary, including shells, e.g. `bash`, `pwsh`, etc."
+    "Internal Command", "``BUILTIN``", "A prebuilt functionality included in **pg_timetable**. These include: 
+        * *NoOp*, 
+        * *Sleep*, 
+        * *Log*,
+        * *SendMail*, 
+        * *Download*."
+
+A new command can be created by inserting a new entry into `timetable.command`.
+
+.. csv-table:: Excerpt of ``timetable.command``
+   :header: "Column", "Type", "Definition"
+   :widths: 10, 10, 80
+
+   ``name``, ``text``, "The unique name of the command."
+   ``kind``, ``timetable.command_kind``, "The type of the command. Can be *SQL* (default), *PROGRAM* or *BUILTIN*."
+   ``script``, ``text``, "Contains either a SQL script or a command string which will be executed. Can be empty for *BUILTIN*."
+
+
+Task
+------------------------------------------------
+
+The next building block is a **task**, which simply represents a step in a list of chain commands. An example of tasks combined in a chain would be:
+
+#. Download files from a server
+#. Import files
+#. Run aggregations
+#. Build report
+#. Remove the files from disk
+
+All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback ``PROGRAM`` and ``BUILTIN`` tasks.
+
+.. csv-table:: Excerpt of ``timetable.task``
+    :header: "Column", "Type", "Definition"
+    :widths: 10, 10, 80
+
+    ``parent_id``, ``bigint``, "The ID of the previous task.  Set this to ``NULL`` if it is the first command (head) of the chain."
+    ``command_id``, ``bigint``, "The ID of the **command**."
+    ``run_as``, ``text``, "The role as which the task should be executed as."
+    ``database_connection``, ``text``, "The connection string for the external database that should be used."
+    ``ignore_error``, ``boolean``, "Specify if the next task should proceed after encountering an error (default: ``false``)."
+    ``autonomous``, ``boolean``, "Specify if the task should be executed out of the chain transaction. Useful for ``VACUUM``, ``CREATE DATABASE``, ``CALL`` etc."
+
+
+If the **task** has been configured with ``ignore_error`` set to ``true`` (the default value is ``false``), the worker process will report a success on execution *even if the task within the chain fails*.
+
+As mentioned above, **commands** are simple skeletons (e.g. *send email*, *vacuum*, etc.).
+In most cases, they have to be brought to live by passing input parameters to the execution. 
+
+.. csv-table:: Excerpt of ``timetable.parameter``
+    :header: "Column", "Type", "Definition"
+    :widths: 10, 10, 80
+
+    ``chain_id``, ``bigint``, "The ID of the chain."
+    ``task_id``, ``bigint``, "The ID of the task."
+    ``order_id``, ``integer``, "The order of the parameter. Several parameters are processed one by one according to the order."
+    ``value``, ``jsonb``, "A JSON value containing the parameters."
+
+Depending on the **command** kind argument can be represented by different *JSON* values.
+
+.. csv-table:: Parameter value format
+    :header: "Kind", "Schema", "Example"
+    :widths: 5, 5, 90
+    :delim: |
+    :quote: ~
+
+    ``SQL``             | ``array``  | ``'[ "one", 2, 3.14, false ]'::jsonb``
+    ``PROGRAM`` | ``array`` | ~
+
+    .. code-block::
+            
+        '["-x", "Latin-ASCII", "-o", "orte_ansi.txt", "orte.txt"]'::jsonb
+        
+    ~    
+    ``BUILTIN: Sleep``  | ``integer``| ``'5' :: jsonb``
+    ``BUILTIN: Log``    | ``any``    |  ~
+
+    .. code-block::
+            
+        '"WARNING"'::jsonb
+        '{"Status": "WARNING"}'::jsonb
+        
+    ~
+    ``BUILTIN: SendMail``| ``object``| ~
+
+    .. code-block::
+            
+        '{
+            "username":     "user@example.com",
+            "password":     "password",
+            "serverhost":   "smtp.example.com",
+            "serverport":   587,
+            "senderaddr":   "user@example.com",
+            "ccaddr":       ["recipient_cc@example.com"],
+            "bccaddr":      ["recipient_bcc@example.com"],
+            "toaddr":       ["recipient@example.com"],
+            "subject":      "pg_timetable - No Reply",
+            "attachment":   ["/temp/attachments/Report.pdf","config.yaml"],
+            "msgbody":      "<h2>Hello User,</h2> <p>check some attachments!</p>"
+        }'::jsonb
+        
+    ~
+    ``BUILTIN: Download``| ``object``| ~
+
+    .. code-block::
+            
+        '{
+            "workersnum": 2, 
+            "fileurls": ["http://example.com/foo.gz", "https://example.com/bar.csv"], 
+            "destpath": "."
+        }'::jsonb
+        
+    ~
+    ``BUILTIN: CopyFromFile``| ``object``| ~
+
+    .. code-block::
+            
+        '{
+            "sql": "COPY location FROM STDIN", 
+            "filename": "download/orte_ansi.txt" 
+        }'::jsonb
+        
+    ~
+    ``BUILTIN: NoOp``  | | *value ignored*
+
+Chain
+------------------------------------------------
+
+Once tasks has been arranged, they have to be scheduled as a **chain**. For this, **pg_timetable** builds upon the enhanced **cron**-string, all the while adding multiple configuration options.
+
+.. csv-table:: Excerpt of ``timetable.chain``
+   :header: "Column", "Type", "Definition"
+   :widths: 10, 10, 80
+
+    ``task_id``, ``bigint``, "The id of the first task (head)."
+    ``chain_name``, ``text``, "The unique name of the chain."
+    ``run_at``, ``timetable.cron``, "Standard *cron*-style value or ``@after``, ``@every``, ``@reboot`` clause."
+    ``max_instances``, ``integer``, "The amount of instances that this chain may have running at the same time. "
+    ``live``, ``boolean``, "Control if the chain may be executed once it reaches its schedule. "
+    ``self_destruct``, ``boolean``, "Self destruct the chain after execution. "
+    ``exclusive_execution``, ``boolean``, "Specifies whether the chain should be executed exclusively while all other chains are paused. "
+    ``client_name``, ``text``, "Specifies which client should execute the chain. Set this to `NULL` to allow any client. "
