@@ -26,8 +26,8 @@ func TestAsyncChains(t *testing.T) {
 	//add correct chain
 	pge.NotificationHandler(&pgconn.PgConn{}, n1)
 	pge.NotificationHandler(&pgconn.PgConn{}, ns)
-	mock.ExpectQuery("SELECT.+chain_execution_config").
-		WillReturnRows(pgxmock.NewRows([]string{"chain_execution_config", "chain_id", "chain_name",
+	mock.ExpectQuery("SELECT.+chain_id").
+		WillReturnRows(pgxmock.NewRows([]string{"chain_id", "task_id", "chain_name",
 			"self_destruct", "exclusive_execution", "max_instances"}).
 			AddRow(24, 24, "foo", false, false, 16))
 	if pge.Verbose() {
@@ -38,7 +38,7 @@ func TestAsyncChains(t *testing.T) {
 	sch.retrieveAsyncChainsAndRun(ctx)
 	//add incorrect chaing
 	pge.NotificationHandler(&pgconn.PgConn{}, n2)
-	mock.ExpectQuery("SELECT.+chain_execution_config").WillReturnError(errors.New("error"))
+	mock.ExpectQuery("SELECT.+chain_id").WillReturnError(errors.New("error"))
 	mock.ExpectExec("INSERT.+log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()

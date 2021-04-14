@@ -141,7 +141,7 @@ CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(run_at timetable.cron, ts t
 	END
 	FROM 
         timetable.cron_split_to_arrays(run_at) a
-$$ LANGUAGE sql;
+$$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.next_run(cron timetable.cron) RETURNS timestamptz AS $$
 	SELECT * FROM timetable.cron_runs(now(), cron) LIMIT 1

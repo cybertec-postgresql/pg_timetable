@@ -1,23 +1,23 @@
 WITH
    hello_task(id) AS (
-        insert into timetable.base_task (name, kind, script)
-            select 'HelloWorld'||i, 'PROGRAM', 'echo'
-            from generate_series(1,500) i
-            returning task_id
+        INSERT INTO timetable.command (name, kind, script)
+            SELECT 'HelloWorld'||i, 'PROGRAM', 'echo'
+            FROM generate_series(1,500) i
+            returning command_id
     ),
 
-    chain_insert(chain_id) AS (
-        INSERT INTO timetable.task_chain
-            (parent_id, task_id, run_uid, database_connection, ignore_error)
+    chain_insert(task_id) AS (
+        INSERT INTO timetable.task
+            (parent_id, command_id, run_as, database_connection, ignore_error)
             select
               NULL, id, NULL, NULL, FALSE
             from hello_task
-            RETURNING chain_id
+            RETURNING task_id
     ),
 
-    chain_config(id, chain_id) as (
-        INSERT INTO timetable.chain_execution_config (
-              chain_id,
+    chain_config(id, task_id) as (
+        INSERT INTO timetable.chain (
+              task_id,
               chain_name,
               run_at,
               max_instances,
@@ -26,23 +26,23 @@ WITH
               exclusive_execution
             )
             SELECT
-              chain_id, -- chain_id,
-              'print hello via echo from ' || chain_id , -- chain_name,
+              task_id, -- task_id,
+              'print hello via echo from ' || task_id , -- chain_name,
               '* * * * *', -- run_at,
               1, -- max_instances,
               TRUE, -- live,
               FALSE, -- self_destruct,
               FALSE -- exclusive_execution,
             FROM chain_insert
-            RETURNING  chain_execution_config, chain_id
+            RETURNING  chain_id, task_id
     )
 
 -- 1 param to the program command
-INSERT INTO timetable.chain_execution_parameters
-(chain_execution_config, chain_id, order_id, value)
+INSERT INTO timetable.parameter
+(chain_id, task_id, order_id, value)
             SELECT
                    id,
-                   chain_id,
+                   task_id,
                     1,
-                    format('["hello world from %s"]', chain_id) :: jsonb
+                    format('["hello world from %s"]', task_id) :: jsonb
             FROM chain_config;

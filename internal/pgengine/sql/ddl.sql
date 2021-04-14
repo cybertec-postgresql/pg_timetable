@@ -4,14 +4,14 @@ CREATE SCHEMA timetable;
 -- every change to this file should populate this table.
 -- Version value should contain issue number zero padded followed by
 -- short description of the issue\feature\bug implemented\resolved
-CREATE TABLE timetable.migrations(
+CREATE TABLE timetable.migration(
 	id INT8 NOT NULL,
 	version TEXT NOT NULL,
 	PRIMARY KEY (id)
 );
 
 INSERT INTO 
-	timetable.migrations (id, version) 
+	timetable.migration (id, version) 
 VALUES 
 	(0, '0051 Implement upgrade machinery'),
 	(1, '0070 Interval scheduling and cron only syntax'),
@@ -24,97 +24,111 @@ VALUES
 	(8, '0178 Disable tasks on a REPLICA node'),
 	(9, '0195 Add notify_chain_start() and notify_chain_stop() functions');
 
--- base tasks: these are the tasks our system actually knows.
--- tasks will be organized in task chains.
---
--- "script" contains either an SQL script, or
---      command string to be executed
---
--- "kind" indicates whether "script" is SQL, built-in function or external program
-CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
+CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
 
-CREATE TABLE timetable.base_task (
-	task_id		BIGSERIAL  			PRIMARY KEY,
+CREATE TABLE timetable.command (
+	command_id	BIGSERIAL  			PRIMARY KEY,
 	name		TEXT    		    NOT NULL UNIQUE,
-	kind		timetable.task_kind	NOT NULL DEFAULT 'SQL',
+	kind		timetable.command_kind	NOT NULL DEFAULT 'SQL',
 	script		TEXT				NOT NULL,
 	CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
 );
 
--- Task chain declaration:
--- "parent_id" is unique to ensure proper chaining (no trees)
--- "task_id" is the task taken from base_task table
--- "params" is the actual parameters passed to the task
---      upon execution
--- "run_uid" is the username to run as (e.g. su -c "..." - username)
---              (if NULL then don't bother changing UIDs)
--- "ignore_error" indicates whether the next task
---      in the chain can be executed regardless of the
---      success of the current one
-CREATE TABLE timetable.task_chain (
-	chain_id        	BIGSERIAL	PRIMARY KEY,
-	parent_id			BIGINT 		UNIQUE  REFERENCES timetable.task_chain(chain_id)
+COMMENT ON TABLE timetable.command IS 
+	'Commands pg_timetable actually knows about';
+COMMENT ON COLUMN timetable.command.kind IS 
+	'Indicates whether "script" is SQL, built-in function or external program';
+COMMENT ON COLUMN timetable.command.script IS 
+	'Contains either an SQL script, or command string to be executed';
+
+
+CREATE TABLE timetable.task (
+	task_id        		BIGSERIAL	PRIMARY KEY,
+	parent_id			BIGINT 		UNIQUE  REFERENCES timetable.task(task_id)
 									ON UPDATE CASCADE
 									ON DELETE CASCADE,
-	task_id				BIGINT		NOT NULL REFERENCES timetable.base_task(task_id)
+	command_id			BIGINT		NOT NULL REFERENCES timetable.command(command_id)
 									ON UPDATE CASCADE
 									ON DELETE CASCADE,
-	run_uid				TEXT,
+	run_as				TEXT,
 	database_connection	TEXT,
-	ignore_error		BOOLEAN		NOT NULL DEFAULT false,
-	autonomous			BOOLEAN		NOT NULL DEFAULT false
+	ignore_error		BOOLEAN		NOT NULL DEFAULT FALSE,
+	autonomous			BOOLEAN		NOT NULL DEFAULT FALSE
 );
 
+COMMENT ON TABLE timetable.task IS 
+	'Holds information about chain elements aka tasks';
+COMMENT ON COLUMN timetable.task.parent_id IS
+	'Link to the parent task, if NULL task considered to be head of a chain';
+COMMENT ON COLUMN timetable.task.run_as IS
+	'Role name to run task as. Uses SET ROLE for SQL commands';
+COMMENT ON COLUMN timetable.task.ignore_error IS
+	'Indicates whether a next task in a chain can be executed regardless of the success of the current one';	
 
--- Task chain execution config. we basically use this table to define when which chain has to
--- be executed.
--- "chain_id" is the first id (parent_id == NULL) of a chain in task_chain
--- "chain_name" is the name of this chain for logging
--- "run_at" is the CRON-style time notation the task has to be run at
--- "max_instances" is the number of instances this chain can run in parallel
--- "live" is the indication that the chain is finalized, the system can run it
--- "self_destruct" is the indication that this chain will delete itself after run
--- "client_name" is the indication that this chain will run only under this tag
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
 	substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL	
 	OR VALUE = '@reboot'
 	OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
 );
 
+COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support of interval values';
 
-CREATE TABLE timetable.chain_execution_config (
-    chain_execution_config		BIGSERIAL	PRIMARY KEY,
-    chain_id        			BIGINT 		REFERENCES timetable.task_chain(chain_id)
+CREATE TABLE timetable.chain (
+    chain_id			BIGSERIAL	PRIMARY KEY,
+    task_id        		BIGINT 		REFERENCES timetable.task(task_id)
                                             ON UPDATE CASCADE
 											ON DELETE CASCADE,
-    chain_name      			TEXT		NOT NULL UNIQUE,
-    run_at						timetable.cron,
-    max_instances				INTEGER,
-    live						BOOLEAN		DEFAULT false,
-    self_destruct				BOOLEAN		DEFAULT false,
-	exclusive_execution			BOOLEAN		DEFAULT false,
-	excluded_execution_configs	INTEGER[],
-	client_name					TEXT
+    chain_name      	TEXT		NOT NULL UNIQUE,
+    run_at				timetable.cron,
+    max_instances		INTEGER,
+    live				BOOLEAN		DEFAULT FALSE,
+    self_destruct		BOOLEAN		DEFAULT FALSE,
+	exclusive_execution	BOOLEAN		DEFAULT FALSE,
+	client_name			TEXT
 );
 
--- parameter passing for config
-CREATE TABLE timetable.chain_execution_parameters(
-	chain_execution_config	BIGINT	REFERENCES timetable.chain_execution_config (chain_execution_config)
+COMMENT ON TABLE timetable.chain IS
+	'Stores information about chains schedule';
+COMMENT ON COLUMN timetable.chain.task_id IS
+	'First task (head) of the chain';
+COMMENT ON COLUMN timetable.chain.run_at IS
+	'Extended CRON-style time notation the chain has to be run at';
+COMMENT ON COLUMN timetable.chain.max_instances IS
+	'Number of instances (clients) this chain can run in parallel';
+COMMENT ON COLUMN timetable.chain.live IS
+	'Indication that the chain is ready to run, set to FALSE to pause execution';	
+COMMENT ON COLUMN timetable.chain.self_destruct IS
+	'Indication that this chain will delete itself after successful run';
+COMMENT ON COLUMN timetable.chain.exclusive_execution IS
+	'All parallel chains should be paused while executing this chain';	
+COMMENT ON COLUMN timetable.chain.client_name IS
+	'Only client with this name is allowed to run this chain, set to NULL to allow any client';	
+
+-- parameter passing for a chain task
+CREATE TABLE timetable.parameter(
+	chain_id	BIGINT	REFERENCES timetable.chain (chain_id)
 									ON UPDATE CASCADE
 									ON DELETE CASCADE,
-	chain_id 				BIGINT 	REFERENCES timetable.task_chain(chain_id)
+	task_id 				BIGINT 	REFERENCES timetable.task(task_id)
 									ON UPDATE CASCADE
 									ON DELETE CASCADE,
 	order_id 				INTEGER	CHECK (order_id > 0),
 	value 					jsonb,
-	PRIMARY KEY (chain_execution_config, chain_id, order_id)
+	PRIMARY KEY (chain_id, task_id, order_id)
 );
+
+COMMENT ON TABLE timetable.parameter IS
+	'Stores parameters passed as arguments to a chain task';
 
 CREATE UNLOGGED TABLE timetable.active_session(
 	client_pid BIGINT NOT NULL,
 	client_name TEXT NOT NULL,
 	server_pid BIGINT NOT NULL
 );
+
+COMMENT ON TABLE timetable.active_session IS
+	'Stores information about active sessions';
+	
 
 CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
 
@@ -126,7 +140,6 @@ LANGUAGE sql;
 
 CREATE TABLE timetable.log
 (
-	id					BIGSERIAL			PRIMARY KEY,
 	ts					TIMESTAMPTZ			DEFAULT now(),
 	client_name	        TEXT				DEFAULT timetable.get_client_name(pg_backend_pid()),
 	pid					INTEGER 			NOT NULL,
@@ -137,33 +150,32 @@ CREATE TABLE timetable.log
 
 -- log timetable related action
 CREATE TABLE timetable.execution_log (
-	chain_execution_config	BIGINT,
-	chain_id        		BIGINT,
-	task_id         		BIGINT,
-	name            		TEXT		NOT NULL,
-	script          		TEXT,
-	kind          			TEXT,
-	last_run       	 		TIMESTAMPTZ	DEFAULT now(),
-	finished        		TIMESTAMPTZ,
-	returncode      		INTEGER,
-	pid             		BIGINT,
-	output					TEXT,
-	client_name				TEXT		NOT NULL
+	chain_id	BIGINT,
+	task_id     BIGINT,
+	command_id  BIGINT,
+	name        TEXT		NOT NULL,
+	script      TEXT,
+	kind        TEXT,
+	last_run    TIMESTAMPTZ	DEFAULT now(),
+	finished    TIMESTAMPTZ,
+	returncode  INTEGER,
+	pid         BIGINT,
+	output		TEXT,
+	client_name	TEXT		NOT NULL
 );
 
 CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
 
 CREATE TABLE timetable.run_status (
-	run_status 					BIGSERIAL,
+	run_status 					BIGSERIAL	PRIMARY KEY,
 	start_status				BIGINT,
 	execution_status 			timetable.execution_status,
-	chain_id 					BIGINT,
+	task_id 					BIGINT,
 	current_execution_element	BIGINT,
 	started 					TIMESTAMPTZ,
-	last_status_update 			TIMESTAMPTZ 				DEFAULT clock_timestamp(),
-	chain_execution_config 		BIGINT,
-	client_name					TEXT	NOT NULL,
-	PRIMARY KEY (run_status)
+	last_status_update 			TIMESTAMPTZ DEFAULT clock_timestamp(),
+	chain_id 					BIGINT,
+	client_name					TEXT		NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
@@ -205,7 +217,7 @@ CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT)
 RETURNS void AS
 $CODE$
 	INSERT INTO timetable.run_status
-		(execution_status, started, last_status_update, start_status, chain_execution_config, client_name)
+		(execution_status, started, last_status_update, start_status, chain_id, client_name)
 	SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
 		SELECT   start_status
 		FROM   timetable.run_status
@@ -218,37 +230,37 @@ STRICT LANGUAGE sql;
 CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 	DECLARE
 		tmp_parent_id BIGINT;
-		tmp_chain_id BIGINT;
-		orig_chain_id BIGINT;
+		tmp_task_id BIGINT;
+		orig_task_id BIGINT;
 		tmp_chain_head_id BIGINT;
 		i BIGINT;
 	BEGIN
-		--raise notice 'Fixing chain for deletion of base_task#%', OLD.task_id;
+		--raise notice 'Fixing chain for deletion of command#%', OLD.command_id;
 
-		FOR orig_chain_id IN
-			SELECT chain_id FROM timetable.task_chain WHERE task_id = OLD.task_id
+		FOR orig_task_id IN
+			SELECT task_id FROM timetable.task WHERE command_id = OLD.command_id
 		LOOP
 
-			--raise notice 'chain_id#%', orig_chain_id;	
-			tmp_chain_id := orig_chain_id;
+			--raise notice 'task_id#%', orig_task_id;	
+			tmp_task_id := orig_task_id;
 			i := 0;
 			LOOP
 				i := i + 1;
-				SELECT parent_id INTO tmp_parent_id FROM timetable.task_chain
-					WHERE chain_id = tmp_chain_id;
+				SELECT parent_id INTO tmp_parent_id FROM timetable.task
+					WHERE task_id = tmp_task_id;
 				EXIT WHEN tmp_parent_id IS NULL;
 				IF i > 100 THEN
-					RAISE EXCEPTION 'Infinite loop at timetable.task_chain.chain_id=%', tmp_chain_id;
+					RAISE EXCEPTION 'Infinite loop at timetable.task.task_id=%', tmp_task_id;
 					RETURN NULL;
 				END IF;
-				tmp_chain_id := tmp_parent_id;
+				tmp_task_id := tmp_parent_id;
 			END LOOP;
 			
-			SELECT parent_id INTO tmp_chain_head_id FROM timetable.task_chain
-				WHERE chain_id = tmp_chain_id;
+			SELECT parent_id INTO tmp_chain_head_id FROM timetable.task
+				WHERE task_id = tmp_task_id;
 				
-			--raise notice 'PERFORM task_chain_delete(%,%)', tmp_chain_head_id, orig_chain_id;
-			PERFORM timetable.task_chain_delete(tmp_chain_head_id, orig_chain_id);
+			--raise notice 'PERFORM task_delete(%,%)', tmp_chain_head_id, orig_task_id;
+			PERFORM timetable.task_delete(tmp_chain_head_id, orig_task_id);
 
 		END LOOP;
 		
@@ -256,70 +268,70 @@ CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
 	END;
 $$ LANGUAGE 'plpgsql';
 
-CREATE TRIGGER trig_task_chain_fixer
-        BEFORE DELETE ON timetable.base_task
+CREATE TRIGGER trig_task_fixer
+        BEFORE DELETE ON timetable.command
         FOR EACH ROW EXECUTE PROCEDURE timetable.trig_chain_fixer();
 
-CREATE OR REPLACE FUNCTION timetable.task_chain_delete(config_ bigint, chain_id_ bigint) RETURNS boolean AS $$
+CREATE OR REPLACE FUNCTION timetable.task_delete(config_ bigint, task_id_ bigint) RETURNS boolean AS $$
 DECLARE
-		chain_id_1st_   bigint;
+		task_id_1st_   bigint;
 		id_in_chain	 bool;
-		chain_id_curs   bigint;
-		chain_id_before bigint;
-		chain_id_after  bigint;
+		task_id_curs   bigint;
+		task_id_before bigint;
+		task_id_after  bigint;
 		curs1 refcursor;
 BEGIN
-		SELECT chain_id INTO chain_id_1st_ FROM timetable.chain_execution_config WHERE chain_execution_config = config_;
-		-- No such chain_execution_config
+		SELECT task_id INTO task_id_1st_ FROM timetable.chain WHERE chain_id = config_;
+		-- No such chain_id
 		IF NOT FOUND THEN
-				RAISE NOTICE 'No such chain_execution_config';
+				RAISE NOTICE 'No such chain_id';
 				RETURN false;
 		END IF;
 		-- This head is not connected to a chain
-		IF chain_id_1st_ IS NULL THEN
+		IF task_id_1st_ IS NULL THEN
 				RAISE NOTICE 'This head is not connected to a chain';
 				RETURN false;
 		END IF;
 
-		OPEN curs1 FOR WITH RECURSIVE x (chain_id) AS (
-				SELECT chain_id FROM timetable.task_chain
-				WHERE chain_id = chain_id_1st_ AND parent_id IS NULL
+		OPEN curs1 FOR WITH RECURSIVE x (task_id) AS (
+				SELECT task_id FROM timetable.task
+				WHERE task_id = task_id_1st_ AND parent_id IS NULL
 				UNION ALL
-				SELECT timetable.task_chain.chain_id FROM timetable.task_chain, x
-				WHERE timetable.task_chain.parent_id = x.chain_id
-		) SELECT chain_id FROM x;
+				SELECT timetable.task.task_id FROM timetable.task, x
+				WHERE timetable.task.parent_id = x.task_id
+		) SELECT task_id FROM x;
 
 		id_in_chain = false;
-		chain_id_curs = NULL;
-		chain_id_before = NULL;
-		chain_id_after = NULL;
+		task_id_curs = NULL;
+		task_id_before = NULL;
+		task_id_after = NULL;
 		LOOP
-				FETCH curs1 INTO chain_id_curs;
-				IF id_in_chain = false AND chain_id_curs <> chain_id_ THEN
-						chain_id_before = chain_id_curs;
+				FETCH curs1 INTO task_id_curs;
+				IF id_in_chain = false AND task_id_curs <> task_id_ THEN
+						task_id_before = task_id_curs;
 				END IF;
-				IF chain_id_curs = chain_id_ THEN
+				IF task_id_curs = task_id_ THEN
 						id_in_chain = true;
 				END IF;
 				EXIT WHEN id_in_chain OR NOT FOUND;
 		END LOOP;
 
 		IF id_in_chain THEN
-				FETCH curs1 INTO chain_id_after;
+				FETCH curs1 INTO task_id_after;
 		ELSE
 				CLOSE curs1;
-				RAISE NOTICE 'This chain_id is not part of chain pointed by the chain_execution_config';
+				RAISE NOTICE 'This task_id is not part of chain pointed by the chain_id';
 				RETURN false;
 		END IF;
 
 		CLOSE curs1;
 
-		IF chain_id_before IS NULL THEN
-			UPDATE timetable.chain_execution_config SET chain_id = chain_id_after WHERE chain_execution_config = config_;
+		IF task_id_before IS NULL THEN
+			UPDATE timetable.chain SET task_id = task_id_after WHERE chain_id = config_;
 		END IF;
-		UPDATE timetable.task_chain SET parent_id = NULL WHERE chain_id = chain_id_;
-		UPDATE timetable.task_chain SET parent_id = chain_id_before WHERE chain_id = chain_id_after;
-		DELETE FROM timetable.task_chain WHERE chain_id = chain_id_;
+		UPDATE timetable.task SET parent_id = NULL WHERE task_id = task_id_;
+		UPDATE timetable.task SET parent_id = task_id_before WHERE task_id = task_id_after;
+		DELETE FROM timetable.task WHERE task_id = task_id_;
 
 		RETURN true;
 END

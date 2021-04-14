@@ -41,6 +41,12 @@ func main() {
 		}
 	} else {
 		if upgrade, err := pge.CheckNeedMigrateDb(ctx); upgrade || err != nil {
+			if upgrade {
+				logger.Error("You need to upgrade your database before proceeding, use --upgrade option")
+			}
+			if err != nil {
+				logger.WithError(err).Error("Migration check failed")
+			}
 			os.Exit(3)
 		}
 	}

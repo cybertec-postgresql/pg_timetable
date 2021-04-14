@@ -1,65 +1,66 @@
--- get_running_jobs() returns jobs are running for particular chain_execution_config
+-- get_running_jobs() returns jobs are running for particular chain_id
 CREATE OR REPLACE FUNCTION timetable.get_running_jobs(BIGINT) RETURNS SETOF record AS $$
-    SELECT  chain_execution_config, start_status
+    SELECT  chain_id, start_status
         FROM    timetable.run_status
         WHERE   start_status IN ( SELECT   start_status
                 FROM    timetable.run_status
                 WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED',
                              'CHAIN_DONE', 'DEAD')
-                    AND (chain_execution_config = $1 OR chain_execution_config = 0)
+                    AND (chain_id = $1 OR chain_id = 0)
                 GROUP BY 1
                 HAVING count(*) < 2 
                 ORDER BY 1)
-            AND chain_execution_config = $1 
+            AND chain_id = $1 
         GROUP BY 1, 2
         ORDER BY 1, 2 DESC
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name TEXT, IN parent_task_id BIGINT) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION timetable.add_task(IN command_name TEXT, IN parent_task_id BIGINT) RETURNS BIGINT AS $$
 DECLARE
-    builtin_id BIGINT;
-    result_id BIGINT;
+    v_command_id BIGINT;
+    v_result_id BIGINT;
 BEGIN
-    SELECT task_id FROM timetable.base_task WHERE name = task_name INTO builtin_id;
+    SELECT command_id FROM timetable.command WHERE name = command_name INTO v_command_id;
     IF NOT FOUND THEN
-        RAISE EXCEPTION 'Nonexistent builtin task --> %', task_name
+        RAISE EXCEPTION 'Nonexistent command --> %', command_name
         USING 
             ERRCODE = 'invalid_parameter_value',
-            HINT = 'Please check your user task name parameter';
+            HINT = 'Please check your command name parameter';
     END IF;
-    INSERT INTO timetable.task_chain 
-        (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
+    INSERT INTO timetable.task 
+        (task_id, parent_id, command_id)
     VALUES 
-        (DEFAULT, parent_task_id, builtin_id, NULL, NULL, FALSE)
-    RETURNING chain_id INTO result_id;
-    RETURN result_id;
+        (DEFAULT, parent_task_id, v_command_id)
+    RETURNING task_id INTO v_result_id;
+    RETURN v_result_id;
 END
 $$ LANGUAGE PLPGSQL;
 
--- job_add() will add job to the system
-CREATE OR REPLACE FUNCTION timetable.job_add(
-    task_name        TEXT,
-    task_function    TEXT,
-    client_name      TEXT,
-    task_type        timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
-    run_at           timetable.cron DEFAULT NULL,
-    max_instances    INTEGER DEFAULT NULL,
-    live             BOOLEAN DEFAULT false,
-    self_destruct    BOOLEAN DEFAULT false
+-- add_job() will add one-task chain to the system
+CREATE OR REPLACE FUNCTION timetable.add_job(
+    job_name            TEXT,
+    job_schedule        timetable.cron,
+    job_command         TEXT,
+    job_client_name     TEXT DEFAULT NULL,
+    job_type            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
+    job_max_instances   INTEGER DEFAULT NULL,
+    job_live            BOOLEAN DEFAULT TRUE,
+    job_self_destruct   BOOLEAN DEFAULT FALSE,
+    job_ignore_errors   BOOLEAN DEFAULT TRUE
 ) RETURNS BIGINT AS $$
     WITH 
-        cte_task(v_task_id) AS ( --Create task
-            INSERT INTO timetable.base_task 
-            VALUES (DEFAULT, task_name, task_type, task_function)
-            RETURNING task_id
+        cte_task(v_command_id) AS ( --Create task
+            INSERT INTO timetable.command (command_id, name, kind, script)
+            VALUES (DEFAULT, job_name, job_type, job_command)
+            RETURNING command_id
         ),
-        cte_chain(v_chain_id) AS ( --Create chain
-            INSERT INTO timetable.task_chain (task_id, ignore_error)
-            SELECT v_task_id, TRUE FROM cte_task
-            RETURNING chain_id
+        cte_chain(v_task_id) AS ( --Create chain
+            INSERT INTO timetable.task (command_id, ignore_error, autonomous)
+            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_task
+            RETURNING task_id
         )
-    INSERT INTO timetable.chain_execution_config (
-        chain_id, 
+    INSERT INTO timetable.chain (
+        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
@@ -67,33 +68,33 @@ CREATE OR REPLACE FUNCTION timetable.job_add(
         self_destruct,
         client_name
     ) SELECT 
-        v_chain_id, 
-        'chain_' || v_chain_id, 
-        run_at,
-        max_instances, 
-        live, 
-        self_destruct,
-        client_name
+        v_task_id, 
+        job_name, 
+        job_schedule,
+        job_max_instances, 
+        job_live, 
+        job_self_destruct,
+        job_client_name
     FROM cte_chain
-    RETURNING chain_execution_config 
+    RETURNING chain_id 
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_config_id BIGINT, worker_name TEXT)
+CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_id BIGINT, worker_name TEXT)
 RETURNS void AS $$
   SELECT pg_notify(
   	worker_name, 
 	format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
-		chain_config_id, 
+		chain_id, 
 		EXTRACT(epoch FROM clock_timestamp())::bigint)
 	)
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(chain_config_id BIGINT, worker_name TEXT)
+CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(chain_id BIGINT, worker_name TEXT)
 RETURNS void AS  $$ 
   SELECT pg_notify(
   	worker_name, 
 	format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
-		chain_config_id, 
+		chain_id, 
 		EXTRACT(epoch FROM clock_timestamp())::bigint)
 	)
 $$ LANGUAGE SQL;

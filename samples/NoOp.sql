@@ -1,21 +1,19 @@
-INSERT INTO timetable.chain_execution_config  (
-    chain_execution_config, 
+INSERT INTO timetable.chain  (
     chain_id, 
+    task_id, 
     chain_name, 
     run_at, 
     max_instances, 
     live,
     self_destruct, 
-    exclusive_execution, 
-    excluded_execution_configs
+    exclusive_execution
 ) VALUES (
-    DEFAULT, -- chain_execution_config, 
-    timetable.insert_base_task(task_name := 'NoOp', parent_task_id := NULL), -- chain_id, 
+    DEFAULT, -- chain_id, 
+    timetable.add_task(command_name := 'NoOp', parent_task_id := NULL), -- task_id, 
     'execute noop every minute', -- chain_name, 
     '* * * * *', -- run_at, 
     1, -- max_instances, 
     TRUE, -- live, 
     FALSE, -- self_destruct,
-	FALSE, -- exclusive_execution, 
-    NULL -- excluded_execution_configs
+	FALSE -- exclusive_execution, 
 );
