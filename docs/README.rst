@@ -8,15 +8,21 @@ Main features
 -------------
 
 - Tasks can be arranged in chains
-- A chain can consist of SQL and executables
+- A chain can consist of built-int commands, SQL and executables
 - Parameters can be passed to chains
 - Missed tasks (possibly due to downtime) can be retried automatically
 - Support for configurable repetitions
-- Builtin tasks such as sending emails, etc.
+- Built-in tasks such as sending emails, etc.
 - Fully database driven configuration
 - Full support for database driven logging
 - Cron-style scheduling
 - Optional concurrency protection
+
+Quick Start
+-----------
+
+1. Download pg_timetable executable
+2. Make sure your PostgreSQL server is up and running and has a role with `CREATE` privilege
 
 ::
 
