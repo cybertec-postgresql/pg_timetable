@@ -20,7 +20,8 @@ Currently, there are three different kinds of commands:
     External Command. Anything that can be called as an external binary, including shells, e.g. ``bash``, ``pwsh``, etc.
 
 ``BUILTIN``
-    Internal Command. A prebuilt functionality included in **pg_timetable**. These include: 
+    Internal Command. A prebuilt functionality included in **pg_timetable**. These include:
+
         * *NoOp*, 
         * *Sleep*, 
         * *Log*,
@@ -30,8 +31,8 @@ Currently, there are three different kinds of commands:
 
 A new command can be created by inserting a new entry into **timetable.command** table.
 
-Excerpt of **timetable.command** table:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Table timetable.command
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     ``name text``
         The unique name of the command.
@@ -52,9 +53,11 @@ The next building block is a **task**, which simply represents a step in a list 
 #. Build report
 #. Remove the files from disk
 
-All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback ``PROGRAM`` and ``BUILTIN`` tasks.
+.. note::
+    
+    All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback ``PROGRAM`` and ``BUILTIN`` tasks.
 
-Excerpt of **timetable.task** table:
+Table timetable.task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     ``parent_id bigint``
@@ -76,17 +79,17 @@ Excerpt of **timetable.task** table:
 As mentioned above, **commands** are simple skeletons (e.g. *send email*, *vacuum*, etc.).
 In most cases, they have to be brought to live by passing input parameters to the execution. 
 
-Excerpt of **timetable.parameter** table:
+Table timetable.parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``chain_id bigint``
-    "The ID of the chain."
-``task_id bigint``
-    "The ID of the task."
-``order_id integer``
-    "The order of the parameter. Several parameters are processed one by one according to the order."
-``value jsonb``
-    "A JSON value containing the parameters."
+    ``chain_id bigint``
+        The ID of the chain.
+    ``task_id bigint``
+        The ID of the task.
+    ``order_id integer``
+        The order of the parameter. Several parameters are processed one by one according to the order.
+    ``value jsonb``
+        A JSON value containing the parameters.
 
 Parameter value format
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,21 +170,22 @@ Chain
 
 Once tasks has been arranged, they have to be scheduled as a **chain**. For this, **pg_timetable** builds upon the enhanced **cron**-string, all the while adding multiple configuration options.
 
-Excerpt of **timetable.chain** table:
+Table timetable.chain
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``task_id bigint``
-    "The id of the first task (head)."
+    The id of the first task (head).
 ``chain_name text``
-    "The unique name of the chain."
+    The unique name of the chain.
 ``run_at timetable.cron``
-    "Standard *cron*-style value or ``@after``, ``@every``, ``@reboot`` clause."
+    Standard *cron*-style value or ``@after``, ``@every``, ``@reboot`` clause.
 ``max_instances integer``
-    "The amount of instances that this chain may have running at the same time. "
+    The amount of instances that this chain may have running at the same time.
 ``live boolean``
-    "Control if the chain may be executed once it reaches its schedule. "
+    Control if the chain may be executed once it reaches its schedule.
 ``self_destruct boolean``
-    "Self destruct the chain after execution. "
+    Self destruct the chain after execution.
 ``exclusive_execution boolean``
-    "Specifies whether the chain should be executed exclusively while all other chains are paused. "
+    Specifies whether the chain should be executed exclusively while all other chains are paused.
 ``client_name text``
-    "Specifies which client should execute the chain. Set this to `NULL` to allow any client. "
+    Specifies which client should execute the chain. Set this to `NULL` to allow any client.
