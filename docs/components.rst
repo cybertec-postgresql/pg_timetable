@@ -127,7 +127,7 @@ Kind
         
 ``BUILTIN: SendMail``
     ``object``
-        .. code-block::
+        .. code-block:: SQL
                 
             '{
                 "username":     "user@example.com",
@@ -145,7 +145,7 @@ Kind
         
 ``BUILTIN: Download``
     ``object``
-        .. code-block::
+        .. code-block:: SQL
                 
             '{
                 "workersnum": 2, 
@@ -155,7 +155,7 @@ Kind
         
 ``BUILTIN: CopyFromFile``
     ``object``
-        .. code-block::
+        .. code-block:: SQL
                 
             '{
                 "sql": "COPY location FROM STDIN", 
@@ -173,19 +173,19 @@ Once tasks has been arranged, they have to be scheduled as a **chain**. For this
 Table timetable.chain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``task_id bigint``
-    The id of the first task (head).
-``chain_name text``
-    The unique name of the chain.
-``run_at timetable.cron``
-    Standard *cron*-style value or ``@after``, ``@every``, ``@reboot`` clause.
-``max_instances integer``
-    The amount of instances that this chain may have running at the same time.
-``live boolean``
-    Control if the chain may be executed once it reaches its schedule.
-``self_destruct boolean``
-    Self destruct the chain after execution.
-``exclusive_execution boolean``
-    Specifies whether the chain should be executed exclusively while all other chains are paused.
-``client_name text``
-    Specifies which client should execute the chain. Set this to `NULL` to allow any client.
+    ``task_id bigint``
+        The id of the first task (head).
+    ``chain_name text``
+        The unique name of the chain.
+    ``run_at timetable.cron``
+        Standard *cron*-style value or ``@after``, ``@every``, ``@reboot`` clause.
+    ``max_instances integer``
+        The amount of instances that this chain may have running at the same time.
+    ``live boolean``
+        Control if the chain may be executed once it reaches its schedule.
+    ``self_destruct boolean``
+        Self destruct the chain after execution.
+    ``exclusive_execution boolean``
+        Specifies whether the chain should be executed exclusively while all other chains are paused.
+    ``client_name text``
+        Specifies which client should execute the chain. Set this to `NULL` to allow any client.

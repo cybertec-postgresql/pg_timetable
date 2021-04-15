@@ -15,7 +15,10 @@ CREATE OR REPLACE FUNCTION timetable.get_running_jobs(BIGINT) RETURNS SETOF reco
         ORDER BY 1, 2 DESC
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.add_task(IN command_name TEXT, IN parent_task_id BIGINT) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION timetable.add_task(
+    IN command_name TEXT, 
+    IN parent_task_id BIGINT
+) RETURNS BIGINT AS $$
 DECLARE
     v_command_id BIGINT;
     v_result_id BIGINT;
@@ -79,22 +82,26 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     RETURNING chain_id 
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_id BIGINT, worker_name TEXT)
-RETURNS void AS $$
+CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS $$
   SELECT pg_notify(
-  	worker_name, 
-	format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
-		chain_id, 
-		EXTRACT(epoch FROM clock_timestamp())::bigint)
-	)
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(chain_id BIGINT, worker_name TEXT)
-RETURNS void AS  $$ 
+CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS  $$ 
   SELECT pg_notify(
-  	worker_name, 
-	format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
-		chain_id, 
-		EXTRACT(epoch FROM clock_timestamp())::bigint)
-	)
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
 $$ LANGUAGE SQL;

@@ -2,13 +2,14 @@ Welcome to pg_timetable's documentation!
 ========================================
 
 .. toctree::
+   :numbered:
    :maxdepth: 2
    :caption: Contents:
 
    README
-   components
-   installation
    background
+   installation
+   components
    database_schema
 ..    features
 ..    advanced_features
