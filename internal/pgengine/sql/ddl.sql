@@ -44,12 +44,12 @@ COMMENT ON COLUMN timetable.command.script IS
 
 CREATE TABLE timetable.task (
     task_id             BIGSERIAL   PRIMARY KEY,
-    parent_id           BIGINT      UNIQUE  REFERENCES timetable.task(task_id)
-                                    ON UPDATE CASCADE
-                                    ON DELETE CASCADE,
-    command_id          BIGINT      NOT NULL REFERENCES timetable.command(command_id)
-                                    ON UPDATE CASCADE
-                                    ON DELETE CASCADE,
+    parent_id           BIGINT      UNIQUE      REFERENCES timetable.task(task_id)
+                                                ON UPDATE CASCADE
+                                                ON DELETE CASCADE,
+    command_id          BIGINT      NOT NULL    REFERENCES timetable.command(command_id)
+                                                ON UPDATE CASCADE
+                                                ON DELETE CASCADE,
     run_as              TEXT,
     database_connection TEXT,
     ignore_error        BOOLEAN     NOT NULL DEFAULT FALSE,
@@ -76,8 +76,8 @@ COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support o
 CREATE TABLE timetable.chain (
     chain_id            BIGSERIAL   PRIMARY KEY,
     task_id             BIGINT      REFERENCES timetable.task(task_id)
-                                            ON UPDATE CASCADE
-                                            ON DELETE CASCADE,
+                                    ON UPDATE CASCADE
+                                    ON DELETE CASCADE,
     chain_name          TEXT        NOT NULL UNIQUE,
     run_at              timetable.cron,
     max_instances       INTEGER,
@@ -107,11 +107,11 @@ COMMENT ON COLUMN timetable.chain.client_name IS
 -- parameter passing for a chain task
 CREATE TABLE timetable.parameter(
     chain_id    BIGINT  REFERENCES timetable.chain (chain_id)
-                                    ON UPDATE CASCADE
-                                    ON DELETE CASCADE,
+                        ON UPDATE CASCADE
+                        ON DELETE CASCADE,
     task_id     BIGINT  REFERENCES timetable.task(task_id)
-                                    ON UPDATE CASCADE
-                                    ON DELETE CASCADE,
+                        ON UPDATE CASCADE
+                        ON DELETE CASCADE,
     order_id    INTEGER CHECK (order_id > 0),
     value       jsonb,
     PRIMARY KEY (chain_id, task_id, order_id)
@@ -121,9 +121,9 @@ COMMENT ON TABLE timetable.parameter IS
     'Stores parameters passed as arguments to a chain task';
 
 CREATE UNLOGGED TABLE timetable.active_session(
-    client_pid BIGINT NOT NULL,
-    client_name TEXT NOT NULL,
-    server_pid BIGINT NOT NULL
+    client_pid  BIGINT  NOT NULL,
+    client_name TEXT    NOT NULL,
+    server_pid  BIGINT  NOT NULL
 );
 
 COMMENT ON TABLE timetable.active_session IS

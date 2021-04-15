@@ -21,6 +21,8 @@ Database Schema
     :caption: Builtin tasks definition
     :language: SQL
     
-.. image:: timetable_schema.png
+.. figure:: timetable_schema.png
     :align: center
     :alt: Database Schema
+
+    ER-Diagram

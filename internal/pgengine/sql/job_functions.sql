@@ -52,14 +52,14 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_ignore_errors   BOOLEAN DEFAULT TRUE
 ) RETURNS BIGINT AS $$
     WITH 
-        cte_task(v_command_id) AS ( --Create task
+        cte_cmd(v_command_id) AS (
             INSERT INTO timetable.command (command_id, name, kind, script)
             VALUES (DEFAULT, job_name, job_type, job_command)
             RETURNING command_id
         ),
-        cte_chain(v_task_id) AS ( --Create chain
+        cte_task(v_task_id) AS (
             INSERT INTO timetable.task (command_id, ignore_error, autonomous)
-            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_task
+            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_cmd
             RETURNING task_id
         )
     INSERT INTO timetable.chain (
@@ -78,7 +78,7 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
         job_live, 
         job_self_destruct,
         job_client_name
-    FROM cte_chain
+    FROM cte_task
     RETURNING chain_id 
 $$ LANGUAGE SQL;
 
