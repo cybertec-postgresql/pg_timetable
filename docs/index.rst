@@ -9,6 +9,7 @@ Welcome to pg_timetable's documentation!
    components
    installation
    background
+   database_schema
 ..    features
 ..    advanced_features
 ..    installation_options

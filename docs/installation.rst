@@ -8,7 +8,7 @@ Installation
     .. raw:: html
 
         <details>
-        <summary>If you want to use pg_timetable with older versions (9.5, 9.6 and 10)...</summary>
+        <summary>If you want to use **pg_timetable** with older versions (9.5, 9.6 and 10)...</summary>
         please, execute this SQL script before running pg_timetable:
 
     .. code-block:: SQL
@@ -44,9 +44,9 @@ The official docker image can be found here: https://hub.docker.com/r/cybertecpo
 
 .. note:: 
 
-    The ``latest`` tag is up to date with the `master` branch thanks to `his github action <https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/docker.yml>`_. In production you probably want to use the latest `stable tag <https://hub.docker.com/r/cybertecpostgresql/pg_timetable/tags>`_.
+    The ``latest`` tag is up to date with the `master` branch thanks to `this github action <https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/docker.yml>`_. In production you probably want to use the latest `stable tag <https://hub.docker.com/r/cybertecpostgresql/pg_timetable/tags>`_.
 
-Run pg_timetable in Docker:
+Run **pg_timetable** in Docker:
 
 .. code-block:: console
 
@@ -54,7 +54,7 @@ Run pg_timetable in Docker:
     cybertecpostgresql/pg_timetable:latest \
     -h 10.0.0.3 -p 54321 -c worker001
 
-Run pg_timetable in Docker with Environment variables:
+Run **pg_timetable** in Docker with Environment variables:
 
 .. code-block:: console
 
@@ -84,5 +84,7 @@ Build from sources
 
 #. (Optional) Run tests in all sub-folders of the project::
 
+    $ psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
+    $ createdb --owner=scheduler timetable
     $ go test -failfast -timeout=300s -count=1 -parallel=1 ./...
 

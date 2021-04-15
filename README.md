@@ -62,10 +62,9 @@ Resource:
   - [3. Example usages](#3-example-usages)
   - [4. Database logging and transactions](#4-database-logging-and-transactions)
   - [5. Runtime information](#5-runtime-information)
-  - [6. Schema diagram](#6-schema-diagram)
-  - [7. Contributing](#7-contributing)
-  - [8. Support](#8-support)
-  - [9. Authors](#9-authors)
+  - [6. Contributing](#6-contributing)
+  - [7. Support](#7-support)
+  - [8. Authors](#8-authors)
 
 ## 1. Main features
 
@@ -153,6 +152,8 @@ $ ./pg_timetable --dbname=dbname --clientname=worker001 --user=scheduler --passw
 
 4. (Optional) Run tests in all sub-folders of the project:
 ```sh
+$ psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
+$ createdb --owner=scheduler timetable
 $ go test -failfast -timeout=300s -count=1 -parallel=1 ./...
 ```
 
@@ -191,24 +192,20 @@ Furthermore, this behavior allows a remote host to access the log in a straightf
 
 In order to examine the activity of **pg_timetable**, the table `timetable.run_status` can be queried. It contains information about active jobs and their current parameters.
 
-## 6. Schema diagram
-
-![Schema diagram](timetable_schema.png?raw=true "Schema diagram")
-
-## 7. Contributing
+## 6. Contributing
 
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a [pull request][PR].
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
 [PR]: https://github.com/cybertec-postgresql/pg_timetable/pulls
 
-## 8. Support
+## 7. Support
 
 For professional support, please contact [Cybertec][cybertec].
 
 [cybertec]: https://www.cybertec-postgresql.com/
 
 
-## 9. Authors
+## 8. Authors
 
 [Pavlo Golub](https://github.com/pashagolub) and [Hans-Jürgen Schönig](https://github.com/postgresql007).
