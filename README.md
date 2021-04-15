@@ -138,13 +138,11 @@ docker run --rm \
 1. Download and install [Go](https://golang.org/doc/install) on your system.
 2. Clone **pg_timetable** using `go get`:
 ```sh
-$ env GIT_TERMINAL_PROMPT=1 go get github.com/cybertec-postgresql/pg_timetable/
-Username for 'https://github.com': <Github Username>
-Password for 'https://cyberboy@github.com': <Github Password>
+$ git clone https://github.com/cybertec-postgresql/pg_timetable.git
+$ cd pg_timetable
 ```
 3. Run `pg_timetable`:
 ```sh
-$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
 $ go run main.go --dbname=dbname --clientname=worker001 --user=scheduler --password=strongpwd
 ```
 Alternatively, build a binary and run it:
@@ -155,15 +153,8 @@ $ ./pg_timetable --dbname=dbname --clientname=worker001 --user=scheduler --passw
 
 4. (Optional) Run tests in all sub-folders of the project:
 ```sh
-$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
-$ go get github.com/stretchr/testify/
-$ go test ./...
+$ go test -failfast -timeout=300s -count=1 -parallel=1 ./...
 ```
-Alternatively, run tests using postgres docker image:
-```sh
-$ RUN_DOCKER=true go test ./...
-```
-
 
 ### 3 Example usages
 

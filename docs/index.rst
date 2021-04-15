@@ -7,6 +7,7 @@ Welcome to pg_timetable's documentation!
 
    README
    components
+   installation
    background
 ..    features
 ..    advanced_features

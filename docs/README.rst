@@ -28,13 +28,13 @@ Quick Start
     .. code-block:: SQL
 
       my_database=> CREATE ROLE scheduler PASSWORD 'somestrong';
-      my_database=> GRANT CREATE ON my_database TO scheduler;
+      my_database=> GRANT CREATE ON DATABASE my_database TO scheduler;
 
 3. Create a new job, e.g. run ``VACUUM`` each night at 00:30
 
     .. code-block:: SQL
 
-      my_database=> select timetable.add_job('frequent-vacuum', '30 * * * *', 'VACUUM');
+      my_database=> SELECT timetable.add_job('frequent-vacuum', '30 * * * *', 'VACUUM');
       add_job
       ---------
             3

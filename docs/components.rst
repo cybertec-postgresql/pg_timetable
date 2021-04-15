@@ -63,7 +63,7 @@ Table timetable.task
     ``parent_id bigint``
         The ID of the previous task.  Set this to ``NULL`` if it is the first command (head) of the chain.
     ``command_id bigint``
-        The ID of the **command**.
+        The ID of the **command** to execute.
     ``run_as text``
         The role as which the task should be executed as.
     ``database_connection text``
