@@ -59,7 +59,7 @@ Resource:
     - [2.1. Official release packages](#21-official-release-packages)
     - [2.2. Docker](#22-docker)
     - [2.3. Build from sources](#23-build-from-sources)
-  - [3. Example usages](#3-example-usages)
+  - [3. Quick Start](#3-quick-start)
   - [4. Database logging and transactions](#4-database-logging-and-transactions)
   - [5. Runtime information](#5-runtime-information)
   - [6. Contributing](#6-contributing)
@@ -157,7 +157,7 @@ $ createdb --owner=scheduler timetable
 $ go test -failfast -timeout=300s -count=1 -parallel=1 ./...
 ```
 
-### 3 Example usages
+### 3 Quick Start
 
 A variety of examples can be found in the `/samples` directory.
 
@@ -175,7 +175,7 @@ Create a job with the `timetable.add_job` function. With this function you can a
 | `job_self_destruct` | `boolean` | Self destruct the chain. |FALSE|
 | `job_ignore_errors` | `boolean` | Ignore error during execution. |TRUE|
 
-Run "MyJob" at 00:05 in August.
+Run `public.my_func()` at 00:05 in August.
 ```SELECT timetable.add_job('execute-func', '5 0 * 8 *', 'SELECT public.my_func()');```
 
 Run `VACUUM` at minute 23 past every 2nd hour from 0 through 20.

@@ -1,6 +1,8 @@
 Database Schema
 ========================================
 
+**pg_timetable** is a database driven application. During the first start the necessary schema is created if absent.
+
 Main tables and objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
