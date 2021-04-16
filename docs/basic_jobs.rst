@@ -13,17 +13,35 @@ For such a group of chains we've introduced a special function `timetable.add_jo
 
 .. function:: add_job()
 
-   Creates a simple one-task chain
+    Creates a simple one-task chain
 
-    :param job_name text: f
-    :param job_schedule timetable.cron: f
-    :param job_command text: f
-    :param job_client_name text: f
-    :param job_type text: f
-    :param job_max_instances integer: f
-    :param job_live boolean: f
-    :param job_self_destruct boolean: f
-    :param job_ignore_errors boolean: f
-    :return: the chain id
+    :param job_name: The unique name of the **chain** and **command**.
+    :type job_name: text
+
+    :param job_schedule: Time schedule in сron syntax.
+    :type job_schedule: timetable.cron
+
+    :param job_command: The SQL which will be executed.
+    :type job_command: text
+
+    :param job_client_name: Specifies which client should execute the chain. Set this to `NULL` to allow any client.
+    :type job_client_name: text
+
+    :param job_type: Type of the function `SQL`,`PROGRAM` and `BUILTIN`.
+    :type job_type: text
+
+    :param job_max_instances: The amount of instances that this chain may have running at the same time.
+    :type job_max_instances: integer
+
+    :param job_live: Control if the chain may be executed once it reaches its schedule.
+    :type job_live: boolean
+
+    :param job_self_destruct: Self destruct the chain after execution.
+    :type job_self_destruct: boolean
+
+    :param job_ignore_errors: Ignore error during execution.
+    :type job_ignore_errors: boolean
+
+    :returns: the chain id
     :rtype: int
 
