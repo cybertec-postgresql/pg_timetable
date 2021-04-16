@@ -44,8 +44,9 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_name            TEXT,
     job_schedule        timetable.cron,
     job_command         TEXT,
+    job_parameters      JSONB DEFAULT NULL,
+    job_kind            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
     job_client_name     TEXT DEFAULT NULL,
-    job_type            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
     job_max_instances   INTEGER DEFAULT NULL,
     job_live            BOOLEAN DEFAULT TRUE,
     job_self_destruct   BOOLEAN DEFAULT FALSE,
@@ -54,32 +55,23 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     WITH 
         cte_cmd(v_command_id) AS (
             INSERT INTO timetable.command (command_id, name, kind, script)
-            VALUES (DEFAULT, job_name, job_type, job_command)
+            VALUES (DEFAULT, job_name, job_kind, job_command)
             RETURNING command_id
         ),
         cte_task(v_task_id) AS (
             INSERT INTO timetable.task (command_id, ignore_error, autonomous)
             SELECT v_command_id, job_ignore_errors, TRUE FROM cte_cmd
             RETURNING task_id
+        ),
+        cte_chain (v_chain_id) AS (
+            INSERT INTO timetable.chain (task_id, chain_name, run_at, max_instances, live,self_destruct, client_name) 
+            SELECT v_task_id, job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name
+            FROM cte_task
+            RETURNING chain_id
         )
-    INSERT INTO timetable.chain (
-        task_id, 
-        chain_name, 
-        run_at, 
-        max_instances, 
-        live,
-        self_destruct,
-        client_name
-    ) SELECT 
-        v_task_id, 
-        job_name, 
-        job_schedule,
-        job_max_instances, 
-        job_live, 
-        job_self_destruct,
-        job_client_name
-    FROM cte_task
-    RETURNING chain_id 
+        INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
+        SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
+        RETURNING chain_id
 $$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
