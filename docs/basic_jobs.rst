@@ -11,7 +11,17 @@ In a real world usually it's enough to use simple jobs. Under this term we under
 
 For such a group of chains we've introduced a special function `timetable.add_job`.
 
-.. function:: add_job()
+.. function:: timetable.add_job(
+    job_name            TEXT,
+    job_schedule        timetable.cron,
+    job_command         TEXT,
+    job_client_name     TEXT DEFAULT NULL,
+    job_type            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
+    job_max_instances   INTEGER DEFAULT NULL,
+    job_live            BOOLEAN DEFAULT TRUE,
+    job_self_destruct   BOOLEAN DEFAULT FALSE,
+    job_ignore_errors   BOOLEAN DEFAULT TRUE
+) RETURNS BIGINT
 
     Creates a simple one-task chain
 
@@ -28,7 +38,7 @@ For such a group of chains we've introduced a special function `timetable.add_jo
     :type job_client_name: text
 
     :param job_type: Type of the function `SQL`,`PROGRAM` and `BUILTIN`.
-    :type job_type: text
+    :type job_type: timetable.command_kind
 
     :param job_max_instances: The amount of instances that this chain may have running at the same time.
     :type job_max_instances: integer
