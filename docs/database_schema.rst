@@ -1,26 +1,37 @@
 Database Schema
 ========================================
 
+Main tables and objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. literalinclude:: ../internal/pgengine/sql/ddl.sql
     :linenos:
-    :caption: Main tables and objects
     :language: SQL
+
+Jobs related functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: ../internal/pgengine/sql/job_functions.sql
     :linenos:
-    :caption: Jobs related functions
     :language: SQL
+
+Сron related functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: ../internal/pgengine/sql/cron_functions.sql
     :linenos:
-    :caption: cron related functions
     :language: SQL
+
+Builtin tasks definition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: ../internal/pgengine/sql/tasks.sql
     :linenos:
-    :caption: Builtin tasks definition
     :language: SQL
-    
+
+ER-Diagram
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. figure:: timetable_schema.png
     :align: center
     :alt: Database Schema

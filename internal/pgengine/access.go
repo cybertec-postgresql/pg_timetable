@@ -28,13 +28,13 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 }
 
 // CanProceedChainExecution checks if particular chain can be exeuted in parallel
-func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstances int) bool {
+func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainID int, maxInstances int) bool {
 	if ctx.Err() != nil {
 		return false
 	}
 	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
 	var procCount int
-	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
+	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, chainID).Scan(&procCount)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
 		return true
@@ -47,9 +47,9 @@ func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
-func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
-	pge.l.WithField("chain", chainConfigID).Info("Deleting self destructive chain configuration")
-	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain WHERE chain_id = $1", chainConfigID)
+func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainID int) bool {
+	pge.l.WithField("chain", chainID).Info("Deleting self destructive chain configuration")
+	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain WHERE chain_id = $1", chainID)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to delete self destructive chain")
 		return false
@@ -91,14 +91,14 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *Ch
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
+func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int, taskID int) int {
 	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
 (task_id, execution_status, started, chain_id, client_name) 
 VALUES 
 ($1, 'STARTED', now(), $2, $3) 
 RETURNING run_status`
 	var id int
-	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, chainConfigID, pge.ClientName).Scan(&id)
+	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, taskID, chainID, pge.ClientName).Scan(&id)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
