@@ -1,4 +1,4 @@
-Getting started with simplest jobs!
+Getting started
 ================================================================
 
 A variety of examples can be found in the :doc:`samples`.
