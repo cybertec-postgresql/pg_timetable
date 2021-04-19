@@ -27,32 +27,25 @@ For such a group of chains we've introduced a special function ``timetable.add_j
     :param job_command: The SQL which will be executed.
     :type job_command: text
 
-    :param job_parameters: Arguments for the chain **command**. 
-                    Default: ``NULL``.
+    :param job_parameters: Arguments for the chain **command**. Default: ``NULL``.
     :type job_parameters: jsonb    
 
+    :param job_kind: Kind of the command: *SQL*, *PROGRAM* or *BUILTIN*. Default: ``SQL``.
     :type job_kind: timetable.command_kind
-    :param job_kind: Type of the function ``SQL``, ``PROGRAM`` and ``BUILTIN``. 
-                    Default: ``SQL``.
 
-    :param job_client_name: Specifies which client should execute the chain. Set this to `NULL` to allow any client. 
-                    Default: ``NULL``.
+    :param job_client_name: Specifies which client should execute the chain. Set this to `NULL` to allow any client. Default: ``NULL``.
     :type job_client_name: text
 
-    :param job_max_instances: The amount of instances that this chain may have running at the same time. 
-                    Default: ``NULL``.
+    :param job_max_instances: The amount of instances that this chain may have running at the same time. Default: ``NULL``.
     :type job_max_instances: integer
 
-    :param job_live: Control if the chain may be executed once it reaches its schedule. 
-                    Default: ``TRUE``.
+    :param job_live: Control if the chain may be executed once it reaches its schedule. Default: ``TRUE``.
     :type job_live: boolean
 
-    :param job_self_destruct: Self destruct the chain after execution. 
-                    Default: ``FALSE``.
+    :param job_self_destruct: Self destruct the chain after execution. Default: ``FALSE``.
     :type job_self_destruct: boolean
 
-    :param job_ignore_errors: Ignore error during execution. 
-                    Default: ``TRUE``.
+    :param job_ignore_errors: Ignore error during execution. Default: ``TRUE``.
     :type job_ignore_errors: boolean
 
     :returns: the ID of the created chain
