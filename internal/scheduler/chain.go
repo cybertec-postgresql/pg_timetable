@@ -148,6 +148,8 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 func (sch *Scheduler) executeChain(ctx context.Context, chainID int, taskID int) {
 	var ChainElements []pgengine.ChainElement
 	var bctx context.Context
+	var runStatusID int
+	var status string
 	chainL := sch.l.WithField("chain", chainID)
 
 	tx, err := sch.pgengine.StartTransaction(ctx)
@@ -161,33 +163,40 @@ func (sch *Scheduler) executeChain(ctx context.Context, chainID int, taskID int)
 		return
 	}
 
-	runStatusID := sch.pgengine.InsertChainRunStatus(ctx, chainID, taskID)
-
 	/* now we can loop through every element of the task chain */
-	for _, chainElem := range ChainElements {
+	for i, chainElem := range ChainElements {
 		chainElem.ChainID = chainID
-		l := chainL.WithField("task", chainElem.CommandID)
+		l := chainL.WithField("task", chainElem.TaskID).WithField("command", chainElem.CommandID)
 		l.Info("Starting task")
 		ctx = log.WithLogger(ctx, l)
-		sch.pgengine.UpdateChainRunStatus(ctx, &chainElem, runStatusID, "STARTED")
+		if runStatusID == 0 {
+			runStatusID = sch.pgengine.InsertChainRunStatus(ctx, &chainElem)
+		} else {
+			sch.pgengine.AddChainRunStatus(ctx, &chainElem, runStatusID, "TASK_STARTED")
+		}
 		retCode := sch.executeСhainElement(ctx, tx, &chainElem)
 
 		// we use background context here because current one (ctx) might be cancelled
 		bctx = log.WithLogger(context.Background(), l)
 		if retCode != 0 && !chainElem.IgnoreError {
 			chainL.Error("Chain failed")
-			sch.pgengine.UpdateChainRunStatus(bctx, &chainElem, runStatusID, "CHAIN_FAILED")
+			sch.pgengine.AddChainRunStatus(bctx, &chainElem, runStatusID, "CHAIN_FAILED")
 			sch.pgengine.MustRollbackTransaction(bctx, tx)
 			return
 		}
-		sch.pgengine.UpdateChainRunStatus(bctx, &chainElem, runStatusID, "CHAIN_DONE")
+		if i == len(ChainElements)-1 {
+			status = "CHAIN_DONE"
+		} else {
+			status = "TASK_DONE"
+		}
+		sch.pgengine.AddChainRunStatus(bctx, &chainElem, runStatusID, status)
 	}
 	chainL.Info("Chain executed successfully")
 	bctx = log.WithLogger(context.Background(), chainL)
-	sch.pgengine.UpdateChainRunStatus(bctx,
-		&pgengine.ChainElement{
-			TaskID:  taskID,
-			ChainID: chainID}, runStatusID, "CHAIN_DONE")
+	// sch.pgengine.AddChainRunStatus(bctx,
+	// 	&pgengine.ChainElement{
+	// 		TaskID:  taskID,
+	// 		ChainID: chainID}, runStatusID, "CHAIN_DONE")
 	sch.pgengine.MustCommitTransaction(bctx, tx)
 }
 

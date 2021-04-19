@@ -164,17 +164,17 @@ CREATE TABLE timetable.execution_log (
 	client_name	TEXT		NOT NULL
 );
 
-CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
+CREATE TYPE timetable.execution_status AS ENUM ('CHAIN_STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'TASK_STARTED', 'TASK_DONE', 'DEAD');
 
 CREATE TABLE timetable.run_status (
 	run_status 					BIGSERIAL	PRIMARY KEY,
 	start_status				BIGINT,
 	execution_status 			timetable.execution_status,
+	chain_id 					BIGINT,
 	task_id 					BIGINT,
-	current_execution_element	BIGINT,
+	command_id                  BIGINT,
 	started 					TIMESTAMPTZ,
 	last_status_update 			TIMESTAMPTZ DEFAULT clock_timestamp(),
-	chain_id 					BIGINT,
 	client_name					TEXT		NOT NULL
 );
 
@@ -221,7 +221,7 @@ $CODE$
 	SELECT 'DEAD', now(), now(), start_status, 0, $1 FROM (
 		SELECT   start_status
 		FROM   timetable.run_status
-		WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
+		WHERE   execution_status IN ('CHAIN_STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD') AND client_name = $1
 		GROUP BY 1
 		HAVING count(*) < 2 ) AS abc
 $CODE$

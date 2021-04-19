@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION timetable.get_running_jobs(BIGINT) RETURNS SETOF reco
         FROM    timetable.run_status
         WHERE   start_status IN ( SELECT   start_status
                 FROM    timetable.run_status
-                WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED',
+                WHERE   execution_status IN ('CHAIN_STARTED', 'CHAIN_FAILED',
                              'CHAIN_DONE', 'DEAD')
                     AND (chain_id = $1 OR chain_id = 0)
                 GROUP BY 1

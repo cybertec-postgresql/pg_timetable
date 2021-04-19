@@ -91,24 +91,25 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *Ch
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainConfigID int, chainID int) int {
+func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainElem *ChainElement) int {
 	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, started, chain_id, client_name) 
+(task_id, execution_status, started, chain_id, client_name, command_id) 
 VALUES 
-($1, 'STARTED', now(), $2, $3) 
+($1, 'CHAIN_STARTED', now(), $2, $3, $4) 
 RETURNING run_status`
 	var id int
-	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, chainConfigID, pge.ClientName).Scan(&id)
+	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainElem.TaskID, chainElem.ChainID,
+		pge.ClientName, chainElem.CommandID).Scan(&id)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
 	return id
 }
 
-// UpdateChainRunStatus inserts status information about running chain elements
-func (pge *PgEngine) UpdateChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
+// AddChainRunStatus inserts status information about running chain elements
+func (pge *PgEngine) AddChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_id, client_name)
+(task_id, execution_status, command_id, started, last_status_update, start_status, chain_id, client_name)
 VALUES 
 ($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
 	var err error

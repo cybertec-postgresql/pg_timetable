@@ -102,7 +102,7 @@ func TestUpdateChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		pge.UpdateChainRunStatus(ctx, &pgengine.ChainElement{}, 0, "STATUS")
+		pge.AddChainRunStatus(ctx, &pgengine.ChainElement{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
