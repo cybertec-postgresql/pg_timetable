@@ -1,7 +1,9 @@
 package tasks
 
 import (
-	"gopkg.in/gomail.v2"
+	"context"
+
+	gomail "github.com/ory/mail/v3"
 )
 
 type EmailConn struct {
@@ -21,14 +23,14 @@ type EmailConn struct {
 
 // Dialer implements DialAndSend function for mailer
 type Dialer interface {
-	DialAndSend(m ...*gomail.Message) error
+	DialAndSend(ctx context.Context, m ...*gomail.Message) error
 }
 
-var getNewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
+var NewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
 	return gomail.NewDialer(host, port, username, password)
 }
 
-func SendMail(conn EmailConn) error {
+func SendMail(ctx context.Context, conn EmailConn) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", conn.SenderAddr)
 
@@ -61,6 +63,6 @@ func SendMail(conn EmailConn) error {
 		mail.Attach(attachment)
 	}
 	// Send Mail
-	dialer := getNewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
-	return dialer.DialAndSend(mail)
+	dialer := NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
+	return dialer.DialAndSend(ctx, mail)
 }

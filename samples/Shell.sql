@@ -33,7 +33,8 @@ BEGIN
 			"-p", "' || inet_server_port() || '",
 			"-d", "' || current_database() || '",
 			"-U", "' || current_user || '",
-			"-c", "SELECT now();"
+			"-c", "SELECT now();",
+			"-w"
 		]')::jsonb
 	);
 END $$

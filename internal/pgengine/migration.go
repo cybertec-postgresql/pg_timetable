@@ -59,7 +59,7 @@ func (pge *PgEngine) initMigrator() error {
 	}
 	var err error
 	m, err = migrator.New(
-		migrator.TableName("timetable.migration"),
+		migrator.TableName("timetable.migrations"),
 		migrator.SetNotice(func(s string) {
 			pge.l.Info(s)
 		}),
