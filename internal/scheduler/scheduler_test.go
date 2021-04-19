@@ -32,7 +32,6 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	}
 	return func(t *testing.T) {
 		_, _ = pge.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
-		pge.Finalize()
 		t.Log("Test schema dropped")
 	}
 }

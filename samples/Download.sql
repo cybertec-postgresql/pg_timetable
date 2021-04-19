@@ -53,8 +53,7 @@ BEGIN
 
 	RAISE NOTICE 'Step 2 completed. Unacent task added';
 
-	-- Step 3. Import ASCII file to PostgreSQL table using "psql \copy"
-	-- Add PROGRAM task 'psql' to the chain
+	-- Step 3. Import ASCII file to PostgreSQL table using "CopyFromFile" built-in command
 	INSERT INTO timetable.task (parent_id, command_id)
 		VALUES (v_task_id, timetable.get_command_id ('CopyFromFile'))
 	RETURNING

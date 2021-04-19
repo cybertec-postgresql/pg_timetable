@@ -16,7 +16,9 @@ type commander interface {
 type realCommander struct{}
 
 func (c realCommander) CombinedOutput(ctx context.Context, command string, args ...string) ([]byte, error) {
-	return exec.CommandContext(ctx, command, args...).CombinedOutput()
+	cmd := exec.CommandContext(ctx, command, args...)
+	cmd.Stdin = nil
+	return cmd.CombinedOutput()
 }
 
 // Cmd executes a command
