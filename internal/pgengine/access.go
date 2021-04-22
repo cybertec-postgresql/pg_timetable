@@ -2,14 +2,10 @@ package pgengine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/georgysavva/scany/pgxscan"
-	pgx "github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -28,46 +24,29 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 }
 
 // CanProceedChainExecution checks if particular chain can be exeuted in parallel
-func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainConfigID int, maxInstances int) bool {
+func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainID int, maxInstances int) bool {
+	var res bool
 	if ctx.Err() != nil {
 		return false
 	}
-	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
-	var procCount int
-	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, chainConfigID).Scan(&procCount)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		return true
-	case err == nil:
-		return procCount < maxInstances
-	default:
+	const sqlProcCount = "SELECT count(*) < $1 FROM timetable.get_chain_running_statuses($2)"
+	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, maxInstances, chainID).Scan(&res)
+	if err != nil {
 		pge.l.WithError(err).Error("Cannot read information about concurrent running jobs")
 		return false
 	}
+	return res
 }
 
 // DeleteChainConfig delete chaing configuration for self destructive chains
-func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainConfigID int) bool {
-	pge.l.WithField("chain", chainConfigID).Info("Deleting self destructive chain configuration")
-	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain WHERE chain_id = $1", chainConfigID)
+func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainID int) bool {
+	pge.l.WithField("chain", chainID).Info("Deleting self destructive chain configuration")
+	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain WHERE chain_id = $1", chainID)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to delete self destructive chain")
 		return false
 	}
 	return err == nil && res.RowsAffected() == 1
-}
-
-// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
-// program if it receives an interrupt from the OS. We then handle this by calling
-// our clean up procedure and exiting the program.
-func (pge *PgEngine) SetupCloseHandler() {
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		pge.Finalize()
-		os.Exit(0)
-	}()
 }
 
 // IsAlive returns true if the connection to the database is alive
@@ -77,6 +56,9 @@ func (pge *PgEngine) IsAlive() bool {
 
 // LogChainElementExecution will log current chain element execution status including retcode
 func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *ChainElement, retCode int, output string) {
+	if ctx.Err() != nil {
+		return
+	}
 	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_id, task_id, command_id, name, script, "+
 		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
@@ -93,10 +75,13 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *Ch
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
 func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainElem *ChainElement) int {
 	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, started, chain_id, client_name, command_id) 
+(task_id, execution_status, chain_id, client_name, command_id) 
 VALUES 
-($1, 'CHAIN_STARTED', now(), $2, $3, $4) 
-RETURNING run_status`
+($1, 'CHAIN_STARTED', $2, $3, $4) 
+RETURNING run_status_id`
+	if ctx.Err() != nil {
+		return -1
+	}
 	var id int
 	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainElem.TaskID, chainElem.ChainID,
 		pge.ClientName, chainElem.CommandID).Scan(&id)
@@ -109,9 +94,12 @@ RETURNING run_status`
 // AddChainRunStatus inserts status information about running chain elements
 func (pge *PgEngine) AddChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, command_id, started, last_status_update, start_status, chain_id, client_name)
+(task_id, execution_status, command_id, start_status_id, chain_id, client_name)
 VALUES 
-($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
+($1, $2, $3, $4, $5, $6)`
+	if ctx.Err() != nil {
+		return
+	}
 	var err error
 	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElem.TaskID, status, chainElem.CommandID,
 		runStatusID, chainElem.ChainID, pge.ClientName)

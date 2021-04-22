@@ -82,8 +82,9 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		var oid int
 		funcNames := []string{"_validate_json_schema_type(text, jsonb)",
 			"validate_json_schema(jsonb, jsonb, jsonb)",
-			"get_running_jobs(bigint)",
-			"trig_chain_fixer()",
+			"get_chain_running_statuses(bigint)",
+			"health_check(TEXT)",
+			"add_task(TEXT, BIGINT)",
 			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName)).Scan(&oid)
@@ -124,10 +125,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		assert.Equal(t, true, pge.ReconnectAndFixLeftovers(ctx),
 			"Should succeed for reconnect")
 	})
-
-	t.Run("Check SetupCloseHandler function", func(t *testing.T) {
-		assert.NotPanics(t, pge.SetupCloseHandler, "Setup Close handler failed")
-	})
 }
 
 func TestFailedConnect(t *testing.T) {
@@ -149,7 +146,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check CanProceedChainExecution funсtion", func(t *testing.T) {
-		assert.Equal(t, true, pge.CanProceedChainExecution(ctx, 0, 0), "Should proceed with clean database")
+		assert.Equal(t, true, pge.CanProceedChainExecution(ctx, 0, 1), "Should proceed with clean database")
 	})
 
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
@@ -178,7 +175,8 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var id int
-		assert.NotPanics(t, func() { id = pge.InsertChainRunStatus(ctx, 0, 0) }, "Should no error in clean database")
+		assert.NotPanics(t, func() { id = pge.InsertChainRunStatus(ctx, &pgengine.ChainElement{ChainID: 0, TaskID: 0}) },
+			"Should no error in clean database")
 		assert.NotZero(t, id, "Run status id should be greater then 0")
 	})
 

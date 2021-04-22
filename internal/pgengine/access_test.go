@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/jackc/pgx/v4"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -57,22 +56,22 @@ func TestCanProceedChainExecution(t *testing.T) {
 	t.Run("Check CanProceedChainExecution if everything fine", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectQuery("SELECT count").WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(1))
+		mockPool.ExpectQuery("SELECT count").WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(false))
 		assert.False(t, pge.CanProceedChainExecution(ctx, 0, 0), "Proc count is less than maxinstances")
 	})
 
 	t.Run("Check CanProceedChainExecution gets ErrNoRows", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectQuery("SELECT count").WillReturnError(pgx.ErrNoRows)
-		assert.True(t, pge.CanProceedChainExecution(ctx, 0, 0))
+		mockPool.ExpectQuery("SELECT count").WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(true))
+		assert.True(t, pge.CanProceedChainExecution(ctx, 0, 1))
 	})
 
 	t.Run("Check CanProceedChainExecution if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectQuery("SELECT count").WillReturnError(errors.New("error"))
-		assert.False(t, pge.CanProceedChainExecution(ctx, 0, 0))
+		assert.False(t, pge.CanProceedChainExecution(ctx, 0, 1))
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
@@ -87,7 +86,7 @@ func TestInsertChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectQuery("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		pge.InsertChainRunStatus(ctx, 0, 0)
+		pge.InsertChainRunStatus(ctx, &pgengine.ChainElement{ChainID: 0, TaskID: 0})
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")

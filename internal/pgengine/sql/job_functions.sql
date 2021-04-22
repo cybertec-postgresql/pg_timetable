@@ -1,19 +1,35 @@
--- get_running_jobs() returns jobs are running for particular chain_id
-CREATE OR REPLACE FUNCTION timetable.get_running_jobs(BIGINT) RETURNS SETOF record AS $$
-    SELECT  chain_id, start_status
-        FROM    timetable.run_status
-        WHERE   start_status IN ( SELECT   start_status
-                FROM    timetable.run_status
-                WHERE   execution_status IN ('CHAIN_STARTED', 'CHAIN_FAILED',
-                             'CHAIN_DONE', 'DEAD')
-                    AND (chain_id = $1 OR chain_id = 0)
-                GROUP BY 1
-                HAVING count(*) < 2 
-                ORDER BY 1)
-            AND chain_id = $1 
-        GROUP BY 1, 2
-        ORDER BY 1, 2 DESC
-$$ LANGUAGE SQL;
+CREATE OR REPLACE FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) RETURNS SETOF BIGINT AS $$
+    SELECT  start_status.run_status_id 
+    FROM    timetable.run_status start_status
+    WHERE   start_status.execution_status = 'CHAIN_STARTED' 
+            AND start_status.chain_id = $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM    timetable.run_status finish_status
+                WHERE   start_status.run_status_id = finish_status.start_status_id
+                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+            )
+    ORDER BY 1
+$$ LANGUAGE SQL STRICT;
+
+COMMENT ON FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) IS
+    'Returns a set of active run status IDs for a given chain';
+
+CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) RETURNS void AS $$
+    INSERT INTO timetable.run_status
+        (execution_status, start_status_id, client_name)
+    SELECT 
+        'DEAD', start_status.run_status_id, $1 
+        FROM    timetable.run_status start_status
+        WHERE   start_status.execution_status = 'CHAIN_STARTED' 
+            AND start_status.client_name = $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM    timetable.run_status finish_status
+                WHERE   start_status.run_status_id = finish_status.start_status_id
+                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+            )
+$$ LANGUAGE SQL STRICT; 
 
 CREATE OR REPLACE FUNCTION timetable.add_task(IN command_name TEXT, IN parent_task_id BIGINT) RETURNS BIGINT AS $$
 DECLARE
