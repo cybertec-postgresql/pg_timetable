@@ -24,21 +24,6 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 	}
 }
 
-// CanProceedChainExecution checks if particular chain can be exeuted in parallel
-func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainID int, maxInstances int) bool {
-	var res bool
-	if ctx.Err() != nil {
-		return false
-	}
-	const sqlProcCount = "SELECT count(*) < $1 FROM timetable.get_chain_running_statuses($2)"
-	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, maxInstances, chainID).Scan(&res)
-	if err != nil {
-		pge.l.WithError(err).Error("Cannot read information about concurrent running jobs")
-		return false
-	}
-	return res
-}
-
 // DeleteChainConfig delete chaing configuration for self destructive chains
 func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainID int) bool {
 	pge.l.WithField("chain", chainID).Info("Deleting self destructive chain configuration")

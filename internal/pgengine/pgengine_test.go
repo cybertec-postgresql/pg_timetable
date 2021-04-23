@@ -145,10 +145,6 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NotPanics(t, func() { pge.FixSchedulerCrash(ctx) }, "Fix scheduler crash failed")
 	})
 
-	t.Run("Check CanProceedChainExecution funсtion", func(t *testing.T) {
-		assert.Equal(t, true, pge.CanProceedChainExecution(ctx, 0, 1), "Should proceed with clean database")
-	})
-
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
 		assert.Equal(t, false, pge.DeleteChainConfig(ctx, 0), "Should not delete in clean database")
 	})
