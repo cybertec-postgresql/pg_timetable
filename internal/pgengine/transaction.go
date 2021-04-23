@@ -71,6 +71,9 @@ func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, savepoint str
 
 // MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
 func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
+	if ctx.Err() != nil {
+		return
+	}
 	_, err := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Rollback to savepoint failed")

@@ -19,6 +19,7 @@ type Chain struct {
 	SelfDestruct       bool   `db:"self_destruct"`
 	ExclusiveExecution bool   `db:"exclusive_execution"`
 	MaxInstances       int    `db:"max_instances"`
+	RunStatusID        int    `db:"run_status_id"`
 }
 
 func (chain Chain) String() string {
@@ -121,15 +122,16 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 			case chain := <-chains:
 				chainL := sch.l.WithField("chain", chain.ChainID)
 				chainContext := log.WithLogger(ctx, chainL)
-				chainL.Info("Starting chain")
-				if !sch.pgengine.CanProceedChainExecution(chainContext, chain.ChainID, chain.MaxInstances) {
-					chainL.Debug("Cannot proceed. Sleeping")
+				chain.RunStatusID = sch.pgengine.InsertChainRunStatus(ctx, chain.ChainID)
+				if chain.RunStatusID == -1 {
+					chainL.Info("Cannot proceed. Sleeping")
 					continue
 				}
+				chainL.Info("Starting chain")
 				sch.Lock(chain.ExclusiveExecution)
 				chainContext, cancel := context.WithCancel(chainContext)
 				sch.addActiveChain(chain.TaskID, cancel)
-				sch.executeChain(chainContext, chain.ChainID, chain.TaskID)
+				sch.executeChain(chainContext, chain)
 				if chain.SelfDestruct {
 					sch.pgengine.DeleteChainConfig(chainContext, chain.ChainID)
 				}
@@ -145,10 +147,11 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 }
 
 /* execute a chain of tasks */
-func (sch *Scheduler) executeChain(ctx context.Context, chainID int, taskID int) {
+func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainElements []pgengine.ChainElement
 	var bctx context.Context
-	chainL := sch.l.WithField("chain", chainID)
+	var status string
+	chainL := sch.l.WithField("chain", chain.ChainID)
 
 	tx, err := sch.pgengine.StartTransaction(ctx)
 	if err != nil {
@@ -156,38 +159,37 @@ func (sch *Scheduler) executeChain(ctx context.Context, chainID int, taskID int)
 		return
 	}
 
-	if !sch.pgengine.GetChainElements(ctx, tx, &ChainElements, taskID) {
+	if !sch.pgengine.GetChainElements(ctx, tx, &ChainElements, chain.TaskID) {
 		sch.pgengine.MustRollbackTransaction(ctx, tx)
 		return
 	}
 
-	runStatusID := sch.pgengine.InsertChainRunStatus(ctx, chainID, taskID)
-
 	/* now we can loop through every element of the task chain */
-	for _, chainElem := range ChainElements {
-		chainElem.ChainID = chainID
-		l := chainL.WithField("task", chainElem.CommandID)
+	for i, chainElem := range ChainElements {
+		chainElem.ChainID = chain.ChainID
+		l := chainL.WithField("task", chainElem.TaskID).WithField("command", chainElem.CommandID)
 		l.Info("Starting task")
 		ctx = log.WithLogger(ctx, l)
-		sch.pgengine.UpdateChainRunStatus(ctx, &chainElem, runStatusID, "STARTED")
+		sch.pgengine.AddChainRunStatus(ctx, &chainElem, chain.RunStatusID, "TASK_STARTED")
 		retCode := sch.executeСhainElement(ctx, tx, &chainElem)
 
 		// we use background context here because current one (ctx) might be cancelled
 		bctx = log.WithLogger(context.Background(), l)
 		if retCode != 0 && !chainElem.IgnoreError {
 			chainL.Error("Chain failed")
-			sch.pgengine.UpdateChainRunStatus(bctx, &chainElem, runStatusID, "CHAIN_FAILED")
+			sch.pgengine.AddChainRunStatus(bctx, &chainElem, chain.RunStatusID, "CHAIN_FAILED")
 			sch.pgengine.MustRollbackTransaction(bctx, tx)
 			return
 		}
-		sch.pgengine.UpdateChainRunStatus(bctx, &chainElem, runStatusID, "CHAIN_DONE")
+		if i == len(ChainElements)-1 {
+			status = "CHAIN_DONE"
+		} else {
+			status = "TASK_DONE"
+		}
+		sch.pgengine.AddChainRunStatus(bctx, &chainElem, chain.RunStatusID, status)
 	}
 	chainL.Info("Chain executed successfully")
 	bctx = log.WithLogger(context.Background(), chainL)
-	sch.pgengine.UpdateChainRunStatus(bctx,
-		&pgengine.ChainElement{
-			TaskID:  taskID,
-			ChainID: chainID}, runStatusID, "CHAIN_DONE")
 	sch.pgengine.MustCommitTransaction(bctx, tx)
 }
 

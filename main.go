@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
@@ -21,23 +23,44 @@ import (
  */
 var pge *pgengine.PgEngine
 
+// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
+// program if it receives an interrupt from the OS. We then handle this by calling
+// our clean up procedure and exiting the program.
+func SetupCloseHandler(cancel context.CancelFunc) {
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cancel()
+	}()
+}
+
 func main() {
-	ctx := context.Background()
+	exitCode := 0
+	defer func() { os.Exit(exitCode) }()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	SetupCloseHandler(cancel)
+	defer cancel()
+
 	cmdOpts, err := config.NewConfig(os.Stdout)
 	if err != nil {
 		fmt.Println("Configuration error: ", err)
-		os.Exit(2)
+		exitCode = 1
+		return
 	}
 	logger := log.Init(cmdOpts.Logging.LogLevel)
-	connctx, cancel := context.WithTimeout(ctx, 90*time.Second)
-	defer cancel()
+	connctx, conncancel := context.WithTimeout(ctx, 90*time.Second)
+	defer conncancel()
 	if pge, err = pgengine.New(connctx, *cmdOpts, logger); err != nil {
-		os.Exit(2)
+		exitCode = 2
+		return
 	}
 	defer pge.Finalize()
 	if cmdOpts.Start.Upgrade {
 		if !pge.MigrateDb(ctx) {
-			os.Exit(3)
+			exitCode = 3
+			return
 		}
 	} else {
 		if upgrade, err := pge.CheckNeedMigrateDb(ctx); upgrade || err != nil {
@@ -47,13 +70,13 @@ func main() {
 			if err != nil {
 				logger.WithError(err).Error("Migration check failed")
 			}
-			os.Exit(3)
+			exitCode = 3
+			return
 		}
 	}
 	if cmdOpts.Start.Init {
-		os.Exit(0)
+		return
 	}
-	pge.SetupCloseHandler()
 	sch := scheduler.New(pge, logger)
 	for sch.Run(ctx) == scheduler.ConnectionDroppped {
 		pge.ReconnectAndFixLeftovers(ctx)
