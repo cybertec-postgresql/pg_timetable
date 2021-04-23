@@ -12,9 +12,6 @@ import (
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
-// AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
-const AppID = 0x204F04EE
-
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {

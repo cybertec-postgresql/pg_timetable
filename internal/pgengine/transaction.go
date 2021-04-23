@@ -31,11 +31,6 @@ type ChainElement struct {
 	Duration      int64 // in microseconds
 }
 
-func (chainElem ChainElement) String() string {
-	data, _ := json.Marshal(chainElem)
-	return string(data)
-}
-
 // StartTransaction return transaction object and panic in the case of error
 func (pge *PgEngine) StartTransaction(ctx context.Context) (pgx.Tx, error) {
 	return pge.ConfigDb.Begin(ctx)
@@ -71,9 +66,6 @@ func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, savepoint str
 
 // MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
 func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	if ctx.Err() != nil {
-		return
-	}
 	_, err := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT "+quoteIdent(savepoint))
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Rollback to savepoint failed")
