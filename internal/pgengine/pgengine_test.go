@@ -175,7 +175,7 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var id int
-		assert.NotPanics(t, func() { id = pge.InsertChainRunStatus(ctx, &pgengine.ChainElement{ChainID: 0, TaskID: 0}) },
+		assert.NotPanics(t, func() { id = pge.InsertChainRunStatus(ctx, 0) },
 			"Should no error in clean database")
 		assert.NotZero(t, id, "Run status id should be greater then 0")
 	})

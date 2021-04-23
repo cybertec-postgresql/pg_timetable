@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -73,19 +74,27 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *Ch
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainElem *ChainElement) int {
+func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int) int {
 	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, chain_id, client_name, command_id) 
-VALUES 
-($1, 'CHAIN_STARTED', $2, $3, $4) 
-RETURNING run_status_id`
+(execution_status, chain_id, client_name) 
+SELECT 'CHAIN_STARTED', c.chain_id, $2 
+FROM timetable.chain c 
+WHERE
+	c.chain_id = $1 AND
+	(
+		SELECT COALESCE(count(*) < c.max_instances, TRUE) 
+		FROM timetable.get_chain_running_statuses(c.chain_id)
+	)
+RETURNING run_status_id;`
 	if ctx.Err() != nil {
 		return -1
 	}
-	var id int
-	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainElem.TaskID, chainElem.ChainID,
-		pge.ClientName, chainElem.CommandID).Scan(&id)
+	id := -1
+	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, pge.ClientName).Scan(&id)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return -1
+		}
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
 	return id
