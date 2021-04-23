@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +14,14 @@ import (
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestSchedulerExclusiveLocking(t *testing.T) {
+	sch := &Scheduler{exclusiveMutex: sync.RWMutex{}}
+	sch.Lock(true)
+	sch.Unlock(true)
+	sch.Lock(false)
+	sch.Unlock(false)
+}
 
 func TestAsyncChains(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
