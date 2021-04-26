@@ -340,7 +340,12 @@ func TestMigrateTxError(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, m)
 
-	expectederr := errors.New("internal tx error")
+	expectederr := errors.New("create table error")
+	mock.ExpectExec("CREATE TABLE").WillReturnError(expectederr)
+	err = m.Migrate(context.Background(), mock)
+	assert.Equal(t, expectederr, err, "MigrateTxError test failed: ", err)
+
+	expectederr = errors.New("internal tx error")
 	mock.ExpectExec("CREATE TABLE").WillReturnResult(pgxmock.NewResult("DDL", 0))
 	mock.ExpectQuery("SELECT count").WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectBegin().WillReturnError(expectederr)
@@ -364,4 +369,15 @@ func TestMigrateTxError(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
+}
+
+func TestMigratorOptions(t *testing.T) {
+	O := migrator.TableName("foo")
+	m := &migrator.Migrator{}
+	O(m)
+	assert.Equal(t, "foo", m.TableName)
+
+	f := func(string) {}
+	O = migrator.SetNotice(f)
+	O(m)
 }
