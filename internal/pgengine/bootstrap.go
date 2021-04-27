@@ -96,19 +96,28 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 // We assume here all checks for proper schema validation are done beforehannd
 func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
 	return &PgEngine{log.Init("error"), DB, *config.NewCmdOptions(args...), make(chan ChainSignal, 64)}
-
 }
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
 func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
-	connstr := fmt.Sprintf("application_name='pg_timetable' host='%s' port='%d' dbname='%s' sslmode='%s' user='%s' password='%s' pool_max_conns=32",
-		pge.Connection.Host, pge.Connection.Port, pge.Connection.DBName, pge.Connection.SSLMode, pge.Connection.User, pge.Connection.Password)
+	var connstr string
+	if pge.Connection.PgURL != "" {
+		connstr = pge.Connection.PgURL
+	} else {
+		connstr = fmt.Sprintf("host='%s' port='%d' dbname='%s' sslmode='%s' user='%s'",
+			pge.Connection.Host, pge.Connection.Port, pge.Connection.DBName, pge.Connection.SSLMode, pge.Connection.User)
+		if pge.Connection.Password != "" {
+			connstr = connstr + fmt.Sprintf(" password='%s'", pge.Connection.Password)
+		}
+	}
 	pge.l.Debug("Connection string: ", connstr)
 	connConfig, err := pgxpool.ParseConfig(connstr)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot parse connection string")
 		return nil
 	}
+	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers)
+	connConfig.ConnConfig.RuntimeParams["application_name"] = "pg_timetable"
 	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		//use background context without deadline for async notifications handler
 		pge.l.WithField("severity", n.Severity).
