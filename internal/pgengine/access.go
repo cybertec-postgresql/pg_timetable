@@ -2,21 +2,15 @@ package pgengine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/georgysavva/scany/pgxscan"
-	pgx "github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
-
-// AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
-const AppID = 0x204F04EE
 
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
@@ -24,25 +18,6 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 	_, err := pge.ConfigDb.Exec(ctx, `SELECT timetable.health_check($1)`, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to perform health check")
-	}
-}
-
-// CanProceedChainExecution checks if particular chain can be exeuted in parallel
-func (pge *PgEngine) CanProceedChainExecution(ctx context.Context, chainID int, maxInstances int) bool {
-	if ctx.Err() != nil {
-		return false
-	}
-	const sqlProcCount = "SELECT count(*) FROM timetable.get_running_jobs($1) AS (id BIGINT, status BIGINT) GROUP BY id"
-	var procCount int
-	err := pge.ConfigDb.QueryRow(ctx, sqlProcCount, chainID).Scan(&procCount)
-	switch {
-	case errors.Is(err, pgx.ErrNoRows):
-		return true
-	case err == nil:
-		return procCount < maxInstances
-	default:
-		pge.l.WithError(err).Error("Cannot read information about concurrent running jobs")
-		return false
 	}
 }
 
@@ -55,19 +30,6 @@ func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainID int) bool {
 		return false
 	}
 	return err == nil && res.RowsAffected() == 1
-}
-
-// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
-// program if it receives an interrupt from the OS. We then handle this by calling
-// our clean up procedure and exiting the program.
-func (pge *PgEngine) SetupCloseHandler() {
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		pge.Finalize()
-		os.Exit(0)
-	}()
 }
 
 // IsAlive returns true if the connection to the database is alive
@@ -91,26 +53,35 @@ func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *Ch
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int, taskID int) int {
+func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int) int {
 	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, started, chain_id, client_name) 
-VALUES 
-($1, 'STARTED', now(), $2, $3) 
-RETURNING run_status`
-	var id int
-	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, taskID, chainID, pge.ClientName).Scan(&id)
+(execution_status, chain_id, client_name) 
+SELECT 'CHAIN_STARTED', c.chain_id, $2 
+FROM timetable.chain c 
+WHERE
+	c.chain_id = $1 AND
+	(
+		SELECT COALESCE(count(*) < c.max_instances, TRUE) 
+		FROM timetable.get_chain_running_statuses(c.chain_id)
+	)
+RETURNING run_status_id;`
+	id := -1
+	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, pge.ClientName).Scan(&id)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return -1
+		}
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
 	return id
 }
 
-// UpdateChainRunStatus inserts status information about running chain elements
-func (pge *PgEngine) UpdateChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
+// AddChainRunStatus inserts status information about running chain elements
+func (pge *PgEngine) AddChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, current_execution_element, started, last_status_update, start_status, chain_id, client_name)
+(task_id, execution_status, command_id, start_status_id, chain_id, client_name)
 VALUES 
-($1, $2, $3, clock_timestamp(), now(), $4, $5, $6)`
+($1, $2, $3, $4, $5, $6)`
 	var err error
 	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElem.TaskID, status, chainElem.CommandID,
 		runStatusID, chainElem.ChainID, pge.ClientName)

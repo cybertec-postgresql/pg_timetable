@@ -234,6 +234,7 @@ func (pge *PgEngine) Finalize() {
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot finalize database session")
 	}
+	pge.ConfigDb.Close()
 	pge.ConfigDb = nil
 }
 

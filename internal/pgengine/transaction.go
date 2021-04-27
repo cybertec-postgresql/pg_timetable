@@ -31,11 +31,6 @@ type ChainElement struct {
 	Duration      int64 // in microseconds
 }
 
-func (chainElem ChainElement) String() string {
-	data, _ := json.Marshal(chainElem)
-	return string(data)
-}
-
 // StartTransaction return transaction object and panic in the case of error
 func (pge *PgEngine) StartTransaction(ctx context.Context) (pgx.Tx, error) {
 	return pge.ConfigDb.Begin(ctx)

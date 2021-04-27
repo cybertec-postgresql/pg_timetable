@@ -91,8 +91,10 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
 	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	mockPool.ExpectClose().WillReturnError(errors.New("expected"))
+	mockPool.ExpectExec(`DELETE FROM timetable\.active_session`).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
+	mockPool.ExpectClose()
 	mockpge.Finalize()
+	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
 
 type mockpgrow struct {
@@ -127,6 +129,7 @@ func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
 
 func TestTryLockClientName(t *testing.T) {
 	pge := pgengine.NewDB(nil, "pgengine_unit_test")
+	defer func() { pge = nil }()
 	t.Run("query error", func(t *testing.T) {
 		r := &mockpgrow{}
 		m := mockpgconn{r}

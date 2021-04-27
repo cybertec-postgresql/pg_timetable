@@ -65,7 +65,7 @@ func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) (stdo
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
 		return "", err
 	}
-	return "", tasks.SendMail(conn)
+	return "", tasks.SendMail(ctx, conn)
 }
 
 func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {

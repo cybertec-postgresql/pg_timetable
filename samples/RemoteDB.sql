@@ -27,7 +27,7 @@ BEGIN
 
     -- attach task to a chain
     INSERT INTO timetable.task (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
-    VALUES (DEFAULT, NULL, v_command_id, NULL, format('host=%s port=%s dbname=%I user=%I password=strongone', 
+    VALUES (DEFAULT, NULL, v_command_id, NULL, format('host=%s port=%s dbname=%I user=%I password=somestrong', 
                     inet_server_addr(), 
                     inet_server_port(),
                     current_database(),
