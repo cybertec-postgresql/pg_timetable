@@ -18,7 +18,7 @@ It is completely database driven and provides a couple of advanced concepts.
 
 ```terminal
 # ./pg_timetable
-Udage
+Usage
   pg_timetable
 
 Application Options:
@@ -59,18 +59,12 @@ Resource:
     - [2.1. Official release packages](#21-official-release-packages)
     - [2.2. Docker](#22-docker)
     - [2.3. Build from sources](#23-build-from-sources)
-  - [3. Features and advanced functionality](#3-features-and-advanced-functionality)
-    - [3.1. Base task](#31-base-task)
-    - [3.2. Task chain](#32-task-chain)
-    	- [3.2.1. Chain execution configuration](#321-chain-execution-configuration)
-    	- [3.2.2. Chain execution parameters](#322-chain-execution-parameters)
-    - [3.3. Example usages](#33-example-usages)
+  - [3. Quick Start](#3-quick-start)
   - [4. Database logging and transactions](#4-database-logging-and-transactions)
   - [5. Runtime information](#5-runtime-information)
-  - [6. Schema diagram](#6-schema-diagram)
-  - [7. Contributing](#7-contributing)
-  - [8. Support](#8-support)
-  - [9. Authors](#9-authors)
+  - [6. Contributing](#6-contributing)
+  - [7. Support](#7-support)
+  - [8. Authors](#8-authors)
 
 ## 1. Main features
 
@@ -143,13 +137,11 @@ docker run --rm \
 1. Download and install [Go](https://golang.org/doc/install) on your system.
 2. Clone **pg_timetable** using `go get`:
 ```sh
-$ env GIT_TERMINAL_PROMPT=1 go get github.com/cybertec-postgresql/pg_timetable/
-Username for 'https://github.com': <Github Username>
-Password for 'https://cyberboy@github.com': <Github Password>
+$ git clone https://github.com/cybertec-postgresql/pg_timetable.git
+$ cd pg_timetable
 ```
 3. Run `pg_timetable`:
 ```sh
-$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
 $ go run main.go --dbname=dbname --clientname=worker001 --user=scheduler --password=strongpwd
 ```
 Alternatively, build a binary and run it:
@@ -160,111 +152,15 @@ $ ./pg_timetable --dbname=dbname --clientname=worker001 --user=scheduler --passw
 
 4. (Optional) Run tests in all sub-folders of the project:
 ```sh
-$ cd ~/go/src/github.com/cybertec-postgresql/pg_timetable/
-$ go get github.com/stretchr/testify/
-$ go test ./...
-```
-Alternatively, run tests using postgres docker image:
-```sh
-$ RUN_DOCKER=true go test ./...
+$ psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
+$ createdb --owner=scheduler timetable
+$ go test -failfast -timeout=300s -count=1 -parallel=1 ./...
 ```
 
-
-## 3. Features and advanced functionality
-
-The scheduling in **pg_timetable** encompasses *three* different stages to facilitate the reuse with other parameters or additional schedules.
-
-
-The first stage, ***command***, defines what to do.\
-The second stage, ***task***, contains a list of base tasks to run sequentially.\
-The third stage consists of the ***chain_id*** and defines *if*, *when*, and *how often* a chain should be executed.
-
-Additionally, to provide the base tasks with parameters and influence their behavior, each entry in a task chain can be accompanied by an ***execution parameter***.
-
-### 3.1. Base task
-
-In **pg_timetable**, the most basic building block is a ***base task***. Currently, there are three different kinds of task:
-
-| Base task kind   | Task kind type | Example                                                                                                                                                             |
-| :--------------- | :------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| SQL snippet      | `SQL`          | Starting a cleanup, refreshing a materialized view or processing data.                                                                                              |
-| External program | `PROGRAM`        | Anything that can be called as an external binary, including shells, e.g. `bash`, `pwsh`, etc. |                                                                                                                  |
-| Internal Task    | `BUILTIN`      | A prebuilt functionality included in **pg_timetable**. These include: <ul style="margin-top:12px"><li>Sleep</li><li>Log</li><li>SendMail</li><li>Download</li></ul> |
-
-A new base task can be created by inserting a new entry into `timetable.command`.
-
-<p align="center">Excerpt of <code>timetable.command</code></p>
-
-| Column   | Type                  | Definition                                                              |
-| :------- | :-------------------- | :---------------------------------------------------------------------- |
-| `name`   | `text`                | The name of the base task.                                              |
-| `kind`   | `timetable.command_kind` | The type of the base task. Can be `SQL`(default), `PROGRAM` or `BUILTIN`. |
-| `script` | `text`                | Contains either a SQL script or a command string which will be executed.|
-
-### 3.2. Task chain
-
-The next building block is a ***chain***, which simply represents a list of tasks. An example would be:
-
-- Download files from a server
-- Import files
-- Run aggregations
-- Commit the transaction
-- Remove the files from disk
-
-All tasks of the chain in **pg_timetable** are executed within one transaction. However, please, pay attention there is no opportunity to rollback `PROGRAM` and `BUILTIN` tasks.
-
-<p align="center">Excerpt of <code>timetable.task</code></p>
-
-| Column                | Type      | Definition                                                                        |
-| :-------------------- | :-------- | :-------------------------------------------------------------------------------- |
-| `parent_id`           | `bigint`  | The ID of the previous chain task.  Set this to `NULL` if it is the first base task in the chain.|
-| `command_id`             | `bigint`  | The ID of the **base task**.                                                      |
-| `run_as`             | `text`    | The role as which the chain should be executed as.                                |
-| `database_connection` | `integer` | The ID of the `timetable.database_connection` that should be used.                |
-| `ignore_error`        | `boolean` | Specify if the chain should resume after encountering an error (default: `false`).|
-
-
-If the chain has been configured with `ignore_error` set to `true` (the default value is `false`), the worker process will report a success on execution *even if the task within the chain fails*.
-
-
-#### 3.2.1. Chain execution configuration
-
-Once a chain has been created, it has to be scheduled. For this, **pg_timetable** builds upon the standard **cron**-string, all the while adding multiple configuration options.
-
-<p align="center">Excerpt of <code>timetable.chain</code></p>
-
-| Column                        | Type             | Definition  |
-| :---------------------------  | :--------------- | :---------- |
-| `task_id`                    | `bigint`         | The id of the task chain. |
-| `chain_name`                  | `text`           | The name of the chain. |
-| `run_at`                      | `timetable.cron` | To achieve the `cron` equivalent of \*, set the value to `NULL`. |
-| `max_instances`               | `integer`        | The amount of instances that this chain may have running at the same time. |
-| `live`                        | `boolean`        | Control if the chain may be executed once it reaches its schedule. |
-| `self_destruct`               | `boolean`        | Self destruct the chain. |
-| `exclusive_execution`         | `boolean`        | Specifies whether the chain should be executed exclusively while all other chains are paused. |
-| `client_name`                 | `text`           | Specifies which client should execute the chain. Set this to `NULL` to allow any client. |
-
-
-
-#### 3.2.2. Chain execution parameters
-
-As mentioned above, base tasks are simple skeletons (e.g. *send email*, *vacuum*, etc.).
-In most cases, they have to be brought to live by passing parameters to the execution.
-
-<p align="center">Excerpt of <code>timetable.parameter</code></p>
-
-| Column                   | Type    | Definition                                       |
-| :----------------------- | :------ | :----------------------------------------------- |
-| `chain_id` | `bigint`  | The ID of the chain execution configuration.     |
-| `task_id`               | `bigint`  | The ID of the chain.                             |
-| `order_id`               | `integer` | The order of the parameter.                      |
-| `value`                  | `jsonb`   | A `string` JSON array containing the parameters. |
-
-### 3.3 Example usages
+### 3 Quick Start
 
 A variety of examples can be found in the `/samples` directory.
 
-### 3.4 Example functions
 Create a job with the `timetable.add_job` function. With this function you can add a new one-step chain with a cron-syntax.
 
 | Parameter                   | Type    | Definition                                       | Default |
@@ -279,9 +175,7 @@ Create a job with the `timetable.add_job` function. With this function you can a
 | `job_self_destruct` | `boolean` | Self destruct the chain. |FALSE|
 | `job_ignore_errors` | `boolean` | Ignore error during execution. |TRUE|
 
-### 3.5 Usage
-
-Run "MyJob" at 00:05 in August.
+Run `public.my_func()` at 00:05 in August.
 ```SELECT timetable.add_job('execute-func', '5 0 * 8 *', 'SELECT public.my_func()');```
 
 Run `VACUUM` at minute 23 past every 2nd hour from 0 through 20.
@@ -298,24 +192,20 @@ Furthermore, this behavior allows a remote host to access the log in a straightf
 
 In order to examine the activity of **pg_timetable**, the table `timetable.run_status` can be queried. It contains information about active jobs and their current parameters.
 
-## 6. Schema diagram
-
-![Schema diagram](timetable_schema.png?raw=true "Schema diagram")
-
-## 7. Contributing
+## 6. Contributing
 
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a [pull request][PR].
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
 [PR]: https://github.com/cybertec-postgresql/pg_timetable/pulls
 
-## 8. Support
+## 7. Support
 
 For professional support, please contact [Cybertec][cybertec].
 
 [cybertec]: https://www.cybertec-postgresql.com/
 
 
-## 9. Authors
+## 8. Authors
 
 [Pavlo Golub](https://github.com/pashagolub) and [Hans-Jürgen Schönig](https://github.com/postgresql007).

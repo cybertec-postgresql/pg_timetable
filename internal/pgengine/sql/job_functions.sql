@@ -31,7 +31,10 @@ CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) RETURNS void
             )
 $$ LANGUAGE SQL STRICT; 
 
-CREATE OR REPLACE FUNCTION timetable.add_task(IN command_name TEXT, IN parent_task_id BIGINT) RETURNS BIGINT AS $$
+CREATE OR REPLACE FUNCTION timetable.add_task(
+    IN command_name TEXT, 
+    IN parent_task_id BIGINT
+) RETURNS BIGINT AS $$
 DECLARE
     v_command_id BIGINT;
     v_result_id BIGINT;
@@ -57,60 +60,56 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_name            TEXT,
     job_schedule        timetable.cron,
     job_command         TEXT,
+    job_parameters      JSONB DEFAULT NULL,
+    job_kind            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
     job_client_name     TEXT DEFAULT NULL,
-    job_type            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
     job_max_instances   INTEGER DEFAULT NULL,
     job_live            BOOLEAN DEFAULT TRUE,
     job_self_destruct   BOOLEAN DEFAULT FALSE,
     job_ignore_errors   BOOLEAN DEFAULT TRUE
 ) RETURNS BIGINT AS $$
     WITH 
-        cte_task(v_command_id) AS ( --Create task
+        cte_cmd(v_command_id) AS (
             INSERT INTO timetable.command (command_id, name, kind, script)
-            VALUES (DEFAULT, job_name, job_type, job_command)
+            VALUES (DEFAULT, job_name, job_kind, job_command)
             RETURNING command_id
         ),
-        cte_chain(v_task_id) AS ( --Create chain
+        cte_task(v_task_id) AS (
             INSERT INTO timetable.task (command_id, ignore_error, autonomous)
-            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_task
+            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_cmd
             RETURNING task_id
+        ),
+        cte_chain (v_chain_id) AS (
+            INSERT INTO timetable.chain (task_id, chain_name, run_at, max_instances, live,self_destruct, client_name) 
+            SELECT v_task_id, job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name
+            FROM cte_task
+            RETURNING chain_id
         )
-    INSERT INTO timetable.chain (
-        task_id, 
-        chain_name, 
-        run_at, 
-        max_instances, 
-        live,
-        self_destruct,
-        client_name
-    ) SELECT 
-        v_task_id, 
-        job_name, 
-        job_schedule,
-        job_max_instances, 
-        job_live, 
-        job_self_destruct,
-        job_client_name
-    FROM cte_chain
-    RETURNING chain_id 
+        INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
+        SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
+        RETURNING chain_id
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.notify_chain_start(chain_id BIGINT, worker_name TEXT)
-RETURNS void AS $$
+CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS $$
   SELECT pg_notify(
-  	worker_name, 
-	format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
-		chain_id, 
-		EXTRACT(epoch FROM clock_timestamp())::bigint)
-	)
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(chain_id BIGINT, worker_name TEXT)
-RETURNS void AS  $$ 
+CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS  $$ 
   SELECT pg_notify(
-  	worker_name, 
-	format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
-		chain_id, 
-		EXTRACT(epoch FROM clock_timestamp())::bigint)
-	)
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
 $$ LANGUAGE SQL;
