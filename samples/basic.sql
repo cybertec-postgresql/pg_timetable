@@ -1,12 +1,12 @@
 WITH 
 sql_task(id) AS (
-    INSERT INTO timetable.command VALUES (
-		DEFAULT, 						-- command_id
-		'notify channel with payload',	-- name
-		DEFAULT, 						-- 'SQL' :: timetable.command_kind
-		'SELECT pg_notify($1, $2)'		-- task script
-	)
-	RETURNING command_id
+    INSERT INTO timetable.command(command_id, name, kind, script) VALUES (
+        DEFAULT,
+        'notify channel with payload',
+        'SQL' :: timetable.command_kind,
+        'SELECT pg_notify($1, $2)'
+    )
+    RETURNING command_id
 ),
 chain_insert(task_id) AS (
     INSERT INTO timetable.task 
