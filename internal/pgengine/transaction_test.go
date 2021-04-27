@@ -84,8 +84,11 @@ func TestExecuteSQLTask(t *testing.T) {
 				String: "error",
 				Status: pgtype.Present},
 		},
-		{RunAs: pgtype.Varchar{String: "foo", Status: pgtype.Present}},
-		{Autonomous: false, IgnoreError: true},
+		{
+			RunAs:         pgtype.Varchar{String: "foo", Status: pgtype.Present},
+			ConnectString: pgtype.Varchar{Status: pgtype.Null},
+		},
+		{Autonomous: false, IgnoreError: true, ConnectString: pgtype.Varchar{Status: pgtype.Null}},
 	}
 
 	for _, element := range elements {

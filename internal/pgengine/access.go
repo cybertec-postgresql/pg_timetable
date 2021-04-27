@@ -12,9 +12,6 @@ import (
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
 
-// AppID used as a key for obtaining locks on the server, it's Adler32 hash of 'pg_timetable' string
-const AppID = 0x204F04EE
-
 /*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
 and marked as stopped at a certain point */
 func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
@@ -42,9 +39,6 @@ func (pge *PgEngine) IsAlive() bool {
 
 // LogChainElementExecution will log current chain element execution status including retcode
 func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *ChainElement, retCode int, output string) {
-	if ctx.Err() != nil {
-		return
-	}
 	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_id, task_id, command_id, name, script, "+
 		"kind, last_run, finished, returncode, pid, output, client_name) "+
 		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
@@ -71,9 +65,6 @@ WHERE
 		FROM timetable.get_chain_running_statuses(c.chain_id)
 	)
 RETURNING run_status_id;`
-	if ctx.Err() != nil {
-		return -1
-	}
 	id := -1
 	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, pge.ClientName).Scan(&id)
 	if err != nil {
@@ -91,9 +82,6 @@ func (pge *PgEngine) AddChainRunStatus(ctx context.Context, chainElem *ChainElem
 (task_id, execution_status, command_id, start_status_id, chain_id, client_name)
 VALUES 
 ($1, $2, $3, $4, $5, $6)`
-	if ctx.Err() != nil {
-		return
-	}
 	var err error
 	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElem.TaskID, status, chainElem.CommandID,
 		runStatusID, chainElem.ChainID, pge.ClientName)

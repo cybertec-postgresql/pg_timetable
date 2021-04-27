@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -20,11 +19,6 @@ type Chain struct {
 	ExclusiveExecution bool   `db:"exclusive_execution"`
 	MaxInstances       int    `db:"max_instances"`
 	RunStatusID        int    `db:"run_status_id"`
-}
-
-func (chain Chain) String() string {
-	data, _ := json.Marshal(chain)
-	return string(data)
 }
 
 // Lock locks the chain in exclusive or non-exclusive mode

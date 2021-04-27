@@ -78,6 +78,21 @@ func TestUpdateChainRunStatus(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
+func TestSelectChains(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	defer mockPool.Close()
+
+	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
+	assert.Error(t, pge.SelectChains(context.Background(), struct{}{}))
+
+	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
+	assert.Error(t, pge.SelectRebootChains(context.Background(), struct{}{}))
+
+	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
+	assert.Error(t, pge.SelectIntervalChains(context.Background(), struct{}{}))
+}
+
 func TestSelectChain(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
