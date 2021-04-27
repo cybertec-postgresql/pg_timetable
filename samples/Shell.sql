@@ -1,12 +1,12 @@
+-- An example for using the PROGRAM task.
 DO $$
 DECLARE
 	v_command_id bigint;
 	v_task_id bigint;
-	v_chain_config_id bigint;
+	v_chain_id bigint;
 BEGIN
-	-- An example for using the PROGRAM task.
 
-	-- Create the base task
+	-- Create the command
 	INSERT INTO timetable.command(name, kind, script)
 	VALUES ('run psql', 'PROGRAM'::timetable.command_kind, 'psql')
 	RETURNING command_id INTO v_command_id;
@@ -19,7 +19,7 @@ BEGIN
 	-- Create the chain execution configuration
 	INSERT INTO timetable.chain (task_id, chain_name, live)
 	VALUES (v_task_id, 'psql chain', TRUE)
-	RETURNING chain_id INTO v_chain_config_id;
+	RETURNING chain_id INTO v_chain_id;
 
 	-- Create the parameters for the chain configuration
 	INSERT INTO timetable.parameter (
@@ -28,7 +28,7 @@ BEGIN
 		order_id,
 		value
 	) VALUES (
-		v_chain_config_id, v_task_id, 1, ('[
+		v_chain_id, v_task_id, 1, ('[
 			"-h", "' || host(inet_server_addr()) || '",
 			"-p", "' || inet_server_port() || '",
 			"-d", "' || current_database() || '",

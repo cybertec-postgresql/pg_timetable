@@ -18,3 +18,12 @@ This sample demonstrates how to create enhanced three-step chain with parameters
 .. literalinclude:: ../samples/Download.sql
     :linenos:
     :language: SQL
+
+Run tasks in autonomous transaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This sample demonstrates how to run special tasks out of chain transaction context. This is useful for special routines and/or 
+non-transactional operations, e.g. *CREATE DATABASE*, *REINDEX*, *VACUUM*, *CREATE TABLESPACE*, etc. 
+
+.. literalinclude:: ../samples/Autonomous.sql
+    :linenos:
+    :language: SQL

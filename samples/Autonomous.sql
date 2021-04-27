@@ -1,41 +1,33 @@
-CREATE OR REPLACE FUNCTION f1 ()
-    RETURNS void
-    AS $$
-BEGIN
-    RAISE notice 'hi';
+-- An advanced example showing how to use atutonomous tasks.
+-- This one-task chain will execute test_proc() procedure.
+-- Since procedure will make two commits (after f1() and f2())
+-- we cannot use it as a regular task, because all regular tasks 
+-- must be executed in the context of a single chain transaction.
+-- Same rule applies for some other SQL commands, 
+-- e.g. CREATE DATABASE, REINDEX, VACUUM, CREATE TABLESPACE, etc.
+CREATE OR REPLACE FUNCTION f (msg TEXT) RETURNS void AS $$
+BEGIN 
+    RAISE notice '%', msg; 
 END;
-$$
-LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION f2 ()
-    RETURNS void
-    AS $$
+CREATE OR REPLACE PROCEDURE test_proc () AS $$
 BEGIN
-    RAISE notice 'hi2';
-END;
-$$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE PROCEDURE test_proc ()
-    AS $$
-BEGIN
-    PERFORM
-        f1 ();
+    PERFORM f('hey 1');
     COMMIT;
-    PERFORM
-        f2 ();
+    PERFORM f('hey 2');
     COMMIT;
 END;
 $$
-LANGUAGE plpgsql;
+LANGUAGE PLPGSQL;
 
 WITH 
 sql_task(id) AS (
-    INSERT INTO timetable.command VALUES (
-        DEFAULT,                     -- command_id
-        'proc with transactions test',  -- name
-        DEFAULT,                     -- 'SQL' :: timetable.command_kind
-        'CALL test_proc()'     -- task script
+    INSERT INTO timetable.command(command_id, name, kind, script) VALUES (
+        DEFAULT,
+        'proc with transactions test',
+        'SQL' :: timetable.command_kind,
+        'CALL test_proc()'
     )
     RETURNING command_id
 ),
