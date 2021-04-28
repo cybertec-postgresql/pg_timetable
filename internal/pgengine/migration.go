@@ -2,15 +2,14 @@ package pgengine
 
 import (
 	"context"
-	"embed"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	pgx "github.com/jackc/pgx/v4"
 )
 
-//go:embed sql/migrations/*.sql
-var migrations embed.FS
+// //go:embed sql/migrations/*.sql
+// var migrations embed.FS
 
 var m *migrator.Migrator
 
@@ -45,13 +44,13 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	return m.NeedUpgrade(ctx, conn.Conn())
 }
 
-func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
-	sql, err := migrations.ReadFile(fname)
-	if err != nil {
-		_, err = tx.Exec(ctx, string(sql))
-	}
-	return err
-}
+// func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
+// 	sql, err := migrations.ReadFile(fname)
+// 	if err != nil {
+// 		_, err = tx.Exec(ctx, string(sql))
+// 	}
+// 	return err
+// }
 
 func (pge *PgEngine) initMigrator() error {
 	if m != nil {
