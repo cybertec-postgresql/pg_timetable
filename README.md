@@ -53,7 +53,7 @@ https://pg-timetable.readthedocs.io/
 
 ## Main features
 - Tasks can be arranged in chains
-- A chain executes SQL, built-in or executable command
+- Each task executes SQL, built-in or executable command
 - Parameters can be passed to tasks
 - Missed chains (possibly due to downtime) can be retried automatically
 - Support for configurable repetitions
@@ -63,7 +63,7 @@ https://pg-timetable.readthedocs.io/
 - Enhanced cron-style scheduling
 - Optional concurrency protection
 
-## Installation
+## [Installation](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html)
 
 Complete installation guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html).
 
@@ -114,5 +114,5 @@ For professional support, please contact [Cybertec](https://www.cybertec-postgre
 
 ## Authors
 
-Implementation: [Pavlo Golub](https://github.com/pashagolub)
-Initial idea and draft design: [Hans-Jürgen Schönig](https://github.com/postgresql007)
+- Implementation: [Pavlo Golub](https://github.com/pashagolub)
+- Initial idea and draft design: [Hans-Jürgen Schönig](https://github.com/postgresql007)
