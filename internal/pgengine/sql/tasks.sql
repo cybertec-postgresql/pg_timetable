@@ -10,3 +10,4 @@ CREATE OR REPLACE FUNCTION timetable.get_command_id(command_name TEXT)
 RETURNS BIGINT AS $$
     SELECT command_id FROM timetable.command WHERE name = $1;
 $$ LANGUAGE SQL STRICT;
+

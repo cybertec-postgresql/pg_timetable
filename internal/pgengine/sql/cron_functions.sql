@@ -160,3 +160,4 @@ $$ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION timetable.next_run(cron timetable.cron) RETURNS timestamptz AS $$
     SELECT * FROM timetable.cron_runs(now(), cron) LIMIT 1
 $$ LANGUAGE SQL STRICT;
+

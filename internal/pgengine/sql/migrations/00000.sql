@@ -1,590 +1,472 @@
 CREATE SCHEMA timetable;
 
--- define database connections for script execution
-CREATE TABLE timetable.database_connection (
-	database_connection BIGSERIAL,
-	connect_string 		TEXT		NOT NULL,
-	comment 			TEXT,
-	PRIMARY KEY (database_connection)
+CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
+
+CREATE TABLE timetable.command (
+    command_id  BIGSERIAL               PRIMARY KEY,
+    name        TEXT                    NOT NULL UNIQUE,
+    kind        timetable.command_kind  NOT NULL DEFAULT 'SQL',
+    script      TEXT                    NOT NULL,
+    CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
 );
 
--- base tasks: these are the tasks our system actually knows.
--- tasks will be organized in task chains.
---
--- "script" contains either an SQL script, or
---      command string to be executed
---
--- "kind" indicates whether "script" is SQL, built-in function or external program
-CREATE TYPE timetable.task_kind AS ENUM ('SQL', 'SHELL', 'BUILTIN');
+COMMENT ON TABLE timetable.command IS
+    'Commands pg_timetable actually knows about';
+COMMENT ON COLUMN timetable.command.kind IS
+    'Indicates whether "script" is SQL, built-in function or external program';
+COMMENT ON COLUMN timetable.command.script IS
+    'Contains either an SQL script, or command string to be executed';
 
-CREATE TABLE timetable.base_task (
-	task_id		BIGSERIAL  			PRIMARY KEY,
-	name		TEXT    		    NOT NULL UNIQUE,
-	kind		timetable.task_kind	NOT NULL DEFAULT 'SQL',
-	script		TEXT				NOT NULL,
-	CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
+
+CREATE TABLE timetable.task (
+    task_id             BIGSERIAL   PRIMARY KEY,
+    parent_id           BIGINT      UNIQUE  REFERENCES timetable.task(task_id)
+                                    ON UPDATE CASCADE ON DELETE CASCADE,
+    command_id          BIGINT      NOT NULL REFERENCES timetable.command(command_id)
+                                    ON UPDATE CASCADE ON DELETE CASCADE,
+    run_as              TEXT,
+    database_connection TEXT,
+    ignore_error        BOOLEAN     NOT NULL DEFAULT FALSE,
+    autonomous          BOOLEAN     NOT NULL DEFAULT FALSE
 );
 
--- Task chain declaration:
--- "parent_id" is unique to ensure proper chaining (no trees)
--- "task_id" is the task taken from base_task table
--- "params" is the actual parameters passed to the task
---      upon execution
--- "run_uid" is the username to run as (e.g. su -c "..." - username)
---              (if NULL then don't bother changing UIDs)
--- "ignore_error" indicates whether the next task
---      in the chain can be executed regardless of the
---      success of the current one
-CREATE TABLE timetable.task_chain (
-	chain_id        	BIGSERIAL	PRIMARY KEY,
-	parent_id			BIGINT 		UNIQUE  REFERENCES timetable.task_chain(chain_id)
-									ON UPDATE CASCADE
-									ON DELETE CASCADE,
-	task_id				BIGINT		NOT NULL REFERENCES timetable.base_task(task_id)
-									ON UPDATE CASCADE
-									ON DELETE CASCADE,
-	run_uid				TEXT,
-	database_connection	BIGINT		REFERENCES timetable.database_connection(database_connection)
-									ON UPDATE CASCADE
-									ON DELETE CASCADE,
-	ignore_error		BOOLEAN		DEFAULT false
+COMMENT ON TABLE timetable.task IS
+    'Holds information about chain elements aka tasks';
+COMMENT ON COLUMN timetable.task.parent_id IS
+    'Link to the parent task, if NULL task considered to be head of a chain';
+COMMENT ON COLUMN timetable.task.run_as IS
+    'Role name to run task as. Uses SET ROLE for SQL commands';
+COMMENT ON COLUMN timetable.task.ignore_error IS
+    'Indicates whether a next task in a chain can be executed regardless of the success of the current one';
+
+CREATE DOMAIN timetable.cron AS TEXT CHECK(
+    substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
+    OR VALUE = '@reboot'
+    OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
 );
 
+COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support of interval values';
 
--- Task chain execution config. we basically use this table to define when which chain has to
--- be executed.
--- "chain_id" is the first id (parent_id == NULL) of a chain in task_chain
--- "chain_name" is the name of this chain for logging
--- "run_at" is the CRON-style time notation the task has to be run at
--- "max_instances" is the number of instances this chain can run in parallel
--- "live" is the indication that the chain is finalized, the system can run it
--- "self_destruct" is the indication that this chain will delete itself after run
--- "client_name" is the indication that this chain will run only under this tag
-CREATE TABLE timetable.chain_execution_config (
-    chain_execution_config		BIGSERIAL	PRIMARY KEY,
-    chain_id        			BIGINT 		REFERENCES timetable.task_chain(chain_id)
-                                            ON UPDATE CASCADE
-											ON DELETE CASCADE,
-    chain_name      			TEXT		NOT NULL UNIQUE,
-    run_at_minute				INTEGER,
-    run_at_hour					INTEGER,
-    run_at_day					INTEGER,
-    run_at_month				INTEGER,
-    run_at_day_of_week			INTEGER,
-    max_instances				INTEGER,
-    live						BOOLEAN		DEFAULT false,
-    self_destruct				BOOLEAN		DEFAULT false,
-	exclusive_execution			BOOLEAN		DEFAULT false,
-	excluded_execution_configs	INTEGER[],
-	client_name					TEXT
+CREATE TABLE timetable.chain (
+    chain_id            BIGSERIAL   PRIMARY KEY,
+    task_id             BIGINT      REFERENCES timetable.task(task_id)
+                                    ON UPDATE CASCADE ON DELETE CASCADE,
+    chain_name          TEXT        NOT NULL UNIQUE,
+    run_at              timetable.cron,
+    max_instances       INTEGER,
+    live                BOOLEAN     DEFAULT FALSE,
+    self_destruct       BOOLEAN     DEFAULT FALSE,
+    exclusive_execution BOOLEAN     DEFAULT FALSE,
+    client_name         TEXT
 );
 
+COMMENT ON TABLE timetable.chain IS
+    'Stores information about chains schedule';
+COMMENT ON COLUMN timetable.chain.task_id IS
+    'First task (head) of the chain';
+COMMENT ON COLUMN timetable.chain.run_at IS
+    'Extended CRON-style time notation the chain has to be run at';
+COMMENT ON COLUMN timetable.chain.max_instances IS
+    'Number of instances (clients) this chain can run in parallel';
+COMMENT ON COLUMN timetable.chain.live IS
+    'Indication that the chain is ready to run, set to FALSE to pause execution';
+COMMENT ON COLUMN timetable.chain.self_destruct IS
+    'Indication that this chain will delete itself after successful run';
+COMMENT ON COLUMN timetable.chain.exclusive_execution IS
+    'All parallel chains should be paused while executing this chain';
+COMMENT ON COLUMN timetable.chain.client_name IS
+    'Only client with this name is allowed to run this chain, set to NULL to allow any client';
 
--- parameter passing for config
-CREATE TABLE timetable.chain_execution_parameters(
-	chain_execution_config	BIGINT	REFERENCES timetable.chain_execution_config (chain_execution_config)
-									ON UPDATE CASCADE
-									ON DELETE CASCADE,
-	chain_id 				BIGINT 	REFERENCES timetable.task_chain(chain_id)
-									ON UPDATE CASCADE
-									ON DELETE CASCADE,
-	order_id 				INTEGER	CHECK (order_id > 0),
-	value 					jsonb,
-	PRIMARY KEY (chain_execution_config, chain_id, order_id)
+-- parameter passing for a chain task
+CREATE TABLE timetable.parameter(
+    chain_id    BIGINT  REFERENCES timetable.chain (chain_id)
+                        ON UPDATE CASCADE ON DELETE CASCADE,
+    task_id     BIGINT  REFERENCES timetable.task(task_id)
+                        ON UPDATE CASCADE ON DELETE CASCADE,
+    order_id    INTEGER CHECK (order_id > 0),
+    value       JSONB,
+    PRIMARY KEY (chain_id, task_id, order_id)
 );
 
+COMMENT ON TABLE timetable.parameter IS
+    'Stores parameters passed as arguments to a chain task';
 
--- log client application related actions
+CREATE UNLOGGED TABLE timetable.active_session(
+    client_pid  BIGINT  NOT NULL,
+    client_name TEXT    NOT NULL,
+    server_pid  BIGINT  NOT NULL
+);
+
+COMMENT ON TABLE timetable.active_session IS
+    'Stores information about active sessions';
+
+
 CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
+
+CREATE OR REPLACE FUNCTION timetable.get_client_name(integer) RETURNS TEXT AS
+$$
+    SELECT client_name FROM timetable.active_session WHERE server_pid = $1 LIMIT 1
+$$
+LANGUAGE sql;
 
 CREATE TABLE timetable.log
 (
-	id					BIGSERIAL			PRIMARY KEY,
-	ts					TIMESTAMPTZ			DEFAULT now(),
-	client_name	        TEXT,
-	pid					INTEGER 			NOT NULL,
-	log_level			timetable.log_type	NOT NULL,
-	message				TEXT
+    ts              TIMESTAMPTZ         DEFAULT now(),
+    client_name     TEXT                DEFAULT timetable.get_client_name(pg_backend_pid()),
+    pid             INTEGER             NOT NULL,
+    log_level       timetable.log_type  NOT NULL,
+    message         TEXT,
+    message_data    jsonb
 );
 
 -- log timetable related action
 CREATE TABLE timetable.execution_log (
-	chain_execution_config	BIGINT,
-	chain_id        		BIGINT,
-	task_id         		BIGINT,
-	name            		TEXT		NOT NULL, -- expanded details about the task run
-	script          		TEXT,
-	kind          			TEXT,
-	last_run       	 		TIMESTAMPTZ	DEFAULT now(),
-	finished        		TIMESTAMPTZ,
-	returncode      		INTEGER,
-	pid             		BIGINT
+    chain_id    BIGINT,
+    task_id     BIGINT,
+    command_id  BIGINT,
+    name        TEXT        NOT NULL,
+    script      TEXT,
+    kind        TEXT,
+    last_run    TIMESTAMPTZ DEFAULT now(),
+    finished    TIMESTAMPTZ,
+    returncode  INTEGER,
+    pid         BIGINT,
+    output      TEXT,
+    client_name TEXT        NOT NULL
 );
 
-CREATE TYPE timetable.execution_status AS ENUM ('STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'DEAD');
+CREATE TYPE timetable.execution_status AS ENUM ('CHAIN_STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'TASK_STARTED', 'TASK_DONE', 'DEAD');
 
 CREATE TABLE timetable.run_status (
-	run_status 					BIGSERIAL,
-	start_status				BIGINT,
-	execution_status 			timetable.execution_status,
-	chain_id 					BIGINT,
-	current_execution_element	BIGINT,
-	started 					TIMESTAMPTZ,
-	last_status_update 			TIMESTAMPTZ 				DEFAULT clock_timestamp(),
-	chain_execution_config 		BIGINT,
-	PRIMARY KEY (run_status)
+    run_status_id           BIGSERIAL   PRIMARY KEY,
+    start_status_id         BIGINT      REFERENCES timetable.run_status(run_status_id)
+                                        ON UPDATE CASCADE ON DELETE CASCADE,
+    execution_status        timetable.execution_status,
+    chain_id                BIGINT,
+    task_id                 BIGINT,
+    command_id              BIGINT,
+    created_at              TIMESTAMPTZ DEFAULT clock_timestamp(),
+    client_name             TEXT        NOT NULL
 );
 
-CREATE OR REPLACE FUNCTION timetable.trig_chain_fixer() RETURNS trigger AS $$
-	DECLARE
-		tmp_parent_id BIGINT;
-		tmp_chain_id BIGINT;
-		orig_chain_id BIGINT;
-		tmp_chain_head_id BIGINT;
-		i BIGINT;
-	BEGIN
-		--raise notice 'Fixing chain for deletion of base_task#%', OLD.task_id;
-
-		FOR orig_chain_id IN
-			SELECT chain_id FROM timetable.task_chain WHERE task_id = OLD.task_id
-		LOOP
-
-			--raise notice 'chain_id#%', orig_chain_id;	
-			tmp_chain_id := orig_chain_id;
-			i := 0;
-			LOOP
-				i := i + 1;
-				SELECT parent_id INTO tmp_parent_id FROM timetable.task_chain
-					WHERE chain_id = tmp_chain_id;
-				EXIT WHEN tmp_parent_id IS NULL;
-				IF i > 100 THEN
-					RAISE EXCEPTION 'Infinite loop at timetable.task_chain.chain_id=%', tmp_chain_id;
-					RETURN NULL;
-				END IF;
-				tmp_chain_id := tmp_parent_id;
-			END LOOP;
-			
-			SELECT parent_id INTO tmp_chain_head_id FROM timetable.task_chain
-				WHERE chain_id = tmp_chain_id;
-				
-			--raise notice 'PERFORM task_chain_delete(%,%)', tmp_chain_head_id, orig_chain_id;
-			PERFORM timetable.task_chain_delete(tmp_chain_head_id, orig_chain_id);
-
-		END LOOP;
-		
-		RETURN OLD;
-	END;
-$$ LANGUAGE 'plpgsql';
-
-CREATE TRIGGER trig_task_chain_fixer
-        BEFORE DELETE ON timetable.base_task
-        FOR EACH ROW EXECUTE PROCEDURE timetable.trig_chain_fixer();
-
-CREATE OR REPLACE FUNCTION timetable.task_chain_delete(config_ bigint, chain_id_ bigint) RETURNS boolean AS $$
-DECLARE
-		chain_id_1st_   bigint;
-		id_in_chain	 bool;
-		chain_id_curs   bigint;
-		chain_id_before bigint;
-		chain_id_after  bigint;
-		curs1 refcursor;
+CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
+RETURNS bool AS
+$CODE$
 BEGIN
-		SELECT chain_id INTO chain_id_1st_ FROM timetable.chain_execution_config WHERE chain_execution_config = config_;
-		-- No such chain_execution_config
-		IF NOT FOUND THEN
-				RAISE NOTICE 'No such chain_execution_config';
-				RETURN false;
-		END IF;
-		-- This head is not connected to a chain
-		IF chain_id_1st_ IS NULL THEN
-				RAISE NOTICE 'This head is not connected to a chain';
-				RETURN false;
-		END IF;
-
-		OPEN curs1 FOR WITH RECURSIVE x (chain_id) AS (
-				SELECT chain_id FROM timetable.task_chain
-				WHERE chain_id = chain_id_1st_ AND parent_id IS NULL
-				UNION ALL
-				SELECT timetable.task_chain.chain_id FROM timetable.task_chain, x
-				WHERE timetable.task_chain.parent_id = x.chain_id
-		) SELECT chain_id FROM x;
-
-		id_in_chain = false;
-		chain_id_curs = NULL;
-		chain_id_before = NULL;
-		chain_id_after = NULL;
-		LOOP
-				FETCH curs1 INTO chain_id_curs;
-				IF id_in_chain = false AND chain_id_curs <> chain_id_ THEN
-						chain_id_before = chain_id_curs;
-				END IF;
-				IF chain_id_curs = chain_id_ THEN
-						id_in_chain = true;
-				END IF;
-				EXIT WHEN id_in_chain OR NOT FOUND;
-		END LOOP;
-
-		IF id_in_chain THEN
-				FETCH curs1 INTO chain_id_after;
-		ELSE
-				CLOSE curs1;
-				RAISE NOTICE 'This chain_id is not part of chain pointed by the chain_execution_config';
-				RETURN false;
-		END IF;
-
-		CLOSE curs1;
-
-		IF chain_id_before IS NULL THEN
-			UPDATE timetable.chain_execution_config SET chain_id = chain_id_after WHERE chain_execution_config = config_;
-		END IF;
-		UPDATE timetable.task_chain SET parent_id = NULL WHERE chain_id = chain_id_;
-		UPDATE timetable.task_chain SET parent_id = chain_id_before WHERE chain_id = chain_id_after;
-		DELETE FROM timetable.task_chain WHERE chain_id = chain_id_;
-
-		RETURN true;
-END
-$$ LANGUAGE plpgsql;
-
--- get_running_jobs() returns jobs are running for particular chain_execution_config
-CREATE OR REPLACE FUNCTION timetable.get_running_jobs(BIGINT) 
-RETURNS SETOF record AS $$
-    SELECT  chain_execution_config, start_status
-        FROM    timetable.run_status
-        WHERE   start_status IN ( SELECT   start_status
-                FROM    timetable.run_status
-                WHERE   execution_status IN ('STARTED', 'CHAIN_FAILED',
-                             'CHAIN_DONE', 'DEAD')
-                    AND (chain_execution_config = $1 OR chain_execution_config = 0)
-                GROUP BY 1
-                HAVING count(*) < 2 
-                ORDER BY 1)
-            AND chain_execution_config = $1 
-        GROUP BY 1, 2
-        ORDER BY 1, 2 DESC
-$$ LANGUAGE 'sql';
-
-CREATE OR REPLACE FUNCTION timetable.insert_base_task(IN task_name TEXT, IN parent_task_id BIGINT)
-RETURNS BIGINT AS $$
-DECLARE
-    builtin_id BIGINT;
-    result_id BIGINT;
-BEGIN
-    SELECT task_id FROM timetable.base_task WHERE name = task_name INTO builtin_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Nonexistent builtin task --> %', task_name
-        USING 
-            ERRCODE = 'invalid_parameter_value',
-            HINT = 'Please check your user task name parameter';
-    END IF;
-    INSERT INTO timetable.task_chain 
-        (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES 
-        (DEFAULT, parent_task_id, builtin_id, NULL, NULL, FALSE)
-    RETURNING chain_id INTO result_id;
-    RETURN result_id;
-END
-$$ LANGUAGE 'plpgsql';
-
--- check_task() stored procedure will tell us if chain execution config id have to be executed 
-CREATE OR REPLACE FUNCTION timetable.check_task(BIGINT) RETURNS BOOLEAN AS
-$$
-DECLARE 
-    v_chain_exec_conf   ALIAS FOR $1;
-    v_record        record;
-    v_return        BOOLEAN;
-BEGIN
-    SELECT *    
-        FROM    timetable.chain_execution_config 
-        WHERE   chain_execution_config = v_chain_exec_conf
-        INTO v_record;
-
-    IF NOT FOUND
-    THEN
+    IF pg_is_in_recovery() THEN
+        RAISE NOTICE 'Cannot obtain lock on a replica. Please, use the primary node';
         RETURN FALSE;
     END IF;
-    
-    -- ALL NULLS means task executed every minute
-    RETURN  COALESCE(v_record.run_at_month, v_record.run_at_day_of_week, v_record.run_at_day,
-            v_record.run_at_hour,v_record.run_at_minute) IS NULL
-        OR 
-            COALESCE(v_record.run_at_month = date_part('month', now()), TRUE)
-        AND COALESCE(v_record.run_at_day_of_week = date_part('dow', now()), TRUE)
-        AND COALESCE(v_record.run_at_day = date_part('day', now()), TRUE)
-        AND COALESCE(v_record.run_at_hour = date_part('hour', now()), TRUE)
-        AND COALESCE(v_record.run_at_minute = date_part('minute', now()), TRUE);
+    -- remove disconnected sessions
+    DELETE
+        FROM timetable.active_session
+        WHERE server_pid NOT IN (
+            SELECT pid
+            FROM pg_catalog.pg_stat_activity
+            WHERE application_name = 'pg_timetable'
+        );
+    -- check if there any active sessions with the client name but different client pid
+    PERFORM 1
+        FROM timetable.active_session s
+        WHERE
+            s.client_pid <> worker_pid
+            AND s.client_name = worker_name
+        LIMIT 1;
+    IF FOUND THEN
+        RAISE NOTICE 'Another client is already connected to server with name: %', worker_name;
+        RETURN FALSE;
+    END IF;
+    -- insert current session information
+    INSERT INTO timetable.active_session VALUES (worker_pid, worker_name, pg_backend_pid());
+    RETURN TRUE;
 END;
-$$ LANGUAGE 'plpgsql';
+$CODE$
+STRICT
+LANGUAGE plpgsql;
 
--- cron_element_to_array() will return array with minutes, hours, days etc. of execution
-CREATE OR REPLACE FUNCTION timetable.cron_element_to_array(
-    element text,
-    element_type text)
-    RETURNS integer[] AS
-$$
+CREATE OR REPLACE FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) RETURNS SETOF BIGINT AS $$
+    SELECT  start_status.run_status_id 
+    FROM    timetable.run_status start_status
+    WHERE   start_status.execution_status = 'CHAIN_STARTED' 
+            AND start_status.chain_id = $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM    timetable.run_status finish_status
+                WHERE   start_status.run_status_id = finish_status.start_status_id
+                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+            )
+    ORDER BY 1
+$$ LANGUAGE SQL STRICT;
+
+COMMENT ON FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) IS
+    'Returns a set of active run status IDs for a given chain';
+
+CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) RETURNS void AS $$
+    INSERT INTO timetable.run_status
+        (execution_status, start_status_id, client_name)
+    SELECT 
+        'DEAD', start_status.run_status_id, $1 
+        FROM    timetable.run_status start_status
+        WHERE   start_status.execution_status = 'CHAIN_STARTED' 
+            AND start_status.client_name = $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM    timetable.run_status finish_status
+                WHERE   start_status.run_status_id = finish_status.start_status_id
+                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+            )
+$$ LANGUAGE SQL STRICT; 
+
+CREATE OR REPLACE FUNCTION timetable.add_task(
+    IN command_name TEXT, 
+    IN parent_task_id BIGINT
+) RETURNS BIGINT AS $$
+DECLARE
+    v_command_id BIGINT;
+    v_result_id BIGINT;
+BEGIN
+    SELECT command_id FROM timetable.command WHERE name = command_name INTO v_command_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Nonexistent command --> %', command_name
+        USING 
+            ERRCODE = 'invalid_parameter_value',
+            HINT = 'Please check your command name parameter';
+    END IF;
+    INSERT INTO timetable.task 
+        (task_id, parent_id, command_id)
+    VALUES 
+        (DEFAULT, parent_task_id, v_command_id)
+    RETURNING task_id INTO v_result_id;
+    RETURN v_result_id;
+END
+$$ LANGUAGE PLPGSQL;
+
+-- add_job() will add one-task chain to the system
+CREATE OR REPLACE FUNCTION timetable.add_job(
+    job_name            TEXT,
+    job_schedule        timetable.cron,
+    job_command         TEXT,
+    job_parameters      JSONB DEFAULT NULL,
+    job_kind            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
+    job_client_name     TEXT DEFAULT NULL,
+    job_max_instances   INTEGER DEFAULT NULL,
+    job_live            BOOLEAN DEFAULT TRUE,
+    job_self_destruct   BOOLEAN DEFAULT FALSE,
+    job_ignore_errors   BOOLEAN DEFAULT TRUE
+) RETURNS BIGINT AS $$
+    WITH 
+        cte_cmd(v_command_id) AS (
+            INSERT INTO timetable.command (command_id, name, kind, script)
+            VALUES (DEFAULT, job_name, job_kind, job_command)
+            RETURNING command_id
+        ),
+        cte_task(v_task_id) AS (
+            INSERT INTO timetable.task (command_id, ignore_error, autonomous)
+            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_cmd
+            RETURNING task_id
+        ),
+        cte_chain (v_chain_id) AS (
+            INSERT INTO timetable.chain (task_id, chain_name, run_at, max_instances, live,self_destruct, client_name) 
+            SELECT v_task_id, job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name
+            FROM cte_task
+            RETURNING chain_id
+        )
+        INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
+        SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
+        RETURNING chain_id
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS $$
+  SELECT pg_notify(
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS  $$ 
+  SELECT pg_notify(
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.cron_split_to_arrays(
+    cron text,
+    OUT mins integer[],
+    OUT hours integer[],
+    OUT days integer[],
+    OUT months integer[],
+    OUT dow integer[]
+) RETURNS record AS $$
 DECLARE
     a_element text[];
     i_index integer;
-    a_tmp text[] := '{}';
+    a_tmp text[];
     tmp_item text;
-    a_range text[];
+    a_range int[];
     a_split text[];
-    counter integer;
-    counter_range integer[];
-    a_res integer[] := '{}';
+    a_res integer[];
     allowed_range integer[];
     max_val integer;
     min_val integer;
 BEGIN
-    IF lower(element_type) = 'minute' THEN
-        i_index = 1;
-        allowed_range = '{0,59}';
-    ELSIF lower(element_type) = 'hour' THEN
-        i_index = 2;
-        allowed_range = '{0,23}';
-    ELSIF lower(element_type) = 'day' THEN
-        i_index = 3;
-        allowed_range = '{1,31}';
-    ELSIF lower(element_type) = 'month' THEN
-        i_index = 4;
-        allowed_range = '{1,12}';
-    ELSIF lower(element_type) = 'day_of_week' THEN
-        i_index = 5;
-        allowed_range = '{0,7}';
-    ELSE
-        RAISE EXCEPTION 'element_type ("%") not recognized', element_type
-            USING HINT = 'Allowed values are "minute, day, hour, month, day_of_month"!';
-    END IF;
-
-
-    a_element := regexp_split_to_array(element, '\s+');
-    a_tmp := string_to_array(a_element[i_index],',');
-
-    FOREACH  tmp_item IN ARRAY a_tmp
-        LOOP
-            -- normal integer
-            IF tmp_item ~ '^[0-9]+$' THEN
+    a_element := regexp_split_to_array(cron, '\s+');
+    FOR i_index IN 1..5 LOOP
+        a_res := NULL;
+        a_tmp := string_to_array(a_element[i_index],',');
+        CASE i_index -- 1 - mins, 2 - hours, 3 - days, 4 - weeks, 5 - DOWs
+            WHEN 1 THEN allowed_range := '{0,59}';
+            WHEN 2 THEN allowed_range := '{0,23}';
+            WHEN 3 THEN allowed_range := '{1,31}';
+            WHEN 4 THEN allowed_range := '{1,12}';
+        ELSE
+            allowed_range := '{0,7}';
+        END CASE;
+        FOREACH  tmp_item IN ARRAY a_tmp LOOP
+            IF tmp_item ~ '^[0-9]+$' THEN -- normal integer
                 a_res := array_append(a_res, tmp_item::int);
-
-                -- '*' any value
-            ELSIF tmp_item ~ '^[*]+$' THEN
-                a_res := array_append(a_res, NULL);
-
-                -- '-' range of values
-            ELSIF tmp_item ~ '^[0-9]+[-][0-9]+$' THEN
+            ELSIF tmp_item ~ '^[*]+$' THEN -- '*' any value
+                a_range := array(select generate_series(allowed_range[1], allowed_range[2]));
+                a_res := array_cat(a_res, a_range);
+            ELSIF tmp_item ~ '^[0-9]+[-][0-9]+$' THEN -- '-' range of values
                 a_range := regexp_split_to_array(tmp_item, '-');
-                a_range := array(select generate_series(a_range[1]::int,a_range[2]::int));
-                a_res := array_cat(a_res, a_range::int[]);
-
-                -- '/' step values
-            ELSIF tmp_item ~ '^[0-9]+[\/][0-9]+$' THEN
+                a_range := array(select generate_series(a_range[1], a_range[2]));
+                a_res := array_cat(a_res, a_range);
+            ELSIF tmp_item ~ '^[0-9]+[\/][0-9]+$' THEN -- '/' step values
+                a_range := regexp_split_to_array(tmp_item, '/');
+                a_range := array(select generate_series(a_range[1], allowed_range[2], a_range[2]));
+                a_res := array_cat(a_res, a_range);
+            ELSIF tmp_item ~ '^[0-9-]+[\/][0-9]+$' THEN -- '-' range of values and '/' step values
                 a_split := regexp_split_to_array(tmp_item, '/');
-                counter := a_split[1]::int;
-                WHILE counter+a_split[2]::int <= 59 LOOP
-                    a_res := array_append(a_res, counter);
-                    counter := counter + a_split[2]::int ;
-                END LOOP ;
-
-                --Heavy sh*t, combinated special chars
-                -- '-' range of values and '/' step values
-            ELSIF tmp_item ~ '^[0-9-]+[\/][0-9]+$' THEN
+                a_range := regexp_split_to_array(a_split[1], '-');
+                a_range := array(select generate_series(a_range[1], a_range[2], a_split[2]::int));
+                a_res := array_cat(a_res, a_range);
+            ELSIF tmp_item ~ '^[*]+[\/][0-9]+$' THEN -- '*' any value and '/' step values
                 a_split := regexp_split_to_array(tmp_item, '/');
-                counter_range := regexp_split_to_array(a_split[1], '-');
-                WHILE counter_range[1]::int+a_split[2]::int <= counter_range[2]::int LOOP
-                    a_res := array_append(a_res, counter_range[1]);
-                    counter_range[1] := counter_range[1] + a_split[2]::int ;
-                END LOOP;
-
-                -- '*' any value and '/' step values
-            ELSIF tmp_item ~ '^[*]+[\/][0-9]+$' THEN
-                a_split := regexp_split_to_array(tmp_item, '/');
-                counter_range := allowed_range;
-                WHILE counter_range[1]::int+a_split[2]::int <= counter_range[2]::int LOOP
-                    counter_range[1] := counter_range[1] + a_split[2]::int ;
-                    a_res := array_append(a_res, counter_range[1]);
-                END LOOP;
+                a_range := array(select generate_series(allowed_range[1], allowed_range[2], a_split[2]::int));
+                a_res := array_cat(a_res, a_range);
             ELSE
                 RAISE EXCEPTION 'Value ("%") not recognized', a_element[i_index]
-                    USING HINT = 'fields separated by space or tab, Values allowed: numbers (value list with ","), any value with "*", range of value with "-" and step values with "/"!';
+                    USING HINT = 'fields separated by space or tab.'+
+                       'Values allowed: numbers (value list with ","), '+
+                    'any value with "*", range of value with "-" and step values with "/"!';
             END IF;
         END LOOP;
-
-    --sort the array ;)
-    SELECT ARRAY_AGG(x.val) INTO a_res
-    FROM (SELECT UNNEST(a_res) AS val ORDER BY val) AS x;
-
-    --check if Values in allowed ranges
-    max_val :=  max(x) FROM unnest(a_res) as x;
-    min_val :=  min(x) FROM unnest(a_res) as x;
-    IF max_val > allowed_range[2] OR min_val < allowed_range[1] then
-        RAISE EXCEPTION '%s incorrect, allowed range between % and %', INITCAP(element_type), allowed_range[1], allowed_range[2]  ;
-    END IF;
-
-    RETURN a_res;
-END;
-$$ LANGUAGE 'plpgsql';
-
--- job_add() will add job to the system
-CREATE OR REPLACE FUNCTION timetable.job_add(
-    task_name text,
-    task_function text,
-    client_name text,
-    task_type timetable.task_kind DEFAULT 'SQL'::timetable.task_kind,
-    by_cron text DEFAULT NULL::text,
-    by_minute text DEFAULT NULL::text,
-    by_hour text DEFAULT NULL::text,
-    by_day text DEFAULT NULL::text,
-    by_month text DEFAULT NULL::text,
-    by_day_of_week text DEFAULT NULL::text,
-    max_instances integer DEFAULT NULL::integer,
-    live boolean DEFAULT false,
-    self_destruct boolean DEFAULT false)
-    RETURNS text AS
-$$
-DECLARE
-    v_task_id bigint;
-    v_chain_id bigint;
-    v_chain_name text;
-    c_matrix refcursor;
-    r_matrix record;
-    a_by_cron text[];
-    a_by_minute integer[];
-    a_by_hour integer[];
-    a_by_day integer[];
-    a_by_month integer[];
-    a_by_day_of_week integer[];
-    tmp_num numeric;
-BEGIN
-    --Create task
-    INSERT INTO timetable.base_task 
-    VALUES (DEFAULT, task_name, task_type, task_function)
-    RETURNING task_id INTO v_task_id;
-
-    --Create chain
-    INSERT INTO timetable.task_chain (chain_id, parent_id, task_id, run_uid, database_connection, ignore_error)
-    VALUES (DEFAULT, NULL, v_task_id, NULL, NULL, TRUE)
-    RETURNING chain_id INTO v_chain_id;
-
-    IF by_cron IS NOT NULL then
-        a_by_minute	:= timetable.cron_element_to_array(by_cron, 'minute');
-        a_by_hour := timetable.cron_element_to_array(by_cron, 'hour');
-        a_by_day := timetable.cron_element_to_array(by_cron, 'day');
-        a_by_month := timetable.cron_element_to_array(by_cron, 'month');
-        a_by_day_of_week := timetable.cron_element_to_array(by_cron, 'day_of_week');
-    ELSE
-        a_by_minute := string_to_array(by_minute, ',');
-        a_by_hour := string_to_array(by_hour, ',');
-        IF lower(by_day) = 'weekend' then
-            a_by_day := '{6,0}'; -- Saturday,Sunday
-        ELSEIF lower(by_day) = 'workweek' then
-            a_by_day := '{1,2,3,4,5}'; 	-- Monday-Friday
-        ELSEIF lower(by_day) = 'daily' then
-            a_by_day := '{0,1,2,3,4,5,6,}';	-- Monday-Sunday
-        ELSE
-            a_by_day := string_to_array(by_day, ',');
+        SELECT
+           ARRAY_AGG(x.val), MIN(x.val), MAX(x.val) INTO a_res, min_val, max_val
+        FROM (
+            SELECT DISTINCT UNNEST(a_res) AS val ORDER BY val) AS x;
+        IF max_val > allowed_range[2] OR min_val < allowed_range[1] THEN
+            RAISE EXCEPTION '% is out of range: %', a_res, allowed_range;
         END IF;
-        a_by_month := string_to_array(by_month, ',');
-        a_by_day_of_week := string_to_array(by_day_of_week, ',');
-    END IF;
-
-    IF a_by_minute IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_minute
-            LOOP
-                IF tmp_num > 59 OR tmp_num < 0 then
-                    RAISE EXCEPTION 'Minutes incorrect'
-                        USING HINT = 'Dude Minutes are between 0 and 59 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_hour IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_hour
-            LOOP
-                IF tmp_num > 23 OR tmp_num < 0 then
-                    RAISE EXCEPTION 'Hours incorrect'
-                        USING HINT = 'Dude Hours are between 0 and 23 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_day IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_day
-            LOOP
-                IF tmp_num > 31 OR tmp_num < 1 then
-                    RAISE EXCEPTION 'Days incorrect'
-                        USING HINT = 'Dude Days are between 1 and 31 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_month IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_month
-            LOOP
-                IF tmp_num > 12 OR tmp_num < 1 then
-                    RAISE EXCEPTION 'Months incorrect'
-                        USING HINT = 'Dude Months are between 1 and 12 not more or less ;)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    IF a_by_day_of_week IS NOT NULL then
-        FOREACH  tmp_num IN ARRAY a_by_day_of_week
-            LOOP
-                IF tmp_num > 7 OR tmp_num < 0 then
-                    RAISE EXCEPTION 'Days of week incorrect'
-                        USING HINT = 'Dude Days of week are between 0 and 7 (0 and 7 are Sunday)';
-                END IF;
-            END LOOP;
-    END IF;
-
-    OPEN c_matrix FOR 
-      SELECT *
-      FROM
-          unnest(a_by_minute) v_min(min) CROSS JOIN 
-          unnest(a_by_hour) v_hour(hour) CROSS JOIN 
-          unnest(a_by_day) v_day(day) CROSS JOIN 
-          unnest(a_by_month) v_month(month) CROSS JOIN 
-          unnest(a_by_day_of_week) v_day_of_week(dow)
-      ORDER BY
-          min, hour, day, month, dow;
-
-    LOOP
-        FETCH c_matrix INTO r_matrix;
-        EXIT WHEN NOT FOUND;
-        RAISE NOTICE 'min: %, hour: %, day: %, month: %',r_matrix.min, r_matrix.hour, r_matrix.day, r_matrix.month;
-
-        v_chain_name := 'chain_'||v_chain_id||'_'||LPAD(COALESCE(r_matrix.min, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.hour, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.day, -1)::text, 2, '0')||LPAD(COALESCE (r_matrix.month, -1)::text, 2, '0')||LPAD(COALESCE(r_matrix.dow, -1)::text, 2, '0');
-        RAISE NOTICE 'chain_name: %',v_chain_name;
-
-
-        INSERT INTO timetable.chain_execution_config VALUES
-        (
-           DEFAULT, -- chain_execution_config,
-           v_chain_id, -- chain_id,
-           v_chain_name, -- chain_name,
-           r_matrix.min, -- run_at_minute,
-           r_matrix.hour, -- run_at_hour,
-           r_matrix.day, -- run_at_day,
-           r_matrix.month, -- run_at_month,
-           r_matrix.dow, -- run_at_day_of_week,
-           max_instances, -- max_instances,
-           live, -- live,
-           self_destruct, -- self_destruct,
-           FALSE, -- exclusive_execution,
-           NULL -- excluded_execution_configs
-        );
+        CASE i_index
+                  WHEN 1 THEN mins := a_res;
+            WHEN 2 THEN hours := a_res;
+            WHEN 3 THEN days := a_res;
+            WHEN 4 THEN months := a_res;
+        ELSE
+            dow := a_res;
+        END CASE;
     END LOOP;
-    CLOSE c_matrix;
-
-    RETURN format('JOB_ID: %s, is Created, EXCEUTE TIMES: Minutes: %s, Hours: %s, Days: %s, Months: %s, Day of Week: %s'
-        ,v_task_id, a_by_minute, a_by_hour, a_by_day, a_by_month, a_by_day_of_week);
-
+    RETURN;
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE PLPGSQL STRICT;
+
+CREATE OR REPLACE FUNCTION timetable.cron_months(
+    from_ts timestamptz,
+    allowed_months int[]
+) RETURNS SETOF timestamptz AS $$
+    WITH
+    am(am) AS (SELECT UNNEST(allowed_months)),
+    genm(ts) AS ( --generated months
+        SELECT date_trunc('month', ts)
+        FROM pg_catalog.generate_series(from_ts, from_ts + INTERVAL '1 year', INTERVAL '1 month') g(ts)
+    )
+    SELECT ts FROM genm JOIN am ON date_part('month', genm.ts) = am.am
+$$ LANGUAGE SQL STRICT;
+
+CREATE OR REPLACE FUNCTION timetable.cron_days(
+    from_ts timestamptz,
+    allowed_months int[],
+    allowed_days int[],
+    allowed_week_days int[]
+) RETURNS SETOF timestamptz AS $$
+    WITH
+    ad(ad) AS (SELECT UNNEST(allowed_days)),
+    am(am) AS (SELECT * FROM timetable.cron_months(from_ts, allowed_months)),
+    gend(ts) AS ( --generated days
+        SELECT date_trunc('day', ts)
+        FROM am,
+            pg_catalog.generate_series(am.am, am.am + INTERVAL '1 month'
+                - INTERVAL '1 day',  -- don't include the same day of the next month
+                INTERVAL '1 day') g(ts)
+    )
+    SELECT ts
+    FROM gend JOIN ad ON date_part('day', gend.ts) = ad.ad
+    WHERE extract(dow from ts)=ANY(allowed_week_days)
+$$ LANGUAGE SQL STRICT;
+
+CREATE OR REPLACE FUNCTION timetable.cron_times(
+    allowed_hours int[],
+    allowed_minutes int[]
+) RETURNS SETOF time AS $$
+    WITH
+    ah(ah) AS (SELECT UNNEST(allowed_hours)),
+    am(am) AS (SELECT UNNEST(allowed_minutes))
+    SELECT make_time(ah.ah, am.am, 0) FROM ah CROSS JOIN am
+$$ LANGUAGE SQL STRICT;
+
+
+CREATE OR REPLACE FUNCTION timetable.cron_runs(
+    from_ts timestamp with time zone, 
+    cron text
+) RETURNS SETOF timestamptz AS $$
+    SELECT cd + ct
+    FROM
+        timetable.cron_split_to_arrays(cron) a,
+        timetable.cron_times(a.hours, a.mins) ct CROSS JOIN
+        timetable.cron_days(from_ts, a.months, a.days, a.dow) cd
+    WHERE cd + ct > from_ts
+    ORDER BY 1 ASC;
+$$ LANGUAGE SQL STRICT;
+
+-- is_cron_in_time returns TRUE if timestamp is listed in cron expression
+CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(
+    run_at timetable.cron, 
+    ts timestamptz
+) RETURNS BOOLEAN AS $$
+    SELECT
+    CASE WHEN run_at IS NULL THEN
+        TRUE
+    ELSE
+        date_part('month', ts) = ANY(a.months)
+        AND date_part('dow', ts) = ANY(a.dow) OR date_part('isodow', ts) = ANY(a.dow)
+        AND date_part('day', ts) = ANY(a.days)
+        AND date_part('hour', ts) = ANY(a.hours)
+        AND date_part('minute', ts) = ANY(a.mins)
+    END
+    FROM
+        timetable.cron_split_to_arrays(run_at) a
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.next_run(cron timetable.cron) RETURNS timestamptz AS $$
+    SELECT * FROM timetable.cron_runs(now(), cron) LIMIT 1
+$$ LANGUAGE SQL STRICT;
 
 -- json validation from:
 -- https://github.com/gavinwahl/postgres-json-schema
 
-CREATE OR REPLACE FUNCTION timetable._validate_json_schema_type(type text, data jsonb) 
+CREATE OR REPLACE FUNCTION timetable._validate_json_schema_type(type text, data jsonb)
 RETURNS boolean AS $$
 BEGIN
   IF type = 'integer' THEN
@@ -601,11 +483,11 @@ BEGIN
   END IF;
   RETURN true;
 END;
-$$ 
+$$
 LANGUAGE 'plpgsql' IMMUTABLE;
 
 
-CREATE OR REPLACE FUNCTION timetable.validate_json_schema(schema jsonb, data jsonb, root_schema jsonb DEFAULT NULL) 
+CREATE OR REPLACE FUNCTION timetable.validate_json_schema(schema jsonb, data jsonb, root_schema jsonb DEFAULT NULL)
 RETURNS boolean AS $$
 DECLARE
   prop text;
@@ -848,15 +730,16 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
 
-INSERT INTO timetable.base_task(task_id, name, script, kind) VALUES
-	(DEFAULT, 'NoOp', 'NoOp', 'BUILTIN'),
-	(DEFAULT, 'Sleep', 'Sleep', 'BUILTIN'),
-	(DEFAULT, 'Log', 'Log', 'BUILTIN'),
-	(DEFAULT, 'SendMail', 'SendMail', 'BUILTIN'),
-	(DEFAULT, 'Download', 'Download', 'BUILTIN');
+INSERT INTO timetable.command(command_id, name, script, kind) VALUES
+    (DEFAULT, 'NoOp', 'NoOp', 'BUILTIN'),
+    (DEFAULT, 'Sleep', 'Sleep', 'BUILTIN'),
+    (DEFAULT, 'Log', 'Log', 'BUILTIN'),
+    (DEFAULT, 'SendMail', 'SendMail', 'BUILTIN'),
+    (DEFAULT, 'Download', 'Download', 'BUILTIN'),
+    (DEFAULT, 'CopyFromFile', 'CopyFromFile', 'BUILTIN');
 
-CREATE OR REPLACE FUNCTION timetable.get_task_id(task_name TEXT) 
+CREATE OR REPLACE FUNCTION timetable.get_command_id(command_name TEXT) 
 RETURNS BIGINT AS $$
-	SELECT task_id FROM timetable.base_task WHERE name = $1;
-$$ LANGUAGE 'sql'
-STRICT;
+    SELECT command_id FROM timetable.command WHERE name = $1;
+$$ LANGUAGE SQL STRICT;
+

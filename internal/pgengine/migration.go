@@ -65,72 +65,19 @@ func (pge *PgEngine) initMigrator() error {
 		}),
 		migrator.Migrations(
 			&migrator.Migration{
-				Name: "0051 Implement upgrade machinery",
+				Name: "00259 Restart migrations for v4",
 				Func: func(ctx context.Context, tx pgx.Tx) error {
 					// "migrations" table will be created automatically
 					return nil
 				},
 			},
-			&migrator.Migration{
-				Name: "0070 Interval scheduling and cron only syntax",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00070.sql")
-				},
-			},
-			&migrator.Migration{
-				Name: "0086 Add task output to execution_log",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					_, err := tx.Exec(ctx, "ALTER TABLE timetable.execution_log "+
-						"ADD COLUMN output TEXT")
-					return err
-				},
-			},
-			&migrator.Migration{
-				Name: "0108 Add client_name column to timetable.run_status",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00108.sql")
-				},
-			},
-			&migrator.Migration{
-				Name: "0122 Add autonomous tasks",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					_, err := tx.Exec(ctx, "ALTER TABLE timetable.task_chain "+
-						"ADD COLUMN autonomous BOOLEAN NOT NULL DEFAULT false")
-					return err
-				},
-			},
-			&migrator.Migration{
-				Name: "0105 Add next_run function",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00105.sql")
-				},
-			},
-			&migrator.Migration{
-				Name: "0149 Reimplement session locking",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00149.sql")
-				},
-			},
-			&migrator.Migration{
-				Name: "0155 Rename SHELL task kind to PROGRAM",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					_, err := tx.Exec(ctx, "ALTER TYPE timetable.task_kind RENAME VALUE 'SHELL' TO 'PROGRAM'")
-					return err
-				},
-			},
-			&migrator.Migration{
-				Name: "0178 Disable tasks on a REPLICA node",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00178.sql")
-				},
-			},
-			&migrator.Migration{
-				Name: "0195 Add notify_chain_start() and notify_chain_stop() functions",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00195.sql")
-				},
-			},
-			// adding new migration here, update "timetable"."migrations" in "sql_ddl.go"
+			// &migrator.Migration{
+			// 	Name: "000XX Short description of a migration",
+			// 	Func: func(ctx context.Context, tx pgx.Tx) error {
+			// 		return executeMigrationScript(ctx, tx, "000XX.sql")
+			// 	},
+			// },
+			// adding new migration here, update "timetable"."migrations" in "sql/ddl.sql"
 		),
 	)
 	if err != nil {

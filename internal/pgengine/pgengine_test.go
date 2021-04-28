@@ -31,7 +31,7 @@ func SetupTestCaseEx(t *testing.T, fc func(c *config.CmdOptions)) func(t *testin
 
 //SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
-	t.Log("Setup test case")
+	t.Helper()
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
