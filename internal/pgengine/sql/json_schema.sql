@@ -1,7 +1,7 @@
 -- json validation from:
 -- https://github.com/gavinwahl/postgres-json-schema
 
-CREATE OR REPLACE FUNCTION timetable._validate_json_schema_type(type text, data jsonb) 
+CREATE OR REPLACE FUNCTION timetable._validate_json_schema_type(type text, data jsonb)
 RETURNS boolean AS $$
 BEGIN
   IF type = 'integer' THEN
@@ -18,11 +18,11 @@ BEGIN
   END IF;
   RETURN true;
 END;
-$$ 
+$$
 LANGUAGE 'plpgsql' IMMUTABLE;
 
 
-CREATE OR REPLACE FUNCTION timetable.validate_json_schema(schema jsonb, data jsonb, root_schema jsonb DEFAULT NULL) 
+CREATE OR REPLACE FUNCTION timetable.validate_json_schema(schema jsonb, data jsonb, root_schema jsonb DEFAULT NULL)
 RETURNS boolean AS $$
 DECLARE
   prop text;
@@ -264,3 +264,4 @@ BEGIN
   RETURN true;
 END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
+

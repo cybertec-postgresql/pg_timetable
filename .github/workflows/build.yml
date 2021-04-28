@@ -1,8 +1,8 @@
 name: Go Build & Test
-on: 
+on:
   pull_request:
   workflow_dispatch:
-      
+
 jobs:
 
   test-postgresql-windows:
@@ -36,7 +36,7 @@ jobs:
         go-version: '1.16'
 
     - name: Test
-      run: go test -v -p 1 -parallel 1 -failfast ./... 
+      run: go test -v -p 1 -parallel 1 -failfast ./...
 
 
 
@@ -80,7 +80,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v2
       with:
-        go-version: '1.16'      
+        go-version: '1.16'
 
     - name: Test
       run: go test -v -p 1 -parallel 1 -failfast ./...
@@ -105,7 +105,7 @@ jobs:
     - name: Create timetable database
       run: |
         sudo -u postgres createdb --owner=scheduler timetable
-        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable    
+        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
 
     - name: Check out code
       uses: actions/checkout@v2
@@ -113,7 +113,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v2
       with:
-        go-version: '1.16'      
+        go-version: '1.16'
 
     - name: Get dependencies
       run: |
@@ -124,7 +124,7 @@ jobs:
       uses: golangci/golangci-lint-action@v2
       with:
         # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-        version: v1.33        
+        version: v1.39
 
     - name: Test
       run: go test -failfast -v -timeout=300s -p 1 -coverprofile=profile.cov ./...

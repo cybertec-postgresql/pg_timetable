@@ -113,3 +113,4 @@ CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
         EXTRACT(epoch FROM clock_timestamp())::bigint)
     )
 $$ LANGUAGE SQL;
+

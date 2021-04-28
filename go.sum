@@ -332,6 +332,8 @@ github.com/pashagolub/pgxmock v0.0.0-20210329125448-d2e8b19a1746 h1:6XFIVysfnfY9
 github.com/pashagolub/pgxmock v0.0.0-20210329125448-d2e8b19a1746/go.mod h1:4DYtbprXlK4/F7P63ROWrOl7+fjmpi9kmqRmOCz5t0U=
 github.com/pashagolub/pgxmock v0.0.0-20210427115130-10a6553866bb h1:T6ieYyZHV/+pMnIzA0fNrXP8nTOQqKSmtGKf2GsROfU=
 github.com/pashagolub/pgxmock v0.0.0-20210427115130-10a6553866bb/go.mod h1:4DYtbprXlK4/F7P63ROWrOl7+fjmpi9kmqRmOCz5t0U=
+github.com/pashagolub/pgxmock v1.0.0 h1:iOlAMkIy5daRYwhvmLAhNHXuY5hBqH0OdVmfq/snIAQ=
+github.com/pashagolub/pgxmock v1.0.0/go.mod h1:4DYtbprXlK4/F7P63ROWrOl7+fjmpi9kmqRmOCz5t0U=
 github.com/pashagolub/pgxstruct v0.0.0-20210217101842-40d357eec200/go.mod h1:fOTLLi1PtVUDXx28olVT/D2UMFCmBEYpnY5QIzghmDc=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=
