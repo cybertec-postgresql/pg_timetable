@@ -86,5 +86,5 @@ Build from sources
 
     $ psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
     $ createdb --owner=scheduler timetable
-    $ go test -failfast -timeout=300s -count=1 -parallel=1 ./...
+    $ go test -failfast -timeout=300s -count=1 -p 1 ./...
 
