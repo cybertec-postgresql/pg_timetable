@@ -99,7 +99,18 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 
 ## Supported Environments
 
-TODO
+| Service       | Supported     |
+| ------------- |:-------------:|
+| [Alibaba Cloud](https://www.alibabacloud.com/help/doc-detail/96715.htm) | ✅ |
+| [Amazon RDS](https://aws.amazon.com/rds/postgresql/) | ✅ |
+| [Amazon Aurora](https://aws.amazon.com/rds/aurora/) | ✅ | 
+| [Azure](https://azure.microsoft.com/en-us/services/postgresql/) | ✅  |
+| [Citus Cloud](https://www.citusdata.com/product/cloud)  | ✅ |
+| [Crunchy Bridge](https://www.crunchydata.com/products/crunchy-bridge/) | ✅ |
+| [DigitalOcean](https://www.digitalocean.com/products/managed-databases/) | ✅ |
+| [Google Cloud](https://cloud.google.com/sql/docs/postgres/) | ✅ |
+| [Heroku](https://elements.heroku.com/addons/heroku-postgresql) | ✅ |
+| [Supabase](https://supabase.io/docs/guides/database) | ✅  |
 
 ## Contributing
 
