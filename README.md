@@ -98,19 +98,56 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 5. PROFIT!
 
 ## Supported Environments
+| Cloud Service    | Supported | PostgreSQL Version | Supported | OS | Supported |
+| ---------------- |:---------:| ------------------ |:---------:| -- |:---------:|
+| [Alibaba Cloud]  | ✅       | [14 (devel)]   | ✅ | Linux    | ✅ |
+| [Amazon RDS]     | ✅       | [13 (current)] | ✅ | Darwin   | ✅ |
+| [Amazon Aurora]  | ✅       | [12]           | ✅ | Windows  | ✅ |
+| [Azure]          | ✅       | [11]           | ✅ | FreeBSD\*| ✅ |
+| [Citus Cloud]    | ✅       | [10]           | ✅ | NetBSD\* | ✅ |
+| [Crunchy Bridge] | ✅       | [9.6]          | ✅ | OpenBSD\*| ✅ | 
+| [DigitalOcean]   | ✅       |                |    | Solaris\* | ✅ |
+| [Google Cloud]   | ✅       |
+| [Heroku]         | ✅       |
+| [Supabase]       | ✅       |
 
-| Service       | Supported     |
-| ------------- |:-------------:|
-| [Alibaba Cloud](https://www.alibabacloud.com/help/doc-detail/96715.htm) | ✅ |
-| [Amazon RDS](https://aws.amazon.com/rds/postgresql/) | ✅ |
-| [Amazon Aurora](https://aws.amazon.com/rds/aurora/) | ✅ | 
-| [Azure](https://azure.microsoft.com/en-us/services/postgresql/) | ✅  |
-| [Citus Cloud](https://www.citusdata.com/product/cloud)  | ✅ |
-| [Crunchy Bridge](https://www.crunchydata.com/products/crunchy-bridge/) | ✅ |
-| [DigitalOcean](https://www.digitalocean.com/products/managed-databases/) | ✅ |
-| [Google Cloud](https://cloud.google.com/sql/docs/postgres/) | ✅ |
-| [Heroku](https://elements.heroku.com/addons/heroku-postgresql) | ✅ |
-| [Supabase](https://supabase.io/docs/guides/database) | ✅  |
+\* - there are no official release binaries made for these OSes. One would need to [build them from sources](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html#build-from-sources).
+
+\** - previous PostgreSQL versions may and should work smoothly. Only [officially supported PostgreSQL versions](https://www.postgresql.org/support/versioning/) are listed in this table.
+      
+[Alibaba Cloud]: https://www.alibabacloud.com/help/doc-detail/96715.htm
+[Amazon RDS]: https://aws.amazon.com/rds/postgresql/
+[Amazon Aurora]: https://aws.amazon.com/rds/aurora/
+[Azure]: https://azure.microsoft.com/en-us/services/postgresql/
+[Citus Cloud]: https://www.citusdata.com/product/cloud
+[Crunchy Bridge]: https://www.crunchydata.com/products/crunchy-bridge/
+[DigitalOcean]: https://www.digitalocean.com/products/managed-databases/
+[Google Cloud]: https://cloud.google.com/sql/docs/postgres/
+[Heroku]: https://elements.heroku.com/addons/heroku-postgresql
+[Supabase]: https://supabase.io/docs/guides/database
+[14 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[13 (current)]: https://www.postgresql.org/docs/13/index.html
+[12]: https://www.postgresql.org/docs/12/index.html
+[11]: https://www.postgresql.org/docs/11/index.html
+[10]: https://www.postgresql.org/docs/10/index.html
+[9.6]: https://www.postgresql.org/docs/9.6/index.html
+      
+[Alibaba Cloud]: https://www.alibabacloud.com/help/doc-detail/96715.htm
+[Amazon RDS]: https://aws.amazon.com/rds/postgresql/
+[Amazon Aurora]: https://aws.amazon.com/rds/aurora/
+[Azure]: https://azure.microsoft.com/en-us/services/postgresql/
+[Citus Cloud]: https://www.citusdata.com/product/cloud
+[Crunchy Bridge]: https://www.crunchydata.com/products/crunchy-bridge/
+[DigitalOcean]: https://www.digitalocean.com/products/managed-databases/
+[Google Cloud]: https://cloud.google.com/sql/docs/postgres/
+[Heroku]: https://elements.heroku.com/addons/heroku-postgresql
+[Supabase]: https://supabase.io/docs/guides/database
+[14 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[13 (current)]: https://www.postgresql.org/docs/13/index.html
+[12]: https://www.postgresql.org/docs/12/index.html
+[11]: https://www.postgresql.org/docs/11/index.html
+[10]: https://www.postgresql.org/docs/10/index.html
+[9.6]: https://www.postgresql.org/docs/9.6/index.html
 
 ## Contributing
 
