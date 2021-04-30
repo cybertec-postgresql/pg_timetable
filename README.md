@@ -5,7 +5,7 @@
 ![](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=v4_dev&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=v4_dev)
 [![Documentation Status](https://readthedocs.org/projects/pg-timetable/badge/?version=v4_dev)](https://pg-timetable.readthedocs.io/en/v4_dev/?badge=v4_dev)
-[![Release](https://img.shields.io/github/release/cybertec-postgresql/pg_timetable.svg)](https://github.com/cybertec-postgresql/pg_timetable/releases/latest)
+[![Release](https://img.shields.io/github/v/release/cybertec-postgresql/pg_timetable?include_prereleases)](https://github.com/cybertec-postgresql/pg_timetable/releases)
 [![Github All Releases](https://img.shields.io/github/downloads/cybertec-postgresql/pg_timetable/total?style=flat-square)](https://github.com/cybertec-postgresql/pg_timetable/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cybertec-postgresql/pg_timetable)](https://goreportcard.com/report/github.com/cybertec-postgresql/pg_timetable)
