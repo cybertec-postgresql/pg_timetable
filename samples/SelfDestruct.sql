@@ -7,20 +7,11 @@ END;
 $BODY$;
 
 WITH 
-sql_task(id) AS (
-    INSERT INTO timetable.command VALUES (
-		DEFAULT, 					-- command_id
-		'self destruct task',	    -- name
-		DEFAULT, 					-- 'SQL' :: timetable.command_kind
-		'SELECT raise_func($1)'		-- task script
-	)
-	RETURNING command_id
-),
 chain_insert(task_id) AS (
     INSERT INTO timetable.task 
-        (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
+        (task_name, command, ignore_error)
     VALUES 
-        (DEFAULT, NULL, (SELECT id FROM sql_task), NULL, NULL, TRUE)
+        ('self destruct task', 'SELECT raise_func($1)', TRUE)
     RETURNING task_id
 ),
 chain_config(id) as (

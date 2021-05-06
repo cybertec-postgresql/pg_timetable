@@ -16,6 +16,3 @@ var sqlJobFunctions string
 
 //go:embed sql/json_schema.sql
 var sqlJSONSchema string
-
-//go:embed sql/tasks.sql
-var sqlTasks string

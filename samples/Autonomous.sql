@@ -21,22 +21,9 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-WITH 
-sql_task(id) AS (
-    INSERT INTO timetable.command(command_id, name, kind, script) VALUES (
-        DEFAULT,
-        'proc with transactions test',
-        'SQL' :: timetable.command_kind,
-        'CALL test_proc()'
-    )
-    RETURNING command_id
-),
-chain_insert(task_id) AS (
-    INSERT INTO timetable.task 
-        (command_id, ignore_error, autonomous)
-    SELECT 
-        id, TRUE, TRUE
-    FROM sql_task
+WITH chain_insert(task_id) AS (
+    INSERT INTO timetable.task(command, ignore_error, autonomous)
+    VALUES('CALL test_proc()', TRUE, TRUE)
     RETURNING task_id
 )
 INSERT INTO timetable.chain (

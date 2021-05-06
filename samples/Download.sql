@@ -7,20 +7,17 @@ DECLARE
     v_head_id bigint;
     v_task_id bigint;
     v_chain_id bigint;
-    v_command_id bigint;
 BEGIN
     -- Step 1. Download file from the server
     -- Create the chain
-    INSERT INTO timetable.task (command_id, ignore_error)
-        VALUES (timetable.get_command_id ('Download'), TRUE)
+    INSERT INTO timetable.task (kind, command, ignore_error)
+    VALUES ('BUILTIN', 'Download', TRUE)
     RETURNING
         task_id INTO v_head_id;
 
     -- Create the chain with default values executed every minute (NULL == '* * * * *' :: timetable.cron)
-    INSERT INTO timetable.chain 
-        (task_id, chain_name, live)
-    VALUES 
-        (v_head_id, 'Download locations and aggregate', TRUE)
+    INSERT INTO timetable.chain (task_id, chain_name, live)
+    VALUES (v_head_id, 'Download locations and aggregate', TRUE)
     RETURNING
         chain_id INTO v_chain_id;
 
@@ -37,14 +34,8 @@ BEGIN
 
     -- Step 2. Transform Unicode characters into ASCII
     -- Create the program task to call 'uconv' and name it 'unaccent'
-    INSERT INTO timetable.command(name, kind, script)
-        VALUES ('unaccent', 'PROGRAM'::timetable.command_kind, 'uconv')
-    RETURNING 
-        command_id INTO v_command_id;
-
-    -- Add program task 'unaccent' to the chain
-    INSERT INTO timetable.task (parent_id, command_id, ignore_error)
-        VALUES (v_head_id, v_command_id, TRUE)
+    INSERT INTO timetable.task (parent_id, kind, command, ignore_error, task_name)
+        VALUES (v_head_id, 'PROGRAM', 'uconv', TRUE, 'unaccent')
     RETURNING
         task_id INTO v_task_id;
 
@@ -57,8 +48,8 @@ BEGIN
     RAISE NOTICE 'Step 2 completed. Unacent task added';
 
     -- Step 3. Import ASCII file to PostgreSQL table using "CopyFromFile" built-in command
-    INSERT INTO timetable.task (parent_id, command_id)
-        VALUES (v_task_id, timetable.get_command_id ('CopyFromFile'))
+    INSERT INTO timetable.task (parent_id, kind, command)
+        VALUES (v_task_id, 'BUILTIN', 'CopyFromFile')
     RETURNING
         task_id INTO v_task_id;
 

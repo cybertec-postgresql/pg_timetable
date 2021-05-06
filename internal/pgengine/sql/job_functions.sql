@@ -32,28 +32,12 @@ CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) RETURNS void
 $$ LANGUAGE SQL STRICT; 
 
 CREATE OR REPLACE FUNCTION timetable.add_task(
-    IN command_name TEXT, 
-    IN parent_task_id BIGINT
+    IN kind timetable.command_kind,
+    IN command TEXT, 
+    IN parent_id BIGINT
 ) RETURNS BIGINT AS $$
-DECLARE
-    v_command_id BIGINT;
-    v_result_id BIGINT;
-BEGIN
-    SELECT command_id FROM timetable.command WHERE name = command_name INTO v_command_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Nonexistent command --> %', command_name
-        USING 
-            ERRCODE = 'invalid_parameter_value',
-            HINT = 'Please check your command name parameter';
-    END IF;
-    INSERT INTO timetable.task 
-        (task_id, parent_id, command_id)
-    VALUES 
-        (DEFAULT, parent_task_id, v_command_id)
-    RETURNING task_id INTO v_result_id;
-    RETURN v_result_id;
-END
-$$ LANGUAGE PLPGSQL;
+    INSERT INTO timetable.task (parent_id, kind, command) VALUES (parent_id, kind, command) RETURNING task_id
+$$ LANGUAGE SQL;
 
 -- add_job() will add one-task chain to the system
 CREATE OR REPLACE FUNCTION timetable.add_job(
@@ -69,14 +53,9 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_ignore_errors   BOOLEAN DEFAULT TRUE
 ) RETURNS BIGINT AS $$
     WITH 
-        cte_cmd(v_command_id) AS (
-            INSERT INTO timetable.command (command_id, name, kind, script)
-            VALUES (DEFAULT, job_name, job_kind, job_command)
-            RETURNING command_id
-        ),
         cte_task(v_task_id) AS (
-            INSERT INTO timetable.task (command_id, ignore_error, autonomous)
-            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_cmd
+            INSERT INTO timetable.task (kind, command, ignore_error, autonomous)
+            VALUES (job_kind, job_command, job_ignore_errors, TRUE)
             RETURNING task_id
         ),
         cte_chain (v_chain_id) AS (
@@ -88,7 +67,7 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
         INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
         SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
         RETURNING chain_id
-$$ LANGUAGE SQL;
+$$ LANGUAGE SQL STRICT;
 
 CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
     chain_id BIGINT, 

@@ -49,8 +49,8 @@ type PgEngine struct {
 	chainSignalChan chan ChainSignal
 }
 
-var sqls = []string{sqlDDL, sqlJSONSchema, sqlTasks, sqlCronFunctions, sqlJobFunctions}
-var sqlNames = []string{"DDL", "JSON Schema", "Built-in Tasks", "Cron Functions", "Job Functions"}
+var sqls = []string{sqlDDL, sqlJSONSchema, sqlCronFunctions, sqlJobFunctions}
+var sqlNames = []string{"DDL", "JSON Schema", "Cron Functions", "Job Functions"}
 
 // New opens connection and creates schema
 func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
@@ -119,10 +119,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers)
 	connConfig.ConnConfig.RuntimeParams["application_name"] = "pg_timetable"
 	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
-		//use background context without deadline for async notifications handler
-		pge.l.WithField("severity", n.Severity).
-			WithField("notice", n.Message).
-			Info("Notice received")
+		pge.l.WithField("severity", n.Severity).WithField("notice", n.Message).Info("Notice received")
 	}
 	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
 		pge.l.WithField("ConnPID", pgconn.PgConn().PID()).
@@ -196,7 +193,7 @@ func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...strin
 	for _, f := range filename {
 		sql, err := ioutil.ReadFile(f)
 		if err != nil {
-			pge.l.WithError(err).Error("Cannot read script file")
+			pge.l.WithError(err).Error("Cannot read command file")
 			return err
 		}
 		pge.l.Info("Executing script: ", f)

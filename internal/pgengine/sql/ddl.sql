@@ -17,33 +17,18 @@ VALUES
 
 CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
 
-CREATE TABLE timetable.command (
-    command_id  BIGSERIAL               PRIMARY KEY,
-    name        TEXT                    NOT NULL UNIQUE,
-    kind        timetable.command_kind  NOT NULL DEFAULT 'SQL',
-    script      TEXT                    NOT NULL,
-    CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
-);
-
-COMMENT ON TABLE timetable.command IS
-    'Commands pg_timetable actually knows about';
-COMMENT ON COLUMN timetable.command.kind IS
-    'Indicates whether "script" is SQL, built-in function or external program';
-COMMENT ON COLUMN timetable.command.script IS
-    'Contains either an SQL script, or command string to be executed';
-
-
 CREATE TABLE timetable.task (
     task_id             BIGSERIAL   PRIMARY KEY,
-    parent_id           BIGINT      UNIQUE  REFERENCES timetable.task(task_id)
-                                    ON UPDATE CASCADE ON DELETE CASCADE,
-    command_id          BIGINT      NOT NULL REFERENCES timetable.command(command_id)
-                                    ON UPDATE CASCADE ON DELETE CASCADE,
+    parent_id           BIGINT      UNIQUE      REFERENCES timetable.task(task_id)
+                                                ON UPDATE CASCADE ON DELETE CASCADE,
+    task_name           TEXT,
+    kind                timetable.command_kind  NOT NULL DEFAULT 'SQL',
+    command             TEXT                    NOT NULL,
     run_as              TEXT,
     database_connection TEXT,
-    ignore_error        BOOLEAN     NOT NULL DEFAULT FALSE,
-    autonomous          BOOLEAN     NOT NULL DEFAULT FALSE
-);
+    ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
+    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE
+);          
 
 COMMENT ON TABLE timetable.task IS
     'Holds information about chain elements aka tasks';
@@ -53,6 +38,10 @@ COMMENT ON COLUMN timetable.task.run_as IS
     'Role name to run task as. Uses SET ROLE for SQL commands';
 COMMENT ON COLUMN timetable.task.ignore_error IS
     'Indicates whether a next task in a chain can be executed regardless of the success of the current one';
+COMMENT ON COLUMN timetable.task.kind IS
+    'Indicates whether "command" is SQL, built-in function or an external program';
+COMMENT ON COLUMN timetable.task.command IS
+    'Contains either an SQL command, or command string to be executed';
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -138,10 +127,8 @@ CREATE TABLE timetable.log
 CREATE TABLE timetable.execution_log (
     chain_id    BIGINT,
     task_id     BIGINT,
-    command_id  BIGINT,
-    name        TEXT        NOT NULL,
-    script      TEXT,
-    kind        TEXT,
+    command     TEXT,
+    kind        timetable.command_kind,
     last_run    TIMESTAMPTZ DEFAULT now(),
     finished    TIMESTAMPTZ,
     returncode  INTEGER,
@@ -159,7 +146,6 @@ CREATE TABLE timetable.run_status (
     execution_status        timetable.execution_status,
     chain_id                BIGINT,
     task_id                 BIGINT,
-    command_id              BIGINT,
     created_at              TIMESTAMPTZ DEFAULT clock_timestamp(),
     client_name             TEXT        NOT NULL
 );

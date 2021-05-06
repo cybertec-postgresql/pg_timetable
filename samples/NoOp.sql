@@ -9,7 +9,7 @@ INSERT INTO timetable.chain  (
     exclusive_execution
 ) VALUES (
     DEFAULT, -- chain_id, 
-    timetable.add_task(command_name := 'NoOp', parent_task_id := NULL), -- task_id, 
+    timetable.add_task(kind := 'BUILTIN', command := 'NoOp', parent_id := NULL), -- task_id, 
     'execute noop every minute', -- chain_name, 
     '* * * * *', -- run_at, 
     1, -- max_instances, 

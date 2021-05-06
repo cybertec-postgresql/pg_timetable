@@ -142,7 +142,7 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 
 /* execute a chain of tasks */
 func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
-	var ChainElements []pgengine.ChainElement
+	var ChainTasks []pgengine.ChainTask
 	var bctx context.Context
 	var status string
 	chainL := sch.l.WithField("chain", chain.ChainID)
@@ -153,64 +153,64 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		return
 	}
 
-	if !sch.pgengine.GetChainElements(ctx, tx, &ChainElements, chain.TaskID) {
+	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.TaskID) {
 		sch.pgengine.MustRollbackTransaction(ctx, tx)
 		return
 	}
 
 	/* now we can loop through every element of the task chain */
-	for i, chainElem := range ChainElements {
-		chainElem.ChainID = chain.ChainID
-		l := chainL.WithField("task", chainElem.TaskID).WithField("command", chainElem.CommandID)
+	for i, task := range ChainTasks {
+		task.ChainID = chain.ChainID
+		l := chainL.WithField("task", task.TaskID)
 		l.Info("Starting task")
 		ctx = log.WithLogger(ctx, l)
-		sch.pgengine.AddChainRunStatus(ctx, &chainElem, chain.RunStatusID, "TASK_STARTED")
-		retCode := sch.executeСhainElement(ctx, tx, &chainElem)
+		sch.pgengine.AddChainRunStatus(ctx, &task, chain.RunStatusID, "TASK_STARTED")
+		retCode := sch.executeСhainElement(ctx, tx, &task)
 
 		// we use background context here because current one (ctx) might be cancelled
 		bctx = log.WithLogger(context.Background(), l)
-		if retCode != 0 && !chainElem.IgnoreError {
+		if retCode != 0 && !task.IgnoreError {
 			chainL.Error("Chain failed")
-			sch.pgengine.AddChainRunStatus(bctx, &chainElem, chain.RunStatusID, "CHAIN_FAILED")
+			sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, "CHAIN_FAILED")
 			sch.pgengine.MustRollbackTransaction(bctx, tx)
 			return
 		}
-		if i == len(ChainElements)-1 {
+		if i == len(ChainTasks)-1 {
 			status = "CHAIN_DONE"
 		} else {
 			status = "TASK_DONE"
 		}
-		sch.pgengine.AddChainRunStatus(bctx, &chainElem, chain.RunStatusID, status)
+		sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, status)
 	}
 	chainL.Info("Chain executed successfully")
 	bctx = log.WithLogger(context.Background(), chainL)
 	sch.pgengine.MustCommitTransaction(bctx, tx)
 }
 
-func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chainElem *pgengine.ChainElement) int {
+func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
 	var paramValues []string
 	var err error
 	var out string
 	var retCode int
 	l := log.GetLogger(ctx)
-	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, chainElem) {
+	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task) {
 		return -1
 	}
 
-	chainElem.StartedAt = time.Now()
-	switch chainElem.Kind {
+	task.StartedAt = time.Now()
+	switch task.Kind {
 	case "SQL":
-		out, err = sch.pgengine.ExecuteSQLTask(ctx, tx, chainElem, paramValues)
+		out, err = sch.pgengine.ExecuteSQLTask(ctx, tx, task, paramValues)
 	case "PROGRAM":
 		if sch.pgengine.NoProgramTasks {
 			l.Info("Program task execution skipped")
 			return -1
 		}
-		retCode, out, err = sch.ExecuteProgramCommand(ctx, chainElem.Script, paramValues)
+		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Script, paramValues)
 	case "BUILTIN":
-		out, err = sch.executeTask(ctx, chainElem.CommandName, paramValues)
+		out, err = sch.executeTask(ctx, task.Script, paramValues)
 	}
-	chainElem.Duration = time.Since(chainElem.StartedAt).Microseconds()
+	task.Duration = time.Since(task.StartedAt).Microseconds()
 
 	if err != nil {
 		if retCode == 0 {
@@ -221,6 +221,6 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, chain
 	} else {
 		l.Info("Task executed successfully")
 	}
-	sch.pgengine.LogChainElementExecution(context.Background(), chainElem, retCode, out)
+	sch.pgengine.LogChainElementExecution(context.Background(), task, retCode, out)
 	return 0
 }
