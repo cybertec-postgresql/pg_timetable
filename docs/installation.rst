@@ -9,7 +9,7 @@ Installation
 
         <details>
         <summary>If you want to use <strong>pg_timetable</strong> with older versions (9.5, 9.6 and 10)...</summary>
-        please, execute this SQL script before running pg_timetable:
+        please, execute this SQL command before running pg_timetable:
 
     .. code-block:: SQL
 

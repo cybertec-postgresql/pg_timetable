@@ -14,7 +14,7 @@ In a real world usually it's enough to use simple jobs. Under this term we under
 
 For such a group of chains we've introduced a special function ``timetable.add_job()``.
 
-.. function:: timetable.add_job( job_name, job_schedule, job_command, ...) RETURNS BIGINT
+.. function:: timetable.add_job(job_name, job_schedule, job_command, ...) RETURNS BIGINT
 
     Creates a simple one-task chain
 
