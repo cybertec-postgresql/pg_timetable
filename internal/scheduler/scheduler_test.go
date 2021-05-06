@@ -44,7 +44,7 @@ func TestRun(t *testing.T) {
 
 	err := pge.ExecuteCustomScripts(context.Background(), "../../samples/Interval.sql")
 	assert.NoError(t, err, "Creating interval tasks failed")
-	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/basic.sql")
+	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/Basic.sql")
 	assert.NoError(t, err, "Creating sql tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/NoOp.sql")
 	assert.NoError(t, err, "Creating built-in tasks failed")
