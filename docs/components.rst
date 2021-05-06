@@ -1,9 +1,9 @@
 Components
 ================================================
 
-The scheduling in **pg_timetable** encompasses three different stages to facilitate the reuse with other parameters or additional schedules.
+The scheduling in **pg_timetable** encompasses three different abstraction levels to facilitate the reuse with other parameters or additional schedules.
 
-:Command: The first level, **command**, defines *what* to do.
+:Command: The base level, **command**, defines *what* to do.
 :Task: The second level, **task**, represents a chain element (step) to run one of the commands. With **tasks** we define order of commands, arguments passed (if any), and how errors are handled.
 :Chain: The third level represents a connected tasks forming a chain of tasks. **Chain** defines *if*, *when*, and *how often* a job should be executed.
 
@@ -11,7 +11,6 @@ Command
 ------------------------------------------------
 
 Currently, there are three different kinds of commands:
-
 
 ``SQL`` 
     SQL snippet. Starting a cleanup, refreshing a materialized view or processing data.
@@ -28,19 +27,6 @@ Currently, there are three different kinds of commands:
         * *SendMail*, 
         * *Download*,
         * *CopyFromFile*.
-
-A new command can be created by inserting a new entry into **timetable.command** table.
-
-Table timetable.command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    ``name text``
-        The unique name of the command.
-    ``kind timetable.command_kind``
-        The type of the command. Can be *SQL* (default), *PROGRAM* or *BUILTIN*.
-    ``script text``
-        Contains either a SQL script or a command string which will be executed. Can be empty for *BUILTIN*.
-
 
 Task
 ------------------------------------------------
@@ -62,8 +48,10 @@ Table timetable.task
 
     ``parent_id bigint``
         The ID of the previous task.  Set this to ``NULL`` if it is the first command (head) of the chain.
-    ``command_id bigint``
-        The ID of the **command** to execute.
+    ``kind timetable.command_kind``
+        The type of the command. Can be *SQL* (default), *PROGRAM* or *BUILTIN*.
+    ``command text``
+        Contains either a SQL command, a path to application or name of the *BUILTIN* command which will be executed.
     ``run_as text``
         The role as which the task should be executed as.
     ``database_connection text``

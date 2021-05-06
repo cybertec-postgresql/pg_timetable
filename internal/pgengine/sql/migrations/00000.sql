@@ -2,33 +2,18 @@ CREATE SCHEMA timetable;
 
 CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
 
-CREATE TABLE timetable.command (
-    command_id  BIGSERIAL               PRIMARY KEY,
-    name        TEXT                    NOT NULL UNIQUE,
-    kind        timetable.command_kind  NOT NULL DEFAULT 'SQL',
-    script      TEXT                    NOT NULL,
-    CHECK (CASE WHEN kind <> 'BUILTIN' THEN script IS NOT NULL ELSE TRUE END)
-);
-
-COMMENT ON TABLE timetable.command IS
-    'Commands pg_timetable actually knows about';
-COMMENT ON COLUMN timetable.command.kind IS
-    'Indicates whether "script" is SQL, built-in function or external program';
-COMMENT ON COLUMN timetable.command.script IS
-    'Contains either an SQL script, or command string to be executed';
-
-
 CREATE TABLE timetable.task (
     task_id             BIGSERIAL   PRIMARY KEY,
-    parent_id           BIGINT      UNIQUE  REFERENCES timetable.task(task_id)
-                                    ON UPDATE CASCADE ON DELETE CASCADE,
-    command_id          BIGINT      NOT NULL REFERENCES timetable.command(command_id)
-                                    ON UPDATE CASCADE ON DELETE CASCADE,
+    parent_id           BIGINT      UNIQUE      REFERENCES timetable.task(task_id)
+                                                ON UPDATE CASCADE ON DELETE CASCADE,
+    task_name           TEXT,
+    kind                timetable.command_kind  NOT NULL DEFAULT 'SQL',
+    command             TEXT                    NOT NULL,
     run_as              TEXT,
     database_connection TEXT,
-    ignore_error        BOOLEAN     NOT NULL DEFAULT FALSE,
-    autonomous          BOOLEAN     NOT NULL DEFAULT FALSE
-);
+    ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
+    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE
+);          
 
 COMMENT ON TABLE timetable.task IS
     'Holds information about chain elements aka tasks';
@@ -38,6 +23,10 @@ COMMENT ON COLUMN timetable.task.run_as IS
     'Role name to run task as. Uses SET ROLE for SQL commands';
 COMMENT ON COLUMN timetable.task.ignore_error IS
     'Indicates whether a next task in a chain can be executed regardless of the success of the current one';
+COMMENT ON COLUMN timetable.task.kind IS
+    'Indicates whether "command" is SQL, built-in function or an external program';
+COMMENT ON COLUMN timetable.task.command IS
+    'Contains either an SQL command, or command string to be executed';
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -123,10 +112,8 @@ CREATE TABLE timetable.log
 CREATE TABLE timetable.execution_log (
     chain_id    BIGINT,
     task_id     BIGINT,
-    command_id  BIGINT,
-    name        TEXT        NOT NULL,
-    script      TEXT,
-    kind        TEXT,
+    command     TEXT,
+    kind        timetable.command_kind,
     last_run    TIMESTAMPTZ DEFAULT now(),
     finished    TIMESTAMPTZ,
     returncode  INTEGER,
@@ -144,7 +131,6 @@ CREATE TABLE timetable.run_status (
     execution_status        timetable.execution_status,
     chain_id                BIGINT,
     task_id                 BIGINT,
-    command_id              BIGINT,
     created_at              TIMESTAMPTZ DEFAULT clock_timestamp(),
     client_name             TEXT        NOT NULL
 );
@@ -183,122 +169,6 @@ END;
 $CODE$
 STRICT
 LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) RETURNS SETOF BIGINT AS $$
-    SELECT  start_status.run_status_id 
-    FROM    timetable.run_status start_status
-    WHERE   start_status.execution_status = 'CHAIN_STARTED' 
-            AND start_status.chain_id = $1
-            AND NOT EXISTS (
-                SELECT 1
-                FROM    timetable.run_status finish_status
-                WHERE   start_status.run_status_id = finish_status.start_status_id
-                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
-            )
-    ORDER BY 1
-$$ LANGUAGE SQL STRICT;
-
-COMMENT ON FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) IS
-    'Returns a set of active run status IDs for a given chain';
-
-CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) RETURNS void AS $$
-    INSERT INTO timetable.run_status
-        (execution_status, start_status_id, client_name)
-    SELECT 
-        'DEAD', start_status.run_status_id, $1 
-        FROM    timetable.run_status start_status
-        WHERE   start_status.execution_status = 'CHAIN_STARTED' 
-            AND start_status.client_name = $1
-            AND NOT EXISTS (
-                SELECT 1
-                FROM    timetable.run_status finish_status
-                WHERE   start_status.run_status_id = finish_status.start_status_id
-                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
-            )
-$$ LANGUAGE SQL STRICT; 
-
-CREATE OR REPLACE FUNCTION timetable.add_task(
-    IN command_name TEXT, 
-    IN parent_task_id BIGINT
-) RETURNS BIGINT AS $$
-DECLARE
-    v_command_id BIGINT;
-    v_result_id BIGINT;
-BEGIN
-    SELECT command_id FROM timetable.command WHERE name = command_name INTO v_command_id;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Nonexistent command --> %', command_name
-        USING 
-            ERRCODE = 'invalid_parameter_value',
-            HINT = 'Please check your command name parameter';
-    END IF;
-    INSERT INTO timetable.task 
-        (task_id, parent_id, command_id)
-    VALUES 
-        (DEFAULT, parent_task_id, v_command_id)
-    RETURNING task_id INTO v_result_id;
-    RETURN v_result_id;
-END
-$$ LANGUAGE PLPGSQL;
-
--- add_job() will add one-task chain to the system
-CREATE OR REPLACE FUNCTION timetable.add_job(
-    job_name            TEXT,
-    job_schedule        timetable.cron,
-    job_command         TEXT,
-    job_parameters      JSONB DEFAULT NULL,
-    job_kind            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
-    job_client_name     TEXT DEFAULT NULL,
-    job_max_instances   INTEGER DEFAULT NULL,
-    job_live            BOOLEAN DEFAULT TRUE,
-    job_self_destruct   BOOLEAN DEFAULT FALSE,
-    job_ignore_errors   BOOLEAN DEFAULT TRUE
-) RETURNS BIGINT AS $$
-    WITH 
-        cte_cmd(v_command_id) AS (
-            INSERT INTO timetable.command (command_id, name, kind, script)
-            VALUES (DEFAULT, job_name, job_kind, job_command)
-            RETURNING command_id
-        ),
-        cte_task(v_task_id) AS (
-            INSERT INTO timetable.task (command_id, ignore_error, autonomous)
-            SELECT v_command_id, job_ignore_errors, TRUE FROM cte_cmd
-            RETURNING task_id
-        ),
-        cte_chain (v_chain_id) AS (
-            INSERT INTO timetable.chain (task_id, chain_name, run_at, max_instances, live,self_destruct, client_name) 
-            SELECT v_task_id, job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name
-            FROM cte_task
-            RETURNING chain_id
-        )
-        INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
-        SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
-        RETURNING chain_id
-$$ LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
-    chain_id BIGINT, 
-    worker_name TEXT
-) RETURNS void AS $$
-  SELECT pg_notify(
-      worker_name, 
-    format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
-        chain_id, 
-        EXTRACT(epoch FROM clock_timestamp())::bigint)
-    )
-$$ LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
-    chain_id BIGINT, 
-    worker_name TEXT
-) RETURNS void AS  $$ 
-  SELECT pg_notify(
-      worker_name, 
-    format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
-        chain_id, 
-        EXTRACT(epoch FROM clock_timestamp())::bigint)
-    )
-$$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.cron_split_to_arrays(
     cron text,
@@ -462,6 +332,101 @@ $$ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION timetable.next_run(cron timetable.cron) RETURNS timestamptz AS $$
     SELECT * FROM timetable.cron_runs(now(), cron) LIMIT 1
 $$ LANGUAGE SQL STRICT;
+
+CREATE OR REPLACE FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) RETURNS SETOF BIGINT AS $$
+    SELECT  start_status.run_status_id 
+    FROM    timetable.run_status start_status
+    WHERE   start_status.execution_status = 'CHAIN_STARTED' 
+            AND start_status.chain_id = $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM    timetable.run_status finish_status
+                WHERE   start_status.run_status_id = finish_status.start_status_id
+                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+            )
+    ORDER BY 1
+$$ LANGUAGE SQL STRICT;
+
+COMMENT ON FUNCTION timetable.get_chain_running_statuses(chain_id BIGINT) IS
+    'Returns a set of active run status IDs for a given chain';
+
+CREATE OR REPLACE FUNCTION timetable.health_check(client_name TEXT) RETURNS void AS $$
+    INSERT INTO timetable.run_status
+        (execution_status, start_status_id, client_name)
+    SELECT 
+        'DEAD', start_status.run_status_id, $1 
+        FROM    timetable.run_status start_status
+        WHERE   start_status.execution_status = 'CHAIN_STARTED' 
+            AND start_status.client_name = $1
+            AND NOT EXISTS (
+                SELECT 1
+                FROM    timetable.run_status finish_status
+                WHERE   start_status.run_status_id = finish_status.start_status_id
+                        AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+            )
+$$ LANGUAGE SQL STRICT; 
+
+CREATE OR REPLACE FUNCTION timetable.add_task(
+    IN kind timetable.command_kind,
+    IN command TEXT, 
+    IN parent_id BIGINT
+) RETURNS BIGINT AS $$
+    INSERT INTO timetable.task (parent_id, kind, command) VALUES (parent_id, kind, command) RETURNING task_id
+$$ LANGUAGE SQL;
+
+-- add_job() will add one-task chain to the system
+CREATE OR REPLACE FUNCTION timetable.add_job(
+    job_name            TEXT,
+    job_schedule        timetable.cron,
+    job_command         TEXT,
+    job_parameters      JSONB DEFAULT NULL,
+    job_kind            timetable.command_kind DEFAULT 'SQL'::timetable.command_kind,
+    job_client_name     TEXT DEFAULT NULL,
+    job_max_instances   INTEGER DEFAULT NULL,
+    job_live            BOOLEAN DEFAULT TRUE,
+    job_self_destruct   BOOLEAN DEFAULT FALSE,
+    job_ignore_errors   BOOLEAN DEFAULT TRUE
+) RETURNS BIGINT AS $$
+    WITH 
+        cte_task(v_task_id) AS (
+            INSERT INTO timetable.task (kind, command, ignore_error, autonomous)
+            VALUES (job_kind, job_command, job_ignore_errors, TRUE)
+            RETURNING task_id
+        ),
+        cte_chain (v_chain_id) AS (
+            INSERT INTO timetable.chain (task_id, chain_name, run_at, max_instances, live,self_destruct, client_name) 
+            SELECT v_task_id, job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name
+            FROM cte_task
+            RETURNING chain_id
+        )
+        INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
+        SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
+        RETURNING chain_id
+$$ LANGUAGE SQL STRICT;
+
+CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS $$
+  SELECT pg_notify(
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
+$$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
+    chain_id BIGINT, 
+    worker_name TEXT
+) RETURNS void AS  $$ 
+  SELECT pg_notify(
+      worker_name, 
+    format('{"ConfigID": %s, "Command": "STOP", "Ts": %s}', 
+        chain_id, 
+        EXTRACT(epoch FROM clock_timestamp())::bigint)
+    )
+$$ LANGUAGE SQL;
 
 -- json validation from:
 -- https://github.com/gavinwahl/postgres-json-schema
@@ -729,17 +694,4 @@ BEGIN
   RETURN true;
 END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
-
-INSERT INTO timetable.command(command_id, name, script, kind) VALUES
-    (DEFAULT, 'NoOp', 'NoOp', 'BUILTIN'),
-    (DEFAULT, 'Sleep', 'Sleep', 'BUILTIN'),
-    (DEFAULT, 'Log', 'Log', 'BUILTIN'),
-    (DEFAULT, 'SendMail', 'SendMail', 'BUILTIN'),
-    (DEFAULT, 'Download', 'Download', 'BUILTIN'),
-    (DEFAULT, 'CopyFromFile', 'CopyFromFile', 'BUILTIN');
-
-CREATE OR REPLACE FUNCTION timetable.get_command_id(command_name TEXT) 
-RETURNS BIGINT AS $$
-    SELECT command_id FROM timetable.command WHERE name = $1;
-$$ LANGUAGE SQL STRICT;
 

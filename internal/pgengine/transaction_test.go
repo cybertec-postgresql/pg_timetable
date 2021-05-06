@@ -62,7 +62,7 @@ func TestExecuteSQLTask(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
-	elements := []pgengine.ChainElement{
+	elements := []pgengine.ChainTask{
 		{
 			Autonomous:  true,
 			IgnoreError: true,
@@ -120,7 +120,7 @@ func TestExecuteSQLCommand(t *testing.T) {
 		{
 			sql:    "",
 			params: []string{},
-			err:    errors.New("SQL script cannot be empty"),
+			err:    errors.New("SQL command cannot be empty"),
 		},
 		{
 			sql:    "foo",
@@ -172,13 +172,13 @@ func TestGetChainElements(t *testing.T) {
 	mockPool.ExpectQuery("SELECT").WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	assert.False(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElement{}))
+	assert.False(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0, 0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	assert.True(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainElement{}))
+	assert.True(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))
 }
 
 func TestSetRole(t *testing.T) {

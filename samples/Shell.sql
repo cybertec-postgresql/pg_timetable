@@ -5,15 +5,9 @@ DECLARE
 	v_task_id bigint;
 	v_chain_id bigint;
 BEGIN
-
-	-- Create the command
-	INSERT INTO timetable.command(name, kind, script)
-	VALUES ('run psql', 'PROGRAM'::timetable.command_kind, 'psql')
-	RETURNING command_id INTO v_command_id;
-
 	-- Create the chain
-	INSERT INTO timetable.task(command_id)
-	VALUES (v_command_id)
+	INSERT INTO timetable.task(kind, command)
+	VALUES ('PROGRAM', 'psql')
 	RETURNING task_id INTO v_task_id;
 
 	-- Create the chain execution configuration
@@ -38,4 +32,4 @@ BEGIN
 		]')::jsonb
 	);
 END $$
-LANGUAGE 'plpgsql';
+LANGUAGE PLPGSQL;

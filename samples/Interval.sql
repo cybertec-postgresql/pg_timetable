@@ -9,21 +9,9 @@ END;
 $BODY$;
 
 WITH 
-sql_task(id) AS (
-    INSERT INTO timetable.command VALUES (
-        DEFAULT,                     -- command_id
-        'execute sleepy functions',  -- name
-        DEFAULT,                     -- 'SQL' :: timetable.command_kind
-        'SELECT sleepy_func($1)'     -- task script
-    )
-    RETURNING command_id
-),
 chain_insert(task_id) AS (
-    INSERT INTO timetable.task 
-        (command_id, ignore_error)
-    SELECT 
-        id, TRUE
-    FROM sql_task
+    INSERT INTO timetable.task (command, ignore_error)
+    VALUES ('SELECT sleepy_func($1)', TRUE) 
     RETURNING task_id
 ),
 chain_config(id, run_at) as (

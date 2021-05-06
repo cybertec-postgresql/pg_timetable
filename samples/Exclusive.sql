@@ -9,21 +9,9 @@ END;
 $BODY$;
 
 WITH 
-sql_task(id) AS (
-    INSERT INTO timetable.command VALUES (
-        DEFAULT,                     -- command_id
-        'execute sleepy',            -- name
-        DEFAULT,                     -- 'SQL' :: timetable.command_kind
-        'SELECT sleepy_func($1)'     -- task script
-    )
-    RETURNING command_id
-),
 chain_insert(task_id) AS (
-    INSERT INTO timetable.task 
-        (command_id, ignore_error)
-    SELECT 
-        id, TRUE
-    FROM sql_task
+    INSERT INTO timetable.task (command, ignore_error)
+    VALUES ('SELECT sleepy_func($1)', TRUE) 
     RETURNING task_id
 ),
 chain_config(id, chain_name) as (
@@ -39,7 +27,7 @@ chain_config(id, chain_name) as (
     )  VALUES (
         DEFAULT, -- chain_id, 
         (SELECT task_id FROM chain_insert), -- task_id, 
-        'run sleepy task every 10 sec', -- chain_name, 
+        'exclusive sleepy task every 10 sec', -- chain_name, 
         '@after 10 seconds', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 
@@ -48,7 +36,7 @@ chain_config(id, chain_name) as (
     ), (
         DEFAULT, -- chain_id, 
         (SELECT task_id FROM chain_insert), -- task_id, 
-        'exclusive sleepy task every 10 sec', -- chain_name, 
+        'exclusive sleepy task every 10 sec after previous', -- chain_name, 
         '@every 10 seconds', -- run_at, 
         1, -- max_instances, 
         TRUE, -- live, 

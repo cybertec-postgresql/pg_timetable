@@ -6,7 +6,7 @@ Basic
 This sample demonstrates how to create a basic one-step chain with parameters. It uses CTE to directly update the
 **timetable** schema tables.
 
-.. literalinclude:: ../samples/basic.sql
+.. literalinclude:: ../samples/Basic.sql
     :linenos:
     :language: SQL
 

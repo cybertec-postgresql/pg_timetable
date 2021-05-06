@@ -6,7 +6,7 @@ DECLARE
 BEGIN
 
 	-- Get the chain id
-	v_task_id := timetable.add_task('SendMail', NULL);
+	v_task_id := timetable.add_task('BUILTIN', 'SendMail', NULL);
 
 	INSERT INTO timetable.chain (task_id, chain_name, max_instances, live)
 		VALUES (v_task_id, 'Send Mail', 1, TRUE)
@@ -43,4 +43,4 @@ BEGIN
 
 END;
 $$
-LANGUAGE 'plpgsql';
+LANGUAGE PLPGSQL;

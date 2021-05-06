@@ -41,7 +41,7 @@ func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int
 
 func (hook *LogHook) Fire(entry *logrus.Entry) error {
 	if hook.ctx.Err() != nil {
-		return hook.ctx.Err()
+		return nil
 	}
 	select {
 	case hook.input <- *entry:

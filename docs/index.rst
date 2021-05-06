@@ -11,8 +11,8 @@ Welcome to pg_timetable's documentation!
    installation
    components
    basic_jobs
-   database_schema
    samples
+   database_schema
 
 Indices and tables
 ==================

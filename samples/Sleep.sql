@@ -1,12 +1,9 @@
 WITH 
-noop(id) AS (
-    SELECT command_id FROM timetable.command WHERE name = 'Sleep'
-),
 chain_insert(task_id) AS (
     INSERT INTO timetable.task 
-        (task_id, parent_id, command_id, run_as, database_connection, ignore_error)
+        (kind, command, ignore_error)
     VALUES 
-        (DEFAULT, NULL, (SELECT id FROM noop), NULL, NULL, TRUE)
+        ('BUILTIN', 'Sleep', TRUE)
     RETURNING task_id
 ),
 chain_config(id) as (

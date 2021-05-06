@@ -72,7 +72,7 @@ func TestUpdateChainRunStatus(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
 		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		pge.AddChainRunStatus(ctx, &pgengine.ChainElement{}, 0, "STATUS")
+		pge.AddChainRunStatus(ctx, &pgengine.ChainTask{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
@@ -117,7 +117,7 @@ func TestLogChainElementExecution(t *testing.T) {
 
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
 		mockPool.ExpectExec("INSERT INTO .*execution_log").WillReturnError(errors.New("error"))
-		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainElement{}, 0, "STATUS")
+		pge.LogChainElementExecution(context.TODO(), &pgengine.ChainTask{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")

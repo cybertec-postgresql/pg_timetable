@@ -44,7 +44,7 @@ func TestCancelledContext(t *testing.T) {
 	cancel()
 	h := NewHook(ctx, nil, "foo", 100)
 	assert.Equal(t, h.Levels(), logrus.AllLevels)
-	assert.Equal(t, ctx.Err(), h.Fire(&logrus.Entry{}))
+	assert.NoError(t, h.Fire(&logrus.Entry{}))
 }
 
 func TestFireError(t *testing.T) {

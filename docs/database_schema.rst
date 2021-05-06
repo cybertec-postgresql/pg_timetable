@@ -24,13 +24,6 @@ Jobs related functions
     :linenos:
     :language: SQL
 
-Builtin tasks definition
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. literalinclude:: ../internal/pgengine/sql/tasks.sql
-    :linenos:
-    :language: SQL
-
 ER-Diagram
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

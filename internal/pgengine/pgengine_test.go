@@ -68,9 +68,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 
 	t.Run("Check timetable tables", func(t *testing.T) {
 		var oid int
-		tableNames := []string{"command", "task",
-			"chain", "parameter",
-			"log", "execution_log", "run_status"}
+		tableNames := []string{"task", "chain", "parameter", "log", "execution_log", "run_status"}
 		for _, tableName := range tableNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName)).Scan(&oid)
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", tableName))
@@ -84,7 +82,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"validate_json_schema(jsonb, jsonb, jsonb)",
 			"get_chain_running_statuses(bigint)",
 			"health_check(TEXT)",
-			"add_task(TEXT, BIGINT)",
+			"add_task(timetable.command_kind, TEXT, BIGINT)",
 			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName)).Scan(&oid)
@@ -150,7 +148,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
-		var chains []pgengine.ChainElement
+		var chains []pgengine.ChainTask
 		tx, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pge.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
@@ -162,7 +160,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		var paramVals []string
 		tx, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
-		assert.True(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainElement{
+		assert.True(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainTask{
 			TaskID:  0,
 			ChainID: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")
@@ -194,17 +192,6 @@ func TestSchedulerFunctions(t *testing.T) {
 		pge.MustCommitTransaction(ctx, tx)
 	})
 
-}
-
-func TestBuiltInTasks(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
-	t.Run("Check built-in tasks number", func(t *testing.T) {
-		var num int
-		err := pge.ConfigDb.QueryRow(context.Background(), "SELECT count(1) FROM timetable.command WHERE kind = 'BUILTIN'").Scan(&num)
-		assert.NoError(t, err, "Query for built-in tasks existence failed")
-		assert.Equal(t, len(scheduler.Tasks), num, fmt.Sprintf("Wrong number of built-in tasks: %d", num))
-	})
 }
 
 func TestGetRemoteDBTransaction(t *testing.T) {

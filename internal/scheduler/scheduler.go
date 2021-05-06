@@ -56,7 +56,8 @@ func (sch *Scheduler) Config() config.CmdOptions {
 	return sch.pgengine.CmdOptions
 }
 
-//Run executes jobs. Returns Fa
+// Run executes jobs. Returns RunStatus why it terminated.
+// There are only two possibilities: dropped connection and cancelled context.
 func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	// create sleeping workers waiting data on channel
 	for w := 1; w <= sch.Config().Resource.CronWorkers; w++ {

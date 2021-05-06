@@ -15,13 +15,11 @@ import (
 	pgx "github.com/jackc/pgx/v4"
 )
 
-// ChainElement structure describes each chain task
-type ChainElement struct {
+// ChainTask structure describes each chain task
+type ChainTask struct {
 	ChainID       int
 	TaskID        int            `db:"task_id"`
-	CommandID     int            `db:"command_id"`
-	CommandName   string         `db:"command_name"`
-	Script        string         `db:"script"`
+	Script        string         `db:"command"`
 	Kind          string         `db:"kind"`
 	RunAs         pgtype.Varchar `db:"run_as"`
 	IgnoreError   bool           `db:"ignore_error"`
@@ -75,14 +73,14 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 // GetChainElements returns all elements for a given chain
 func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, taskID int) bool {
 	const sqlSelectChainTasks = `WITH RECURSIVE x
-(task_id, command_id, command_name, script, kind, run_as, ignore_error, autonomous, connect_string) 
+(task_id, command, kind, run_as, ignore_error, autonomous, connect_string) 
 AS (
-	SELECT tc.task_id, tc.command_id, bt.name, bt.script, bt.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection 
-	FROM timetable.task tc JOIN timetable.command bt USING (command_id) 
+	SELECT tc.task_id, tc.command, tc.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection 
+	FROM timetable.task tc
 	WHERE tc.parent_id IS NULL AND tc.task_id = $1 
 UNION ALL 
-	SELECT tc.task_id, tc.command_id, bt.name, bt.script, bt.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection 
-	FROM timetable.task tc JOIN timetable.command bt USING (command_id) JOIN x ON (x.task_id = tc.parent_id) 
+	SELECT tc.task_id, tc.command, tc.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection 
+	FROM timetable.task tc JOIN x ON (x.task_id = tc.parent_id) 
 ) 
 	SELECT * FROM x`
 	err := pgxscan.Select(ctx, tx, chains, sqlSelectChainTasks, taskID)
@@ -94,9 +92,9 @@ UNION ALL
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, chainElem *ChainElement) bool {
+func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, task *ChainTask) bool {
 	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE chain_id = $1 AND task_id = $2 ORDER BY order_id ASC`
-	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, chainElem.ChainID, chainElem.TaskID)
+	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, task.ChainID, task.TaskID)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("cannot fetch parameters values for chain: ", err)
 		return false
@@ -109,25 +107,25 @@ type executor interface {
 }
 
 // ExecuteSQLTask executes SQL task
-func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElem *ChainElement, paramValues []string) (out string, err error) {
+func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error) {
 	var execTx pgx.Tx
 	var remoteDb PgxConnIface
 	var executor executor
 
 	execTx = tx
-	if chainElem.Autonomous {
+	if task.Autonomous {
 		executor = pge.ConfigDb
 	} else {
 		executor = tx
 	}
 
 	//Connect to Remote DB
-	if chainElem.ConnectString.Status != pgtype.Null {
-		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, chainElem.ConnectString.String)
+	if task.ConnectString.Status != pgtype.Null {
+		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, task.ConnectString.String)
 		if err != nil {
 			return
 		}
-		if chainElem.Autonomous {
+		if task.Autonomous {
 			executor = remoteDb
 			_ = execTx.Rollback(ctx)
 		} else {
@@ -138,43 +136,43 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, chainElem *C
 	}
 
 	// Set Role
-	if chainElem.RunAs.Status != pgtype.Null && !chainElem.Autonomous {
-		pge.SetRole(ctx, execTx, chainElem.RunAs)
+	if task.RunAs.Status != pgtype.Null && !task.Autonomous {
+		pge.SetRole(ctx, execTx, task.RunAs)
 	}
 
-	if chainElem.IgnoreError && !chainElem.Autonomous {
-		pge.MustSavepoint(ctx, execTx, chainElem.CommandName)
+	if task.IgnoreError && !task.Autonomous {
+		pge.MustSavepoint(ctx, execTx, fmt.Sprintf("task_%d", task.TaskID))
 	}
 
-	out, err = pge.ExecuteSQLCommand(ctx, executor, chainElem.Script, paramValues)
+	out, err = pge.ExecuteSQLCommand(ctx, executor, task.Script, paramValues)
 
-	if err != nil && chainElem.IgnoreError && !chainElem.Autonomous {
-		pge.MustRollbackToSavepoint(ctx, execTx, chainElem.CommandName)
+	if err != nil && task.IgnoreError && !task.Autonomous {
+		pge.MustRollbackToSavepoint(ctx, execTx, fmt.Sprintf("task_%d", task.TaskID))
 	}
 
 	//Reset The Role
-	if chainElem.RunAs.Status != pgtype.Null && !chainElem.Autonomous {
+	if task.RunAs.Status != pgtype.Null && !task.Autonomous {
 		pge.ResetRole(ctx, execTx)
 	}
 
 	// Commit changes on remote server
-	if chainElem.ConnectString.Status != pgtype.Null && !chainElem.Autonomous {
+	if task.ConnectString.Status != pgtype.Null && !task.Autonomous {
 		pge.MustCommitTransaction(ctx, execTx)
 	}
 
 	return
 }
 
-// ExecuteSQLCommand executes chain script with parameters inside transaction
-func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, script string, paramValues []string) (out string, err error) {
+// ExecuteSQLCommand executes chain command with parameters inside transaction
+func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, command string, paramValues []string) (out string, err error) {
 	var ct pgconn.CommandTag
 	var params []interface{}
 
-	if strings.TrimSpace(script) == "" {
-		return "", errors.New("SQL script cannot be empty")
+	if strings.TrimSpace(command) == "" {
+		return "", errors.New("SQL command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		ct, err = executor.Exec(ctx, script)
+		ct, err = executor.Exec(ctx, command)
 		out = string(ct)
 	} else {
 		for _, val := range paramValues {
@@ -182,7 +180,7 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, s
 				if err = json.Unmarshal([]byte(val), &params); err != nil {
 					return
 				}
-				ct, err = executor.Exec(ctx, script, params...)
+				ct, err = executor.Exec(ctx, command, params...)
 				out = out + string(ct) + "\n"
 			}
 		}

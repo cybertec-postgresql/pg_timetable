@@ -38,14 +38,12 @@ func (pge *PgEngine) IsAlive() bool {
 }
 
 // LogChainElementExecution will log current chain element execution status including retcode
-func (pge *PgEngine) LogChainElementExecution(ctx context.Context, chainElem *ChainElement, retCode int, output string) {
-	_, err := pge.ConfigDb.Exec(ctx, "INSERT INTO timetable.execution_log (chain_id, task_id, command_id, name, script, "+
-		"kind, last_run, finished, returncode, pid, output, client_name) "+
-		"VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp() - $7 :: interval, clock_timestamp(), $8, $9, "+
-		"NULLIF($10, ''), $11)",
-		chainElem.ChainID, chainElem.TaskID, chainElem.CommandID, chainElem.CommandName,
-		chainElem.Script, chainElem.Kind,
-		fmt.Sprintf("%f seconds", float64(chainElem.Duration)/1000000),
+func (pge *PgEngine) LogChainElementExecution(ctx context.Context, task *ChainTask, retCode int, output string) {
+	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
+chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name) 
+VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9)`,
+		task.ChainID, task.TaskID, task.Script, task.Kind,
+		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
 		retCode, os.Getpid(), output, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to log chain element execution status")
@@ -77,14 +75,14 @@ RETURNING run_status_id;`
 }
 
 // AddChainRunStatus inserts status information about running chain elements
-func (pge *PgEngine) AddChainRunStatus(ctx context.Context, chainElem *ChainElement, runStatusID int, status string) {
+func (pge *PgEngine) AddChainRunStatus(ctx context.Context, task *ChainTask, runStatusID int, status string) {
 	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, command_id, start_status_id, chain_id, client_name)
+(task_id, execution_status, start_status_id, chain_id, client_name)
 VALUES 
-($1, $2, $3, $4, $5, $6)`
+($1, $2, $3, $4, $5)`
 	var err error
-	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus, chainElem.TaskID, status, chainElem.CommandID,
-		runStatusID, chainElem.ChainID, pge.ClientName)
+	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus,
+		task.TaskID, status, runStatusID, task.ChainID, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Update chain status failed")
 	}
