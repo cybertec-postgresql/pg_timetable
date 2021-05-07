@@ -15,7 +15,7 @@ Main features
 - Built-in tasks such as sending emails, etc.
 - Fully database driven configuration
 - Full support for database driven logging
-- Cron-style scheduling
+- Cron-style scheduling at the PostgreSQL server time zone
 - Optional concurrency protection
 
 Quick Start
@@ -30,7 +30,7 @@ Quick Start
       my_database=> CREATE ROLE scheduler PASSWORD 'somestrong';
       my_database=> GRANT CREATE ON DATABASE my_database TO scheduler;
 
-3. Create a new job, e.g. run ``VACUUM`` each night at 00:30
+3. Create a new job, e.g. run ``VACUUM`` each night at 00:30 Postgres server time zone
 
     .. code-block:: SQL
 

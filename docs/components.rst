@@ -166,7 +166,7 @@ Table timetable.chain
     ``chain_name text``
         The unique name of the chain.
     ``run_at timetable.cron``
-        Standard *cron*-style value or ``@after``, ``@every``, ``@reboot`` clause.
+        Standard *cron*-style value at Postgres server time zone or ``@after``, ``@every``, ``@reboot`` clause.
     ``max_instances integer``
         The amount of instances that this chain may have running at the same time.
     ``live boolean``
@@ -177,3 +177,16 @@ Table timetable.chain
         Specifies whether the chain should be executed exclusively while all other chains are paused.
     ``client_name text``
         Specifies which client should execute the chain. Set this to `NULL` to allow any client.
+
+.. note::
+    
+    All tasks of the chain in **pg_timetable** are scheduled in the PostgreSQL server time zone.
+    You can change the `timezone <https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-TIMEZONES>`_ 
+    for the **current session** when adding new chains, e.g.
+    
+    .. code-block:: SQL
+
+        SET TIME ZONE 'UTC';
+        
+        -- Run VACUUM at 00:05 every day in August UTC
+        SELECT timetable.add_job('execute-func', '5 0 * 8 *', 'VACUUM');

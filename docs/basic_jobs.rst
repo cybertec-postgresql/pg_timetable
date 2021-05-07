@@ -21,7 +21,7 @@ For such a group of chains we've introduced a special function ``timetable.add_j
     :param job_name: The unique name of the **chain** and **command**.
     :type job_name: text
 
-    :param job_schedule: Time schedule in сron syntax.
+    :param job_schedule: Time schedule in сron syntax at Postgres server time zone
     :type job_schedule: timetable.cron
 
     :param job_command: The SQL which will be executed.
@@ -54,13 +54,13 @@ For such a group of chains we've introduced a special function ``timetable.add_j
 Examples
 ~~~~~~~~~
 
-#. Run ``public.my_func()`` at 00:05 every day in August:
+#. Run ``public.my_func()`` at 00:05 every day in August Postgres server time zone:
 
     .. code-block:: SQL
 
         SELECT timetable.add_job('execute-func', '5 0 * 8 *', 'SELECT public.my_func()');
 
-#. Run `VACUUM` at minute 23 past every 2nd hour from 0 through 20 every day:
+#. Run `VACUUM` at minute 23 past every 2nd hour from 0 through 20 every day Postgres server time zone:
 
     .. code-block:: SQL
 
@@ -78,7 +78,7 @@ Examples
 
         SELECT timetable.add_job('clear-log', '@reboot', 'TRUNCATE timetable.log');
 
-#. Reindex at midnight on Sundays with `reindexdb <https://www.postgresql.org/docs/current/app-reindexdb.html>`_ utility:
+#. Reindex at midnight Postgres server time zone on Sundays with `reindexdb <https://www.postgresql.org/docs/current/app-reindexdb.html>`_ utility:
 
     - using default database under default user (no command line arguments)
   
