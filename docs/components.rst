@@ -180,7 +180,7 @@ Table timetable.chain
 
 .. note::
     
-    All tasks of the chain in **pg_timetable** are scheduled in the PostgreSQL server time zone.
+    All chains in **pg_timetable** are scheduled at the PostgreSQL server time zone.
     You can change the `timezone <https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-TIMEZONES>`_ 
     for the **current session** when adding new chains, e.g.
     
