@@ -7,6 +7,7 @@ import (
 	flags "github.com/jessevdk/go-flags"
 )
 
+// ConnectionOpts specifies the database connection options
 type ConnectionOpts struct {
 	Host     string `short:"h" long:"host" description:"PostgreSQL host" default:"localhost" env:"PGTT_PGHOST"`
 	Port     int    `short:"p" long:"port" description:"PostgreSQL port" default:"5432" env:"PGTT_PGPORT"`
@@ -17,6 +18,7 @@ type ConnectionOpts struct {
 	PgURL    string `long:"pgurl" description:"PostgreSQL connection URL" env:"PGTT_URL"`
 }
 
+// LoggingOpts specifies the logging configuration
 type LoggingOpts struct {
 	LogLevel      string `long:"loglevel" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
 	LogDBLevel    string `long:"logdblevel" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" default:"info"`
@@ -24,6 +26,7 @@ type LoggingOpts struct {
 	LogFileFormat string `long:"logfileformat" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
 }
 
+// StartOpts specifies the application startup options
 type StartOpts struct {
 	File    string `short:"f" long:"file" description:"SQL script file to execute during startup"`
 	Init    bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
@@ -31,6 +34,7 @@ type StartOpts struct {
 	Debug   bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
 }
 
+// ResourceOpts specifies the maximum resources available to application
 type ResourceOpts struct {
 	CronWorkers     int `long:"cronworkers" description:"Number of parallel workers for scheduled chains" default:"16"`
 	IntervalWorkers int `long:"intervalworkers" description:"Number of parallel workers for interval chains" default:"16"`
@@ -48,6 +52,7 @@ type CmdOptions struct {
 	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
 }
 
+// Verbose returns true if the debug log is enabled
 func (c CmdOptions) Verbose() bool {
 	return c.Logging.LogLevel == "debug"
 }

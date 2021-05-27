@@ -13,10 +13,11 @@ import (
 // NotifyTTL specifies how long processed NOTIFY messages should be stored
 var NotifyTTL int64 = 60
 
+// ChainSignal used to hold asynchronous notifications from PostgreSQL server
 type ChainSignal struct {
-	ConfigID int    // chain configuration ifentifier
-	Command  string // allowed: START, STOP
-	Ts       int64  // timestamp NOTIFY sent
+	ChainID int    // chain configuration ifentifier
+	Command string // allowed: START, STOP
+	Ts      int64  // timestamp NOTIFY sent
 }
 
 //  Since there are usually multiple opened connections to the database, all of them will receive NOTIFY messages.
@@ -56,7 +57,7 @@ func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notificatio
 		mutex.Unlock()
 		switch signal.Command {
 		case "STOP", "START":
-			if signal.ConfigID > 0 {
+			if signal.ChainID > 0 {
 				l.WithField("signal", signal).Info("Adding asynchronous chain to working queue")
 				pge.chainSignalChan <- signal
 				return

@@ -21,7 +21,7 @@ const WaitTime = 5
 // maximum wait time before reconnect attempts
 const maxWaitTime = WaitTime * 16
 
-// PgxIface is common interface for every pgx classes
+// PgxIface is common interface for every pgx class
 type PgxIface interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
@@ -30,10 +30,14 @@ type PgxIface interface {
 	Ping(ctx context.Context) error
 	CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error)
 }
+
+// PgxConnIface is interface representing pgx connection
 type PgxConnIface interface {
 	PgxIface
 	Close(ctx context.Context) error
 }
+
+// PgxPoolIface is interface representing pgx pool
 type PgxPoolIface interface {
 	PgxIface
 	Acquire(ctx context.Context) (*pgxpool.Conn, error)
@@ -143,10 +147,12 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	return connConfig
 }
 
+// AddLogHook adds a new pgx log hook to logrus logger
 func (pge *PgEngine) AddLogHook(ctx context.Context) {
 	pge.l.AddHook(NewHook(ctx, pge.ConfigDb, pge.ClientName, 500))
 }
 
+// QueryRowIface specifies interface to use QueryRow method
 type QueryRowIface interface {
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }

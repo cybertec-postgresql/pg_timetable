@@ -22,7 +22,7 @@ var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http
 	for i := 0; i < 4096; i++ {
 		_, _ = bw.Write([]byte{byte(i)})
 	}
-	bw.Flush()
+	_ = bw.Flush()
 	w.WriteHeader(http.StatusOK)
 }))
 

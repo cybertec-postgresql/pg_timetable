@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// LogHook is the implementation of the logrus hook for pgx
 type LogHook struct {
 	cacheLimit      int           // hold this number of entries before flush to database
 	cacheTimeout    time.Duration // wait this amount of time before flush to database
@@ -39,6 +40,7 @@ func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int
 	return l
 }
 
+// Fire adds logrus log message to the internal queue for processing
 func (hook *LogHook) Fire(entry *logrus.Entry) error {
 	if hook.ctx.Err() != nil {
 		return nil

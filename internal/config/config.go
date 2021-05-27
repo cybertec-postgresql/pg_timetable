@@ -74,6 +74,7 @@ func (cmdSet cmdArgSet) setDefaults(v *viper.Viper) {
 	})
 }
 
+// NewConfig returns a new instance of CmdOptions read from the writer
 func NewConfig(writer io.Writer) (*CmdOptions, error) {
 	v := viper.New()
 	p, err := Parse(writer)

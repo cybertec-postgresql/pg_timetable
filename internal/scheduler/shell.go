@@ -15,6 +15,7 @@ type commander interface {
 
 type realCommander struct{}
 
+// CombinedOutput executes program command and returns combined stdout and stderr
 func (c realCommander) CombinedOutput(ctx context.Context, command string, args ...string) ([]byte, error) {
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Stdin = nil
@@ -24,7 +25,7 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 // Cmd executes a command
 var Cmd commander = realCommander{}
 
-// ExecuteShellCommand executes program command and returns status code, output and error if any
+// ExecuteProgramCommand executes program command and returns status code, output and error if any
 func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
 
 	if strings.TrimSpace(command) == "" {

@@ -9,6 +9,7 @@ import (
 	pgx "github.com/jackc/pgx/v4"
 )
 
+// PgxIface is interface for database connection or transaction
 type PgxIface interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
