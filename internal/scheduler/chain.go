@@ -42,13 +42,13 @@ func (sch *Scheduler) Unlock(exclusiveExecution bool) {
 func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 	for {
 		chainSignal := sch.pgengine.WaitForChainSignal(ctx)
-		if chainSignal.ChainID == 0 {
+		if chainSignal.ConfigID == 0 {
 			return
 		}
 		switch chainSignal.Command {
 		case "START":
 			var headChain Chain
-			err := sch.pgengine.SelectChain(ctx, &headChain, chainSignal.ChainID)
+			err := sch.pgengine.SelectChain(ctx, &headChain, chainSignal.ConfigID)
 			if err != nil {
 				sch.l.WithError(err).Error("Could not query pending tasks")
 			} else {
@@ -57,7 +57,7 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 				sch.chainsChan <- headChain
 			}
 		case "STOP":
-			if cancel, ok := sch.activeChains[chainSignal.ChainID]; ok {
+			if cancel, ok := sch.activeChains[chainSignal.ConfigID]; ok {
 				cancel()
 			}
 		}
