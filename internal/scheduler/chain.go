@@ -126,9 +126,6 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 				chainContext, cancel := context.WithCancel(chainContext)
 				sch.addActiveChain(chain.TaskID, cancel)
 				sch.executeChain(chainContext, chain)
-				if chain.SelfDestruct {
-					sch.pgengine.DeleteChainConfig(chainContext, chain.ChainID)
-				}
 				sch.deleteActiveChain(chain.TaskID)
 				cancel()
 				sch.Unlock(chain.ExclusiveExecution)
@@ -185,6 +182,9 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	chainL.Info("Chain executed successfully")
 	bctx = log.WithLogger(context.Background(), chainL)
 	sch.pgengine.MustCommitTransaction(bctx, tx)
+	if chain.SelfDestruct {
+		sch.pgengine.DeleteChainConfig(bctx, chain.ChainID)
+	}
 }
 
 func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
