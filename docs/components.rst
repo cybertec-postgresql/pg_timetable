@@ -172,7 +172,7 @@ Table timetable.chain
     ``live boolean``
         Control if the chain may be executed once it reaches its schedule.
     ``self_destruct boolean``
-        Self destruct the chain after execution.
+        Self destruct the chain after successful execution. Failed chains will be executed according to the schedule one more time.
     ``exclusive_execution boolean``
         Specifies whether the chain should be executed exclusively while all other chains are paused.
     ``client_name text``
