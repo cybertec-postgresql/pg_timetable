@@ -156,7 +156,7 @@ Kind
 Chain
 ------------------------------------------------
 
-Once tasks has been arranged, they have to be scheduled as a **chain**. For this, **pg_timetable** builds upon the enhanced **cron**-string, all the while adding multiple configuration options.
+Once tasks have been arranged, they have to be scheduled as a **chain**. For this, **pg_timetable** builds upon the enhanced **cron**-string, all the while adding multiple configuration options.
 
 Table timetable.chain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
