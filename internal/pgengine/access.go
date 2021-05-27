@@ -109,7 +109,7 @@ func (pge *PgEngine) SelectRebootChains(ctx context.Context, dest interface{}) e
 	return pgxscan.Select(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectRebootChains), pge.ClientName)
 }
 
-// SelectRebootChains returns a list of chains should be executed after reboot
+// SelectChains returns a list of chains should be executed at the current moment
 func (pge *PgEngine) SelectChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
 	return pgxscan.Select(ctx, pge.ConfigDb, dest, qualifySQL(sqlSelectChains), pge.ClientName)

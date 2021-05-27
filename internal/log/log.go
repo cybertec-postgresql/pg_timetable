@@ -9,7 +9,9 @@ import (
 )
 
 type (
-	LoggerIface       logrus.FieldLogger
+	// LoggerIface is the interface used by all components
+	LoggerIface logrus.FieldLogger
+	//LoggerHookerIface adds AddHook method to LoggerIface for database logging hook
 	LoggerHookerIface interface {
 		LoggerIface
 		AddHook(hook logrus.Hook)
@@ -37,14 +39,17 @@ func Init(level string) LoggerHookerIface {
 	return l
 }
 
+// PgxLogger is the struct used to log using pgx postgres driver
 type PgxLogger struct {
 	l LoggerIface
 }
 
+// NewPgxLogger returns a new instance of PgxLogger
 func NewPgxLogger(l LoggerIface) *PgxLogger {
 	return &PgxLogger{l}
 }
 
+// Log transforms logging calls from pgx to logrus
 func (pgxlogger *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	logger := GetLogger(ctx)
 	if logger == FallbackLogger { //switch from standard to specified

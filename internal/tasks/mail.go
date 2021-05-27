@@ -6,6 +6,7 @@ import (
 	gomail "github.com/ory/mail/v3"
 )
 
+// EmailConn structure represents a connection to a mail server and mail fields
 type EmailConn struct {
 	Username    string   `json:"username"`
 	Password    string   `json:"password"`
@@ -26,10 +27,12 @@ type Dialer interface {
 	DialAndSend(ctx context.Context, m ...*gomail.Message) error
 }
 
+// NewDialer returns a new gomail dialer instance
 var NewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
 	return gomail.NewDialer(host, port, username, password)
 }
 
+// SendMail sends mail message specified by conn within context ctx
 func SendMail(ctx context.Context, conn EmailConn) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", conn.SenderAddr)

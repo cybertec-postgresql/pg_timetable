@@ -13,6 +13,7 @@ import (
 // NotifyTTL specifies how long processed NOTIFY messages should be stored
 var NotifyTTL int64 = 60
 
+// ChainSignal used to hold asynchronous notifications from PostgreSQL server
 type ChainSignal struct {
 	ConfigID int    // chain configuration ifentifier
 	Command  string // allowed: START, STOP

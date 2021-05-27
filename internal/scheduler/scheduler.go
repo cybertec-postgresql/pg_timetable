@@ -23,6 +23,7 @@ const (
 	ContextCancelled
 )
 
+// Scheduler is the main class for running the tasks
 type Scheduler struct {
 	l          log.LoggerIface
 	chainsChan chan Chain // channel for passing chains to workers
@@ -41,6 +42,7 @@ type Scheduler struct {
 	intervalChainMutex sync.Mutex
 }
 
+// New returns a new instance of Scheduler
 func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
 		l:                  logger,
@@ -52,6 +54,7 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	}
 }
 
+// Config returns the current configuration for application
 func (sch *Scheduler) Config() config.CmdOptions {
 	return sch.pgengine.CmdOptions
 }
