@@ -90,7 +90,8 @@ VALUES
 
 //Select live chains with proper client_name value
 const sqlSelectLiveChains = `SELECT
-	chain_id, task_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+	chain_id, task_id, chain_name, self_destruct, exclusive_execution, timeout,
+	COALESCE(max_instances, 16) as max_instances
 FROM 
 	timetable.chain 
 WHERE 
@@ -118,7 +119,8 @@ func (pge *PgEngine) SelectChains(ctx context.Context, dest interface{}) error {
 // SelectIntervalChains returns list of interval chains to be executed
 func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectIntervalChains = `SELECT
-	chain_id, task_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances,
+	chain_id, task_id, chain_name, self_destruct, exclusive_execution, 
+	timeout, COALESCE(max_instances, 16) as max_instances,
 	EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
 	starts_with(run_at, '@after') as repeat_after
 FROM 
@@ -132,7 +134,8 @@ WHERE
 func (pge *PgEngine) SelectChain(ctx context.Context, dest interface{}, chainID int) error {
 	// we accept not only live chains here because we want to run them in debug mode
 	const sqlSelectSingleChain = `SELECT
-	chain_id, task_id, chain_name, self_destruct, exclusive_execution, COALESCE(max_instances, 16) as max_instances
+	chain_id, task_id, chain_name, self_destruct, exclusive_execution, 
+	timeout, COALESCE(max_instances, 16) as max_instances
 FROM 
 	timetable.chain 
 WHERE 

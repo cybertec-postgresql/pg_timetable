@@ -91,3 +91,14 @@ func TestChainWorker(t *testing.T) {
 		sch.chainWorker(ctx, chains)
 	})
 }
+
+func TestExecuteChain(t *testing.T) {
+	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
+	assert.NoError(t, err)
+	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
+	sch := New(pge, log.Init("error"))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	sch.executeChain(ctx, Chain{Timeout: 1})
+}

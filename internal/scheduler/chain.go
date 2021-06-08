@@ -18,6 +18,7 @@ type Chain struct {
 	SelfDestruct       bool   `db:"self_destruct"`
 	ExclusiveExecution bool   `db:"exclusive_execution"`
 	MaxInstances       int    `db:"max_instances"`
+	Timeout            int    `db:"timeout"`
 	RunStatusID        int    `db:"run_status_id"`
 }
 
@@ -141,7 +142,14 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
 	var bctx context.Context
+	var cancel context.CancelFunc
 	var status string
+
+	if chain.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Millisecond*time.Duration(chain.Timeout))
+		defer cancel()
+	}
+
 	chainL := sch.l.WithField("chain", chain.ChainID)
 
 	tx, err := sch.pgengine.StartTransaction(ctx)
