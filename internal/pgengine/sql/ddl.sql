@@ -58,6 +58,7 @@ CREATE TABLE timetable.chain (
     chain_name          TEXT        NOT NULL UNIQUE,
     run_at              timetable.cron,
     max_instances       INTEGER,
+    timeout             INTEGER     DEFAULT 0,
     live                BOOLEAN     DEFAULT FALSE,
     self_destruct       BOOLEAN     DEFAULT FALSE,
     exclusive_execution BOOLEAN     DEFAULT FALSE,
@@ -72,6 +73,8 @@ COMMENT ON COLUMN timetable.chain.run_at IS
     'Extended CRON-style time notation the chain has to be run at';
 COMMENT ON COLUMN timetable.chain.max_instances IS
     'Number of instances (clients) this chain can run in parallel';
+COMMENT ON COLUMN timetable.chain.timeout IS
+    'Abort any chain that takes more than the specified number of milliseconds';
 COMMENT ON COLUMN timetable.chain.live IS
     'Indication that the chain is ready to run, set to FALSE to pause execution';
 COMMENT ON COLUMN timetable.chain.self_destruct IS
