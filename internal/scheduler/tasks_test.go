@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/pashagolub/pgxmock"
@@ -14,7 +15,7 @@ func TestExecuteTask(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	mocksch := New(pge, log.Init("error"))
+	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
 	et := func(task string, params []string) (err error) {
 		_, err = mocksch.executeTask(context.TODO(), task, params)

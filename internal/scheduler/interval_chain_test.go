@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/pashagolub/pgxmock"
@@ -14,7 +15,7 @@ func TestIntervalChain(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	sch := New(pge, log.Init("error"))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
 	ichain := IntervalChain{Interval: 42}
 	assert.True(t, ichain.isListed([]IntervalChain{ichain}))

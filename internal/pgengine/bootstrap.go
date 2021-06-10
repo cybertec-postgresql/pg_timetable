@@ -99,7 +99,7 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 // NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.
 // We assume here all checks for proper schema validation are done beforehannd
 func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
-	return &PgEngine{log.Init("error"), DB, *config.NewCmdOptions(args...), make(chan ChainSignal, 64)}
+	return &PgEngine{log.Init(config.LoggingOpts{LogLevel: "error"}), DB, *config.NewCmdOptions(args...), make(chan ChainSignal, 64)}
 }
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with

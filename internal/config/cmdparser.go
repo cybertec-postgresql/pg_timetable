@@ -20,10 +20,10 @@ type ConnectionOpts struct {
 
 // LoggingOpts specifies the logging configuration
 type LoggingOpts struct {
-	LogLevel      string `long:"loglevel" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
-	LogDBLevel    string `long:"logdblevel" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" default:"info"`
-	LogFile       string `long:"logfile" description:"File name to store logs"`
-	LogFileFormat string `long:"logfileformat" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
+	LogLevel      string `long:"log-level" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
+	LogDBLevel    string `long:"log-database-level" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" default:"info"`
+	LogFile       string `long:"log-file" description:"File name to store logs"`
+	LogFileFormat string `long:"log-file-format" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
 }
 
 // StartOpts specifies the application startup options
@@ -36,8 +36,8 @@ type StartOpts struct {
 
 // ResourceOpts specifies the maximum resources available to application
 type ResourceOpts struct {
-	CronWorkers     int `long:"cronworkers" description:"Number of parallel workers for scheduled chains" default:"16"`
-	IntervalWorkers int `long:"intervalworkers" description:"Number of parallel workers for interval chains" default:"16"`
+	CronWorkers     int `long:"cron-workers" description:"Number of parallel workers for scheduled chains" default:"16"`
+	IntervalWorkers int `long:"interval-workers" description:"Number of parallel workers for interval chains" default:"16"`
 }
 
 // CmdOptions holds command line options passed

@@ -4,7 +4,9 @@ import (
 	"context"
 	"os"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/jackc/pgx/v4"
+	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,11 +23,19 @@ type (
 )
 
 // Init creates logging facilities for the application
-func Init(level string) LoggerHookerIface {
+func Init(opts config.LoggingOpts) LoggerHookerIface {
 	var err error
 	l := logrus.New()
 	l.Out = os.Stdout
-	l.Level, err = logrus.ParseLevel(level)
+	if opts.LogFile > "" {
+		var f logrus.Formatter
+		f = &logrus.JSONFormatter{}
+		if opts.LogFileFormat == "text" {
+			f = &logrus.TextFormatter{}
+		}
+		l.AddHook(lfshook.NewHook(opts.LogFile, f))
+	}
+	l.Level, err = logrus.ParseLevel(opts.LogLevel)
 	if err != nil {
 		l.Level = logrus.InfoLevel
 	}
