@@ -23,14 +23,14 @@ connection:
 
 # - Logging Settings -
 logging:
-  # loglevel:[debug|info|error]    Verbosity level for stdout and log file (default: info)
-  loglevel: debug
-  # logdblevel:[debug|info|error]  Verbosity level for database storing (default: info)
-  logdblevel: debug
-  # logfile:                       File name to store logs
-  logfile: session.log
-  # logfileformat:[json|text]      Format of file logs (default: json)
-  logfileformat: text
+  # log-level:[debug|info|error]   Verbosity level for stdout and log file (default: info)
+  log-level: debug
+  # log-database-level:[debug|info|error]  Verbosity level for database storing (default: info)
+  log-database-level: debug
+  # log-file:                      File name to store logs
+  log-file: session.log
+  # log-file-format:[json|text]    Format of file logs (default: json)
+  log-file-format: text
 
 # - Bootstrap Settings -
 start:
@@ -44,7 +44,8 @@ start:
   upgrade: true
 
 # - Resource Settings -
-  # cronworkers:                   Number of parallel workers for scheduled chains (default: 16)
-  CronWorkers: 10
-  # intervalworkers:               Number of parallel workers for interval chains (default: 16)
-  IntervalWorkers: 6
+resource:
+  # cron-workers:                  Number of parallel workers for scheduled chains (default: 16)
+  cron-workers: 10
+  # interval-workers:              Number of parallel workers for interval chains (default: 16)
+  interval-workers: 6

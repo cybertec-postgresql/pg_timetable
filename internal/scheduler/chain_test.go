@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgconn"
@@ -27,7 +28,7 @@ func TestAsyncChains(t *testing.T) {
 	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	sch := New(pge, log.Init("error"))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 	n1 := &pgconn.Notification{Payload: `{"ConfigID": 1, "Command": "START"}`}
 	n2 := &pgconn.Notification{Payload: `{"ConfigID": 2, "Command": "START"}`}
 	ns := &pgconn.Notification{Payload: `{"ConfigID": 24, "Command": "STOP"}`}
@@ -58,7 +59,7 @@ func TestChainWorker(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
-	sch := New(pge, log.Init("error"))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 	chains := make(chan Chain, 16)
 
 	t.Run("Check chainWorker if context cancelled", func(t *testing.T) {
@@ -96,7 +97,7 @@ func TestExecuteChain(t *testing.T) {
 	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
-	sch := New(pge, log.Init("error"))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

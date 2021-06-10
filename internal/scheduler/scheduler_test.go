@@ -22,7 +22,7 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
 	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init("error"))
+		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
 		done <- true
 	}()
 	select {
@@ -54,6 +54,6 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	assert.Equal(t, New(pge, log.Init("error")).Run(ctx), ContextCancelled)
+	assert.Equal(t, New(pge, log.Init(config.LoggingOpts{LogLevel: "error"})).Run(ctx), ContextCancelled)
 
 }

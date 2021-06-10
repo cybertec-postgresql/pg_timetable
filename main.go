@@ -49,7 +49,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	logger := log.Init(cmdOpts.Logging.LogLevel)
+	logger := log.Init(cmdOpts.Logging)
+
 	connctx, conncancel := context.WithTimeout(ctx, 90*time.Second)
 	defer conncancel()
 	if pge, err = pgengine.New(connctx, *cmdOpts, logger); err != nil {
