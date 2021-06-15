@@ -200,8 +200,9 @@ github.com/jackc/pgproto3/v2 v2.0.1/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwX
 github.com/jackc/pgproto3/v2 v2.0.2/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
 github.com/jackc/pgproto3/v2 v2.0.5/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
 github.com/jackc/pgproto3/v2 v2.0.6/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
-github.com/jackc/pgproto3/v2 v2.0.7 h1:6Pwi1b3QdY65cuv6SyVO0FgPd5J3Bl7wf/nQQjinHMA=
 github.com/jackc/pgproto3/v2 v2.0.7/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
+github.com/jackc/pgproto3/v2 v2.1.0 h1:h2yg3kjIyAGSZKDijYn1/gXHlYLCwl9ZjEh2PU0yVxE=
+github.com/jackc/pgproto3/v2 v2.1.0/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
 github.com/jackc/pgservicefile v0.0.0-20200307190119-3430c5407db8/go.mod h1:vsD4gTJCa9TptPL8sPkXrLZ+hDuNrZCnj29CQpr4X1E=
 github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b h1:C8S2+VttkHFdOOCXJe+YGfa4vHYwlt4Zx+IVXQ97jYg=
 github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b/go.mod h1:vsD4gTJCa9TptPL8sPkXrLZ+hDuNrZCnj29CQpr4X1E=
@@ -328,8 +329,8 @@ github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc h1:BU12v9x5hvONtYU2R
 github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc/go.mod h1:vAPEMm1zIQKGmM9hcZTSlOU/CDVCXHGOw6SFxPlSoHw=
 github.com/pact-foundation/pact-go v1.0.4/go.mod h1:uExwJY4kCzNPcHRj+hCR/HBbOOIwwtUjcrb0b5/5kLM=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
-github.com/pashagolub/pgxmock v1.1.0 h1:B+HLIpIEdD1iKGh1GBzOk6ZctUrerXW427PDqSRVTTQ=
-github.com/pashagolub/pgxmock v1.1.0/go.mod h1:4DYtbprXlK4/F7P63ROWrOl7+fjmpi9kmqRmOCz5t0U=
+github.com/pashagolub/pgxmock v1.2.0 h1:0QZsII5Wc/uBDS8KSJM8PQTLWlneH9DJxcRdgJiChw0=
+github.com/pashagolub/pgxmock v1.2.0/go.mod h1:ohpepGqK1H+SEAUgeK0lVJoe4wiFOhnp8Zcq7TK/UMs=
 github.com/pashagolub/pgxstruct v0.0.0-20210217101842-40d357eec200/go.mod h1:fOTLLi1PtVUDXx28olVT/D2UMFCmBEYpnY5QIzghmDc=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=
