@@ -38,6 +38,7 @@ type StartOpts struct {
 type ResourceOpts struct {
 	CronWorkers     int `long:"cron-workers" description:"Number of parallel workers for scheduled chains" default:"16"`
 	IntervalWorkers int `long:"interval-workers" description:"Number of parallel workers for interval chains" default:"16"`
+	ChainTimeout    int `long:"chain-timeout" description:"Abort any chain that takes more than the specified number of milliseconds"`
 }
 
 // CmdOptions holds command line options passed

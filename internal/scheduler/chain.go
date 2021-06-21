@@ -144,9 +144,15 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var bctx context.Context
 	var cancel context.CancelFunc
 	var status string
+	var timeout int
 
-	if chain.Timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, time.Millisecond*time.Duration(chain.Timeout))
+	if sch.Config().Resource.ChainTimeout > chain.Timeout {
+		timeout = sch.Config().Resource.ChainTimeout
+	} else {
+		timeout = chain.Timeout
+	}
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Millisecond*time.Duration(timeout))
 		defer cancel()
 	}
 
