@@ -49,3 +49,5 @@ resource:
   cron-workers: 10
   # interval-workers:              Number of parallel workers for interval chains (default: 16)
   interval-workers: 6
+  # chain-timeout:                 Abort any chain that takes more than the specified number of milliseconds
+  chain-timeout: 0
