@@ -51,3 +51,5 @@ resource:
   interval-workers: 6
   # chain-timeout:                 Abort any chain that takes more than the specified number of milliseconds
   chain-timeout: 0
+  # task-timeout:                  Abort any task within a chain that takes more than the specified number of milliseconds
+  task-timeout: 0  
