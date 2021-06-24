@@ -27,7 +27,8 @@ CREATE TABLE timetable.task (
     run_as              TEXT,
     database_connection TEXT,
     ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
-    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE
+    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE,
+    timeout             INTEGER                 DEFAULT 0
 );          
 
 COMMENT ON TABLE timetable.task IS
@@ -42,6 +43,8 @@ COMMENT ON COLUMN timetable.task.kind IS
     'Indicates whether "command" is SQL, built-in function or an external program';
 COMMENT ON COLUMN timetable.task.command IS
     'Contains either an SQL command, or command string to be executed';
+COMMENT ON COLUMN timetable.task.timeout IS
+    'Abort any task within a chain that takes more than the specified number of milliseconds';
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL

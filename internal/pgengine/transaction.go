@@ -25,6 +25,7 @@ type ChainTask struct {
 	IgnoreError   bool           `db:"ignore_error"`
 	Autonomous    bool           `db:"autonomous"`
 	ConnectString pgtype.Varchar `db:"connect_string"`
+	Timeout       int            `db:"timeout"` // in milliseconds
 	StartedAt     time.Time
 	Duration      int64 // in microseconds
 }
@@ -73,13 +74,13 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 // GetChainElements returns all elements for a given chain
 func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, taskID int) bool {
 	const sqlSelectChainTasks = `WITH RECURSIVE x
-(task_id, command, kind, run_as, ignore_error, autonomous, connect_string) 
+(task_id, command, kind, run_as, ignore_error, autonomous, connect_string, timeout) 
 AS (
-	SELECT tc.task_id, tc.command, tc.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection 
+	SELECT tc.task_id, tc.command, tc.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection, tc.timeout 
 	FROM timetable.task tc
 	WHERE tc.parent_id IS NULL AND tc.task_id = $1 
 UNION ALL 
-	SELECT tc.task_id, tc.command, tc.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection 
+	SELECT tc.task_id, tc.command, tc.kind, tc.run_as, tc.ignore_error, tc.autonomous, tc.database_connection, tc.timeout 
 	FROM timetable.task tc JOIN x ON (x.task_id = tc.parent_id) 
 ) 
 	SELECT * FROM x`

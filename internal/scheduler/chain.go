@@ -138,21 +138,28 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 	}
 }
 
+func getTimeoutContext(ctx context.Context, t1 int, t2 int) (context.Context, context.CancelFunc) {
+	var timeout int
+	if t1 > t2 {
+		timeout = t1
+	} else {
+		timeout = t2
+	}
+	if timeout > 0 {
+		return context.WithTimeout(ctx, time.Millisecond*time.Duration(timeout))
+	}
+	return ctx, nil
+}
+
 /* execute a chain of tasks */
 func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
 	var bctx context.Context
 	var cancel context.CancelFunc
 	var status string
-	var timeout int
 
-	if sch.Config().Resource.ChainTimeout > chain.Timeout {
-		timeout = sch.Config().Resource.ChainTimeout
-	} else {
-		timeout = chain.Timeout
-	}
-	if timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, time.Millisecond*time.Duration(timeout))
+	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.ChainTimeout, chain.Timeout)
+	if cancel != nil {
 		defer cancel()
 	}
 
@@ -206,9 +213,16 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 	var err error
 	var out string
 	var retCode int
+	var cancel context.CancelFunc
+
 	l := log.GetLogger(ctx)
 	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task) {
 		return -1
+	}
+
+	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.TaskTimeout, task.Timeout)
+	if cancel != nil {
+		defer cancel()
 	}
 
 	task.StartedAt = time.Now()
