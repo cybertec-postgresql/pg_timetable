@@ -21,13 +21,14 @@ type LogHook struct {
 	lastError       chan error
 	pid             int
 	client          string
+	level           string
 }
 
 // NewHook creates a LogHook to be added to an instance of logger
-func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int) *LogHook {
+func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int, level string) *LogHook {
 	l := &LogHook{
 		cacheLimit:      cacheLimit,
-		cacheTimeout:    5 * time.Second,
+		cacheTimeout:    2 * time.Second,
 		highLoadTimeout: 200 * time.Millisecond,
 		db:              db,
 		input:           make(chan logrus.Entry, cacheLimit),
@@ -35,6 +36,7 @@ func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int
 		ctx:             ctx,
 		pid:             os.Getpid(),
 		client:          client,
+		level:           level,
 	}
 	go l.poll(l.input)
 	return l
@@ -61,7 +63,24 @@ func (hook *LogHook) Fire(entry *logrus.Entry) error {
 
 // Levels returns the available logging levels
 func (hook *LogHook) Levels() []logrus.Level {
-	return logrus.AllLevels
+	switch hook.level {
+	case "debug":
+		return logrus.AllLevels
+	case "info":
+		return []logrus.Level{
+			logrus.PanicLevel,
+			logrus.FatalLevel,
+			logrus.ErrorLevel,
+			logrus.WarnLevel,
+			logrus.InfoLevel,
+		}
+	default:
+		return []logrus.Level{
+			logrus.PanicLevel,
+			logrus.FatalLevel,
+			logrus.ErrorLevel,
+		}
+	}
 }
 
 // poll checks for incoming messages and caches them internally
