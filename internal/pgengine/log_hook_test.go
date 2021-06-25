@@ -21,6 +21,7 @@ func TestLogHook(t *testing.T) {
 			cacheLimit:   2,
 			cacheTimeout: time.Second,
 			input:        make(chan logrus.Entry, 2),
+			level:        "debug",
 		}
 		go h.poll(h.input)
 	}()
@@ -42,7 +43,7 @@ func TestLogHook(t *testing.T) {
 func TestCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	h := NewHook(ctx, nil, "foo", 100, "error")
+	h := NewHook(ctx, nil, "foo", 100, "debug")
 	assert.Equal(t, h.Levels(), logrus.AllLevels)
 	assert.NoError(t, h.Fire(&logrus.Entry{}))
 }
@@ -50,7 +51,7 @@ func TestCancelledContext(t *testing.T) {
 func TestFireError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	h := NewHook(ctx, nil, "foo", 100, "error")
+	h := NewHook(ctx, nil, "foo", 100, "debug")
 	err := errors.New("fire error")
 	go func() { h.lastError <- err }()
 	<-time.After(time.Second)
