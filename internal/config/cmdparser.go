@@ -20,10 +20,10 @@ type ConnectionOpts struct {
 
 // LoggingOpts specifies the logging configuration
 type LoggingOpts struct {
-	LogLevel      string `long:"log-level" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
-	LogDBLevel    string `long:"log-database-level" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" default:"info"`
-	LogFile       string `long:"log-file" description:"File name to store logs"`
-	LogFileFormat string `long:"log-file-format" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
+	LogLevel      string `long:"log-level" mapstructure:"log-level" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
+	LogDBLevel    string `long:"log-database-level" mapstructure:"log-database-level" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" default:"info"`
+	LogFile       string `long:"log-file" mapstructure:"log-file" description:"File name to store logs"`
+	LogFileFormat string `long:"log-file-format" mapstructure:"log-file-format" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
 }
 
 // StartOpts specifies the application startup options
@@ -36,10 +36,10 @@ type StartOpts struct {
 
 // ResourceOpts specifies the maximum resources available to application
 type ResourceOpts struct {
-	CronWorkers     int `long:"cron-workers" description:"Number of parallel workers for scheduled chains" default:"16"`
-	IntervalWorkers int `long:"interval-workers" description:"Number of parallel workers for interval chains" default:"16"`
-	ChainTimeout    int `long:"chain-timeout" description:"Abort any chain that takes more than the specified number of milliseconds"`
-	TaskTimeout     int `long:"task-timeout" description:"Abort any task within a chain that takes more than the specified number of milliseconds"`
+	CronWorkers     int `long:"cron-workers" mapstructure:"cron-workers" description:"Number of parallel workers for scheduled chains" default:"16"`
+	IntervalWorkers int `long:"interval-workers" mapstructure:"interval-workers" description:"Number of parallel workers for interval chains" default:"16"`
+	ChainTimeout    int `long:"chain-timeout" mapstructure:"chain-timeout" description:"Abort any chain that takes more than the specified number of milliseconds"`
+	TaskTimeout     int `long:"task-timeout" mapstructure:"task-timeout" description:"Abort any task within a chain that takes more than the specified number of milliseconds"`
 }
 
 // CmdOptions holds command line options passed
