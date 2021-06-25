@@ -149,7 +149,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 
 // AddLogHook adds a new pgx log hook to logrus logger
 func (pge *PgEngine) AddLogHook(ctx context.Context) {
-	pge.l.AddHook(NewHook(ctx, pge.ConfigDb, pge.ClientName, 500))
+	pge.l.AddHook(NewHook(ctx, pge.ConfigDb, pge.ClientName, 500, pge.Logging.LogDBLevel))
 }
 
 // QueryRowIface specifies interface to use QueryRow method

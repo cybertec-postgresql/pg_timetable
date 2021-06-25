@@ -42,7 +42,7 @@ func TestLogHook(t *testing.T) {
 func TestCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	h := NewHook(ctx, nil, "foo", 100)
+	h := NewHook(ctx, nil, "foo", 100, "error")
 	assert.Equal(t, h.Levels(), logrus.AllLevels)
 	assert.NoError(t, h.Fire(&logrus.Entry{}))
 }
@@ -50,7 +50,7 @@ func TestCancelledContext(t *testing.T) {
 func TestFireError(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	h := NewHook(ctx, nil, "foo", 100)
+	h := NewHook(ctx, nil, "foo", 100, "error")
 	err := errors.New("fire error")
 	go func() { h.lastError <- err }()
 	<-time.After(time.Second)
