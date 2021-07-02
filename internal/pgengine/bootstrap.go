@@ -66,7 +66,7 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 		cmdOpts,
 		make(chan ChainSignal, 64),
 	}
-	pge.l.WithField("PID", os.Getpid()).Debugf("Starting new session... %+v", &cmdOpts)
+	pge.l.WithField("PID", os.Getpid()).Debug("Starting new session... ")
 	config := pge.getPgxConnConfig()
 	pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
 	for err != nil {
@@ -114,7 +114,6 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 			connstr = connstr + fmt.Sprintf(" password='%s'", pge.Connection.Password)
 		}
 	}
-	pge.l.Debug("Connection string: ", connstr)
 	connConfig, err := pgxpool.ParseConfig(connstr)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot parse connection string")
