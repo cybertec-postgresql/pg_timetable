@@ -67,7 +67,7 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
         INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
         SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
         RETURNING chain_id
-$$ LANGUAGE SQL STRICT;
+$$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
     chain_id BIGINT, 
