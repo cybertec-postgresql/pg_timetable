@@ -6,7 +6,7 @@ require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/georgysavva/scany v0.2.9
 	github.com/jackc/pgconn v1.8.1
-	github.com/jackc/pgtype v1.7.0
+	github.com/jackc/pgtype v1.8.0
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
