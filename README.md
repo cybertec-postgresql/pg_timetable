@@ -1,6 +1,3 @@
-#### We are actively developing **pg_timetable v4**. Please refer to the [v3 branch](https://github.com/cybertec-postgresql/pg_timetable/tree/master) for previous version documentation and sources.
---------
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=v4_dev&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=v4_dev)
