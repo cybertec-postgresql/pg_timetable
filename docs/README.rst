@@ -55,35 +55,38 @@ Command line options
   # ./pg_timetable
 
   Application Options:
-    -c, --clientname=                   Unique name for application instance [$PGTT_CLIENTNAME]
-        --config=                       YAML configuration file
-        --no-program-tasks              Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
+    -c, --clientname=                           Unique name for application instance [$PGTT_CLIENTNAME]
+        --config=                               YAML configuration file
+        --no-program-tasks                      Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
 
   Connection:
-    -h, --host=                         PostgreSQL host (default: localhost) [$PGTT_PGHOST]
-    -p, --port=                         PostgreSQL port (default: 5432) [$PGTT_PGPORT]
-    -d, --dbname=                       PostgreSQL database name (default: timetable) [$PGTT_PGDATABASE]
-    -u, --user=                         PostgreSQL user (default: scheduler) [$PGTT_PGUSER]
-        --password=                     PostgreSQL user password [$PGTT_PGPASSWORD]
-        --sslmode=[disable|require]     What SSL priority use for connection (default: disable)
-        --pgurl=                        PostgreSQL connection URL [$PGTT_URL]
+    -h, --host=                                 PostgreSQL host (default: localhost) [$PGTT_PGHOST]
+    -p, --port=                                 PostgreSQL port (default: 5432) [$PGTT_PGPORT]
+    -d, --dbname=                               PostgreSQL database name (default: timetable) [$PGTT_PGDATABASE]
+    -u, --user=                                 PostgreSQL user (default: scheduler) [$PGTT_PGUSER]
+        --password=                             PostgreSQL user password [$PGTT_PGPASSWORD]
+        --sslmode=[disable|require]             What SSL priority use for connection (default: disable)
+        --pgurl=                                PostgreSQL connection URL [$PGTT_URL]
 
   Logging:
-        --loglevel=[debug|info|error]   Verbosity level for stdout and log file (default: info)
-        --logdblevel=[debug|info|error] Verbosity level for database storing (default: info)
-        --logfile=                      File name to store logs
-        --logfileformat=[json|text]     Format of file logs (default: json)
+        --log-level=[debug|info|error]          Verbosity level for stdout and log file (default: info)
+        --log-database-level=[debug|info|error] Verbosity level for database storing (default: info)
+        --log-file=                             File name to store logs
+        --log-file-format=[json|text]           Format of file logs (default: json)
 
   Start:
-    -f, --file=                         SQL script file to execute during startup
-        --init                          Initialize database schema to the latest version and exit. Can
-                                        be used with --upgrade
-        --upgrade                       Upgrade database to the latest version
-        --debug                         Run in debug mode. Only asynchronous chains will be executed
+    -f, --file=                                 SQL script file to execute during startup
+        --init                                  Initialize database schema to the latest version and exit. Can be used
+                                                with --upgrade
+        --upgrade                               Upgrade database to the latest version
+        --debug                                 Run in debug mode. Only asynchronous chains will be executed
 
   Resource:
-        --cronworkers=                  Number of parallel workers for scheduled chains (default: 16)
-        --intervalworkers=              Number of parallel workers for interval chains (default: 16)   
+        --cron-workers=                         Number of parallel workers for scheduled chains (default: 16)
+        --interval-workers=                     Number of parallel workers for interval chains (default: 16)
+        --chain-timeout=                        Abort any chain that takes more than the specified number of milliseconds
+        --task-timeout=                         Abort any task within a chain that takes more than the specified number
+                                                of milliseconds  
 
 
 
