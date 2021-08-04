@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ![](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=v4_dev&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=v4_dev)
-[![Documentation Status](https://readthedocs.org/projects/pg-timetable/badge/?version=master)](https://pg-timetable.readthedocs.io/en/v4_dev/?badge=master)
+[![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=master&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/pg-timetable/badge/?version=master)](https://pg-timetable.readthedocs.io/en/master/?badge=master)
 [![Release](https://img.shields.io/github/v/release/cybertec-postgresql/pg_timetable?include_prereleases)](https://github.com/cybertec-postgresql/pg_timetable/releases)
 [![Github All Releases](https://img.shields.io/github/downloads/cybertec-postgresql/pg_timetable/total?style=flat-square)](https://github.com/cybertec-postgresql/pg_timetable/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
@@ -60,18 +60,18 @@ https://pg-timetable.readthedocs.io/
 - Enhanced cron-style scheduling
 - Optional concurrency protection
 
-## [Installation](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html)
+## [Installation](https://pg-timetable.readthedocs.io/en/master/installation.html)
 
-Complete installation guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html).
+Complete installation guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/master/installation.html).
 
 Possible choices are:
 - official [release packages](https://github.com/cybertec-postgresql/pg_timetable/releases);
 - [Docker images](https://hub.docker.com/r/cybertecpostgresql/pg_timetable);
-- [build from sources](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html#build-from-sources).
+- [build from sources](https://pg-timetable.readthedocs.io/en/master/installation.html#build-from-sources).
 
-## [Quick Start](https://pg-timetable.readthedocs.io/en/v4_dev/README.html#quick-start)
+## [Quick Start](https://pg-timetable.readthedocs.io/en/master/README.html#quick-start)
 
-Complete usage guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/v4_dev/basic_jobs.html).
+Complete usage guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/master/basic_jobs.html).
 
 1. Download **pg_timetable** executable
 
@@ -108,7 +108,7 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 | [Heroku]         | ✅       |
 | [Supabase]       | ✅       |
 
-\* - there are no official release binaries made for these OSes. One would need to [build them from sources](https://pg-timetable.readthedocs.io/en/v4_dev/installation.html#build-from-sources).
+\* - there are no official release binaries made for these OSes. One would need to [build them from sources](https://pg-timetable.readthedocs.io/en/master/installation.html#build-from-sources).
 
 \** - previous PostgreSQL versions may and should work smoothly. Only [officially supported PostgreSQL versions](https://www.postgresql.org/support/versioning/) are listed in this table.
       
