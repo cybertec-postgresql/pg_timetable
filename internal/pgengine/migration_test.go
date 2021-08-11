@@ -3,7 +3,6 @@ package pgengine_test
 import (
 	"context"
 	_ "embed"
-	"os"
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
@@ -36,11 +35,6 @@ func TestMigrations(t *testing.T) {
 
 func TestExecuteMigrationScript(t *testing.T) {
 	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, "foo"), "File does not exist")
-	f, err := os.Create("sql/migrations/empty.sql")
-	assert.NoError(t, err)
-	f.Close()
-	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, "empty.sql"), "File is empty")
-	assert.NoError(t, os.Remove("sql/migrations/empty.sql"))
 }
 
 func TestInitMigrator(t *testing.T) {

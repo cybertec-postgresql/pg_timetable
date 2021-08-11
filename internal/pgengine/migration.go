@@ -3,7 +3,6 @@ package pgengine
 import (
 	"context"
 	"embed"
-	"errors"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
@@ -52,9 +51,6 @@ func ExecuteMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error 
 	sql, err := migrationsFiles.ReadFile("sql/migrations/" + fname)
 	if err != nil {
 		return err
-	}
-	if len(sql) == 0 {
-		return errors.New("Empty migration script")
 	}
 	_, err = tx.Exec(ctx, string(sql))
 	return err
