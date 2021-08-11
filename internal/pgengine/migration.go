@@ -3,6 +3,7 @@ package pgengine
 import (
 	"context"
 	"embed"
+	"errors"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
@@ -46,10 +47,14 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	return m.NeedUpgrade(ctx, conn.Conn())
 }
 
-func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
+// ExecuteMigrationScript executes the migration script specified by fname within transaction tx
+func ExecuteMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
 	sql, err := migrations.ReadFile("sql/migrations/" + fname)
 	if err != nil {
 		return err
+	}
+	if len(sql) == 0 {
+		return errors.New("Empty migration script")
 	}
 	_, err = tx.Exec(ctx, string(sql))
 	return err
@@ -76,7 +81,7 @@ func (pge *PgEngine) initMigrator() error {
 			&migrator.Migration{
 				Name: "00305 Fix timetable.is_cron_in_time",
 				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return executeMigrationScript(ctx, tx, "00305.sql")
+					return ExecuteMigrationScript(ctx, tx, "00305.sql")
 				},
 			},
 			// &migrator.Migration{
