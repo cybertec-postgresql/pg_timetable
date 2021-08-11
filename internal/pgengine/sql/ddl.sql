@@ -13,7 +13,8 @@ CREATE TABLE timetable.migration(
 INSERT INTO
     timetable.migration (id, version)
 VALUES
-    (0, '00259 Restart migrations for v4');
+    (0, '00259 Restart migrations for v4'),
+    (1, '00305 Fix timetable.is_cron_in_time');
 
 CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
 

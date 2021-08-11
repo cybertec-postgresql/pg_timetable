@@ -148,7 +148,7 @@ CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(
         TRUE
     ELSE
         date_part('month', ts) = ANY(a.months)
-        AND date_part('dow', ts) = ANY(a.dow) OR date_part('isodow', ts) = ANY(a.dow)
+        AND (date_part('dow', ts) = ANY(a.dow) OR date_part('isodow', ts) = ANY(a.dow))
         AND date_part('day', ts) = ANY(a.days)
         AND date_part('hour', ts) = ANY(a.hours)
         AND date_part('minute', ts) = ANY(a.mins)

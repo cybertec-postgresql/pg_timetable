@@ -2,36 +2,38 @@ package pgengine
 
 import (
 	"context"
+	"embed"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	pgx "github.com/jackc/pgx/v4"
 )
 
-// //go:embed sql/migrations/*.sql
-// var migrations embed.FS
-
-var m *migrator.Migrator
+//go:embed sql/migrations/*.sql
+var migrationsFiles embed.FS
 
 // MigrateDb upgrades database with all migrations
-func (pge *PgEngine) MigrateDb(ctx context.Context) bool {
+func (pge *PgEngine) MigrateDb(ctx context.Context) error {
+	m, err := pge.initMigrator()
+	if err != nil {
+		return err
+	}
 	pge.l.Info("Upgrading database...")
 	conn, err := pge.ConfigDb.Acquire(ctx)
 	defer conn.Release()
 	if err != nil {
-		pge.l.WithError(err).Error("Cannot acquire database")
-		return false
+		return err
 	}
 	if err := m.Migrate(ctx, conn.Conn()); err != nil {
-		pge.l.WithError(err).Error()
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
 func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
-	if err := pge.initMigrator(); err != nil {
+	m, err := pge.initMigrator()
+	if err != nil {
 		return false, err
 	}
 	pge.l.Debug("Check need of upgrading database...")
@@ -44,43 +46,52 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 	return m.NeedUpgrade(ctx, conn.Conn())
 }
 
-// func executeMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
-// 	sql, err := migrations.ReadFile(fname)
-// 	if err != nil {
-// 		_, err = tx.Exec(ctx, string(sql))
-// 	}
-// 	return err
-// }
-
-func (pge *PgEngine) initMigrator() error {
-	if m != nil {
-		return nil
+// ExecuteMigrationScript executes the migration script specified by fname within transaction tx
+func ExecuteMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
+	sql, err := migrationsFiles.ReadFile("sql/migrations/" + fname)
+	if err != nil {
+		return err
 	}
-	var err error
-	m, err = migrator.New(
+	_, err = tx.Exec(ctx, string(sql))
+	return err
+}
+
+// Migrations holds function returning all updgrade migrations needed
+var Migrations func() migrator.Option = func() migrator.Option {
+	return migrator.Migrations(
+		&migrator.Migration{
+			Name: "00259 Restart migrations for v4",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				// "migrations" table will be created automatically
+				return nil
+			},
+		},
+		&migrator.Migration{
+			Name: "00305 Fix timetable.is_cron_in_time",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00305.sql")
+			},
+		},
+		// &migrator.Migration{
+		// 	Name: "000XX Short description of a migration",
+		// 	Func: func(ctx context.Context, tx pgx.Tx) error {
+		// 		return executeMigrationScript(ctx, tx, "000XX.sql")
+		// 	},
+		// },
+		// adding new migration here, update "timetable"."migrations" in "sql/ddl.sql"
+	)
+}
+
+func (pge *PgEngine) initMigrator() (*migrator.Migrator, error) {
+	m, err := migrator.New(
 		migrator.TableName("timetable.migration"),
 		migrator.SetNotice(func(s string) {
 			pge.l.Info(s)
 		}),
-		migrator.Migrations(
-			&migrator.Migration{
-				Name: "00259 Restart migrations for v4",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					// "migrations" table will be created automatically
-					return nil
-				},
-			},
-			// &migrator.Migration{
-			// 	Name: "000XX Short description of a migration",
-			// 	Func: func(ctx context.Context, tx pgx.Tx) error {
-			// 		return executeMigrationScript(ctx, tx, "000XX.sql")
-			// 	},
-			// },
-			// adding new migration here, update "timetable"."migrations" in "sql/ddl.sql"
-		),
+		Migrations(),
 	)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot initialize migration")
 	}
-	return err
+	return m, err
 }

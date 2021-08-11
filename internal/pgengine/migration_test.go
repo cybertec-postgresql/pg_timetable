@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,10 +25,28 @@ func TestMigrations(t *testing.T) {
 	ok, err := pge.CheckNeedMigrateDb(ctx)
 	assert.NoError(t, err)
 	assert.True(t, ok, "Should need migrations")
-	assert.True(t, pge.MigrateDb(ctx), "Migrations should be applied")
+	assert.NoError(t, pge.MigrateDb(ctx), "Migrations should be applied")
 	_, err = pge.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 	assert.NoError(t, err)
 
 	_, err = pge.CheckNeedMigrateDb(ctx)
 	assert.NoError(t, err)
+}
+
+func TestExecuteMigrationScript(t *testing.T) {
+	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, "foo"), "File does not exist")
+}
+
+func TestInitMigrator(t *testing.T) {
+	teardownTestCase := SetupTestCase(t)
+	defer teardownTestCase(t)
+	pgengine.Migrations = func() migrator.Option {
+		return migrator.Migrations()
+	}
+
+	ctx := context.Background()
+	err := pge.MigrateDb(ctx)
+	assert.Error(t, err, "Empty migrations")
+	_, err = pge.CheckNeedMigrateDb(ctx)
+	assert.Error(t, err, "Empty migrations")
 }
