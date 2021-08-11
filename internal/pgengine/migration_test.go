@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,4 +41,18 @@ func TestExecuteMigrationScript(t *testing.T) {
 	f.Close()
 	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, "empty.sql"), "File is empty")
 	assert.NoError(t, os.Remove("sql/migrations/empty.sql"))
+}
+
+func TestInitMigrator(t *testing.T) {
+	teardownTestCase := SetupTestCase(t)
+	defer teardownTestCase(t)
+	pgengine.Migrations = func() migrator.Option {
+		return migrator.Migrations()
+	}
+
+	ctx := context.Background()
+	err := pge.MigrateDb(ctx)
+	assert.Error(t, err, "Empty migrations")
+	_, err = pge.CheckNeedMigrateDb(ctx)
+	assert.Error(t, err, "Empty migrations")
 }

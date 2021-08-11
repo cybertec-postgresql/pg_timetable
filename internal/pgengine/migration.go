@@ -60,6 +60,32 @@ func ExecuteMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error 
 	return err
 }
 
+// Migrations holds function returning all updgrade migrations needed
+var Migrations func() migrator.Option = func() migrator.Option {
+	return migrator.Migrations(
+		&migrator.Migration{
+			Name: "00259 Restart migrations for v4",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				// "migrations" table will be created automatically
+				return nil
+			},
+		},
+		&migrator.Migration{
+			Name: "00305 Fix timetable.is_cron_in_time",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00305.sql")
+			},
+		},
+		// &migrator.Migration{
+		// 	Name: "000XX Short description of a migration",
+		// 	Func: func(ctx context.Context, tx pgx.Tx) error {
+		// 		return executeMigrationScript(ctx, tx, "000XX.sql")
+		// 	},
+		// },
+		// adding new migration here, update "timetable"."migrations" in "sql/ddl.sql"
+	)
+}
+
 func (pge *PgEngine) initMigrator() error {
 	if m != nil {
 		return nil
@@ -70,28 +96,7 @@ func (pge *PgEngine) initMigrator() error {
 		migrator.SetNotice(func(s string) {
 			pge.l.Info(s)
 		}),
-		migrator.Migrations(
-			&migrator.Migration{
-				Name: "00259 Restart migrations for v4",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					// "migrations" table will be created automatically
-					return nil
-				},
-			},
-			&migrator.Migration{
-				Name: "00305 Fix timetable.is_cron_in_time",
-				Func: func(ctx context.Context, tx pgx.Tx) error {
-					return ExecuteMigrationScript(ctx, tx, "00305.sql")
-				},
-			},
-			// &migrator.Migration{
-			// 	Name: "000XX Short description of a migration",
-			// 	Func: func(ctx context.Context, tx pgx.Tx) error {
-			// 		return executeMigrationScript(ctx, tx, "000XX.sql")
-			// 	},
-			// },
-			// adding new migration here, update "timetable"."migrations" in "sql/ddl.sql"
-		),
+		Migrations(),
 	)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot initialize migration")
