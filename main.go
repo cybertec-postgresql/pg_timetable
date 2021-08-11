@@ -59,7 +59,8 @@ func main() {
 	}
 	defer pge.Finalize()
 	if cmdOpts.Start.Upgrade {
-		if !pge.MigrateDb(ctx) {
+		if err := pge.MigrateDb(ctx); err != nil {
+			logger.WithError(err).Error("Upgrade failed")
 			exitCode = 3
 			return
 		}

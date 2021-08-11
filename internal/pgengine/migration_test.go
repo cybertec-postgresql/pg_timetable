@@ -23,7 +23,7 @@ func TestMigrations(t *testing.T) {
 	ok, err := pge.CheckNeedMigrateDb(ctx)
 	assert.NoError(t, err)
 	assert.True(t, ok, "Should need migrations")
-	assert.True(t, pge.MigrateDb(ctx), "Migrations should be applied")
+	assert.NoError(t, pge.MigrateDb(ctx), "Migrations should be applied")
 	_, err = pge.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 	assert.NoError(t, err)
 
