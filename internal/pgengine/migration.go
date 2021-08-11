@@ -11,13 +11,12 @@ import (
 )
 
 //go:embed sql/migrations/*.sql
-var migrations embed.FS
-
-var m *migrator.Migrator
+var migrationsFiles embed.FS
 
 // MigrateDb upgrades database with all migrations
 func (pge *PgEngine) MigrateDb(ctx context.Context) error {
-	if err := pge.initMigrator(); err != nil {
+	m, err := pge.initMigrator()
+	if err != nil {
 		return err
 	}
 	pge.l.Info("Upgrading database...")
@@ -34,7 +33,8 @@ func (pge *PgEngine) MigrateDb(ctx context.Context) error {
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true
 func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
-	if err := pge.initMigrator(); err != nil {
+	m, err := pge.initMigrator()
+	if err != nil {
 		return false, err
 	}
 	pge.l.Debug("Check need of upgrading database...")
@@ -49,7 +49,7 @@ func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error) {
 
 // ExecuteMigrationScript executes the migration script specified by fname within transaction tx
 func ExecuteMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error {
-	sql, err := migrations.ReadFile("sql/migrations/" + fname)
+	sql, err := migrationsFiles.ReadFile("sql/migrations/" + fname)
 	if err != nil {
 		return err
 	}
@@ -86,12 +86,8 @@ var Migrations func() migrator.Option = func() migrator.Option {
 	)
 }
 
-func (pge *PgEngine) initMigrator() error {
-	if m != nil {
-		return nil
-	}
-	var err error
-	m, err = migrator.New(
+func (pge *PgEngine) initMigrator() (*migrator.Migrator, error) {
+	m, err := migrator.New(
 		migrator.TableName("timetable.migration"),
 		migrator.SetNotice(func(s string) {
 			pge.l.Info(s)
@@ -101,5 +97,5 @@ func (pge *PgEngine) initMigrator() error {
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot initialize migration")
 	}
-	return err
+	return m, err
 }
