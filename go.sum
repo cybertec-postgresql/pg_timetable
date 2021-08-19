@@ -317,8 +317,8 @@ github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3Rllmb
 github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc h1:BU12v9x5hvONtYU2R2LnlkxmWSsjzco046NzJLcWMHg=
 github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc/go.mod h1:vAPEMm1zIQKGmM9hcZTSlOU/CDVCXHGOw6SFxPlSoHw=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
-github.com/pashagolub/pgxmock v1.3.0 h1:xtQ0+MSxoCT/b6N+oLo8KCtm/QilF4wxaVMyPBKxSzU=
-github.com/pashagolub/pgxmock v1.3.0/go.mod h1:Ktp8tF8SkFOibmga06ubwrpr9ZL6zAa1qdo9oq2NG60=
+github.com/pashagolub/pgxmock v1.4.0 h1:VFybRGI+QRfe6ua3vBO0jfzszHzO7Vt/De8fy6cq/bQ=
+github.com/pashagolub/pgxmock v1.4.0/go.mod h1:BKB1w/Es9R1RGuuIAyTgbPJekAMtWQ2Yy9E82pTPObs=
 github.com/pashagolub/pgxstruct v0.0.0-20210217101842-40d357eec200/go.mod h1:fOTLLi1PtVUDXx28olVT/D2UMFCmBEYpnY5QIzghmDc=
 github.com/pelletier/go-toml v1.9.3 h1:zeC5b1GviRUyKYd6OJPvBU/mcVDVoL1OhT17FCt5dSQ=
 github.com/pelletier/go-toml v1.9.3/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
