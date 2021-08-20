@@ -129,7 +129,7 @@ Kind
                 "subject":      "pg_timetable - No Reply",
                 "attachment":   ["/temp/attachments/Report.pdf","config.yaml"],
                 "msgbody":      "<h2>Hello User,</h2> <p>check some attachments!</p>",
-                "contentype":   "text/html; charset=UTF-8"
+                "contenttype":   "text/html; charset=UTF-8"
             }'::jsonb
         
 ``BUILTIN: Download``
