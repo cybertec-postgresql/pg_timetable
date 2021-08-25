@@ -128,7 +128,8 @@ Kind
                 "toaddr":       ["recipient@example.com"],
                 "subject":      "pg_timetable - No Reply",
                 "attachment":   ["/temp/attachments/Report.pdf","config.yaml"],
-                "msgbody":      "<h2>Hello User,</h2> <p>check some attachments!</p>"
+                "msgbody":      "<h2>Hello User,</h2> <p>check some attachments!</p>",
+                "contenttype":   "text/html; charset=UTF-8"
             }'::jsonb
         
 ``BUILTIN: Download``
