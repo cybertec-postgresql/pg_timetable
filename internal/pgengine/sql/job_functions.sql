@@ -136,3 +136,12 @@ CREATE OR REPLACE FUNCTION timetable.move_task_down(IN task_id BIGINT) RETURNS b
     )
     SELECT count(*) > 0 FROM upd_current
 $$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION timetable.delete_task(IN task_id BIGINT) RETURNS boolean AS $$
+    WITH 
+    del_task AS (
+        DELETE FROM timetable.task WHERE task_id = $1 AND parent_id IS NOT NULL RETURNING parent_id),
+    upd_task AS (
+        UPDATE timetable.task t SET parent_id = dt.parent_id FROM del_task dt WHERE t.parent_id = $1)
+    SELECT count(*) > 0 FROM del_task
+$$ LANGUAGE SQL;
