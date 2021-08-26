@@ -33,7 +33,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v2
       with:
-        go-version: '1.16'
+        go-version: '1.17'
 
     - name: Test
       run: go test -v -p 1 -parallel 1 -failfast ./...
@@ -113,7 +113,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v2
       with:
-        go-version: '1.16'
+        go-version: '1.17'
 
     - name: Get dependencies
       run: |
@@ -123,9 +123,8 @@ jobs:
     - name: GolangCI-Lint
       uses: golangci/golangci-lint-action@v2
       with:
-        # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-        version: v1.39
-
+        version: latest
+        
     - name: Test
       run: go test -failfast -v -timeout=300s -p 1 -coverprofile=profile.cov ./...
 
