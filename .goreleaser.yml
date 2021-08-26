@@ -15,7 +15,8 @@ builds:
       goarch: 386
     - goos: windows
       goarch: 386
- 
+    - goos: windows
+      goarch: arm64 
 
 archives:
 - name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
