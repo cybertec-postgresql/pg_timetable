@@ -82,7 +82,7 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 ```
 3. Create a new job, e.g. run `VACUUM` each night at 00:30
 ```sql
-    my_database=> SELECT timetable.add_job('frequent-vacuum', '30 * * * *', 'VACUUM');
+    my_database=> SELECT timetable.add_job('frequent-vacuum', '30 0 * * *', 'VACUUM');
     add_job
     ---------
           3
