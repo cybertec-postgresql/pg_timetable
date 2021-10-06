@@ -137,7 +137,7 @@ CREATE OR REPLACE FUNCTION timetable.move_task_down(IN task_id BIGINT) RETURNS b
     SELECT count(*) > 0 FROM upd_current
 $$ LANGUAGE SQL;
 
--- delete_job() will add chain and it's tasks from the system
+-- delete_job() will delete chain and it's tasks from the system
 CREATE OR REPLACE FUNCTION timetable.delete_job(IN job_name TEXT) RETURNS boolean AS $$
     WITH
     del_chain AS (
