@@ -97,7 +97,7 @@ func NewConfig(writer io.Writer) (*CmdOptions, error) {
 	if err = v.Unmarshal(conf); err != nil {
 		return nil, fmt.Errorf("Fatal error unmarshalling config file: %w", err)
 	}
-	if !v.IsSet("clientname") {
+	if conf.ClientName == "" {
 		p.WriteHelp(writer)
 		return nil, errors.New("The required flag `-c, --clientname` was not specified")
 	}
