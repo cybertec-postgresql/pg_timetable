@@ -46,7 +46,7 @@ func TestAsyncChains(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	sch.retrieveAsyncChainsAndRun(ctx)
-	//add incorrect chaing
+	//add incorrect chain
 	pge.NotificationHandler(&pgconn.PgConn{}, n2)
 	mock.ExpectQuery("SELECT.+chain_id").WillReturnError(errors.New("error"))
 	mock.ExpectExec("INSERT.+log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
