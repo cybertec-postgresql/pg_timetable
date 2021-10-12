@@ -69,6 +69,10 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 	pge.l.WithField("PID", os.Getpid()).Debug("Starting new session... ")
 	config := pge.getPgxConnConfig()
 	pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
+	if ctx.Err() != nil {
+		pge.l.WithError(ctx.Err()).Error("Connection cancelled")
+		return nil, ctx.Err()
+	}
 	for err != nil {
 		pge.l.WithError(err).Error("Connection failed")
 		pge.l.Info("Reconnecting in ", wt, " sec...")
