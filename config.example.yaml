@@ -20,6 +20,8 @@ connection:
   port: 5433
   # sslmode:[disable|require]      What SSL priority use for connection
   sslmode: require
+  # timeout:                       PostgreSQL connection timeout in seconds (default: 90)
+  timeout: 45
 
 # - Logging Settings -
 logging:

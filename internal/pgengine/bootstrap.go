@@ -67,17 +67,24 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 		make(chan ChainSignal, 64),
 	}
 	pge.l.WithField("PID", os.Getpid()).Debug("Starting new session... ")
+	connctx, conncancel := context.WithTimeout(ctx, time.Duration(cmdOpts.Connection.Timeout)*time.Second)
+	defer conncancel()
+
 	config := pge.getPgxConnConfig()
-	pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
+	pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config)
+	if connctx.Err() != nil {
+		pge.l.WithError(connctx.Err()).Error("Connection cancelled")
+		return nil, connctx.Err()
+	}
 	for err != nil {
 		pge.l.WithError(err).Error("Connection failed")
 		pge.l.Info("Reconnecting in ", wt, " sec...")
 		select {
 		case <-time.After(time.Duration(wt) * time.Second):
-			pge.ConfigDb, err = pgxpool.ConnectConfig(ctx, config)
-		case <-ctx.Done():
-			pge.l.WithError(ctx.Err()).Error("Connection request cancelled")
-			return nil, ctx.Err()
+			pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config)
+		case <-connctx.Done():
+			pge.l.WithError(connctx.Err()).Error("Connection request cancelled")
+			return nil, connctx.Err()
 		}
 		if wt < maxWaitTime {
 			wt = wt * 2

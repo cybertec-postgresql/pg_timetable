@@ -21,7 +21,7 @@ func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
 	}
 }
 
-// DeleteChainConfig delete chaing configuration for self destructive chains
+// DeleteChainConfig delete chain configuration for self destructive chains
 func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainID int) bool {
 	pge.l.WithField("chain", chainID).Info("Deleting self destructive chain configuration")
 	res, err := pge.ConfigDb.Exec(ctx, "DELETE FROM timetable.chain WHERE chain_id = $1", chainID)

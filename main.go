@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -51,9 +50,7 @@ func main() {
 	}
 	logger := log.Init(cmdOpts.Logging)
 
-	connctx, conncancel := context.WithTimeout(ctx, 90*time.Second)
-	defer conncancel()
-	if pge, err = pgengine.New(connctx, *cmdOpts, logger); err != nil {
+	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
 		exitCode = 2
 		return
 	}

@@ -16,6 +16,7 @@ type ConnectionOpts struct {
 	Password string `long:"password" description:"PostgreSQL user password" env:"PGTT_PGPASSWORD"`
 	SSLMode  string `long:"sslmode" default:"disable" description:"What SSL priority use for connection" choice:"disable" choice:"require"`
 	PgURL    string `long:"pgurl" description:"PostgreSQL connection URL" env:"PGTT_URL"`
+	Timeout  int    `long:"timeout" description:"PostgreSQL connection timeout" env:"PGTT_TIMEOUT" default:"90"`
 }
 
 // LoggingOpts specifies the logging configuration
