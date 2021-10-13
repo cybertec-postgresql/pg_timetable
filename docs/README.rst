@@ -67,6 +67,7 @@ Command line options
         --password=                             PostgreSQL user password [$PGTT_PGPASSWORD]
         --sslmode=[disable|require]             What SSL priority use for connection (default: disable)
         --pgurl=                                PostgreSQL connection URL [$PGTT_URL]
+        --timeout=                              PostgreSQL connection timeout in seconds (default: 90) [$PGTT_TIMEOUT]
 
   Logging:
         --log-level=[debug|info|error]          Verbosity level for stdout and log file (default: info)
