@@ -78,6 +78,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00323.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00329 Migration required for some new added functions",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00329.sql")
+			},
+		},
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",
 		// 	Func: func(ctx context.Context, tx pgx.Tx) error {
