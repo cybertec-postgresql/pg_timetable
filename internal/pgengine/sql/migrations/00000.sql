@@ -12,7 +12,8 @@ CREATE TABLE timetable.task (
     run_as              TEXT,
     database_connection TEXT,
     ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
-    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE
+    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE,
+    timeout             INTEGER                 DEFAULT 0
 );          
 
 COMMENT ON TABLE timetable.task IS
@@ -27,6 +28,8 @@ COMMENT ON COLUMN timetable.task.kind IS
     'Indicates whether "command" is SQL, built-in function or an external program';
 COMMENT ON COLUMN timetable.task.command IS
     'Contains either an SQL command, or command string to be executed';
+COMMENT ON COLUMN timetable.task.timeout IS
+    'Abort any task within a chain that takes more than the specified number of milliseconds';
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -43,6 +46,7 @@ CREATE TABLE timetable.chain (
     chain_name          TEXT        NOT NULL UNIQUE,
     run_at              timetable.cron,
     max_instances       INTEGER,
+    timeout             INTEGER     DEFAULT 0,
     live                BOOLEAN     DEFAULT FALSE,
     self_destruct       BOOLEAN     DEFAULT FALSE,
     exclusive_execution BOOLEAN     DEFAULT FALSE,
@@ -57,6 +61,8 @@ COMMENT ON COLUMN timetable.chain.run_at IS
     'Extended CRON-style time notation the chain has to be run at';
 COMMENT ON COLUMN timetable.chain.max_instances IS
     'Number of instances (clients) this chain can run in parallel';
+COMMENT ON COLUMN timetable.chain.timeout IS
+    'Abort any chain that takes more than the specified number of milliseconds';
 COMMENT ON COLUMN timetable.chain.live IS
     'Indication that the chain is ready to run, set to FALSE to pause execution';
 COMMENT ON COLUMN timetable.chain.self_destruct IS
@@ -88,7 +94,6 @@ CREATE UNLOGGED TABLE timetable.active_session(
 
 COMMENT ON TABLE timetable.active_session IS
     'Stores information about active sessions';
-
 
 CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
 
