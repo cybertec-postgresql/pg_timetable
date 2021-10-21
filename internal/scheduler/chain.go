@@ -125,9 +125,9 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 				chainL.Info("Starting chain")
 				sch.Lock(chain.ExclusiveExecution)
 				chainContext, cancel := context.WithCancel(chainContext)
-				sch.addActiveChain(chain.TaskID, cancel)
+				sch.addActiveChain(chain.ChainID, cancel)
 				sch.executeChain(chainContext, chain)
-				sch.deleteActiveChain(chain.TaskID)
+				sch.deleteActiveChain(chain.ChainID)
 				cancel()
 				sch.Unlock(chain.ExclusiveExecution)
 			case <-ctx.Done():
