@@ -54,6 +54,6 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	assert.Equal(t, New(pge, log.Init(config.LoggingOpts{LogLevel: "error"})).Run(ctx), ContextCancelledStatus)
+	assert.Equal(t, ContextCancelledStatus, New(pge, log.Init(config.LoggingOpts{LogLevel: "error"})).Run(ctx))
 
 }
