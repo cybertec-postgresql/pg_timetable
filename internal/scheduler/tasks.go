@@ -19,7 +19,8 @@ var Tasks = map[string](func(context.Context, *Scheduler, string) (string, error
 	"Log":          taskLog,
 	"SendMail":     taskSendMail,
 	"Download":     taskDownload,
-	"CopyFromFile": taskCopyFromFile}
+	"CopyFromFile": taskCopyFromFile,
+	"Shutdown":     taskShutdown}
 
 func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
 	var s string
@@ -98,4 +99,10 @@ func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) (stdo
 		return "", errors.New("Files to download are not specified")
 	}
 	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
+}
+
+func taskShutdown(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+	sch.l.Debug("Shutdown command received...")
+	sch.Shutdown()
+	return "Shutdown task called", nil
 }

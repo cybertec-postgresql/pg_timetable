@@ -17,10 +17,12 @@ const refetchTimeout = 60
 type RunStatus int
 
 const (
-	// ConnectionDroppped specifies the connection has been dropped
-	ConnectionDroppped RunStatus = iota
-	// ContextCancelled specifies the context has been cancelled probably due to timeout
-	ContextCancelled
+	// ConnectionDropppedStatus specifies the connection has been dropped
+	ConnectionDropppedStatus RunStatus = iota
+	// ContextCancelledStatus specifies the context has been cancelled probably due to timeout
+	ContextCancelledStatus
+	// Shutdown specifies proper termination of the session
+	ShutdownStatus
 )
 
 // Scheduler is the main class for running the tasks
@@ -40,6 +42,7 @@ type Scheduler struct {
 	// create channel for passing interval chains to workers
 	intervalChainsChan chan IntervalChain
 	intervalChainMutex sync.Mutex
+	shutdown           chan struct{} // closed when shutdown is called
 }
 
 // New returns a new instance of Scheduler
@@ -51,7 +54,13 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 		intervalChainsChan: make(chan IntervalChain, pge.Resource.IntervalWorkers),
 		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains:     make(map[int]IntervalChain),
+		shutdown:           make(chan struct{}),
 	}
+}
+
+// Shutdown terminates the current session
+func (sch *Scheduler) Shutdown() {
+	close(sch.shutdown)
 }
 
 // Config returns the current configuration for application
@@ -87,7 +96,7 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 
 	if sch.Config().Start.Debug { //run blocking notifications receiving
 		sch.pgengine.HandleNotifications(ctx)
-		return ContextCancelled
+		return ContextCancelledStatus
 	}
 
 	sch.l.Debug("Checking for @reboot task chains...")
@@ -103,7 +112,10 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 		case <-time.After(refetchTimeout * time.Second):
 			// pass
 		case <-ctx.Done():
-			return ContextCancelled
+			return ContextCancelledStatus
+		case <-sch.shutdown:
+			sch.terminateChains()
+			return ShutdownStatus
 		}
 	}
 }

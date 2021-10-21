@@ -107,6 +107,20 @@ func (sch *Scheduler) deleteActiveChain(id int) {
 	sch.activeChainMutex.Unlock()
 }
 
+func (sch *Scheduler) terminateChains() {
+	for id, cancel := range sch.activeChains {
+		sch.l.WithField("chain", id).Debug("Terminating chain...")
+		cancel()
+	}
+	for {
+		time.Sleep(1 * time.Second) // give some time to terminate chains gracefully
+		if len(sch.activeChains) == 0 {
+			return
+		}
+		sch.l.Debugf("Still active chains running: %d", len(sch.activeChains))
+	}
+}
+
 func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 	for {
 		select {
@@ -172,7 +186,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 
 	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.TaskID) {
-		sch.pgengine.MustRollbackTransaction(ctx, tx)
+		sch.pgengine.RollbackTransaction(ctx, tx)
 		return
 	}
 
@@ -190,7 +204,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		if retCode != 0 && !task.IgnoreError {
 			chainL.Error("Chain failed")
 			sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, "CHAIN_FAILED")
-			sch.pgengine.MustRollbackTransaction(bctx, tx)
+			sch.pgengine.RollbackTransaction(bctx, tx)
 			return
 		}
 		if i == len(ChainTasks)-1 {
@@ -202,7 +216,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 	chainL.Info("Chain executed successfully")
 	bctx = log.WithLogger(context.Background(), chainL)
-	sch.pgengine.MustCommitTransaction(bctx, tx)
+	sch.pgengine.CommitTransaction(bctx, tx)
 	if chain.SelfDestruct {
 		sch.pgengine.DeleteChainConfig(bctx, chain.ChainID)
 	}

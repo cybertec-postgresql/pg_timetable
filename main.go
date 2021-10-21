@@ -77,7 +77,7 @@ func main() {
 		return
 	}
 	sch := scheduler.New(pge, logger)
-	for sch.Run(ctx) == scheduler.ConnectionDroppped {
+	for sch.Run(ctx) == scheduler.ConnectionDropppedStatus {
 		pge.ReconnectAndFixLeftovers(ctx)
 	}
 }

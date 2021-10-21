@@ -35,16 +35,16 @@ func (pge *PgEngine) StartTransaction(ctx context.Context) (pgx.Tx, error) {
 	return pge.ConfigDb.Begin(ctx)
 }
 
-// MustCommitTransaction commits transaction and log error in the case of error
-func (pge *PgEngine) MustCommitTransaction(ctx context.Context, tx pgx.Tx) {
+// CommitTransaction commits transaction and log error in the case of error
+func (pge *PgEngine) CommitTransaction(ctx context.Context, tx pgx.Tx) {
 	err := tx.Commit(ctx)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Application cannot commit after job finished")
 	}
 }
 
-// MustRollbackTransaction rollbacks transaction and log error in the case of error
-func (pge *PgEngine) MustRollbackTransaction(ctx context.Context, tx pgx.Tx) {
+// RollbackTransaction rollbacks transaction and log error in the case of error
+func (pge *PgEngine) RollbackTransaction(ctx context.Context, tx pgx.Tx) {
 	err := tx.Rollback(ctx)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Application cannot rollback after job failed")
@@ -158,7 +158,7 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainT
 
 	// Commit changes on remote server
 	if task.ConnectString.Status != pgtype.Null && !task.Autonomous {
-		pge.MustCommitTransaction(ctx, execTx)
+		pge.CommitTransaction(ctx, execTx)
 	}
 
 	return
