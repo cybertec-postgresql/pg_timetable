@@ -35,13 +35,13 @@ func TestMustTransaction(t *testing.T) {
 	mockPool.ExpectCommit().WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pge.MustCommitTransaction(ctx, tx)
+	pge.CommitTransaction(ctx, tx)
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectRollback().WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pge.MustRollbackTransaction(ctx, tx)
+	pge.RollbackTransaction(ctx, tx)
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("SAVEPOINT").WillReturnError(errors.New("error"))

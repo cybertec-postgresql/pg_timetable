@@ -153,7 +153,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NoError(t, err, "Should start transaction")
 		assert.True(t, pge.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
-		pge.MustCommitTransaction(ctx, tx)
+		pge.CommitTransaction(ctx, tx)
 	})
 
 	t.Run("Check GetChainParamValues funсtion", func(t *testing.T) {
@@ -164,7 +164,7 @@ func TestSchedulerFunctions(t *testing.T) {
 			TaskID:  0,
 			ChainID: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")
-		pge.MustCommitTransaction(ctx, tx)
+		pge.CommitTransaction(ctx, tx)
 	})
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NoError(t, f("SELECT $1::int4", []string{"[42]", `[14]`}), "Simple query with doubled parameters")
 		assert.NoError(t, f("SELECT $1::int4, $2::text", []string{`[42, "hey"]`}), "Simple query with two parameters")
 
-		pge.MustCommitTransaction(ctx, tx)
+		pge.CommitTransaction(ctx, tx)
 	})
 
 }
@@ -220,7 +220,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 		assert.NotPanics(t, func() { pge.ResetRole(ctx, tx) }, "Reset Role failed")
 	})
 
-	pge.MustCommitTransaction(ctx, tx)
+	pge.CommitTransaction(ctx, tx)
 }
 
 func TestSamplesScripts(t *testing.T) {
@@ -235,7 +235,8 @@ func TestSamplesScripts(t *testing.T) {
 		defer cancel()
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),
 			"Sample query failed: ", f.Name())
-		assert.Equal(t, scheduler.New(pge, l).Run(ctx), scheduler.ContextCancelled)
+		// either context should be cancelled or 'shutdown.sql' will terminate the session
+		assert.True(t, scheduler.New(pge, l).Run(ctx) > scheduler.ConnectionDropppedStatus)
 		_, err = pge.ConfigDb.Exec(context.Background(),
 			"TRUNCATE timetable.task, timetable.chain CASCADE")
 		assert.NoError(t, err)

@@ -41,15 +41,6 @@ var migrations = []interface{}{
 			return nil
 		},
 	},
-	&migrator.Migration{
-		Name: "Using tx, encapsulate two queries",
-		Func: func(ctx context.Context, tx pgx.Tx) error {
-			if _, err := tx.Exec(ctx, "CREATE TABLE bar (id INT PRIMARY KEY)"); err != nil {
-				return err
-			}
-			return nil
-		},
-	},
 }
 
 func migrateTest() error {
@@ -64,7 +55,7 @@ func migrateTest() error {
 	if err != nil {
 		return err
 	}
-	_, _ = pge.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz")
+	_, _ = pge.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz, migrations")
 	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
 		return err
@@ -144,33 +135,6 @@ func TestBadMigrations(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-	}
-}
-
-func TestBadMigrationNumber(t *testing.T) {
-	pge, err := pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx := context.Background()
-	db, err := pge.ConfigDb.Acquire(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Release()
-	migrator := mustMigrator(migrator.New(migrator.Migrations(
-		&migrator.Migration{
-			Name: "bad migration number",
-			Func: func(ctx context.Context, tx pgx.Tx) error {
-				if _, err := tx.Exec(ctx, "CREATE TABLE bar (id INT PRIMARY KEY)"); err != nil {
-					return err
-				}
-				return nil
-			},
-		},
-	)))
-	if err := migrator.Migrate(context.Background(), db.Conn()); err == nil {
-		t.Fatalf("BAD MIGRATION NUMBER should fail: %v", err)
 	}
 }
 

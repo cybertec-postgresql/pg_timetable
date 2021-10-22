@@ -50,10 +50,12 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating built-in tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/Shell.sql")
 	assert.NoError(t, err, "Creating program tasks failed")
-	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/SelfDestruct.sql")
-	assert.NoError(t, err, "Creating program tasks failed")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	assert.Equal(t, New(pge, log.Init(config.LoggingOpts{LogLevel: "error"})).Run(ctx), ContextCancelled)
-
+	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/ManyTasks.sql")
+	assert.NoError(t, err, "Creating many tasks failed")
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	go func() {
+		time.Sleep(2 * time.Second)
+		sch.Shutdown()
+	}()
+	assert.Equal(t, ShutdownStatus, sch.Run(context.Background()))
 }
