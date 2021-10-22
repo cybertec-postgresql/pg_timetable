@@ -27,3 +27,13 @@ non-transactional operations, e.g. *CREATE DATABASE*, *REINDEX*, *VACUUM*, *CREA
 .. literalinclude:: ../samples/Autonomous.sql
     :linenos:
     :language: SQL
+
+Shutdown the scheduler and terminate the session
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This sample demonstrates how to shutdown the scheduler using special built-in task. This can be used to control 
+maintenance windows, to restart the scheduler for update purposes, or to stop session before the database should be 
+dropped.
+
+.. literalinclude:: ../samples/Shutdown.sql
+    :linenos:
+    :language: SQL

@@ -4,7 +4,7 @@
 
 SELECT timetable.add_job (
     job_name     => 'Shutdown pg_timetable session on schedule',
-    job_schedule => '* * * * *',
+    job_schedule => '* * 1 * *',
     job_command  => 'Shutdown',
     job_kind     => 'BUILTIN'
 );

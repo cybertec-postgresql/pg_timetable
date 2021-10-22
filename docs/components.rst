@@ -26,7 +26,8 @@ Currently, there are three different kinds of commands:
         * *Log*,
         * *SendMail*, 
         * *Download*,
-        * *CopyFromFile*.
+        * *CopyFromFile*,
+        * *Shutdown*.
 
 Task
 ------------------------------------------------
@@ -150,7 +151,10 @@ Kind
                 "sql": "COPY location FROM STDIN", 
                 "filename": "download/orte_ansi.txt" 
             }'::jsonb
-        
+
+``BUILTIN: Shutdown``
+    *value ignored*
+
 ``BUILTIN: NoOp``
     *value ignored*
 
