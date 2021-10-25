@@ -13,7 +13,6 @@ import (
 // Chain structure used to represent tasks chains
 type Chain struct {
 	ChainID            int    `db:"chain_id"`
-	TaskID             int    `db:"task_id"`
 	ChainName          string `db:"chain_name"`
 	SelfDestruct       bool   `db:"self_destruct"`
 	ExclusiveExecution bool   `db:"exclusive_execution"`
@@ -185,7 +184,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		return
 	}
 
-	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.TaskID) {
+	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.ChainID) {
 		sch.pgengine.RollbackTransaction(ctx, tx)
 		return
 	}

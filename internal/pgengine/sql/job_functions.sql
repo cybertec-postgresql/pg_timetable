@@ -34,9 +34,12 @@ $$ LANGUAGE SQL STRICT;
 CREATE OR REPLACE FUNCTION timetable.add_task(
     IN kind timetable.command_kind,
     IN command TEXT, 
-    IN parent_id BIGINT
+    IN parent_id BIGINT,
+    IN order_delta DOUBLE PRECISION DEFAULT 10
 ) RETURNS BIGINT AS $$
-    INSERT INTO timetable.task (parent_id, kind, command) VALUES (parent_id, kind, command) RETURNING task_id
+    INSERT INTO timetable.task (chain_id, task_order, kind, command) 
+	SELECT chain_id, task_order + $4, $1, $2 FROM timetable.task WHERE task_id = $3
+	RETURNING task_id
 $$ LANGUAGE SQL;
 
 -- add_job() will add one-task chain to the system
@@ -53,16 +56,16 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_ignore_errors   BOOLEAN DEFAULT TRUE
 ) RETURNS BIGINT AS $$
     WITH 
-        cte_task(v_task_id) AS (
-            INSERT INTO timetable.task (kind, command, ignore_error, autonomous)
-            VALUES (job_kind, job_command, job_ignore_errors, TRUE)
-            RETURNING task_id
-        ),
         cte_chain (v_chain_id) AS (
-            INSERT INTO timetable.chain (task_id, chain_name, run_at, max_instances, live,self_destruct, client_name) 
-            SELECT v_task_id, job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name
-            FROM cte_task
+            INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct, client_name) 
+            VALUES (job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name)
             RETURNING chain_id
+        ),
+        cte_task(v_task_id) AS (
+            INSERT INTO timetable.task (chain_id, task_order, kind, command, ignore_error, autonomous)
+            SELECT v_chain_id, 10, job_kind, job_command, job_ignore_errors, TRUE
+            FROM cte_chain
+            RETURNING task_id
         )
         INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
         SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
@@ -94,65 +97,50 @@ CREATE OR REPLACE FUNCTION timetable.notify_chain_stop(
 $$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.move_task_up(IN task_id BIGINT) RETURNS boolean AS $$
-    WITH 
-    current_task AS (
-        SELECT * FROM timetable.task WHERE task_id = $1), 
-    parrent_task AS (
-        SELECT t.* FROM timetable.task t, current_task WHERE t.task_id = current_task.parent_id),
-    upd_parent AS (
-        UPDATE timetable.task t SET 
-            (task_name, kind, command, run_as, database_connection, ignore_error, autonomous, timeout) = 
-            (ct.task_name, ct.kind, ct.command, ct.run_as, ct.database_connection, ct.ignore_error, ct.autonomous, ct.timeout) 
-        FROM current_task ct WHERE t.task_id = ct.parent_id
-    ),
-    upd_current AS (
-        UPDATE timetable.task t SET 
-            (task_name, kind, command, run_as, database_connection, ignore_error, autonomous, timeout) = 
-            (pt.task_name, pt.kind, pt.command, pt.run_as, pt.database_connection, pt.ignore_error, pt.autonomous, pt.timeout) 
-        FROM parrent_task pt WHERE t.task_id = $1
-        RETURNING true
-    )
-    SELECT count(*) > 0 FROM upd_current
+	WITH current_task (ct_chain_id, ct_id, ct_order) AS (
+		SELECT chain_id, task_id, task_order FROM timetable.task WHERE task_id = $1
+	),
+	tasks(t_id, t_new_order) AS (
+		SELECT task_id, COALESCE(LAG(task_order) OVER w, LEAD(task_order) OVER w)
+		FROM timetable.task t, current_task ct
+		WHERE chain_id = ct_chain_id AND (task_order < ct_order OR task_id = ct_id)
+		WINDOW w AS (PARTITION BY chain_id ORDER BY ABS(task_order - ct_order))
+		LIMIT 2
+	),
+	upd AS (
+		UPDATE timetable.task t SET task_order = t_new_order
+		FROM tasks WHERE tasks.t_id = t.task_id AND tasks.t_new_order IS NOT NULL
+		RETURNING true
+	)
+	SELECT COUNT(*) > 0 FROM upd
 $$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.move_task_down(IN task_id BIGINT) RETURNS boolean AS $$
-    WITH 
-    current_task AS (
-        SELECT * FROM timetable.task WHERE task_id = $1), 
-    child_task AS (
-        SELECT * FROM timetable.task WHERE parent_id = $1),
-    upd_child AS (
-        UPDATE timetable.task t SET 
-            (task_name, kind, command, run_as, database_connection, ignore_error, autonomous, timeout) = 
-            (ct.task_name, ct.kind, ct.command, ct.run_as, ct.database_connection, ct.ignore_error, ct.autonomous, ct.timeout) 
-        FROM current_task ct WHERE t.parent_id = $1
-    ),
-    upd_current AS (
-        UPDATE timetable.task t SET 
-            (task_name, kind, command, run_as, database_connection, ignore_error, autonomous, timeout) = 
-            (pt.task_name, pt.kind, pt.command, pt.run_as, pt.database_connection, pt.ignore_error, pt.autonomous, pt.timeout) 
-        FROM child_task pt WHERE t.task_id = $1
-        RETURNING true
-    )
-    SELECT count(*) > 0 FROM upd_current
+	WITH current_task (ct_chain_id, ct_id, ct_order) AS (
+		SELECT chain_id, task_id, task_order FROM timetable.task WHERE task_id = $1
+	),
+	tasks(t_id, t_new_order) AS (
+		SELECT task_id, COALESCE(LAG(task_order) OVER w, LEAD(task_order) OVER w)
+		FROM timetable.task t, current_task ct
+		WHERE chain_id = ct_chain_id AND (task_order > ct_order OR task_id = ct_id)
+		WINDOW w AS (PARTITION BY chain_id ORDER BY ABS(task_order - ct_order))
+		LIMIT 2
+	),
+	upd AS (
+		UPDATE timetable.task t SET task_order = t_new_order
+		FROM tasks WHERE tasks.t_id = t.task_id AND tasks.t_new_order IS NOT NULL
+		RETURNING true
+	)
+	SELECT COUNT(*) > 0 FROM upd
 $$ LANGUAGE SQL;
 
 -- delete_job() will delete chain and it's tasks from the system
 CREATE OR REPLACE FUNCTION timetable.delete_job(IN job_name TEXT) RETURNS boolean AS $$
-    WITH
-    del_chain AS (
-        DELETE FROM timetable.chain WHERE chain.chain_name = $1 RETURNING task_id),
-    del_tasks AS (
-		DELETE FROM timetable.task WHERE task.task_id IN (SELECT task_id FROM del_chain)
-	)
-    SELECT count(*) > 0 FROM del_chain
+    WITH del_chain AS (DELETE FROM timetable.chain WHERE chain.chain_name = $1 RETURNING chain_id)
+    SELECT EXISTS(SELECT 1 FROM del_chain)
 $$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.delete_task(IN task_id BIGINT) RETURNS boolean AS $$
-    WITH 
-    del_task AS (
-        DELETE FROM timetable.task WHERE task_id = $1 AND parent_id IS NOT NULL RETURNING parent_id),
-    upd_task AS (
-        UPDATE timetable.task t SET parent_id = dt.parent_id FROM del_task dt WHERE t.parent_id = $1)
-    SELECT count(*) > 0 FROM del_task
+    WITH del_task AS (DELETE FROM timetable.task WHERE task_id = $1 RETURNING task_id)
+    SELECT EXISTS(SELECT 1 FROM del_task)
 $$ LANGUAGE SQL;
