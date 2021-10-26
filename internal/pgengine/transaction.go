@@ -85,8 +85,8 @@ FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
 
 // GetChainParamValues returns parameter values to pass for task being executed
 func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, task *ChainTask) bool {
-	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE chain_id = $1 AND task_id = $2 AND value IS NOT NULL ORDER BY order_id ASC`
-	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, task.ChainID, task.TaskID)
+	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
+	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("cannot fetch parameters values for chain: ", err)
 		return false
