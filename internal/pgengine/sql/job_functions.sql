@@ -53,12 +53,13 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_max_instances   INTEGER DEFAULT NULL,
     job_live            BOOLEAN DEFAULT TRUE,
     job_self_destruct   BOOLEAN DEFAULT FALSE,
-    job_ignore_errors   BOOLEAN DEFAULT TRUE
+    job_ignore_errors   BOOLEAN DEFAULT TRUE,
+    job_exclusive       BOOLEAN DEFAULT FALSE
 ) RETURNS BIGINT AS $$
     WITH 
         cte_chain (v_chain_id) AS (
-            INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct, client_name) 
-            VALUES (job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name)
+            INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct, client_name, exclusive_execution) 
+            VALUES (job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name, job_exclusive)
             RETURNING chain_id
         ),
         cte_task(v_task_id) AS (
@@ -66,10 +67,12 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
             SELECT v_chain_id, 10, job_kind, job_command, job_ignore_errors, TRUE
             FROM cte_chain
             RETURNING task_id
+        ),
+        cte_param AS (
+            INSERT INTO timetable.parameter (task_id, order_id, value)
+            SELECT v_task_id, 1, job_parameters FROM cte_task, cte_chain
         )
-        INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
-        SELECT v_chain_id, v_task_id, 1, job_parameters FROM cte_task, cte_chain
-        RETURNING chain_id
+        SELECT v_chain_id FROM cte_chain
 $$ LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
