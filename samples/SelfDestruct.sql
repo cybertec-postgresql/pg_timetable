@@ -6,40 +6,12 @@ BEGIN
 END; 
 $BODY$;
 
-WITH 
-chain_insert(task_id) AS (
-    INSERT INTO timetable.task 
-        (task_name, command, ignore_error)
-    VALUES 
-        ('self destruct task', 'SELECT raise_func($1)', TRUE)
-    RETURNING task_id
-),
-chain_config(id) as (
-    INSERT INTO timetable.chain (
-        chain_id, 
-        task_id, 
-        chain_name, 
-        run_at, 
-        max_instances, 
-        live,
-        self_destruct, 
-        exclusive_execution 
-    ) VALUES ( 
-        DEFAULT, -- chain_id, 
-        (SELECT task_id FROM chain_insert), -- task_id, 
-        'notify then destruct', -- chain_name, 
-        '* * * * *', -- run_at, 
-        1, -- max_instances, 
-        TRUE, -- live, 
-        TRUE, -- self_destruct,
-        FALSE -- exclusive_execution, 
-    )
-    RETURNING  chain_id
-)
-INSERT INTO timetable.parameter 
-    (chain_id, task_id, order_id, value)
-VALUES (
-    (SELECT id FROM chain_config),
-    (SELECT task_id FROM chain_insert),
-    1,
-    '[ "Ahoj from self destruct task" ]' :: jsonb) 
+SELECT timetable.add_job(
+    job_name            => 'notify then destruct',
+    job_schedule        => '* * * * *',
+    job_command         => 'SELECT raise_func($1)',
+    job_parameters      => '[ "Ahoj from self destruct task" ]' :: jsonb,
+    job_kind            => 'SQL'::timetable.command_kind,
+    job_live            => TRUE,
+    job_self_destruct   => TRUE
+) as chain_id;

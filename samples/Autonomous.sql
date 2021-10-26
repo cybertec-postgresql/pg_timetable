@@ -21,28 +21,21 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
-WITH chain_insert(task_id) AS (
-    INSERT INTO timetable.task(command, ignore_error, autonomous)
-    VALUES('CALL test_proc()', TRUE, TRUE)
-    RETURNING task_id
-)
-INSERT INTO timetable.chain (
-    chain_id, 
-    task_id, 
-    chain_name, 
-    run_at, 
-    max_instances, 
-    live,
-    self_destruct, 
-    exclusive_execution
-)  VALUES (
-    DEFAULT, -- chain_id, 
-    (SELECT task_id FROM chain_insert), -- task_id, 
-    'call proc() every 10 sec', -- chain_name, 
-    '@every 10 seconds', -- run_at, 
-    1, -- max_instances, 
-    TRUE, -- live, 
-    FALSE, -- self_destruct,
-    FALSE -- exclusive_execution, 
-)
-RETURNING  chain_id, run_at;
+WITH
+    cte_chain (v_chain_id) AS (
+        INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct) 
+        VALUES (
+            'call proc() every 10 sec', -- chain_name, 
+            '@every 10 seconds',        -- run_at,
+            1,     -- max_instances, 
+            TRUE,  -- live, 
+            FALSE -- self_destruct
+        ) RETURNING chain_id
+    ),
+    cte_task(v_task_id) AS (
+        INSERT INTO timetable.task (chain_id, task_order, kind, command, ignore_error, autonomous)
+        SELECT v_chain_id, 10, 'SQL', 'CALL test_proc()', TRUE, TRUE
+        FROM cte_chain
+        RETURNING task_id
+    )
+SELECT v_chain_id, v_task_id FROM cte_task, cte_chain;

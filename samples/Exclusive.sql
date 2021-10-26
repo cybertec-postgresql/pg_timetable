@@ -8,48 +8,24 @@ BEGIN
 END; 
 $BODY$;
 
-WITH 
-chain_insert(task_id) AS (
-    INSERT INTO timetable.task (command, ignore_error)
-    VALUES ('SELECT sleepy_func($1)', TRUE) 
-    RETURNING task_id
-),
-chain_config(id, chain_name) as (
-    INSERT INTO timetable.chain (
-        chain_id, 
-        task_id, 
-        chain_name, 
-        run_at, 
-        max_instances, 
-        live,
-        self_destruct, 
-        exclusive_execution 
-    )  VALUES (
-        DEFAULT, -- chain_id, 
-        (SELECT task_id FROM chain_insert), -- task_id, 
-        'exclusive sleepy task every 10 sec', -- chain_name, 
-        '@after 10 seconds', -- run_at, 
-        1, -- max_instances, 
-        TRUE, -- live, 
-        FALSE, -- self_destruct,
-        FALSE -- exclusive_execution, 
-    ), (
-        DEFAULT, -- chain_id, 
-        (SELECT task_id FROM chain_insert), -- task_id, 
-        'exclusive sleepy task every 10 sec after previous', -- chain_name, 
-        '@every 10 seconds', -- run_at, 
-        1, -- max_instances, 
-        TRUE, -- live, 
-        FALSE, -- self_destruct,
-        TRUE -- exclusive_execution, 
-    ) 
-    RETURNING  chain_id, chain_name
-)
-INSERT INTO timetable.parameter 
-    (chain_id, task_id, order_id, value)
-SELECT 
-    chain_config.id,
-    chain_insert.task_id,
-    1,
-    format('[ "Configuration %s" ]', chain_config.chain_name) :: jsonb
-FROM chain_config, chain_insert;
+SELECT timetable.add_job(
+    job_name            => 'exclusive sleepy task every 10 sec',
+    job_schedule        => '@every 10 seconds',
+    job_command         => 'SELECT sleepy_func($1)',
+    job_parameters      => '[ "Configuration EVERY 10sec" ]'::jsonb,
+    job_kind            => 'SQL'::timetable.command_kind,
+    job_max_instances   => 1,
+    job_live            => TRUE,
+    job_exclusive       => TRUE
+) as chain_id
+UNION
+SELECT timetable.add_job(
+    job_name            => 'exclusive sleepy task after 10 sec',
+    job_schedule        => '@after 10 seconds',
+    job_command         => 'SELECT sleepy_func($1)',
+    job_parameters      => '[ "Configuration AFTER 10sec" ]'::jsonb,
+    job_kind            => 'SQL'::timetable.command_kind,
+    job_max_instances   => 1,
+    job_live            => TRUE,
+    job_exclusive       => TRUE
+);

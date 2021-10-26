@@ -200,11 +200,14 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 
 		// we use background context here because current one (ctx) might be cancelled
 		bctx = log.WithLogger(context.Background(), l)
-		if retCode != 0 && !task.IgnoreError {
-			chainL.Error("Chain failed")
-			sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, "CHAIN_FAILED")
-			sch.pgengine.RollbackTransaction(bctx, tx)
-			return
+		if retCode != 0 {
+			if !task.IgnoreError {
+				chainL.Error("Chain failed")
+				sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, "CHAIN_FAILED")
+				sch.pgengine.RollbackTransaction(bctx, tx)
+				return
+			}
+			l.Info("Ignoring task failure")
 		}
 		if i == len(ChainTasks)-1 {
 			status = "CHAIN_DONE"

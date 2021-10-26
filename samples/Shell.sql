@@ -1,35 +1,14 @@
 -- An example for using the PROGRAM task.
-DO $$
-DECLARE
-	v_command_id bigint;
-	v_task_id bigint;
-	v_chain_id bigint;
-BEGIN
-	-- Create the chain
-	INSERT INTO timetable.task(kind, command)
-	VALUES ('PROGRAM', 'psql')
-	RETURNING task_id INTO v_task_id;
-
-	-- Create the chain execution configuration
-	INSERT INTO timetable.chain (task_id, chain_name, live)
-	VALUES (v_task_id, 'psql chain', TRUE)
-	RETURNING chain_id INTO v_chain_id;
-
-	-- Create the parameters for the chain configuration
-	INSERT INTO timetable.parameter (
-		chain_id,
-		task_id,
-		order_id,
-		value
-	) VALUES (
-		v_chain_id, v_task_id, 1, ('[
+SELECT timetable.add_job(
+    job_name            => 'psql chain',
+    job_schedule        => '* * * * *',
+    job_kind            => 'PROGRAM'::timetable.command_kind,
+    job_command         => 'psql',
+    job_parameters      => ('[
 			"-h", "' || host(inet_server_addr()) || '",
 			"-p", "' || inet_server_port() || '",
 			"-d", "' || current_database() || '",
 			"-U", "' || current_user || '",
-			"-c", "SELECT now();",
-			"-w"
+			"-w", "-c", "SELECT now();"
 		]')::jsonb
-	);
-END $$
-LANGUAGE PLPGSQL;
+) as chain_id;
