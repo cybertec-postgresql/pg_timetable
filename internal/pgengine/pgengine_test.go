@@ -82,7 +82,8 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"validate_json_schema(jsonb, jsonb, jsonb)",
 			"get_chain_running_statuses(bigint)",
 			"health_check(TEXT)",
-			"add_task(timetable.command_kind, TEXT, BIGINT)",
+			"add_task(timetable.command_kind, TEXT, BIGINT, DOUBLE PRECISION)",
+			"add_job(TEXT, timetable.cron, TEXT, JSONB, timetable.command_kind, TEXT, INTEGER, BOOLEAN, BOOLEAN, BOOLEAN, BOOLEAN)",
 			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName)).Scan(&oid)
