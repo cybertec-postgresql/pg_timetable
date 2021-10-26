@@ -47,8 +47,10 @@ The next building block is a **task**, which simply represents a step in a list 
 Table timetable.task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    ``parent_id bigint``
-        The ID of the previous task.  Set this to ``NULL`` if it is the first command (head) of the chain.
+    ``chain_id bigint``
+        Link to the chain, if ``NULL`` task considered to be disabled
+    ``task_order DOUBLE PRECISION``
+        Indicates the order of task within a chain.
     ``kind timetable.command_kind``
         The type of the command. Can be *SQL* (default), *PROGRAM* or *BUILTIN*.
     ``command text``
@@ -61,6 +63,9 @@ Table timetable.task
         Specify if the next task should proceed after encountering an error (default: ``false``).
     ``autonomous boolean``
         Specify if the task should be executed out of the chain transaction. Useful for ``VACUUM``, ``CREATE DATABASE``, ``CALL`` etc.
+    ``timeout integer``
+        Abort any task within a chain that takes more than the specified number of milliseconds.
+
 
 
 .. warning:: If the **task** has been configured with ``ignore_error`` set to ``true`` (the default value is ``false``), the worker process will report a success on execution *even if the task within the chain fails*.
@@ -71,8 +76,6 @@ In most cases, they have to be brought to live by passing input parameters to th
 Table timetable.parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    ``chain_id bigint``
-        The ID of the chain.
     ``task_id bigint``
         The ID of the task.
     ``order_id integer``
@@ -166,14 +169,14 @@ Once tasks have been arranged, they have to be scheduled as a **chain**. For thi
 Table timetable.chain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    ``task_id bigint``
-        The id of the first task (head).
     ``chain_name text``
         The unique name of the chain.
     ``run_at timetable.cron``
         Standard *cron*-style value at Postgres server time zone or ``@after``, ``@every``, ``@reboot`` clause.
     ``max_instances integer``
         The amount of instances that this chain may have running at the same time.
+    ``timeout integer``
+        Abort any chain that takes more than the specified number of milliseconds.
     ``live boolean``
         Control if the chain may be executed once it reaches its schedule.
     ``self_destruct boolean``

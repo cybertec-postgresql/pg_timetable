@@ -17,6 +17,7 @@ Main features
 - Full support for database driven logging
 - Cron-style scheduling at the PostgreSQL server time zone
 - Optional concurrency protection
+- Task and chain can have execution timeout settings
 
 Quick Start
 ------------
@@ -93,14 +94,14 @@ Command line options
 
 Contributing
 ------------
-
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an 
 `issue <https://github.com/cybertec-postgresql/pg_timetable/issues>`_ or even consider submitting a 
-`pull request <https://github.com/cybertec-postgresql/pg_timetable/pulls>`_.
+`pull request <https://github.com/cybertec-postgresql/pg_timetable/pulls>`_. You also can give a 
+`star <https://github.com/cybertec-postgresql/pg_timetable/stargazers>`_ to **pg_timetable** project, 
+and to tell the world about it.
 
 Support
 ------------
-
 For professional support, please contact `Cybertec <https://www.cybertec-postgresql.com/>`_.
 
 
