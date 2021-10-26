@@ -222,11 +222,13 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 }
 
 func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
-	var paramValues []string
-	var err error
-	var out string
-	var retCode int
-	var cancel context.CancelFunc
+	var (
+		paramValues []string
+		err         error
+		out         string
+		retCode     int
+		cancel      context.CancelFunc
+	)
 
 	l := log.GetLogger(ctx)
 	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task) {
@@ -245,7 +247,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 	case "PROGRAM":
 		if sch.pgengine.NoProgramTasks {
 			l.Info("Program task execution skipped")
-			return -1
+			return -2
 		}
 		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Script, paramValues)
 	case "BUILTIN":
@@ -263,5 +265,5 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 		l.Info("Task executed successfully")
 	}
 	sch.pgengine.LogChainElementExecution(context.Background(), task, retCode, out)
-	return 0
+	return retCode
 }
