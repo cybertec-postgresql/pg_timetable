@@ -168,4 +168,4 @@ CREATE OR REPLACE FUNCTION timetable.delete_task(IN task_id BIGINT) RETURNS bool
     SELECT EXISTS(SELECT 1 FROM del_task)
 $$ LANGUAGE SQL;
 
-COMMENT ON FUNCTION timetable.delete_job IS 'Delete the task from a chain';
+COMMENT ON FUNCTION timetable.delete_task IS 'Delete the task from a chain';

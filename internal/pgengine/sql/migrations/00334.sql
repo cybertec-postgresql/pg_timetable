@@ -20,10 +20,14 @@ CREATE OR REPLACE FUNCTION timetable.delete_task(IN task_id BIGINT) RETURNS bool
     SELECT EXISTS(SELECT 1 FROM del_task)
 $$ LANGUAGE SQL;
 
+COMMENT ON FUNCTION timetable.delete_task IS 'Delete the task from a chain';
+
 CREATE OR REPLACE FUNCTION timetable.delete_job(IN job_name TEXT) RETURNS boolean AS $$
     WITH del_chain AS (DELETE FROM timetable.chain WHERE chain.chain_name = $1 RETURNING chain_id)
     SELECT EXISTS(SELECT 1 FROM del_chain)
 $$ LANGUAGE SQL;
+
+COMMENT ON FUNCTION timetable.delete_job IS 'Delete the chain and its tasks from the system';
 
 CREATE OR REPLACE FUNCTION timetable.move_task_up(IN task_id BIGINT) RETURNS boolean AS $$
 	WITH current_task (ct_chain_id, ct_id, ct_order) AS (
@@ -44,6 +48,8 @@ CREATE OR REPLACE FUNCTION timetable.move_task_up(IN task_id BIGINT) RETURNS boo
 	SELECT COUNT(*) > 0 FROM upd
 $$ LANGUAGE SQL;
 
+COMMENT ON FUNCTION timetable.move_task_up IS 'Switch the order of the task execution with a previous task within the chain';
+
 CREATE OR REPLACE FUNCTION timetable.move_task_down(IN task_id BIGINT) RETURNS boolean AS $$
 	WITH current_task (ct_chain_id, ct_id, ct_order) AS (
 		SELECT chain_id, task_id, task_order FROM timetable.task WHERE task_id = $1
@@ -63,6 +69,8 @@ CREATE OR REPLACE FUNCTION timetable.move_task_down(IN task_id BIGINT) RETURNS b
 	SELECT COUNT(*) > 0 FROM upd
 $$ LANGUAGE SQL;
 
+COMMENT ON FUNCTION timetable.move_task_down IS 'Switch the order of the task execution with a following task within the chain';
+
 DROP FUNCTION IF EXISTS timetable.add_task;
 CREATE OR REPLACE FUNCTION timetable.add_task(
     IN kind timetable.command_kind,
@@ -74,6 +82,8 @@ CREATE OR REPLACE FUNCTION timetable.add_task(
 	SELECT chain_id, task_order + $4, $1, $2 FROM timetable.task WHERE task_id = $3
 	RETURNING task_id
 $$ LANGUAGE SQL;
+
+COMMENT ON FUNCTION timetable.add_task IS 'Add a task to the same chain as the task with parent_id';
 
 DROP FUNCTION IF EXISTS timetable.add_job;
 CREATE OR REPLACE FUNCTION timetable.add_job(
@@ -107,3 +117,5 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
         )
         SELECT v_chain_id FROM cte_chain
 $$ LANGUAGE SQL;
+
+COMMENT ON FUNCTION timetable.add_job IS 'Add one-task chain (aka job) to the system';
