@@ -84,13 +84,20 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00329.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00334 Refactor timetable.task as plain schema without tree-like dependencies",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00334.sql")
+			},
+		},
+		// adding new migration here, update "timetable"."migration" in "sql/ddl.sql"!
+
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",
 		// 	Func: func(ctx context.Context, tx pgx.Tx) error {
 		// 		return executeMigrationScript(ctx, tx, "000XX.sql")
 		// 	},
 		// },
-		// adding new migration here, update "timetable"."migrations" in "sql/ddl.sql"
 	)
 }
 
