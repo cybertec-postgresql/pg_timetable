@@ -18,9 +18,11 @@ Cybertec also provides commercial 9-to-5 and 24/7 support for pg_timetable.
 
 * `Exclusive jobs explained <https://www.cybertec-postgresql.com/en/postgresql-exclusive-cron-jobs-using-pg_timetable-scheduler/>`_
 
+* `Asynchronous chain execution <https://www.cybertec-postgresql.com/en/pg_timetable-asynchronous-chain-execution/>`_
 
+* `v4 released <https://www.cybertec-postgresql.com/en/pg_timetable_v4-is-out/>`_
 
-
+* `PostgreSQL schedulers: comparison table <https://www.cybertec-postgresql.com/en/postgresql-schedulers-comparison-table/>`_
 
 Project feedback
 ----------------

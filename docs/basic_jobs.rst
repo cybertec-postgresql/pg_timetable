@@ -48,6 +48,9 @@ For such a group of chains we've introduced a special function ``timetable.add_j
     :param job_ignore_errors: Ignore error during execution. Default: ``TRUE``.
     :type job_ignore_errors: boolean
 
+    :param job_exclusive: Execute the chain in the exclusive mode. Default: ``FALSE``.
+    :type job_exclusive: boolean
+
     :returns: the ID of the created chain
     :rtype: integer
 

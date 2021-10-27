@@ -55,12 +55,12 @@ func TestExecuteCustomScripts(t *testing.T) {
 	})
 
 	t.Run("Check ExecuteCustomScripts if error returned", func(t *testing.T) {
-		mockPool.ExpectExec("WITH").WillReturnError(errors.New("expected"))
+		mockPool.ExpectExec("SELECT timetable.add_job").WillReturnError(errors.New("expected"))
 		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), "../../samples/Basic.sql"))
 	})
 
 	t.Run("Check ExecuteCustomScripts if everything fine", func(t *testing.T) {
-		mockPool.ExpectExec("WITH").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
+		mockPool.ExpectExec("SELECT timetable.add_job").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mockPool.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.NoError(t, mockpge.ExecuteCustomScripts(context.Background(), "../../samples/Basic.sql"))
 	})

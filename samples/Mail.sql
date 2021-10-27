@@ -1,19 +1,20 @@
 DO $$
 	-- An example for using the SendMail task.
 DECLARE
-	v_task_id bigint;
-	v_chain_config_id bigint;
+	v_mail_task_id bigint;
+	v_log_task_id bigint;
+	v_chain_id bigint;
 BEGIN
-
 	-- Get the chain id
-	v_task_id := timetable.add_task('BUILTIN', 'SendMail', NULL);
+	INSERT INTO timetable.chain (chain_name, max_instances, live) VALUES ('Send Mail', 1, TRUE)
+	RETURNING chain_id INTO v_chain_id;
 
-	INSERT INTO timetable.chain (task_id, chain_name, max_instances, live)
-		VALUES (v_task_id, 'Send Mail', 1, TRUE)
-	RETURNING
-		chain_id INTO v_chain_config_id;
+	-- Add SendMail task
+	INSERT INTO timetable.task (chain_id, task_order, kind, command) 
+	SELECT v_chain_id, 10, 'BUILTIN', 'SendMail'
+	RETURNING task_id INTO v_mail_task_id;
 
-	-- Create the parameters for the chain configuration
+	-- Create the parameters for the SensMail task
 		-- "username":	  The username used for authenticating on the mail server
 		-- "password":    The password used for authenticating on the mail server
 		-- "serverhost":  The IP address or hostname of the mail server
@@ -26,8 +27,8 @@ BEGIN
 		-- "attachment":  String array of the attachments
 		-- "msgbody":	  The body of the email
 
-	INSERT INTO timetable.parameter (chain_id, task_id, order_id, value)
-		VALUES (v_chain_config_id, v_task_id, 1, '{
+	INSERT INTO timetable.parameter (task_id, order_id, value)
+		VALUES (v_mail_task_id, 1, '{
 				"username":     "user@example.com",
 				"password":		"password",
 				"serverhost":	"smtp.example.com",
@@ -40,6 +41,39 @@ BEGIN
 				"attachment":   ["D:\\Go stuff\\Books\\Concurrency in Go.pdf","D:\\Go stuff\\Books\\The Way To Go.pdf"],
 				"msgbody":		"<b>Hello User,</b> <p>I got some Go books for you enjoy</p> <i>pg_timetable</i>!"
 				}'::jsonb);
+	
+	-- Add Log task and make it the last task using `task_order` column (=30)
+	INSERT INTO timetable.task (chain_id, task_order, kind, command) 
+	SELECT v_chain_id, 30, 'BUILTIN', 'Log'
+	RETURNING task_id INTO v_log_task_id;
+
+	-- Add housekeeping task, that will delete sent mail and update parameter for the previous logging task
+	-- Since we're using special add_task() function we don't need to specify the `chain_id`.
+	-- Function will take the same `chain_id` from the parent task, SendMail in this particular case
+	PERFORM timetable.add_task(
+		kind => 'SQL', 
+		parent_id => v_mail_task_id,
+		command => format(
+$query$WITH sent_mail(toaddr) AS (DELETE FROM timetable.parameter WHERE task_id = %s RETURNING value->>'username')
+INSERT INTO timetable.parameter (task_id, order_id, value) 
+SELECT %s, 1, to_jsonb('Sent emails to: ' || string_agg(sent_mail.toaddr, ';'))
+FROM sent_mail
+ON CONFLICT (task_id, order_id) DO UPDATE SET value = EXCLUDED.value$query$, 
+				v_mail_task_id, v_log_task_id
+			),
+		order_delta => 10
+	);
+
+-- In the end we should have something like this. Note, that even Log task was created earlier it will be executed later
+-- due to `task_order` column.
+
+-- timetable=> SELECT task_id, chain_id, kind, left(command, 50) FROM timetable.task ORDER BY task_order;  
+--  task_id | chain_id | task_order |  kind   |                             left
+-- ---------+----------+------------+---------+---------------------------------------------------------------
+--       45 |       24 |         10 | BUILTIN | SendMail
+--       47 |       24 |         20 | SQL     | WITH sent_mail(toaddr) AS (DELETE FROM timetable.p
+--       46 |       24 |         30 | BUILTIN | Log
+-- (3 rows)
 
 END;
 $$

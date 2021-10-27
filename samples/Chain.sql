@@ -18,19 +18,8 @@ BEGIN
         PRIMARY KEY (chain_log)
     );
 
-    --Add a head task
-    INSERT INTO timetable.task (command, ignore_error)
-    VALUES ('INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)', TRUE)
-    RETURNING task_id INTO v_parent_id;
-
-    -- Add one more task, this task will keep parent_id value which is task_id of the HEAD task
-    INSERT INTO timetable.task (parent_id, command, ignore_error)
-    VALUES (v_parent_id, 'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)', TRUE)
-    RETURNING task_id INTO v_task_id;
-
     INSERT INTO timetable.chain (
         chain_id, 
-        task_id, 
         chain_name, 
         run_at, 
         max_instances, 
@@ -39,21 +28,30 @@ BEGIN
         exclusive_execution
     ) VALUES (
         DEFAULT,            -- chain_id, 
-        v_parent_id,        -- task_id, 
         'chain operation',  -- chain_name
         '* * * * *',        -- run_at, 
         1,                  -- max_instances, 
         TRUE,               -- live, 
         FALSE,              -- self_destruct,
         FALSE               -- exclusive_execution, 
-        )
-    RETURNING  chain_id INTO v_chain_id;
+    ) RETURNING chain_id INTO v_chain_id;
 
-    INSERT INTO timetable.parameter(chain_id, task_id, order_id, value)
+    --Add a head task
+    INSERT INTO timetable.task (chain_id, task_order, command, ignore_error)
+    VALUES (v_chain_id, 1, 'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)', TRUE)
+    RETURNING task_id INTO v_parent_id;
+
+    -- Add one more task, this task will keep parent_id value which is task_id of the HEAD task
+    INSERT INTO timetable.task (chain_id, task_order, command, ignore_error)
+    VALUES (v_chain_id, 2, 'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)', TRUE)
+    RETURNING task_id INTO v_task_id;
+
+
+    INSERT INTO timetable.parameter(task_id, order_id, value)
     VALUES 
         -- Parameter for HEAD (parent) task
-        (v_chain_id, v_parent_id, 1, '["Added"]' :: jsonb),
-        -- Parameter for child task
-        ( v_chain_id, v_task_id, 1, '["Updated"]' :: jsonb);
+        (v_parent_id, 1, '["Added"]' :: jsonb),
+        -- Parameter for the next task
+        (v_task_id, 1, '["Updated"]' :: jsonb);
 END;
-$$ LANGUAGE PLPGSQL;
+$$ LANGUAGE plpgsql;

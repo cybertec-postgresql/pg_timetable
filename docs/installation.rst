@@ -1,7 +1,7 @@
 Installation
 ================================================
 
-**pg_timetable** is compatible with the latest supported `PostgreSQL versions <https://www.postgresql.org/support/versioning/>`_: 11, 12, 13 (stable); 14 (dev).
+**pg_timetable** is compatible with the latest supported `PostgreSQL versions <https://www.postgresql.org/support/versioning/>`_: 11, 12, 13, 14 (stable); 15 (dev).
 
 .. note::
 

@@ -157,13 +157,13 @@ func TestGetChainElements(t *testing.T) {
 	ctx := context.Background()
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("WITH RECURSIVE").WillReturnError(errors.New("error"))
+	mockPool.ExpectQuery("SELECT task_id").WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.False(t, pge.GetChainElements(ctx, tx, &[]string{}, 0))
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("WITH RECURSIVE").WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
+	mockPool.ExpectQuery("SELECT task_id").WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.True(t, pge.GetChainElements(ctx, tx, &[]string{}, 0))
@@ -175,7 +175,7 @@ func TestGetChainElements(t *testing.T) {
 	assert.False(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("SELECT").WithArgs(0, 0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
+	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.True(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))

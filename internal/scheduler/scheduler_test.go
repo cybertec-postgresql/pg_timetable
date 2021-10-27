@@ -42,7 +42,7 @@ func TestRun(t *testing.T) {
 
 	require.NotNil(t, pge.ConfigDb, "ConfigDB should be initialized")
 
-	err := pge.ExecuteCustomScripts(context.Background(), "../../samples/Interval.sql")
+	err := pge.ExecuteCustomScripts(context.Background(), "../../samples/Exclusive.sql")
 	assert.NoError(t, err, "Creating interval tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/Basic.sql")
 	assert.NoError(t, err, "Creating sql tasks failed")
@@ -54,7 +54,7 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating many tasks failed")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 	go func() {
-		time.Sleep(2 * time.Second)
+		time.Sleep(10 * time.Second)
 		sch.Shutdown()
 	}()
 	assert.Equal(t, ShutdownStatus, sch.Run(context.Background()))

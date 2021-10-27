@@ -13,7 +13,6 @@ import (
 // Chain structure used to represent tasks chains
 type Chain struct {
 	ChainID            int    `db:"chain_id"`
-	TaskID             int    `db:"task_id"`
 	ChainName          string `db:"chain_name"`
 	SelfDestruct       bool   `db:"self_destruct"`
 	ExclusiveExecution bool   `db:"exclusive_execution"`
@@ -185,7 +184,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		return
 	}
 
-	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.TaskID) {
+	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.ChainID) {
 		sch.pgengine.RollbackTransaction(ctx, tx)
 		return
 	}
@@ -201,11 +200,14 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 
 		// we use background context here because current one (ctx) might be cancelled
 		bctx = log.WithLogger(context.Background(), l)
-		if retCode != 0 && !task.IgnoreError {
-			chainL.Error("Chain failed")
-			sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, "CHAIN_FAILED")
-			sch.pgengine.RollbackTransaction(bctx, tx)
-			return
+		if retCode != 0 {
+			if !task.IgnoreError {
+				chainL.Error("Chain failed")
+				sch.pgengine.AddChainRunStatus(bctx, &task, chain.RunStatusID, "CHAIN_FAILED")
+				sch.pgengine.RollbackTransaction(bctx, tx)
+				return
+			}
+			l.Info("Ignoring task failure")
 		}
 		if i == len(ChainTasks)-1 {
 			status = "CHAIN_DONE"
@@ -223,11 +225,13 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 }
 
 func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
-	var paramValues []string
-	var err error
-	var out string
-	var retCode int
-	var cancel context.CancelFunc
+	var (
+		paramValues []string
+		err         error
+		out         string
+		retCode     int
+		cancel      context.CancelFunc
+	)
 
 	l := log.GetLogger(ctx)
 	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task) {
@@ -246,7 +250,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 	case "PROGRAM":
 		if sch.pgengine.NoProgramTasks {
 			l.Info("Program task execution skipped")
-			return -1
+			return -2
 		}
 		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Script, paramValues)
 	case "BUILTIN":
@@ -264,5 +268,5 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 		l.Info("Task executed successfully")
 	}
 	sch.pgengine.LogChainElementExecution(context.Background(), task, retCode, out)
-	return 0
+	return retCode
 }

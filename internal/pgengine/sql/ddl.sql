@@ -16,38 +16,8 @@ VALUES
     (0, '00259 Restart migrations for v4'),
     (1, '00305 Fix timetable.is_cron_in_time'),
     (2, '00323 Append timetable.delete_job function'),
-    (3, '00329 Migration required for some new added functions');
-
-CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
-
-CREATE TABLE timetable.task (
-    task_id             BIGSERIAL   PRIMARY KEY,
-    parent_id           BIGINT      UNIQUE      REFERENCES timetable.task(task_id)
-                                                ON UPDATE CASCADE ON DELETE CASCADE,
-    task_name           TEXT,
-    kind                timetable.command_kind  NOT NULL DEFAULT 'SQL',
-    command             TEXT                    NOT NULL,
-    run_as              TEXT,
-    database_connection TEXT,
-    ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
-    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE,
-    timeout             INTEGER                 DEFAULT 0
-);          
-
-COMMENT ON TABLE timetable.task IS
-    'Holds information about chain elements aka tasks';
-COMMENT ON COLUMN timetable.task.parent_id IS
-    'Link to the parent task, if NULL task considered to be head of a chain';
-COMMENT ON COLUMN timetable.task.run_as IS
-    'Role name to run task as. Uses SET ROLE for SQL commands';
-COMMENT ON COLUMN timetable.task.ignore_error IS
-    'Indicates whether a next task in a chain can be executed regardless of the success of the current one';
-COMMENT ON COLUMN timetable.task.kind IS
-    'Indicates whether "command" is SQL, built-in function or an external program';
-COMMENT ON COLUMN timetable.task.command IS
-    'Contains either an SQL command, or command string to be executed';
-COMMENT ON COLUMN timetable.task.timeout IS
-    'Abort any task within a chain that takes more than the specified number of milliseconds';
+    (3, '00329 Migration required for some new added functions'),
+    (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies');
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -59,8 +29,6 @@ COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support o
 
 CREATE TABLE timetable.chain (
     chain_id            BIGSERIAL   PRIMARY KEY,
-    task_id             BIGINT      REFERENCES timetable.task(task_id)
-                                    ON UPDATE CASCADE ON DELETE CASCADE,
     chain_name          TEXT        NOT NULL UNIQUE,
     run_at              timetable.cron,
     max_instances       INTEGER,
@@ -73,8 +41,6 @@ CREATE TABLE timetable.chain (
 
 COMMENT ON TABLE timetable.chain IS
     'Stores information about chains schedule';
-COMMENT ON COLUMN timetable.chain.task_id IS
-    'First task (head) of the chain';
 COMMENT ON COLUMN timetable.chain.run_at IS
     'Extended CRON-style time notation the chain has to be run at';
 COMMENT ON COLUMN timetable.chain.max_instances IS
@@ -88,17 +54,48 @@ COMMENT ON COLUMN timetable.chain.self_destruct IS
 COMMENT ON COLUMN timetable.chain.exclusive_execution IS
     'All parallel chains should be paused while executing this chain';
 COMMENT ON COLUMN timetable.chain.client_name IS
-    'Only client with this name is allowed to run this chain, set to NULL to allow any client';
+    'Only client with this name is allowed to run this chain, set to NULL to allow any client';    
+
+CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
+
+CREATE TABLE timetable.task (
+    task_id             BIGSERIAL               PRIMARY KEY,
+    chain_id            BIGINT                  REFERENCES timetable.chain(chain_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    task_order          DOUBLE PRECISION        NOT NULL,
+    task_name           TEXT,
+    kind                timetable.command_kind  NOT NULL DEFAULT 'SQL',
+    command             TEXT                    NOT NULL,
+    run_as              TEXT,
+    database_connection TEXT,
+    ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
+    autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE,
+    timeout             INTEGER                 DEFAULT 0
+);          
+
+COMMENT ON TABLE timetable.task IS
+    'Holds information about chain elements aka tasks';
+COMMENT ON COLUMN timetable.task.chain_id IS
+    'Link to the chain, if NULL task considered to be disabled';
+COMMENT ON COLUMN timetable.task.task_order IS
+    'Indicates the order of task within a chain';    
+COMMENT ON COLUMN timetable.task.run_as IS
+    'Role name to run task as. Uses SET ROLE for SQL commands';
+COMMENT ON COLUMN timetable.task.ignore_error IS
+    'Indicates whether a next task in a chain can be executed regardless of the success of the current one';
+COMMENT ON COLUMN timetable.task.kind IS
+    'Indicates whether "command" is SQL, built-in function or an external program';
+COMMENT ON COLUMN timetable.task.command IS
+    'Contains either an SQL command, or command string to be executed';
+COMMENT ON COLUMN timetable.task.timeout IS
+    'Abort any task within a chain that takes more than the specified number of milliseconds';
 
 -- parameter passing for a chain task
 CREATE TABLE timetable.parameter(
-    chain_id    BIGINT  REFERENCES timetable.chain (chain_id)
-                        ON UPDATE CASCADE ON DELETE CASCADE,
     task_id     BIGINT  REFERENCES timetable.task(task_id)
                         ON UPDATE CASCADE ON DELETE CASCADE,
     order_id    INTEGER CHECK (order_id > 0),
     value       JSONB,
-    PRIMARY KEY (chain_id, task_id, order_id)
+    PRIMARY KEY (task_id, order_id)
 );
 
 COMMENT ON TABLE timetable.parameter IS
