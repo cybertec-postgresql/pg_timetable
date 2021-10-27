@@ -89,7 +89,7 @@ VALUES
 }
 
 //Select live chains with proper client_name value
-const sqlSelectLiveChains = `SELECT	chain_id, chain_name, self_destruct, exclusive_execution, timeout, COALESCE(max_instances, 16) as max_instances
+const sqlSelectLiveChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, timeout, COALESCE(max_instances, 16) as max_instances
 FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
 
 // SelectRebootChains returns a list of chains should be executed after reboot
