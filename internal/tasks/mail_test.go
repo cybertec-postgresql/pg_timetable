@@ -31,5 +31,9 @@ func TestTaskSendMail(t *testing.T) {
 		CcAddr:      []string{"cc@example.com"},
 		BccAddr:     []string{"bcc@example.com"},
 		Attachments: []string{"mail.go"},
+		AttachmentData: []EmailAttachmentData{{
+			Name:       "File1.txt",
+			Base64Data: []byte("RmlsZSBDb250ZW50"), // "File Content" base64-encoded
+		}},
 	}), "Sending email with required json input should succeed")
 }

@@ -15,17 +15,18 @@ BEGIN
 	RETURNING task_id INTO v_mail_task_id;
 
 	-- Create the parameters for the SensMail task
-		-- "username":	  The username used for authenticating on the mail server
-		-- "password":    The password used for authenticating on the mail server
-		-- "serverhost":  The IP address or hostname of the mail server
-		-- "serverport":  The port of the mail server
-		-- "senderaddr":  The email that will appear as the sender
-		-- "ccaddr":	  String array of the recipients(Cc) email addresses
-		-- "bccaddr":	  String array of the recipients(Bcc) email addresses
-		-- "toaddr":      String array of the recipients(To) email addresses
-		-- "subject":	  Subject of the email
-		-- "attachment":  String array of the attachments
-		-- "msgbody":	  The body of the email
+		-- "username":	      The username used for authenticating on the mail server
+		-- "password":        The password used for authenticating on the mail server
+		-- "serverhost":      The IP address or hostname of the mail server
+		-- "serverport":      The port of the mail server
+		-- "senderaddr":      The email that will appear as the sender
+		-- "ccaddr":	      String array of the recipients(Cc) email addresses
+		-- "bccaddr":	      String array of the recipients(Bcc) email addresses
+		-- "toaddr":          String array of the recipients(To) email addresses
+		-- "subject":	      Subject of the email
+		-- "attachment":      String array of the attachments (local file)
+		-- "attachmentdata":  Pairs of name and base64-encoded content
+		-- "msgbody":	      The body of the email
 
 	INSERT INTO timetable.parameter (task_id, order_id, value)
 		VALUES (v_mail_task_id, 1, '{
@@ -39,6 +40,7 @@ BEGIN
 				"toaddr":       ["recipient@example.com"],
 				"subject": 		"pg_timetable - No Reply",
 				"attachment":   ["D:\\Go stuff\\Books\\Concurrency in Go.pdf","D:\\Go stuff\\Books\\The Way To Go.pdf"],
+                "attachmentdata": [{"name": "File.txt", "base64data": "RmlsZSBDb250ZW50"}],
 				"msgbody":		"<b>Hello User,</b> <p>I got some Go books for you enjoy</p> <i>pg_timetable</i>!"
 				}'::jsonb);
 	
