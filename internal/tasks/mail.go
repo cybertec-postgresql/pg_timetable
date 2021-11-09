@@ -1,25 +1,34 @@
 package tasks
 
 import (
+	"bytes"
 	"context"
 
 	gomail "github.com/ory/mail/v3"
 )
 
+// Attachment file type
+// Has pair: name and content (base64-encoded) of attachment file
+type EmailAttachmentData struct {
+	Name       string `json:"name"`
+	Base64Data []byte `json:"base64data"`
+}
+
 // EmailConn structure represents a connection to a mail server and mail fields
 type EmailConn struct {
-	Username    string   `json:"username"`
-	Password    string   `json:"password"`
-	ServerHost  string   `json:"serverhost"`
-	ServerPort  int      `json:"serverport"`
-	SenderAddr  string   `json:"senderaddr"`
-	CcAddr      []string `json:"ccaddr"`
-	BccAddr     []string `json:"bccaddr"`
-	ToAddr      []string `json:"toaddr"`
-	Subject     string   `json:"subject"`
-	MsgBody     string   `json:"msgbody"`
-	Attachments []string `json:"attachment"`
-	ContentType string   `json:"contenttype"`
+	Username       string                `json:"username"`
+	Password       string                `json:"password"`
+	ServerHost     string                `json:"serverhost"`
+	ServerPort     int                   `json:"serverport"`
+	SenderAddr     string                `json:"senderaddr"`
+	CcAddr         []string              `json:"ccaddr"`
+	BccAddr        []string              `json:"bccaddr"`
+	ToAddr         []string              `json:"toaddr"`
+	Subject        string                `json:"subject"`
+	MsgBody        string                `json:"msgbody"`
+	Attachments    []string              `json:"attachment"`
+	AttachmentData []EmailAttachmentData `json:"attachmentdata"`
+	ContentType    string                `json:"contenttype"`
 }
 
 // Dialer implements DialAndSend function for mailer
@@ -64,6 +73,11 @@ func SendMail(ctx context.Context, conn EmailConn) error {
 	//attach multiple documents
 	for _, attachment := range conn.Attachments {
 		mail.Attach(attachment)
+	}
+
+	// Attach file with contents
+	for _, attachmentData := range conn.AttachmentData {
+		mail.AttachReader(attachmentData.Name, bytes.NewReader([]byte(attachmentData.Base64Data)))
 	}
 	// Send Mail
 	dialer := NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
