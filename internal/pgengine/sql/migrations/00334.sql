@@ -1,8 +1,35 @@
 -- table changes
 ALTER TABLE timetable.task
-	DROP COLUMN parent_id  CASCADE,
-    ADD  COLUMN chain_id   BIGINT REFERENCES timetable.chain(chain_id) ON UPDATE CASCADE ON DELETE CASCADE,
-    ADD  COLUMN task_order DOUBLE PRECISION NOT NULL;
+    ADD COLUMN chain_id   BIGINT REFERENCES timetable.chain(chain_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    ADD COLUMN task_order DOUBLE PRECISION;
+
+-- apply new task orderings
+WITH RECURSIVE x AS (
+    SELECT
+        c.chain_id,
+        1.00 AS task_order,
+        tc.task_id
+    FROM
+        timetable.task tc JOIN timetable.chain c ON tc.parent_id IS NULL AND tc.task_id = c.task_id
+    UNION ALL
+    SELECT
+        x.chain_id,
+        x.task_order + 1.00,
+        tc.task_id
+    FROM
+        timetable.task tc JOIN x ON x.task_id = tc.parent_id
+), xx AS (
+	SELECT * FROM x ORDER BY chain_id, task_order
+)
+UPDATE timetable.task t 
+SET chain_id = xx.chain_id, task_order = xx.task_order 
+FROM xx 
+WHERE t.task_id = xx.task_id;
+
+-- apply NOT NULL constraint to task_order and drop old orderings
+ALTER TABLE timetable.task 
+    ALTER COLUMN task_order SET NOT NULL,
+    DROP  COLUMN parent_id  CASCADE;
 
 COMMENT ON COLUMN timetable."task"."chain_id" IS 'Link to the chain, if NULL task considered to be disabled';
 COMMENT ON COLUMN timetable."task"."task_order" IS 'Indicates the order of task within a chain';
