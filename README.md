@@ -70,7 +70,6 @@ Possible choices are:
 - [build from sources](https://pg-timetable.readthedocs.io/en/master/installation.html#build-from-sources).
 
 ## [Quick Start](https://pg-timetable.readthedocs.io/en/master/README.html#quick-start)
-
 Complete usage guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/master/basic_jobs.html).
 
 1. Download **pg_timetable** executable
@@ -147,6 +146,8 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [9.6]: https://www.postgresql.org/docs/9.6/index.html
 
 ## Contributing
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/cybertec-postgresql/pg_timetable)
 
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a [pull request][PR].
 
