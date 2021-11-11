@@ -2,11 +2,8 @@
 tasks:
   - name: Dependencies & Database
     init: |
-      sudo apt-get -y install postgresql
-      sudo systemctl start postgresql.service
-      pg_isready
-      sudo -u postgres psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du"
-      sudo -u postgres createdb --owner=scheduler timetable
+      psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du"
+      psql --command="CREATE DATABASE timetable OWNER scheduler " --command="\l"
     command: PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
 
 # List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
