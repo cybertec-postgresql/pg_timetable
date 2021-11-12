@@ -6,7 +6,7 @@
         {
             "label": "Unit Test",
             "type": "shell",
-            "command": "gotest -failfast -timeout=300s -parallel=1 .\\${relativeFileDirname}\\... -coverprofile='coverage.out' && go tool cover -func='coverage.out'",
+            "command": "gotest -failfast -timeout=300s -parallel=1 ./${relativeFileDirname}/... -coverprofile='coverage.out' && go tool cover -func='coverage.out'",
             "problemMatcher": [
                 "$go"
             ],
