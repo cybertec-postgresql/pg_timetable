@@ -121,12 +121,12 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Google Cloud]: https://cloud.google.com/sql/docs/postgres/
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
-[14 (devel)]: https://www.postgresql.org/docs/devel/index.html
-[13 (current)]: https://www.postgresql.org/docs/13/index.html
+[15 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[14 (current)]: https://www.postgresql.org/docs/14/index.html
+[13]: https://www.postgresql.org/docs/13/index.html
 [12]: https://www.postgresql.org/docs/12/index.html
 [11]: https://www.postgresql.org/docs/11/index.html
 [10]: https://www.postgresql.org/docs/10/index.html
-[9.6]: https://www.postgresql.org/docs/9.6/index.html
       
 [Alibaba Cloud]: https://www.alibabacloud.com/help/doc-detail/96715.htm
 [Amazon RDS]: https://aws.amazon.com/rds/postgresql/
