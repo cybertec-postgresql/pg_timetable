@@ -4,7 +4,6 @@ image:
 tasks:
   - name: Dependencies & Database
     init: |
-      sudo sudo -u postgres psql -c "CREATE USER gitpod PASSWORD 'gitpod' SUPERUSER"
       psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
       psql --command="CREATE DATABASE timetable OWNER scheduler "
     command: PGPASSWORD=somestrong psql --username=scheduler --host=localhost --dbname=timetable -c "SELECT version()"
