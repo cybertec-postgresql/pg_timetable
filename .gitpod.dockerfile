@@ -7,6 +7,8 @@ RUN sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release 
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 RUN sudo apt-get update
 RUN sudo apt-get -y install postgresql postgresql-contrib
+RUN sudo service postgresql start
+
 # Check PostgreSQL service is running
 RUN until pg_isready; do sleep 1; done
 
