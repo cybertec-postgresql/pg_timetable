@@ -7,6 +7,7 @@ RUN sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release 
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 RUN sudo apt-get update
 RUN sudo apt-get -y install postgresql postgresql-contrib
+RUN sudo service postgresql start
 
 # Create the PostgreSQL user. 
 # Hack with double sudo is because gitpod user cannot run command on behalf of postgres user.
