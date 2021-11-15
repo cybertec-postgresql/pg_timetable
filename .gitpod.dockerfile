@@ -8,8 +8,9 @@ RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo 
 RUN sudo apt-get update
 RUN sudo apt-get -y install postgresql postgresql-contrib
 
-# Create the PostgreSQL user
-# RUN sudo -u postgres psql -c "CREATE USER gitpod PASSWORD 'gitpod' SUPERUSER"
+# Create the PostgreSQL user. 
+# Hack with double sudo is because gitpod user cannot run command on behalf of postgres user.
+RUN sudo sudo -u postgres psql -c "CREATE USER gitpod PASSWORD 'gitpod' SUPERUSER"
 
 # This is a bit of a hack. At the moment we have no means of starting background
 # tasks from a Dockerfile. This workaround checks, on each bashrc eval, if the
