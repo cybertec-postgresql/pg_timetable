@@ -7,3 +7,11 @@ RUN sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release 
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 RUN sudo apt-get update
 RUN sudo apt-get -y install postgresql postgresql-contrib
+
+# Create the PostgreSQL user
+RUN sudo -u postgres psql -c "CREATE USER gitpod PASSWORD 'gitpod' SUPERUSER"
+
+# This is a bit of a hack. At the moment we have no means of starting background
+# tasks from a Dockerfile. This workaround checks, on each bashrc eval, if the
+# PostgreSQL server is running, and if not starts it.
+RUN printf "\n# Auto-start PostgreSQL server.\nsudo service postgresql start\n" >> ~/.bashrc
