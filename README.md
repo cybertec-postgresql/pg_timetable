@@ -96,12 +96,12 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 ## Supported Environments
 | Cloud Service    | Supported | PostgreSQL Version | Supported | OS | Supported |
 | ---------------- |:---------:| ------------------ |:---------:| -- |:---------:|
-| [Alibaba Cloud]  | ✅       | [14 (devel)]   | ✅ | Linux    | ✅ |
-| [Amazon RDS]     | ✅       | [13 (current)] | ✅ | Darwin   | ✅ |
-| [Amazon Aurora]  | ✅       | [12]           | ✅ | Windows  | ✅ |
-| [Azure]          | ✅       | [11]           | ✅ | FreeBSD\*| ✅ |
-| [Citus Cloud]    | ✅       | [10]           | ✅ | NetBSD\* | ✅ |
-| [Crunchy Bridge] | ✅       | [9.6]          | ✅ | OpenBSD\*| ✅ | 
+| [Alibaba Cloud]  | ✅       | [15 (devel)]   | ✅ | Linux    | ✅ |
+| [Amazon RDS]     | ✅       | [14 (current)] | ✅ | Darwin   | ✅ |
+| [Amazon Aurora]  | ✅       | [13]           | ✅ | Windows  | ✅ |
+| [Azure]          | ✅       | [12]           | ✅ | FreeBSD\*| ✅ |
+| [Citus Cloud]    | ✅       | [11]           | ✅ | NetBSD\* | ✅ |
+| [Crunchy Bridge] | ✅       | [10]          | ✅ | OpenBSD\*| ✅ | 
 | [DigitalOcean]   | ✅       |                |    | Solaris\* | ✅ |
 | [Google Cloud]   | ✅       |
 | [Heroku]         | ✅       |
