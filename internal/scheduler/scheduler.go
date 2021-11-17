@@ -12,7 +12,6 @@ import (
 
 //the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes
 const refetchTimeout = 60
-const MaxChainQueueSize = 1024 // Todo: make setting!
 
 // RunStatus specifies the current status of execution
 type RunStatus int
@@ -51,8 +50,8 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
 		l:                  logger,
 		pgengine:           pge,
-		chainsChan:         make(chan Chain, MaxChainQueueSize),
-		intervalChainsChan: make(chan IntervalChain, MaxChainQueueSize),
+		chainsChan:         make(chan Chain, pge.Resource.CronWorkers*8),
+		intervalChainsChan: make(chan IntervalChain, pge.Resource.IntervalWorkers*8),
 		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains:     make(map[int]IntervalChain),
 		shutdown:           make(chan struct{}),
