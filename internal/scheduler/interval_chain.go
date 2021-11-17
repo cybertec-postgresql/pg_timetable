@@ -63,7 +63,12 @@ func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 	// update chains from the database and send to working channel new one
 	for _, ichain := range ichains {
 		if (IntervalChain{}) == sch.intervalChains[ichain.ChainID] {
-			sch.intervalChainsChan <- ichain
+			select {
+			case sch.intervalChainsChan <- ichain:
+				sch.l.WithField("chain", ichain.ChainID).Debug("Sent head chain to the execution channel")
+			default:
+				sch.l.WithField("chain", ichain.ChainID).Error("Failed to send head chain to the execution channel")
+			}
 		}
 		sch.intervalChains[ichain.ChainID] = ichain
 	}

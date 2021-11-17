@@ -52,9 +52,12 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 			if err != nil {
 				sch.l.WithError(err).Error("Could not query pending tasks")
 			} else {
-				sch.l.WithField("chain", headChain.ChainID).
-					Debug("Putting head chain to the execution channel")
-				sch.chainsChan <- headChain
+				select {
+				case sch.chainsChan <- headChain:
+					sch.l.WithField("chain", headChain.ChainID).Debug("Sent head chain to the execution channel")
+				default:
+					sch.l.WithField("chain", headChain.ChainID).Error("Failed to send head chain to the execution channel")
+				}
 			}
 		case "STOP":
 			if cancel, ok := sch.activeChains[chainSignal.ConfigID]; ok {
@@ -88,9 +91,12 @@ func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 		if headChainsCount > sch.Config().Resource.CronWorkers*refetchTimeout {
 			time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
 		}
-		sch.l.WithField("chain", headChain.ChainID).
-			Debug("Putting head chain to the execution channel")
-		sch.chainsChan <- headChain
+		select {
+		case sch.chainsChan <- headChain:
+			sch.l.WithField("chain", headChain.ChainID).Debug("Sent head chain to the execution channel")
+		default:
+			sch.l.WithField("chain", headChain.ChainID).Error("Failed to send head chain to the execution channel")
+		}
 	}
 }
 
