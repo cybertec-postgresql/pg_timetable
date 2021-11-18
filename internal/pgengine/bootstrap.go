@@ -126,7 +126,11 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		pge.l.WithError(err).Error("Cannot parse connection string")
 		return nil
 	}
-	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers)
+	// in the worst scenario we need separate connections for each of workers,
+	// separate connection for Scheduler.retrieveChainsAndRun(),
+	// separate connection for Scheduler.retrieveIntervalChainsAndRun(),
+	// and another connection for LogHook.send()
+	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers) + 3
 	connConfig.ConnConfig.RuntimeParams["application_name"] = "pg_timetable"
 	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		pge.l.WithField("severity", n.Severity).WithField("notice", n.Message).Info("Notice received")

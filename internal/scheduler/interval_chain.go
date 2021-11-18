@@ -23,6 +23,16 @@ func (ichain IntervalChain) isListed(ichains []IntervalChain) bool {
 	return false
 }
 
+// SendIntervalChain sends interval chain to the channel for workers
+func (sch *Scheduler) SendIntervalChain(c IntervalChain) {
+	select {
+	case sch.intervalChainsChan <- c:
+		sch.l.WithField("chain", c.ChainID).Debug("Sent interval chain to the execution channel")
+	default:
+		sch.l.WithField("chain", c.ChainID).Error("Failed to send interval chain to the execution channel")
+	}
+}
+
 func (sch *Scheduler) isValid(ichain IntervalChain) bool {
 	return (IntervalChain{}) != sch.intervalChains[ichain.ChainID]
 }
@@ -36,7 +46,7 @@ func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 	select {
 	case <-time.After(time.Duration(ichain.Interval) * time.Second):
 		if sch.isValid(ichain) {
-			sch.intervalChainsChan <- ichain
+			sch.SendIntervalChain(ichain)
 		}
 	case <-ctx.Done():
 		return
@@ -63,7 +73,7 @@ func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 	// update chains from the database and send to working channel new one
 	for _, ichain := range ichains {
 		if (IntervalChain{}) == sch.intervalChains[ichain.ChainID] {
-			sch.intervalChainsChan <- ichain
+			sch.SendIntervalChain(ichain)
 		}
 		sch.intervalChains[ichain.ChainID] = ichain
 	}

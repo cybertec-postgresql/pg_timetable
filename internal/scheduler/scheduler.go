@@ -10,8 +10,11 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
-//the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes
+// the main loop period. Should be 60 (sec) for release configuration. Set to 10 (sec) for debug purposes
 const refetchTimeout = 60
+
+// the min capacity of chains channels
+const minChannelCapacity = 1024
 
 // RunStatus specifies the current status of execution
 type RunStatus int
@@ -45,13 +48,20 @@ type Scheduler struct {
 	shutdown           chan struct{} // closed when shutdown is called
 }
 
+func max(x, y int) int {
+	if x < y {
+		return y
+	}
+	return x
+}
+
 // New returns a new instance of Scheduler
 func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
 		l:                  logger,
 		pgengine:           pge,
-		chainsChan:         make(chan Chain, pge.Resource.CronWorkers),
-		intervalChainsChan: make(chan IntervalChain, pge.Resource.IntervalWorkers),
+		chainsChan:         make(chan Chain, max(minChannelCapacity, pge.Resource.CronWorkers*2)),
+		intervalChainsChan: make(chan IntervalChain, max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
 		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains:     make(map[int]IntervalChain),
 		shutdown:           make(chan struct{}),

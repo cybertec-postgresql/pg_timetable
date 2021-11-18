@@ -21,6 +21,16 @@ type Chain struct {
 	RunStatusID        int    `db:"run_status_id"`
 }
 
+// SendChain sends chain to the channel for workers
+func (sch *Scheduler) SendChain(c Chain) {
+	select {
+	case sch.chainsChan <- c:
+		sch.l.WithField("chain", c.ChainID).Debug("Sent chain to the execution channel")
+	default:
+		sch.l.WithField("chain", c.ChainID).Error("Failed to send chain to the execution channel")
+	}
+}
+
 // Lock locks the chain in exclusive or non-exclusive mode
 func (sch *Scheduler) Lock(exclusiveExecution bool) {
 	if exclusiveExecution {
@@ -47,14 +57,12 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 		}
 		switch chainSignal.Command {
 		case "START":
-			var headChain Chain
-			err := sch.pgengine.SelectChain(ctx, &headChain, chainSignal.ConfigID)
+			var c Chain
+			err := sch.pgengine.SelectChain(ctx, &c, chainSignal.ConfigID)
 			if err != nil {
 				sch.l.WithError(err).Error("Could not query pending tasks")
 			} else {
-				sch.l.WithField("chain", headChain.ChainID).
-					Debug("Putting head chain to the execution channel")
-				sch.chainsChan <- headChain
+				sch.SendChain(c)
 			}
 		case "STOP":
 			if cancel, ok := sch.activeChains[chainSignal.ConfigID]; ok {
@@ -82,15 +90,13 @@ func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 	}
 	headChainsCount := len(headChains)
 	sch.l.WithField("count", headChainsCount).Info(msg)
-	// now we can loop through so chains
-	for _, headChain := range headChains {
+	// now we can loop through the chains
+	for _, c := range headChains {
 		// if the number of chains pulled for execution is high, try to spread execution to avoid spikes
 		if headChainsCount > sch.Config().Resource.CronWorkers*refetchTimeout {
 			time.Sleep(time.Duration(refetchTimeout*1000/headChainsCount) * time.Millisecond)
 		}
-		sch.l.WithField("chain", headChain.ChainID).
-			Debug("Putting head chain to the execution channel")
-		sch.chainsChan <- headChain
+		sch.SendChain(c)
 	}
 }
 
