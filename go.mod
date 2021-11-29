@@ -6,8 +6,8 @@ require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/georgysavva/scany v0.2.9
 	github.com/jackc/pgconn v1.10.1
-	github.com/jackc/pgtype v1.9.0
-	github.com/jackc/pgx/v4 v4.14.0
+	github.com/jackc/pgtype v1.9.1
+	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock v1.4.2
@@ -39,10 +39,10 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
-	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
+	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/ini.v1 v1.64.0 // indirect
+	gopkg.in/ini.v1 v1.65.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
