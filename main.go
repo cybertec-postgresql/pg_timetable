@@ -34,8 +34,15 @@ func SetupCloseHandler(cancel context.CancelFunc) {
 	}()
 }
 
+const (
+	ExitCodeOK int = iota
+	ExitCodeConfigError
+	ExitCodeDBEngineError
+	ExitCodeUpgradeError
+)
+
 func main() {
-	exitCode := 0
+	exitCode := ExitCodeOK
 	defer func() { os.Exit(exitCode) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -45,13 +52,13 @@ func main() {
 	cmdOpts, err := config.NewConfig(os.Stdout)
 	if err != nil {
 		fmt.Println("Configuration error: ", err)
-		exitCode = 1
+		exitCode = ExitCodeConfigError
 		return
 	}
 	logger := log.Init(cmdOpts.Logging)
 
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
-		exitCode = 2
+		exitCode = ExitCodeDBEngineError
 		return
 	}
 	defer pge.Finalize()
@@ -69,7 +76,7 @@ func main() {
 			if err != nil {
 				logger.WithError(err).Error("Migration check failed")
 			}
-			exitCode = 3
+			exitCode = ExitCodeUpgradeError
 			return
 		}
 	}
