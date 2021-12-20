@@ -43,6 +43,13 @@ type ResourceOpts struct {
 	TaskTimeout     int `long:"task-timeout" mapstructure:"task-timeout" description:"Abort any task within a chain that takes more than the specified number of milliseconds"`
 }
 
+// HTTP Options fot internal web server
+type HTTPOpts struct {
+	//Port    int `long:"http-port" description:"HTTP port for service health checking" env:"PGTT_HTTPPORT" default: "0"`
+	Port int `long:"http-port" mapstructure:"http-port" description:"HTTP port for service health checking" env:"PGTT_HTTPPORT" default:"0"`
+	//Port int `long:"http-port" description:"HTTP port for service health checking" env:"PGTT_HTTPPORT" default:"8085"`
+}
+
 // CmdOptions holds command line options passed
 type CmdOptions struct {
 	ClientName     string         `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
@@ -51,6 +58,7 @@ type CmdOptions struct {
 	Logging        LoggingOpts    `group:"Logging" mapstructure:"Logging"`
 	Start          StartOpts      `group:"Start" mapstructure:"Start"`
 	Resource       ResourceOpts   `group:"Resource" mapstructure:"Resource"`
+	HTTP           HTTPOpts       `group:"HTTP" mapstructure:"HTTP"`
 	NoProgramTasks bool           `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
 }
