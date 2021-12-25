@@ -13,7 +13,7 @@ require (
 	github.com/pashagolub/pgxmock v1.4.3
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/viper v1.10.0
+	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 )
 
@@ -39,7 +39,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
