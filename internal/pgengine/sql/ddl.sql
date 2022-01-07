@@ -122,9 +122,9 @@ LANGUAGE sql;
 CREATE TABLE timetable.log
 (
     ts              TIMESTAMPTZ         DEFAULT now(),
-    client_name     TEXT                DEFAULT timetable.get_client_name(pg_backend_pid()),
     pid             INTEGER             NOT NULL,
     log_level       timetable.log_type  NOT NULL,
+    client_name     TEXT                DEFAULT timetable.get_client_name(pg_backend_pid()),
     message         TEXT,
     message_data    jsonb
 );
@@ -133,12 +133,12 @@ CREATE TABLE timetable.log
 CREATE TABLE timetable.execution_log (
     chain_id    BIGINT,
     task_id     BIGINT,
-    command     TEXT,
-    kind        timetable.command_kind,
     last_run    TIMESTAMPTZ DEFAULT now(),
     finished    TIMESTAMPTZ,
-    returncode  INTEGER,
     pid         BIGINT,
+    returncode  INTEGER,
+    kind        timetable.command_kind,
+    command     TEXT,
     output      TEXT,
     client_name TEXT        NOT NULL
 );
@@ -149,10 +149,10 @@ CREATE TABLE timetable.run_status (
     run_status_id           BIGSERIAL   PRIMARY KEY,
     start_status_id         BIGINT      REFERENCES timetable.run_status(run_status_id)
                                         ON UPDATE CASCADE ON DELETE CASCADE,
-    execution_status        timetable.execution_status,
     chain_id                BIGINT,
     task_id                 BIGINT,
     created_at              TIMESTAMPTZ DEFAULT clock_timestamp(),
+    execution_status        timetable.execution_status,
     client_name             TEXT        NOT NULL
 );
 
