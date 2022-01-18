@@ -9,7 +9,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 )
 
-// StatusIface is a common interface describing the cirrent status of a connection
+// StatusIface is a common interface describing the current status of a connection
 type StatusIface interface {
 	IsReady() bool
 }

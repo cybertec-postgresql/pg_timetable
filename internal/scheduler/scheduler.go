@@ -20,7 +20,7 @@ const minChannelCapacity = 1024
 type RunStatus int
 
 const (
-	// RunningStatus specifies the connection has been dropped
+	// RunningStatus specifies the scheduler is in the main loop processing chains
 	RunningStatus RunStatus = iota
 	// ContextCancelledStatus specifies the context has been cancelled probably due to timeout
 	ContextCancelledStatus
