@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/api"
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/cybertec-postgresql/pg_timetable/internal/pgtt_http"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 )
 
@@ -58,15 +58,14 @@ func main() {
 	}
 	logger := log.Init(cmdOpts.Logging)
 
-	if cmdOpts.HTTP.Port != 0 {
-		go pgtt_http.StartHTTP(logger, cmdOpts.HTTP.Port)
-	}
-
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
 		exitCode = ExitCodeDBEngineError
 		return
 	}
 	defer pge.Finalize()
+
+	apiserver := api.Init(cmdOpts.RestApi, logger)
+
 	if cmdOpts.Start.Upgrade {
 		if err := pge.MigrateDb(ctx); err != nil {
 			logger.WithError(err).Error("Upgrade failed")
@@ -89,10 +88,9 @@ func main() {
 		return
 	}
 	sch := scheduler.New(pge, logger)
+	apiserver.StatusReporter = sch
 
-	pgtt_http.SetHttpStatusRunning()
-
-	for sch.Run(ctx) == scheduler.ConnectionDropppedStatus {
+	for sch.Run(ctx) == scheduler.RunningStatus {
 		pge.ReconnectAndFixLeftovers(ctx)
 	}
 }
