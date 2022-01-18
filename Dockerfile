@@ -33,6 +33,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Command to run the executable
 ENTRYPOINT ["/pg_timetable"]
 
-ENV PGTT_HTTPPORT 8088
+ENV PGTT_RESTPORT 8088
 # Exposing port 8088 (you should specify your value!)
 EXPOSE 8088
