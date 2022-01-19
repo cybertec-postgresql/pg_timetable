@@ -12,6 +12,7 @@ Welcome to pg_timetable's documentation!
    components
    basic_jobs
    samples
+   api
    database_schema
 
 Indices and tables
