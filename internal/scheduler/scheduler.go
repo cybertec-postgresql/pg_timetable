@@ -49,7 +49,8 @@ type Scheduler struct {
 	status             RunStatus
 }
 
-func max(x, y int) int {
+// Max returns the maximum number of two arguments
+func Max(x, y int) int {
 	if x < y {
 		return y
 	}
@@ -61,8 +62,8 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
 		l:                  logger,
 		pgengine:           pge,
-		chainsChan:         make(chan Chain, max(minChannelCapacity, pge.Resource.CronWorkers*2)),
-		intervalChainsChan: make(chan IntervalChain, max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
+		chainsChan:         make(chan Chain, Max(minChannelCapacity, pge.Resource.CronWorkers*2)),
+		intervalChainsChan: make(chan IntervalChain, Max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
 		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains:     make(map[int]IntervalChain),
 		shutdown:           make(chan struct{}),
