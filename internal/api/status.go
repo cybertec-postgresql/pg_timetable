@@ -9,22 +9,22 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 )
 
-// StatusIface is a common interface describing the current status of a connection
-type StatusIface interface {
+// StatusReporter is a common interface describing the current status of a connection
+type StatusReporter interface {
 	IsReady() bool
 }
 
 type RestApiServer struct {
-	StatusReporter StatusIface
-	l              log.LoggerIface
-	*http.Server
+	Reporter StatusReporter
+	l        log.LoggerIface
+	http.Server
 }
 
 func Init(opts config.RestApiOpts, logger log.LoggerIface) *RestApiServer {
 	s := &RestApiServer{
 		nil,
 		logger,
-		&http.Server{
+		http.Server{
 			Addr:           fmt.Sprintf(":%d", opts.Port),
 			ReadTimeout:    10 * time.Second,
 			WriteTimeout:   10 * time.Second,
@@ -44,7 +44,7 @@ func Init(opts config.RestApiOpts, logger log.LoggerIface) *RestApiServer {
 
 func (Server *RestApiServer) readinessHandler(w http.ResponseWriter, r *http.Request) {
 	Server.l.Debug("Received /readiness REST API request")
-	if Server.StatusReporter == nil || !Server.StatusReporter.IsReady() {
+	if Server.Reporter == nil || !Server.Reporter.IsReady() {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

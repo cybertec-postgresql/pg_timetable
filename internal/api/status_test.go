@@ -27,7 +27,7 @@ func TestStatus(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusServiceUnavailable, r.StatusCode)
 
-	restsrv.StatusReporter = &reporter{}
+	restsrv.Reporter = &reporter{}
 	r, err = http.Get("http://localhost:8080/readiness")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, r.StatusCode)

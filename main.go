@@ -88,7 +88,7 @@ func main() {
 		return
 	}
 	sch := scheduler.New(pge, logger)
-	apiserver.StatusReporter = sch
+	apiserver.Reporter = sch
 
 	for sch.Run(ctx) == scheduler.RunningStatus {
 		pge.ReconnectAndFixLeftovers(ctx)
