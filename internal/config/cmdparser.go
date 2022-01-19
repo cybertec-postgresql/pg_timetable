@@ -45,7 +45,7 @@ type ResourceOpts struct {
 
 // RestApiOpts fot internal web server impleenting REST API
 type RestApiOpts struct {
-	Port int `long:"rest-port" mapstructure:"rest-port" description:"HTTP port for REST API" env:"PGTT_RESTPORT" default:"0"`
+	Port int `long:"rest-port" mapstructure:"rest-port" description:"REST API port" env:"PGTT_RESTPORT" default:"0"`
 }
 
 // CmdOptions holds command line options passed
@@ -56,7 +56,7 @@ type CmdOptions struct {
 	Logging        LoggingOpts    `group:"Logging" mapstructure:"Logging"`
 	Start          StartOpts      `group:"Start" mapstructure:"Start"`
 	Resource       ResourceOpts   `group:"Resource" mapstructure:"Resource"`
-	RestApi        RestApiOpts    `group:"HTTP" mapstructure:"HTTP"`
+	RestApi        RestApiOpts    `group:"REST" mapstructure:"REST"`
 	NoProgramTasks bool           `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
 }
