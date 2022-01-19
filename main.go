@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/api"
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
@@ -62,6 +63,9 @@ func main() {
 		return
 	}
 	defer pge.Finalize()
+
+	apiserver := api.Init(cmdOpts.RestApi, logger)
+
 	if cmdOpts.Start.Upgrade {
 		if err := pge.MigrateDb(ctx); err != nil {
 			logger.WithError(err).Error("Upgrade failed")
@@ -84,7 +88,9 @@ func main() {
 		return
 	}
 	sch := scheduler.New(pge, logger)
-	for sch.Run(ctx) == scheduler.ConnectionDropppedStatus {
+	apiserver.Reporter = sch
+
+	for sch.Run(ctx) == scheduler.RunningStatus {
 		pge.ReconnectAndFixLeftovers(ctx)
 	}
 }

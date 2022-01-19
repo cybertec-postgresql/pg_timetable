@@ -237,7 +237,7 @@ func TestSamplesScripts(t *testing.T) {
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),
 			"Sample query failed: ", f.Name())
 		// either context should be cancelled or 'shutdown.sql' will terminate the session
-		assert.True(t, scheduler.New(pge, l).Run(ctx) > scheduler.ConnectionDropppedStatus)
+		assert.True(t, scheduler.New(pge, l).Run(ctx) > scheduler.RunningStatus)
 		_, err = pge.ConfigDb.Exec(context.Background(),
 			"TRUNCATE timetable.task, timetable.chain CASCADE")
 		assert.NoError(t, err)

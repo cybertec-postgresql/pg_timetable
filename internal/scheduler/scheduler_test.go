@@ -57,5 +57,8 @@ func TestRun(t *testing.T) {
 		time.Sleep(10 * time.Second)
 		sch.Shutdown()
 	}()
+	assert.Equal(t, 1, Max(0, 1))
+	assert.Equal(t, 1, Max(1, 0))
+	assert.True(t, sch.IsReady())
 	assert.Equal(t, ShutdownStatus, sch.Run(context.Background()))
 }

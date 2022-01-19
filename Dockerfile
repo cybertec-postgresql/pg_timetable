@@ -32,3 +32,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Command to run the executable
 ENTRYPOINT ["/pg_timetable"]
+
+# Expose REST API if needed
+ENV PGTT_RESTPORT 8008
+EXPOSE 8008

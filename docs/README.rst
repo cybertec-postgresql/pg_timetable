@@ -90,6 +90,8 @@ Command line options
         --task-timeout=                         Abort any task within a chain that takes more than the specified number
                                                 of milliseconds  
 
+  REST:
+        --rest-port:                            REST API port (default: 0) [%PGTT_RESTPORT%]
 
 
 Contributing

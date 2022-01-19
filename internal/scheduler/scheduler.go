@@ -20,8 +20,8 @@ const minChannelCapacity = 1024
 type RunStatus int
 
 const (
-	// ConnectionDropppedStatus specifies the connection has been dropped
-	ConnectionDropppedStatus RunStatus = iota
+	// RunningStatus specifies the scheduler is in the main loop processing chains
+	RunningStatus RunStatus = iota
 	// ContextCancelledStatus specifies the context has been cancelled probably due to timeout
 	ContextCancelledStatus
 	// Shutdown specifies proper termination of the session
@@ -46,9 +46,11 @@ type Scheduler struct {
 	intervalChainsChan chan IntervalChain
 	intervalChainMutex sync.Mutex
 	shutdown           chan struct{} // closed when shutdown is called
+	status             RunStatus
 }
 
-func max(x, y int) int {
+// Max returns the maximum number of two arguments
+func Max(x, y int) int {
 	if x < y {
 		return y
 	}
@@ -60,11 +62,12 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
 		l:                  logger,
 		pgengine:           pge,
-		chainsChan:         make(chan Chain, max(minChannelCapacity, pge.Resource.CronWorkers*2)),
-		intervalChainsChan: make(chan IntervalChain, max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
+		chainsChan:         make(chan Chain, Max(minChannelCapacity, pge.Resource.CronWorkers*2)),
+		intervalChainsChan: make(chan IntervalChain, Max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
 		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains:     make(map[int]IntervalChain),
 		shutdown:           make(chan struct{}),
+		status:             RunningStatus,
 	}
 }
 
@@ -76,6 +79,11 @@ func (sch *Scheduler) Shutdown() {
 // Config returns the current configuration for application
 func (sch *Scheduler) Config() config.CmdOptions {
 	return sch.pgengine.CmdOptions
+}
+
+// IsReady returns True if the scheduler is in the main loop processing chains
+func (sch *Scheduler) IsReady() bool {
+	return sch.status == RunningStatus
 }
 
 // Run executes jobs. Returns RunStatus why it terminated.
@@ -122,10 +130,14 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 		case <-time.After(refetchTimeout * time.Second):
 			// pass
 		case <-ctx.Done():
-			return ContextCancelledStatus
+			sch.status = ContextCancelledStatus
 		case <-sch.shutdown:
+			sch.status = ShutdownStatus
 			sch.terminateChains()
-			return ShutdownStatus
+		}
+
+		if sch.status != RunningStatus {
+			return sch.status
 		}
 	}
 }

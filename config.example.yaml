@@ -55,3 +55,7 @@ resource:
   chain-timeout: 0
   # task-timeout:                  Abort any task within a chain that takes more than the specified number of milliseconds
   task-timeout: 0  
+
+# - REST API Settings -
+  # rest-port:                     REST API port (default: 0)
+  rest-port: 8008
