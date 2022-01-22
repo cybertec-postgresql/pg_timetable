@@ -129,8 +129,9 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	// in the worst scenario we need separate connections for each of workers,
 	// separate connection for Scheduler.retrieveChainsAndRun(),
 	// separate connection for Scheduler.retrieveIntervalChainsAndRun(),
+	// separate connection for Scheduler.cleanStaleRunStatus(),
 	// and another connection for LogHook.send()
-	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers) + 3
+	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers) + 4
 	connConfig.ConnConfig.RuntimeParams["application_name"] = "pg_timetable"
 	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
 		pge.l.WithField("severity", n.Severity).WithField("notice", n.Message).Info("Notice received")

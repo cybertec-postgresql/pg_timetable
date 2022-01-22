@@ -53,6 +53,12 @@ func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 	}
 }
 
+func (sch *Scheduler) cleanStaleRunStatus(ctx context.Context) {
+	sch.deleteStaleRunStatusMutex.Lock()
+	defer sch.deleteStaleRunStatusMutex.Unlock()
+	sch.pgengine.CleanStaleRunStatus(ctx)
+}
+
 func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 	sch.intervalChainMutex.Lock()
 	ichains := []IntervalChain{}

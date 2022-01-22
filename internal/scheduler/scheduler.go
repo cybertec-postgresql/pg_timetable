@@ -43,10 +43,11 @@ type Scheduler struct {
 	// map of active chains, updated every minute
 	intervalChains map[int]IntervalChain
 	// create channel for passing interval chains to workers
-	intervalChainsChan chan IntervalChain
-	intervalChainMutex sync.Mutex
-	shutdown           chan struct{} // closed when shutdown is called
-	status             RunStatus
+	intervalChainsChan        chan IntervalChain
+	intervalChainMutex        sync.Mutex
+	deleteStaleRunStatusMutex sync.Mutex
+	shutdown                  chan struct{} // closed when shutdown is called
+	status                    RunStatus
 }
 
 // Max returns the maximum number of two arguments
@@ -121,6 +122,8 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	sch.retrieveChainsAndRun(ctx, true)
 
 	for {
+		sch.l.Debug("Cleaning stale run_status rows...")
+		go sch.cleanStaleRunStatus(ctx)
 		sch.l.Debug("Checking for task chains...")
 		go sch.retrieveChainsAndRun(ctx, false)
 		sch.l.Debug("Checking for interval task chains...")

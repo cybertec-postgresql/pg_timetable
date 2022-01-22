@@ -88,6 +88,27 @@ VALUES
 	}
 }
 
+// DeleteStaleRunStatus delete stale rows from run_status table
+func (pge *PgEngine) CleanStaleRunStatus(ctx context.Context) {
+	// Select rows which have completed pair row
+	// Finished row will be deleting because we have cascade constraint
+	// The question is with DEAD rows - should we keep it or not?
+	const sqlDeleteStaleStatus = `DELETE FROM timetable.run_status
+WHERE run_status_id IN (
+  SELECT start_status.run_status_id
+  FROM timetable.run_status start_status
+         JOIN timetable.run_status finish_status
+              ON start_status.run_status_id = finish_status.start_status_id
+                AND finish_status.execution_status IN ('CHAIN_FAILED', 'CHAIN_DONE', 'DEAD')
+  WHERE start_status.execution_status = 'CHAIN_STARTED'
+    AND start_status.client_name = $1
+)`
+	_, err := pge.ConfigDb.Exec(ctx, sqlDeleteStaleStatus, pge.ClientName)
+	if err != nil {
+		pge.l.WithError(err).Error("Could not delete stale run status")
+	}
+}
+
 //Select live chains with proper client_name value
 const sqlSelectLiveChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, timeout, COALESCE(max_instances, 16) as max_instances
 FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
