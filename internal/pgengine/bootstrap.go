@@ -252,8 +252,8 @@ func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
 // Finalize closes session
 func (pge *PgEngine) Finalize() {
 	pge.l.Info("Closing session")
-	sql := `DELETE FROM timetable.active_session WHERE client_name = $1;
-DELETE FROM timetable.active_chain WHERE client_name = $1;`
+	sql := `WITH del_ch AS (DELETE FROM timetable.active_chain WHERE client_name = $1)
+DELETE FROM timetable.active_session WHERE client_name = $1`
 	_, err := pge.ConfigDb.Exec(context.Background(), sql, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot finalize database session")
