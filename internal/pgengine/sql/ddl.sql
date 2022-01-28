@@ -17,7 +17,8 @@ VALUES
     (1, '00305 Fix timetable.is_cron_in_time'),
     (2, '00323 Append timetable.delete_job function'),
     (3, '00329 Migration required for some new added functions'),
-    (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies');
+    (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies'),
+    (5, '00381 Rewrite active chain handling');
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
