@@ -36,14 +36,27 @@ func TestDeleteChainConfig(t *testing.T) {
 func TestInsertChainRunStatus(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	pge.ClientName = "test_client"
 	defer mockPool.Close()
 
-	t.Run("Check InsertChainRunStatus if sql fails", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-		defer cancel()
-		mockPool.ExpectQuery("INSERT INTO timetable\\.active_chain").WillReturnError(errors.New("error"))
-		pge.InsertChainRunStatus(ctx, 0, 1)
-	})
+	mockPool.ExpectExec("INSERT INTO timetable\\.active_chain").
+		WithArgs(0, pge.ClientName, 1).
+		WillReturnError(errors.New("error"))
+	pge.InsertChainRunStatus(context.Background(), 0, 1)
+
+	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
+}
+
+func TestRemoveChainRunStatus(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	pge.ClientName = "test_client"
+	defer mockPool.Close()
+
+	mockPool.ExpectExec("DELETE FROM timetable\\.active_chain").
+		WithArgs(0, pge.ClientName).
+		WillReturnError(errors.New("error"))
+	pge.RemoveChainRunStatus(context.Background(), 0)
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }

@@ -164,7 +164,7 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
 		var res bool
-		assert.NotPanics(t, func() { res = pge.InsertChainRunStatus(ctx, 0, 0) },
+		assert.NotPanics(t, func() { res = pge.InsertChainRunStatus(ctx, 0, 1) },
 			"Should no error in clean database")
 		assert.True(t, res, "Active chain should be inserted")
 	})
