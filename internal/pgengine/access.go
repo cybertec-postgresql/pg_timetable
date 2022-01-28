@@ -6,20 +6,10 @@ import (
 	"os"
 
 	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4"
 )
 
 // InvalidOid specifies value for non-existent objects
 const InvalidOid = 0
-
-/*FixSchedulerCrash make sure that task chains which are not complete due to a scheduler crash are "fixed"
-and marked as stopped at a certain point */
-func (pge *PgEngine) FixSchedulerCrash(ctx context.Context) {
-	_, err := pge.ConfigDb.Exec(ctx, `SELECT timetable.health_check($1)`, pge.ClientName)
-	if err != nil {
-		pge.l.WithError(err).Error("Failed to perform health check")
-	}
-}
 
 // DeleteChainConfig delete chain configuration for self destructive chains
 func (pge *PgEngine) DeleteChainConfig(ctx context.Context, chainID int) bool {
@@ -51,41 +41,28 @@ VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $
 }
 
 // InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
-func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int) int {
-	const sqlInsertRunStatus = `INSERT INTO timetable.run_status 
-(execution_status, chain_id, client_name) 
-SELECT 'CHAIN_STARTED', c.chain_id, $2 
-FROM timetable.chain c 
-WHERE
-	c.chain_id = $1 AND
+func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int, maxInstances int) bool {
+	const sqlInsertRunStatus = `INSERT INTO timetable.active_chain (chain_id, client_name) 
+SELECT $1, $2 WHERE
 	(
-		SELECT COALESCE(count(*) < c.max_instances, TRUE) 
-		FROM timetable.get_chain_running_statuses(c.chain_id)
-	)
-RETURNING run_status_id;`
-	id := -1
-	err := pge.ConfigDb.QueryRow(ctx, sqlInsertRunStatus, chainID, pge.ClientName).Scan(&id)
+		SELECT COALESCE(count(*) < $3, TRUE) 
+		FROM timetable.active_chain ac WHERE ac.chain_id = $1
+	)`
+	res, err := pge.ConfigDb.Exec(ctx, sqlInsertRunStatus, chainID, pge.ClientName, maxInstances)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return -1
-		}
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
+		return false
 	}
-	return id
+	return res.RowsAffected() == 1
 }
 
-// AddChainRunStatus inserts status information about running chain elements
-func (pge *PgEngine) AddChainRunStatus(ctx context.Context, task *ChainTask, runStatusID int, status string) {
-	const sqlInsertFinishStatus = `INSERT INTO timetable.run_status 
-(task_id, execution_status, start_status_id, chain_id, client_name)
-VALUES 
-($1, $2, $3, $4, $5)`
-	var err error
-	_, err = pge.ConfigDb.Exec(ctx, sqlInsertFinishStatus,
-		task.TaskID, status, runStatusID, task.ChainID, pge.ClientName)
+func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int) {
+	const sqlRemoveRunStatus = `DELETE FROM timetable.active_chain WHERE chain_id = $1 and client_name = $2`
+	_, err := pge.ConfigDb.Exec(ctx, sqlRemoveRunStatus, chainID, pge.ClientName)
 	if err != nil {
-		pge.l.WithError(err).Error("Update chain status failed")
+		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
+	return
 }
 
 //Select live chains with proper client_name value

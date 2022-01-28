@@ -33,21 +33,6 @@ func TestDeleteChainConfig(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
 
-func TestFixSchedulerCrash(t *testing.T) {
-	initmockdb(t)
-	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	defer mockPool.Close()
-
-	t.Run("Check FixSchedulerCrash if sql fails", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-		defer cancel()
-		mockPool.ExpectExec(`SELECT timetable\.health_check`).WillReturnError(errors.New("error"))
-		pge.FixSchedulerCrash(ctx)
-	})
-
-	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
-}
-
 func TestInsertChainRunStatus(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
@@ -56,23 +41,8 @@ func TestInsertChainRunStatus(t *testing.T) {
 	t.Run("Check InsertChainRunStatus if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
 		defer cancel()
-		mockPool.ExpectQuery("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		pge.InsertChainRunStatus(ctx, 0)
-	})
-
-	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
-}
-
-func TestUpdateChainRunStatus(t *testing.T) {
-	initmockdb(t)
-	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	defer mockPool.Close()
-
-	t.Run("Check UpdateChainRunStatus if sql fails", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
-		defer cancel()
-		mockPool.ExpectExec("INSERT INTO timetable\\.run_status").WillReturnError(errors.New("error"))
-		pge.AddChainRunStatus(ctx, &pgengine.ChainTask{}, 0, "STATUS")
+		mockPool.ExpectQuery("INSERT INTO timetable\\.active_chain").WillReturnError(errors.New("error"))
+		pge.InsertChainRunStatus(ctx, 0, 1)
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")

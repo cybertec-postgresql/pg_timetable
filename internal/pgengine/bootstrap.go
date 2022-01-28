@@ -252,7 +252,9 @@ func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
 // Finalize closes session
 func (pge *PgEngine) Finalize() {
 	pge.l.Info("Closing session")
-	_, err := pge.ConfigDb.Exec(context.Background(), "DELETE FROM timetable.active_session WHERE client_pid = $1 AND client_name = $2", os.Getpid(), pge.ClientName)
+	sql := `DELETE FROM timetable.active_session WHERE client_name = $1;
+DELETE FROM timetable.active_chain WHERE client_name = $1;`
+	_, err := pge.ConfigDb.Exec(context.Background(), sql, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot finalize database session")
 	}
@@ -260,8 +262,8 @@ func (pge *PgEngine) Finalize() {
 	pge.ConfigDb = nil
 }
 
-//ReconnectAndFixLeftovers keeps trying reconnecting every `waitTime` seconds till connection established
-func (pge *PgEngine) ReconnectAndFixLeftovers(ctx context.Context) bool {
+//Reconnect keeps trying reconnecting every `waitTime` seconds till connection established
+func (pge *PgEngine) Reconnect(ctx context.Context) bool {
 	for pge.ConfigDb.Ping(ctx) != nil {
 		pge.l.Info("Connection to the server was lost. Waiting for ", WaitTime, " sec...")
 		select {
@@ -273,6 +275,5 @@ func (pge *PgEngine) ReconnectAndFixLeftovers(ctx context.Context) bool {
 		}
 	}
 	pge.l.Info("Connection reestablished...")
-	pge.FixSchedulerCrash(ctx)
 	return true
 }

@@ -74,8 +74,7 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		mockPool.ExpectPing()
-		mockPool.ExpectExec(`SELECT timetable\.health_check`).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-		assert.True(t, mockpge.ReconnectAndFixLeftovers(ctx))
+		assert.True(t, mockpge.Reconnect(ctx))
 	})
 
 	t.Run("Check ReconnectAndFixLeftovers if error returned", func(t *testing.T) {
@@ -83,7 +82,7 @@ func TestReconnectAndFixLeftovers(t *testing.T) {
 		defer cancel()
 		mockPool.ExpectPing().WillReturnError(errors.New("expected"))
 		mockPool.ExpectPing().WillDelayFor(pgengine.WaitTime * time.Second * 2)
-		assert.False(t, mockpge.ReconnectAndFixLeftovers(ctx))
+		assert.False(t, mockpge.Reconnect(ctx))
 	})
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
