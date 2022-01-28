@@ -62,7 +62,6 @@ func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int) {
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
 	}
-	return
 }
 
 //Select live chains with proper client_name value
