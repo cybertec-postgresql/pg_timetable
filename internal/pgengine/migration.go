@@ -90,6 +90,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00334.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00381 Rewrite active chain handling",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00381.sql")
+			},
+		},
 		// adding new migration here, update "timetable"."migration" in "sql/ddl.sql"!
 
 		// &migrator.Migration{

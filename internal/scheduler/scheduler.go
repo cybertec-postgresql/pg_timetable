@@ -101,8 +101,6 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 		go sch.intervalChainWorker(workerCtx, sch.intervalChainsChan)
 	}
 	ctx = log.WithLogger(ctx, sch.l)
-	/* cleanup potential database leftovers */
-	sch.pgengine.FixSchedulerCrash(ctx)
 
 	/*
 		Loop forever or until we ask it to stop.

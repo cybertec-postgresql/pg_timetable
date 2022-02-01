@@ -17,7 +17,8 @@ VALUES
     (1, '00305 Fix timetable.is_cron_in_time'),
     (2, '00323 Append timetable.delete_job function'),
     (3, '00329 Migration required for some new added functions'),
-    (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies');
+    (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies'),
+    (5, '00381 Rewrite active chain handling');
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -110,7 +111,6 @@ CREATE UNLOGGED TABLE timetable.active_session(
 COMMENT ON TABLE timetable.active_session IS
     'Stores information about active sessions';
 
-
 CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
 
 CREATE OR REPLACE FUNCTION timetable.get_client_name(integer) RETURNS TEXT AS
@@ -129,7 +129,9 @@ CREATE TABLE timetable.log
     message_data    jsonb
 );
 
--- log timetable related action
+COMMENT ON TABLE timetable.log IS
+    'Stores log entries of active sessions';
+
 CREATE TABLE timetable.execution_log (
     chain_id    BIGINT,
     task_id     BIGINT,
@@ -143,18 +145,16 @@ CREATE TABLE timetable.execution_log (
     client_name TEXT        NOT NULL
 );
 
-CREATE TYPE timetable.execution_status AS ENUM ('CHAIN_STARTED', 'CHAIN_FAILED', 'CHAIN_DONE', 'TASK_STARTED', 'TASK_DONE', 'DEAD');
+COMMENT ON TABLE timetable.execution_log IS
+    'Stores log entries of executed tasks and chains';
 
-CREATE TABLE timetable.run_status (
-    run_status_id           BIGSERIAL   PRIMARY KEY,
-    start_status_id         BIGINT      REFERENCES timetable.run_status(run_status_id)
-                                        ON UPDATE CASCADE ON DELETE CASCADE,
-    chain_id                BIGINT,
-    task_id                 BIGINT,
-    created_at              TIMESTAMPTZ DEFAULT clock_timestamp(),
-    execution_status        timetable.execution_status,
-    client_name             TEXT        NOT NULL
+CREATE UNLOGGED TABLE timetable.active_chain(
+    chain_id    BIGINT  NOT NULL,
+    client_name TEXT    NOT NULL
 );
+
+COMMENT ON TABLE timetable.active_chain IS
+    'Stores information about active chains within session';
 
 CREATE OR REPLACE FUNCTION timetable.try_lock_client_name(worker_pid BIGINT, worker_name TEXT)
 RETURNS bool AS
@@ -171,6 +171,11 @@ BEGIN
             SELECT pid
             FROM pg_catalog.pg_stat_activity
             WHERE application_name = 'pg_timetable'
+        );
+    DELETE 
+        FROM timetable.active_chain 
+        WHERE client_name NOT IN (
+            SELECT client_name FROM timetable.active_session
         );
     -- check if there any active sessions with the client name but different client pid
     PERFORM 1

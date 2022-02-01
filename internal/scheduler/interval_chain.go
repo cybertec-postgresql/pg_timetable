@@ -97,8 +97,7 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 				if !ichain.RepeatAfter {
 					go sch.reschedule(chainContext, ichain)
 				}
-				ichain.RunStatusID = sch.pgengine.InsertChainRunStatus(ctx, ichain.ChainID)
-				if ichain.RunStatusID == -1 {
+				if !sch.pgengine.InsertChainRunStatus(ctx, ichain.ChainID, ichain.MaxInstances) {
 					chainL.Info("Cannot proceed. Sleeping")
 					if ichain.RepeatAfter {
 						go sch.reschedule(chainContext, ichain)

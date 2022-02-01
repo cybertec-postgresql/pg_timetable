@@ -91,6 +91,9 @@ func main() {
 	apiserver.Reporter = sch
 
 	for sch.Run(ctx) == scheduler.RunningStatus {
-		pge.ReconnectAndFixLeftovers(ctx)
+		if !pge.Reconnect(ctx) {
+			exitCode = ExitCodeDBEngineError
+			return
+		}
 	}
 }

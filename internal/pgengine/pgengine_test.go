@@ -68,7 +68,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 
 	t.Run("Check timetable tables", func(t *testing.T) {
 		var oid int
-		tableNames := []string{"task", "chain", "parameter", "log", "execution_log", "run_status"}
+		tableNames := []string{"task", "chain", "parameter", "log", "execution_log", "active_session", "active_chain"}
 		for _, tableName := range tableNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regclass('timetable.%s'), 0) :: int", tableName)).Scan(&oid)
 			assert.NoError(t, err, fmt.Sprintf("Query for %s existence failed", tableName))
@@ -80,8 +80,6 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		var oid int
 		funcNames := []string{"_validate_json_schema_type(text, jsonb)",
 			"validate_json_schema(jsonb, jsonb, jsonb)",
-			"get_chain_running_statuses(bigint)",
-			"health_check(TEXT)",
 			"add_task(timetable.command_kind, TEXT, BIGINT, DOUBLE PRECISION)",
 			"add_job(TEXT, timetable.cron, TEXT, JSONB, timetable.command_kind, TEXT, INTEGER, BOOLEAN, BOOLEAN, BOOLEAN, BOOLEAN)",
 			"is_cron_in_time(timetable.cron, timestamptz)"}
@@ -121,7 +119,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	})
 
 	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		assert.Equal(t, true, pge.ReconnectAndFixLeftovers(ctx),
+		assert.Equal(t, true, pge.Reconnect(ctx),
 			"Should succeed for reconnect")
 	})
 }
@@ -139,10 +137,6 @@ func TestSchedulerFunctions(t *testing.T) {
 	defer teardownTestCase(t)
 
 	ctx := context.Background()
-
-	t.Run("Check FixSchedulerCrash function", func(t *testing.T) {
-		assert.NotPanics(t, func() { pge.FixSchedulerCrash(ctx) }, "Fix scheduler crash failed")
-	})
 
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
 		assert.Equal(t, false, pge.DeleteChainConfig(ctx, 0), "Should not delete in clean database")
@@ -169,10 +163,10 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
-		var id int
-		assert.NotPanics(t, func() { id = pge.InsertChainRunStatus(ctx, 0) },
+		var res bool
+		assert.NotPanics(t, func() { res = pge.InsertChainRunStatus(ctx, 0, 1) },
 			"Should no error in clean database")
-		assert.NotZero(t, id, "Run status id should be greater then 0")
+		assert.True(t, res, "Active chain should be inserted")
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
