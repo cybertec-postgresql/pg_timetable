@@ -44,7 +44,7 @@ const (
 
 // version output variables
 var (
-	сommit  string = "000000"
+	commit  string = "000000"
 	version string = "master"
 	date    string = "unknown"
 	dbapi   string = "00381"
@@ -56,7 +56,7 @@ func printVersion() {
  DB Schema:    %s
  Git Commit:   %s
  Built:        %s`,
-		version, dbapi, сommit, date)
+		version, dbapi, commit, date)
 }
 
 func main() {
