@@ -1,5 +1,13 @@
+# When building an image it is recommended to provide version arguments, e.g.
+# docker build --no-cached -t <tagname> \
+#     --build-arg COMMIT=`git show -s --format=%H HEAD` \
+#     --build-arg VERSION=`git describe --tags --abbrev=0` \
+#     --build-arg DATE=`git show -s --format=%cI HEAD` .
 FROM golang:alpine AS builder
 
+ARG COMMIT
+ARG VERSION
+ARG DATE
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
@@ -22,7 +30,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN go build -o pg_timetable .
+RUN go build -ldflags "-X main.commit=${COMMIT} -X main.version=${VERSION} -X main.date=${DATE}" -o pg_timetable .
 
 FROM scratch
 
