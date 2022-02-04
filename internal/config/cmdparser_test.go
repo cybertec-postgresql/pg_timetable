@@ -37,6 +37,14 @@ func TestLogLevel(t *testing.T) {
 	assert.False(t, c.Verbose())
 }
 
+func TestVersionOnly(t *testing.T) {
+	c := &CmdOptions{Version: true}
+	os.Args = []string{0: "go-test", "-v"}
+	assert.True(t, c.VersionOnly())
+	c = &CmdOptions{Version: false}
+	assert.False(t, c.VersionOnly())
+}
+
 func TestNewCmdOptions(t *testing.T) {
 	c := NewCmdOptions("-c", "config_unit_test", "--password=somestrong")
 	assert.NotNil(t, c)
