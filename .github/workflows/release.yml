@@ -8,7 +8,7 @@ on:
 jobs:
 
   goreleaser:
-    if: false # false to skip job during debug
+    if: true # false to skip job during debug
     runs-on: ubuntu-latest
     name: goreleaser
     steps:
@@ -43,26 +43,17 @@ jobs:
     - name: Version strings
       id: version
       run: |
-        echo "::set-output name=RELEASE_VERSION::$(echo "$GITHUB_REF_NAME#${GITHUB_SHA:0:6}")"
         echo "::set-output name=RELEASE_TIME::$(git show -s --format=%cI HEAD)"        
 
-    - name: Check arguments
+    - name: Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
       env:
         VERSION: ${{ github.ref_name }}
         COMMIT: ${{ github.sha }}
         DATE: ${{ steps.version.outputs.RELEASE_TIME }}       
-      run: |
-        echo "$VERSION | $COMMIT | $DATE"
-
-    # - name: Publish to Registry
-    #   uses: elgohr/Publish-Docker-Github-Action@master
-    #   env:
-    #     VERSION: ${{ github.ref_name }}
-    #     COMMIT: ${{ github.sha }}
-    #     DATE: ${{ steps.version.outputs.RELEASE_TIME }}       
-    #   with:
-    #     name: cybertecpostgresql/pg_timetable
-    #     username: ${{ secrets.DOCKER_USERNAME }}
-    #     password: ${{ secrets.DOCKER_PASSWORD }}
-    #     buildargs: VERSION,COMMIT,DATE
-    #     tag_semver: true
+      with:
+        name: cybertecpostgresql/pg_timetable
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        buildargs: VERSION,COMMIT,DATE
+        tag_semver: true
