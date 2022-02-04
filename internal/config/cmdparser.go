@@ -59,11 +59,17 @@ type CmdOptions struct {
 	RestApi        RestApiOpts    `group:"REST" mapstructure:"REST"`
 	NoProgramTasks bool           `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
+	Version        bool           `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
 }
 
 // Verbose returns true if the debug log is enabled
 func (c CmdOptions) Verbose() bool {
 	return c.Logging.LogLevel == "debug"
+}
+
+// VersionOnly returns true if the `--version` is the only argument
+func (c CmdOptions) VersionOnly() bool {
+	return len(os.Args) == 2 && c.Version
 }
 
 // NewCmdOptions returns a new instance of CmdOptions with default values
