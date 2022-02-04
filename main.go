@@ -42,6 +42,23 @@ const (
 	ExitCodeUpgradeError
 )
 
+// version output variables
+var (
+	сommit  string = "000000"
+	version string = "master"
+	date    string = "unknown"
+	dbapi   string = "00381"
+)
+
+func printVersion() {
+	fmt.Printf(`pg_timetable:
+ Version:      %s
+ DB Schema:    %s
+ Git Commit:   %s
+ Built:        %s`,
+		version, dbapi, сommit, date)
+}
+
 func main() {
 	exitCode := ExitCodeOK
 	defer func() { os.Exit(exitCode) }()
@@ -52,10 +69,19 @@ func main() {
 
 	cmdOpts, err := config.NewConfig(os.Stdout)
 	if err != nil {
+		if cmdOpts != nil && cmdOpts.VersionOnly() {
+			printVersion()
+			return
+		}
 		fmt.Println("Configuration error: ", err)
 		exitCode = ExitCodeConfigError
 		return
 	}
+
+	if cmdOpts.Version {
+		printVersion()
+	}
+
 	logger := log.Init(cmdOpts.Logging)
 
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {

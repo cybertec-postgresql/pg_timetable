@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -98,8 +99,9 @@ func NewConfig(writer io.Writer) (*CmdOptions, error) {
 		return nil, fmt.Errorf("Fatal error unmarshalling config file: %w", err)
 	}
 	if conf.ClientName == "" {
-		p.WriteHelp(writer)
-		return nil, errors.New("The required flag `-c, --clientname` was not specified")
+		buf := bytes.NewBufferString("The required flag `-c, --clientname` was not specified\n")
+		p.WriteHelp(buf)
+		return conf, errors.New(buf.String())
 	}
 	return conf, nil
 }
