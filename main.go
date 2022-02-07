@@ -55,8 +55,8 @@ func printVersion() {
  Version:      %s
  DB Schema:    %s
  Git Commit:   %s
- Built:        %s`,
-		version, dbapi, commit, date)
+ Built:        %s
+ `, version, dbapi, commit, date)
 }
 
 func main() {
