@@ -9,7 +9,7 @@ on:
       - 'go.sum'
       - 'Dockerfile'  
     branches:
-      - '*'
+      - 'master'
   workflow_dispatch:
 
 jobs:
