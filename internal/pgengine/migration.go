@@ -97,7 +97,7 @@ var Migrations func() migrator.Option = func() migrator.Option {
 			},
 		},
 		// adding new migration here, update "timetable"."migration" in "sql/ddl.sql"
-		// and BuildDBAPI variable in main.go!
+		// and "dbapi" variable in main.go!
 
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",
