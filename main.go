@@ -52,11 +52,11 @@ var (
 
 func printVersion() {
 	fmt.Printf(`pg_timetable:
- Version:      %s
- DB Schema:    %s
- Git Commit:   %s
- Built:        %s
- `, version, dbapi, commit, date)
+  Version:      %s
+  DB Schema:    %s
+  Git Commit:   %s
+  Built:        %s
+`, version, dbapi, commit, date)
 }
 
 func main() {
