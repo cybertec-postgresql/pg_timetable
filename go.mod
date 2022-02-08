@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/georgysavva/scany v0.3.0
-	github.com/jackc/pgconn v1.10.1
+	github.com/jackc/pgconn v1.11.0
 	github.com/jackc/pgtype v1.9.1
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/jessevdk/go-flags v1.5.0
