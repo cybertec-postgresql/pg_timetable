@@ -37,6 +37,12 @@ func TestLogHook(t *testing.T) {
 		_ = h.Fire(&e)
 		_ = adaptEntryLevel(e.Level)
 	}
+
+	levels := []string{"debug", "info", "warn", "fatal", "foobar"}
+	for _, level := range levels {
+		h.level = level
+		assert.NotEmpty(t, h.Levels())
+	}
 	<-time.After(time.Second)
 }
 
