@@ -83,14 +83,13 @@ func main() {
 	}
 
 	logger := log.Init(cmdOpts.Logging)
+	apiserver := api.Init(cmdOpts.RestApi, logger)
 
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
 		exitCode = ExitCodeDBEngineError
 		return
 	}
 	defer pge.Finalize()
-
-	apiserver := api.Init(cmdOpts.RestApi, logger)
 
 	if cmdOpts.Start.Upgrade {
 		if err := pge.MigrateDb(ctx); err != nil {
