@@ -162,3 +162,8 @@ For professional support, please contact [Cybertec](https://www.cybertec-postgre
 
 - Implementation: [Pavlo Golub](https://github.com/pashagolub)
 - Initial idea and draft design: [Hans-Jürgen Schönig](https://github.com/postgresql007)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=cybertec-postgresql/pg_timetable&type=Date)](https://star-history.com/#cybertec-postgresql/pg_timetable&Date)
+
