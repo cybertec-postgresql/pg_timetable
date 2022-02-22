@@ -26,7 +26,7 @@ func (ichain IntervalChain) isListed(ichains []IntervalChain) bool {
 // SendIntervalChain sends interval chain to the channel for workers
 func (sch *Scheduler) SendIntervalChain(c IntervalChain) {
 	select {
-	case sch.intervalChainsChan <- c:
+	case sch.ichainsChan <- c:
 		sch.l.WithField("chain", c.ChainID).Debug("Sent interval chain to the execution channel")
 	default:
 		sch.l.WithField("chain", c.ChainID).Error("Failed to send interval chain to the execution channel")
@@ -34,6 +34,8 @@ func (sch *Scheduler) SendIntervalChain(c IntervalChain) {
 }
 
 func (sch *Scheduler) isValid(ichain IntervalChain) bool {
+	sch.intervalChainMutex.Lock()
+	defer sch.intervalChainMutex.Unlock()
 	return (IntervalChain{}) != sch.intervalChains[ichain.ChainID]
 }
 
@@ -54,7 +56,6 @@ func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 }
 
 func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
-	sch.intervalChainMutex.Lock()
 	ichains := []IntervalChain{}
 	err := sch.pgengine.SelectIntervalChains(ctx, &ichains)
 	if err != nil {
@@ -64,6 +65,7 @@ func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 	}
 
 	// delete chains that are not returned from the database
+	sch.intervalChainMutex.Lock()
 	for id, ichain := range sch.intervalChains {
 		if !ichain.isListed(ichains) {
 			delete(sch.intervalChains, id)

@@ -30,23 +30,21 @@ const (
 
 // Scheduler is the main class for running the tasks
 type Scheduler struct {
-	l          log.LoggerIface
-	chainsChan chan Chain // channel for passing chains to workers
-	pgengine   *pgengine.PgEngine
+	pgengine    *pgengine.PgEngine
+	l           log.LoggerIface
+	chainsChan  chan Chain         // channel for passing chains to workers
+	ichainsChan chan IntervalChain // channel for passing interval chains to workers
 
 	exclusiveMutex sync.RWMutex //read-write mutex for running regular and exclusive chains
 
-	// activeChains holds the map of chain ID with context cancel() function, so we can abort chain by request
-	activeChains     map[int]func()
+	activeChains     map[int]func() // map of chain ID with context cancel() function to abort chain by request
 	activeChainMutex sync.Mutex
 
-	// map of active chains, updated every minute
-	intervalChains map[int]IntervalChain
-	// create channel for passing interval chains to workers
-	intervalChainsChan chan IntervalChain
+	intervalChains     map[int]IntervalChain // map of active chains, updated every minute
 	intervalChainMutex sync.Mutex
-	shutdown           chan struct{} // closed when shutdown is called
-	status             RunStatus
+
+	shutdown chan struct{} // closed when shutdown is called
+	status   RunStatus
 }
 
 // Max returns the maximum number of two arguments
@@ -60,14 +58,14 @@ func Max(x, y int) int {
 // New returns a new instance of Scheduler
 func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 	return &Scheduler{
-		l:                  logger,
-		pgengine:           pge,
-		chainsChan:         make(chan Chain, Max(minChannelCapacity, pge.Resource.CronWorkers*2)),
-		intervalChainsChan: make(chan IntervalChain, Max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
-		activeChains:       make(map[int]func()), //holds cancel() functions to stop chains
-		intervalChains:     make(map[int]IntervalChain),
-		shutdown:           make(chan struct{}),
-		status:             RunningStatus,
+		l:              logger,
+		pgengine:       pge,
+		chainsChan:     make(chan Chain, Max(minChannelCapacity, pge.Resource.CronWorkers*2)),
+		ichainsChan:    make(chan IntervalChain, Max(minChannelCapacity, pge.Resource.IntervalWorkers*2)),
+		activeChains:   make(map[int]func()), //holds cancel() functions to stop chains
+		intervalChains: make(map[int]IntervalChain),
+		shutdown:       make(chan struct{}),
+		status:         RunningStatus,
 	}
 }
 
@@ -98,7 +96,7 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	for w := 1; w <= sch.Config().Resource.IntervalWorkers; w++ {
 		workerCtx, cancel := context.WithCancel(ctx)
 		defer cancel()
-		go sch.intervalChainWorker(workerCtx, sch.intervalChainsChan)
+		go sch.intervalChainWorker(workerCtx, sch.ichainsChan)
 	}
 	ctx = log.WithLogger(ctx, sch.l)
 
