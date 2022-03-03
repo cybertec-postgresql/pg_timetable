@@ -96,6 +96,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00381.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00394 Add started_at column to active_session and active_chain tables",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00394.sql")
+			},
+		},
 		// adding new migration here, update "timetable"."migration" in "sql/ddl.sql"
 		// and "dbapi" variable in main.go!
 
