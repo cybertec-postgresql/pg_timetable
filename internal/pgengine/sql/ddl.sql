@@ -18,7 +18,8 @@ VALUES
     (2, '00323 Append timetable.delete_job function'),
     (3, '00329 Migration required for some new added functions'),
     (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies'),
-    (5, '00381 Rewrite active chain handling');
+    (5, '00381 Rewrite active chain handling'),
+    (6, '00394 Add started_at column to active_session and active_chain tables');
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -105,7 +106,8 @@ COMMENT ON TABLE timetable.parameter IS
 CREATE UNLOGGED TABLE timetable.active_session(
     client_pid  BIGINT  NOT NULL,
     client_name TEXT    NOT NULL,
-    server_pid  BIGINT  NOT NULL
+    server_pid  BIGINT  NOT NULL,
+    started_at  TIMESTAMPTZ DEFAULT now()
 );
 
 COMMENT ON TABLE timetable.active_session IS
@@ -150,7 +152,8 @@ COMMENT ON TABLE timetable.execution_log IS
 
 CREATE UNLOGGED TABLE timetable.active_chain(
     chain_id    BIGINT  NOT NULL,
-    client_name TEXT    NOT NULL
+    client_name TEXT    NOT NULL,
+    started_at  TIMESTAMPTZ DEFAULT now()
 );
 
 COMMENT ON TABLE timetable.active_chain IS
@@ -189,7 +192,7 @@ BEGIN
         RETURN FALSE;
     END IF;
     -- insert current session information
-    INSERT INTO timetable.active_session VALUES (worker_pid, worker_name, pg_backend_pid());
+    INSERT INTO timetable.active_session(client_pid, client_name, server_pid) VALUES (worker_pid, worker_name, pg_backend_pid());
     RETURN TRUE;
 END;
 $CODE$
