@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// CopyToFile copies data from database into local file using COPY format specified by sql
 func (pge *PgEngine) CopyToFile(ctx context.Context, filename string, sql string) (int64, error) {
 	dbconn, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
