@@ -20,6 +20,7 @@ var Tasks = map[string](func(context.Context, *Scheduler, string) (string, error
 	"SendMail":     taskSendMail,
 	"Download":     taskDownload,
 	"CopyFromFile": taskCopyFromFile,
+	"CopyToFile":   taskCopyToFile,
 	"Shutdown":     taskShutdown}
 
 func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
@@ -81,6 +82,22 @@ func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) (stdout s
 	count, err := sch.pgengine.CopyFromFile(ctx, ct.Filename, ct.SQL)
 	if err == nil {
 		stdout = fmt.Sprintf("%d rows copied from %s", count, ct.Filename)
+	}
+	return stdout, err
+}
+
+func taskCopyToFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+	type copyTo struct {
+		SQL      string `json:"sql"`
+		Filename string `json:"filename"`
+	}
+	var ct copyTo
+	if err := json.Unmarshal([]byte(val), &ct); err != nil {
+		return "", err
+	}
+	count, err := sch.pgengine.CopyToFile(ctx, ct.Filename, ct.SQL)
+	if err == nil {
+		stdout = fmt.Sprintf("%d rows copied to %s", count, ct.Filename)
 	}
 	return stdout, err
 }
