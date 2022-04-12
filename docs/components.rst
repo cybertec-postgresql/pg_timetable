@@ -27,6 +27,7 @@ Currently, there are three different kinds of commands:
         * *SendMail*, 
         * *Download*,
         * *CopyFromFile*,
+        * *CopyToFile*,
         * *Shutdown*.
 
 Task
@@ -154,6 +155,15 @@ Kind
             '{
                 "sql": "COPY location FROM STDIN", 
                 "filename": "download/orte_ansi.txt" 
+            }'::jsonb
+
+``BUILTIN: CopyToFile``
+    ``object``
+        .. code-block:: SQL
+                
+            '{
+                "sql": "COPY location TO STDOUT", 
+                "filename": "download/location.txt" 
             }'::jsonb
 
 ``BUILTIN: Shutdown``

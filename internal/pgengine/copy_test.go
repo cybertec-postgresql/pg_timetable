@@ -22,3 +22,15 @@ func TestCopyFromFile(t *testing.T) {
 	assert.True(t, cnt == 2, "Should copy exactly 2 rows")
 	assert.NoError(t, os.RemoveAll("test.csv"), "Test output should be removed")
 }
+
+func TestCopyToFile(t *testing.T) {
+	teardownTestCase := SetupTestCase(t)
+	defer teardownTestCase(t)
+	ctx := context.Background()
+	_, err := pge.CopyToFile(ctx, "", "COPY location TO STDOUT")
+	assert.Error(t, err, "Should fail for empty file name")
+	cnt, err := pge.CopyToFile(ctx, "test.csv", "COPY (SELECT generate_series(1,5)) TO STDOUT (FORMAT csv)")
+	assert.NoError(t, err, "Should copy to file")
+	assert.True(t, cnt == 5, "Should copy exactly 5 rows")
+	assert.NoError(t, os.RemoveAll("test.csv"), "Test output should be removed")
+}
