@@ -35,6 +35,9 @@ func TestExecuteTask(t *testing.T) {
 	assert.Error(t, et("CopyFromFile", []string{"foo"}), "Invalid json")
 	assert.Error(t, et("CopyFromFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
 
+	assert.Error(t, et("CopyToFile", []string{"foo"}), "Invalid json")
+	assert.Error(t, et("CopyToFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
+
 	assert.Error(t, et("SendMail", []string{"foo"}), "Invalid json")
 	assert.Error(t, et("SendMail", []string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user"}`}))
 
@@ -44,4 +47,5 @@ func TestExecuteTask(t *testing.T) {
 	assert.Error(t, et("Download", []string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "" }`}),
 		"Downlod incorrect url should fail")
 
+	assert.NoError(t, et("Shutdown", []string{}))
 }
