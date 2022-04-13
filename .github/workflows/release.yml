@@ -16,7 +16,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v2
       with:
-        go-version: '1.17'
+        go-version: '1.18'
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -46,7 +46,7 @@ jobs:
         echo "::set-output name=RELEASE_TIME::$(git show -s --format=%cI HEAD)"        
 
     - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@v4
       env:
         VERSION: ${{ github.ref_name }}
         COMMIT: ${{ github.sha }}
