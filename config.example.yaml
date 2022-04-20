@@ -57,5 +57,6 @@ resource:
   task-timeout: 0  
 
 # - REST API Settings -
+rest:
   # rest-port:                     REST API port (default: 0)
   rest-port: 8008
