@@ -28,7 +28,8 @@ var Cmd commander = realCommander{}
 // ExecuteProgramCommand executes program command and returns status code, output and error if any
 func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
 
-	if strings.TrimSpace(command) == "" {
+	command = strings.TrimSpace(command)
+	if command == "" {
 		return -1, "", errors.New("Program command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
