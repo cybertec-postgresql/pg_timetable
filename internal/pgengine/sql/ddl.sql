@@ -19,7 +19,8 @@ VALUES
     (3, '00329 Migration required for some new added functions'),
     (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies'),
     (5, '00381 Rewrite active chain handling'),
-    (6, '00394 Add started_at column to active_session and active_chain tables');
+    (6, '00394 Add started_at column to active_session and active_chain tables'),
+    (7, '00417 Rename LOG database log level to INFO');
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -113,7 +114,7 @@ CREATE UNLOGGED TABLE timetable.active_session(
 COMMENT ON TABLE timetable.active_session IS
     'Stores information about active sessions';
 
-CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
+CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'INFO', 'ERROR', 'PANIC', 'USER');
 
 CREATE OR REPLACE FUNCTION timetable.get_client_name(integer) RETURNS TEXT AS
 $$

@@ -119,7 +119,7 @@ func adaptEntryLevel(level logrus.Level) string {
 	case logrus.TraceLevel, logrus.DebugLevel:
 		return "DEBUG"
 	case logrus.InfoLevel, logrus.WarnLevel:
-		return "LOG"
+		return "INFO"
 	case logrus.ErrorLevel:
 		return "ERROR"
 	case logrus.FatalLevel, logrus.PanicLevel:
