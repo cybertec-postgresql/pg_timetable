@@ -102,6 +102,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00394.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00417 Rename LOG database log level to INFO",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00417.sql")
+			},
+		},
 		// adding new migration here, update "timetable"."migration" in "sql/ddl.sql"
 		// and "dbapi" variable in main.go!
 

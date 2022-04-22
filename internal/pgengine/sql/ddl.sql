@@ -113,7 +113,7 @@ CREATE UNLOGGED TABLE timetable.active_session(
 COMMENT ON TABLE timetable.active_session IS
     'Stores information about active sessions';
 
-CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'LOG', 'ERROR', 'PANIC', 'USER');
+CREATE TYPE timetable.log_type AS ENUM ('DEBUG', 'NOTICE', 'INFO', 'ERROR', 'PANIC', 'USER');
 
 CREATE OR REPLACE FUNCTION timetable.get_client_name(integer) RETURNS TEXT AS
 $$
