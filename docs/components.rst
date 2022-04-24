@@ -16,7 +16,7 @@ Currently, there are three different kinds of commands:
     SQL snippet. Starting a cleanup, refreshing a materialized view or processing data.
 
 ``PROGRAM``
-    External Command. Anything that can be called as an external binary, including shells, e.g. ``bash``, ``pwsh``, etc.
+    External Command. Anything that can be called as an external binary, including shells, e.g. ``bash``, ``pwsh``, etc. The external command will be called using golang's `exec.CommandContext <https://pkg.go.dev/os/exec#CommandContext>`_. 
 
 ``BUILTIN``
     Internal Command. A prebuilt functionality included in **pg_timetable**. These include:
