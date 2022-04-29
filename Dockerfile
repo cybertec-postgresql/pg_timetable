@@ -32,7 +32,10 @@ COPY . .
 # Build the application
 RUN go build -buildvcs=false -ldflags "-X main.commit=${COMMIT} -X main.version=${VERSION} -X main.date=${DATE}" -o pg_timetable .
 
-FROM scratch
+FROM alpine
+
+# Install psql client
+RUN apk --no-cache add postgresql-client
 
 # Copy the binary and certificates into the container
 COPY --from=builder /build/pg_timetable /
