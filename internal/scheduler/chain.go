@@ -7,6 +7,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/georgysavva/scany/pgxscan"
 	pgx "github.com/jackc/pgx/v4"
 )
 
@@ -168,6 +169,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
 	var bctx context.Context
 	var cancel context.CancelFunc
+	var txid int
 
 	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.ChainTimeout, chain.Timeout)
 	if cancel != nil {
@@ -177,10 +179,14 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	chainL := sch.l.WithField("chain", chain.ChainID)
 
 	tx, err := sch.pgengine.StartTransaction(ctx)
+	if err == nil {
+		err = pgxscan.Get(ctx, tx, &txid, "SELECT txid_current()")
+	}
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
 		return
 	}
+	chainL = chainL.WithField("txid", txid)
 
 	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.ChainID) {
 		sch.pgengine.RollbackTransaction(ctx, tx)
@@ -190,6 +196,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	/* now we can loop through every element of the task chain */
 	for _, task := range ChainTasks {
 		task.ChainID = chain.ChainID
+		task.Txid = txid
 		l := chainL.WithField("task", task.TaskID)
 		l.Info("Starting task")
 		ctx = log.WithLogger(ctx, l)

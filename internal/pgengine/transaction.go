@@ -28,6 +28,7 @@ type ChainTask struct {
 	Timeout       int            `db:"timeout"` // in milliseconds
 	StartedAt     time.Time
 	Duration      int64 // in microseconds
+	Txid          int
 }
 
 // StartTransaction return transaction object and panic in the case of error
@@ -72,10 +73,10 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 }
 
 // GetChainElements returns all elements for a given chain
-func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, chainID int) bool {
+func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks interface{}, chainID int) bool {
 	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
-	err := pgxscan.Select(ctx, tx, chains, sqlSelectChainTasks, chainID)
+	err := pgxscan.Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Failed to retrieve chain elements")
 		return false
