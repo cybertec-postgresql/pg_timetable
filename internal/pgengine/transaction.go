@@ -39,6 +39,9 @@ func (pge *PgEngine) StartTransaction(ctx context.Context, chainID int) (tx pgx.
 		return
 	}
 	err = pgxscan.Get(ctx, tx, &txid, "SELECT txid_current()")
+	if err != nil {
+		return
+	}
 	_, err = tx.Exec(ctx, `SELECT set_config('pg_timetable.current_chain_id', $1, true)`, strconv.Itoa(chainID))
 	return
 }
