@@ -7,7 +7,6 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/georgysavva/scany/pgxscan"
 	pgx "github.com/jackc/pgx/v4"
 )
 
@@ -178,10 +177,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 
 	chainL := sch.l.WithField("chain", chain.ChainID)
 
-	tx, err := sch.pgengine.StartTransaction(ctx)
-	if err == nil {
-		err = pgxscan.Get(ctx, tx, &txid, "SELECT txid_current()")
-	}
+	tx, txid, err := sch.pgengine.StartTransaction(ctx, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
 		return

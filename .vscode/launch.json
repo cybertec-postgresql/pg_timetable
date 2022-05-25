@@ -11,7 +11,9 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "env": {},
-            "args": ["-v"]
+            "args": ["postgresql://scheduler@localhost:5432/timetable",
+                "--clientname=loader", 
+                "--log-level=debug"]
         }
     ]
 }
