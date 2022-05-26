@@ -1,7 +1,8 @@
 Getting started
 ================================================================
 
-A variety of examples can be found in the :doc:`samples`.
+A variety of examples can be found in the :doc:`samples`. If you want to migrate from a different scheduler, 
+you can use :doc:`migration` scripts.
 
 Add simple job
 ~~~~~~~~~~~~~~
