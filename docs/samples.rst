@@ -40,9 +40,10 @@ dropped.
 
 Access previous task result code and output from the next task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This sample demonstrates how to check the result code and output of a previous task. If previous task failed that possible only
-if *ignore_error boolean = true* set for that particular task. Otherwise, the chain will be stopped. This exactly samples
-shows how to calculate failed, successful, and total tasks executed. Based on this values we can calculate the success ratio.
+This sample demonstrates how to check the result code and output of a previous task. If the last task failed, 
+that is possible only if *ignore_error boolean = true* is set for that task. Otherwise, a scheduler will 
+stop the chain. This sample shows how to calculate failed, successful, and the total number of tasks executed. 
+Based on these values, we can calculate the success ratio.
 
 .. literalinclude:: ../samples/ManyTasks.sql
     :linenos:
