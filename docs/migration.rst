@@ -5,7 +5,7 @@ Migrate jobs from pg_cron to pg_timetable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you want to quickly export jobs scheduled from *pg_cron* to *pg_timetable*, you can use this SQL snippet:
 
-.. literalinclude:: ../extras/pg_cron_to_pg_timetable_simple.sql.sql
+.. literalinclude:: ../extras/pg_cron_to_pg_timetable_simple.sql
     :linenos:
     :language: SQL
 
@@ -17,6 +17,6 @@ Secondly, database connection parameters are lost for source *pg_cron* jobs, mak
 every information available precisely as possible, use this SQL snippet under the role they were scheduled in 
 *pg_cron*:
 
-.. literalinclude:: ../extras/pg_cron_to_pg_timetable.sql.sql
+.. literalinclude:: ../extras/pg_cron_to_pg_timetable.sql
     :linenos:
     :language: SQL
