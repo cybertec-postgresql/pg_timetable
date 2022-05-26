@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/georgysavva/scany/pgxscan"
 )
@@ -30,11 +31,11 @@ func (pge *PgEngine) IsAlive() bool {
 // LogChainElementExecution will log current chain element execution status including retcode
 func (pge *PgEngine) LogChainElementExecution(ctx context.Context, task *ChainTask, retCode int, output string) {
 	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
-chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name) 
-VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9)`,
+chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid) 
+VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10)`,
 		task.ChainID, task.TaskID, task.Script, task.Kind,
 		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
-		retCode, os.Getpid(), output, pge.ClientName)
+		retCode, os.Getpid(), strings.TrimSpace(output), pge.ClientName, task.Txid)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to log chain element execution status")
 	}

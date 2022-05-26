@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,11 +29,21 @@ type ChainTask struct {
 	Timeout       int            `db:"timeout"` // in milliseconds
 	StartedAt     time.Time
 	Duration      int64 // in microseconds
+	Txid          int
 }
 
-// StartTransaction return transaction object and panic in the case of error
-func (pge *PgEngine) StartTransaction(ctx context.Context) (pgx.Tx, error) {
-	return pge.ConfigDb.Begin(ctx)
+// StartTransaction returns transaction object, transaction id and error
+func (pge *PgEngine) StartTransaction(ctx context.Context, chainID int) (tx pgx.Tx, txid int, err error) {
+	tx, err = pge.ConfigDb.Begin(ctx)
+	if err != nil {
+		return
+	}
+	err = pgxscan.Get(ctx, tx, &txid, "SELECT txid_current()")
+	if err != nil {
+		return
+	}
+	_, err = tx.Exec(ctx, `SELECT set_config('pg_timetable.current_chain_id', $1, true)`, strconv.Itoa(chainID))
+	return
 }
 
 // CommitTransaction commits transaction and log error in the case of error
@@ -72,10 +83,10 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 }
 
 // GetChainElements returns all elements for a given chain
-func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chains interface{}, chainID int) bool {
+func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks interface{}, chainID int) bool {
 	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
-	err := pgxscan.Select(ctx, tx, chains, sqlSelectChainTasks, chainID)
+	err := pgxscan.Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
 	if err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Failed to retrieve chain elements")
 		return false
@@ -127,15 +138,14 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainT
 		defer pge.FinalizeRemoteDBConnection(ctx, remoteDb)
 	}
 
-	// Set Role
-	if task.RunAs.Status != pgtype.Null && !task.Autonomous {
+	if !task.Autonomous {
 		pge.SetRole(ctx, execTx, task.RunAs)
+		if task.IgnoreError {
+			pge.MustSavepoint(ctx, execTx, fmt.Sprintf("task_%d", task.TaskID))
+		}
 	}
 
-	if task.IgnoreError && !task.Autonomous {
-		pge.MustSavepoint(ctx, execTx, fmt.Sprintf("task_%d", task.TaskID))
-	}
-
+	pge.SetCurrentTaskContext(ctx, execTx, task.TaskID)
 	out, err = pge.ExecuteSQLCommand(ctx, executor, task.Script, paramValues)
 
 	if err != nil && task.IgnoreError && !task.Autonomous {
@@ -222,6 +232,9 @@ func (pge *PgEngine) FinalizeRemoteDBConnection(ctx context.Context, remoteDb Pg
 
 // SetRole - set the current user identifier of the current session
 func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varchar) {
+	if runUID.Status == pgtype.Null {
+		return
+	}
 	l := log.GetLogger(ctx)
 	l.Info("Setting Role to ", runUID.String)
 	_, err := tx.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
@@ -237,6 +250,16 @@ func (pge *PgEngine) ResetRole(ctx context.Context, tx pgx.Tx) {
 	const sqlResetRole = `RESET ROLE`
 	_, err := tx.Exec(ctx, sqlResetRole)
 	if err != nil {
-		l.WithError(err).Error("Error in ReSetting role", err)
+		l.WithError(err).Error("Failed to set a role", err)
+	}
+}
+
+// SetCurrentTaskContext - set the working transaction "pg_timetable.current_task_id" run-time parameter
+func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, tx pgx.Tx, taskID int) {
+	l := log.GetLogger(ctx)
+	l.Debug("Setting current task context to ", taskID)
+	_, err := tx.Exec(ctx, "SELECT set_config('pg_timetable.current_task_id', $1, true)", strconv.Itoa(taskID))
+	if err != nil {
+		l.WithError(err).Error("Failed to set current task context", err)
 	}
 }

@@ -37,3 +37,14 @@ dropped.
 .. literalinclude:: ../samples/Shutdown.sql
     :linenos:
     :language: SQL
+
+Access previous task result code and output from the next task
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This sample demonstrates how to check the result code and output of a previous task. If the last task failed, 
+that is possible only if *ignore_error boolean = true* is set for that task. Otherwise, a scheduler will 
+stop the chain. This sample shows how to calculate failed, successful, and the total number of tasks executed. 
+Based on these values, we can calculate the success ratio.
+
+.. literalinclude:: ../samples/ManyTasks.sql
+    :linenos:
+    :language: SQL    

@@ -18,6 +18,7 @@ BEGIN
         PRIMARY KEY (chain_log)
     );
 
+    -- Let's create a new chain and add tasks to it later
     INSERT INTO timetable.chain (
         chain_id, 
         chain_name, 
@@ -46,12 +47,27 @@ BEGIN
     VALUES (v_chain_id, 2, 'INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)', TRUE)
     RETURNING task_id INTO v_task_id;
 
-
     INSERT INTO timetable.parameter(task_id, order_id, value)
     VALUES 
         -- Parameter for HEAD (parent) task
         (v_parent_id, 1, '["Added"]' :: jsonb),
         -- Parameter for the next task
         (v_task_id, 1, '["Updated"]' :: jsonb);
+
+    -- Add one more task swowing IDs for all tasks within the chain
+    INSERT INTO timetable.task (chain_id, task_order, command, ignore_error)
+    VALUES (v_chain_id, 3, 
+    $CMD$
+        DO $BODY$ 
+        DECLARE tasks TEXT;
+        BEGIN 
+            SELECT array_agg(task_id ORDER BY task_order) FROM timetable.task
+            INTO tasks
+            WHERE chain_id = current_setting('pg_timetable.current_chain_id')::bigint;
+            RAISE NOTICE 'Task IDs in chain: %', tasks;
+        END; 
+        $BODY$
+    $CMD$, TRUE);
+   
 END;
 $$ LANGUAGE plpgsql;

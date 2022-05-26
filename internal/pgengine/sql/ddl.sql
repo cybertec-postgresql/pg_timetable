@@ -20,7 +20,8 @@ VALUES
     (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies'),
     (5, '00381 Rewrite active chain handling'),
     (6, '00394 Add started_at column to active_session and active_chain tables'),
-    (7, '00417 Rename LOG database log level to INFO');
+    (7, '00417 Rename LOG database log level to INFO'),
+    (8, '00436 Add txid column to timetable.execution_log');
 
 CREATE DOMAIN timetable.cron AS TEXT CHECK(
     substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
@@ -138,6 +139,7 @@ COMMENT ON TABLE timetable.log IS
 CREATE TABLE timetable.execution_log (
     chain_id    BIGINT,
     task_id     BIGINT,
+    txid        INTEGER NOT NULL,
     last_run    TIMESTAMPTZ DEFAULT now(),
     finished    TIMESTAMPTZ,
     pid         BIGINT,

@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,4 +34,14 @@ func TestCopyToFile(t *testing.T) {
 	assert.NoError(t, err, "Should copy to file")
 	assert.True(t, cnt == 5, "Should copy exactly 5 rows")
 	assert.NoError(t, os.RemoveAll("test.csv"), "Test output should be removed")
+}
+
+func TestCopyErrors(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	defer mockPool.Close()
+	_, err := pge.CopyFromFile(context.Background(), "foo", "boo")
+	assert.Error(t, err, "Should fail in pgxmock Acquire()")
+	_, err = pge.CopyToFile(context.Background(), "foo", "boo")
+	assert.Error(t, err, "Should fail in pgxmock Acquire()")
 }
