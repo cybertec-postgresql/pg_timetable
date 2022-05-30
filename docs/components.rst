@@ -99,7 +99,7 @@ Kind
             '[ "one", 2, 3.14, false ]'::jsonb
     
 ``PROGRAM``
-    ``array`` 
+    ``array of strings`` 
         .. code-block:: SQL
 
             '["-x", "Latin-ASCII", "-o", "orte_ansi.txt", "orte.txt"]'::jsonb
