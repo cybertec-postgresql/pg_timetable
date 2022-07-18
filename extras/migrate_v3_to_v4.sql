@@ -10,6 +10,17 @@ ALTER SCHEMA timetable RENAME TO timetable_v3;
 -- create the v4 initial schema
 CREATE SCHEMA timetable;
 
+CREATE TABLE timetable.migration(
+    id INT8 NOT NULL,
+    version TEXT NOT NULL,
+    PRIMARY KEY (id)
+);
+
+INSERT INTO
+    timetable.migration (id, version)
+VALUES
+    (0, '00259 Restart migrations for v4');
+
 CREATE TYPE timetable.command_kind AS ENUM ('SQL', 'PROGRAM', 'BUILTIN');
 
 CREATE TABLE timetable.task (
