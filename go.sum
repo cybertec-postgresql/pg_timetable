@@ -68,8 +68,8 @@ github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7
 github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3ZUKE=
 github.com/fsnotify/fsnotify v1.5.4 h1:jRbGcIw6P2Meqdwuo0H1p6JVLbL5DHKAKlYndzMwVZI=
 github.com/fsnotify/fsnotify v1.5.4/go.mod h1:OVB6XrOHzAwXMpEM7uPOzcehqUV2UqJxmVXmkdnm1bU=
-github.com/georgysavva/scany v1.0.0 h1:9ar4458sgkWehk8bRsEe128FQV3pVKxdN4ytmCK6BEY=
-github.com/georgysavva/scany v1.0.0/go.mod h1:q8QyrfXjmBk9iJD00igd4lbkAKEXAH/zIYoZ0z/Wan4=
+github.com/georgysavva/scany v1.1.0 h1:KnUuWwLfLa9kvWzZx0aEq6iw15F2iCTqzp89LhfM5N8=
+github.com/georgysavva/scany v1.1.0/go.mod h1:q8QyrfXjmBk9iJD00igd4lbkAKEXAH/zIYoZ0z/Wan4=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
