@@ -20,3 +20,13 @@ every information available precisely as possible, use this SQL snippet under th
 .. literalinclude:: ../extras/pg_cron_to_pg_timetable.sql
     :linenos:
     :language: SQL
+
+Migrate jobs from pgAgent to pg_timetable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To migrate jobs from **pgAgent**, please use this script. **pgAgent** doesn't have concept of *PROGRAM* task, thus to
+emulate *BATCH* steps, **pg_timetable** will execute them inside the shell. You may change the shell by editing *cte_shell*
+CTE clause.
+
+.. literalinclude:: ../extras/pgagent_to_pg_timetable.sql
+    :linenos:
+    :language: SQL
