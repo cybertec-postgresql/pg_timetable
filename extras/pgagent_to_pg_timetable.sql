@@ -10,7 +10,7 @@ LANGUAGE sql;
 
 WITH
 cte_shell(shell, cmd_param) AS (
-	VALUES ('sh', '-c') -- set the shell you want to use for batch steps, e.g. "pwsh -c", "cmd /C", "bash -c", "zsh -c"
+	VALUES ('sh', '-c') -- set the shell you want to use for batch steps, e.g. "pwsh -c", "cmd /C"
 ),
 pga_schedule AS (
 	SELECT
@@ -56,7 +56,10 @@ pga_step AS (
 		jstenabled,
 		CASE jstkind WHEN 'b' THEN 'PROGRAM' ELSE 'SQL' END AS jstkind,
 		jstcode,
-		COALESCE(NULLIF(jstconnstr, ''), CASE WHEN jstdbname > '' THEN 'dbname=' || jstdbname END) AS jstconnstr,
+		COALESCE(
+            NULLIF(jstconnstr, ''), 
+            CASE WHEN jstdbname > '' THEN 'dbname=' || jstdbname END
+        ) AS jstconnstr,
 		jstonerror != 'f' AS jstignoreerror
 	FROM
 		pga_chain c JOIN pgagent.pga_jobstep js ON c.jobid = js.jstjobid
@@ -65,7 +68,7 @@ cte_tasks AS (
 	INSERT INTO timetable.task(task_id, chain_id, task_name, task_order, kind, command, database_connection)
 	    SELECT
 	    	task_id, chain_id, jstname, jstorder, jstkind::timetable.command_kind, 
-	    	CASE jstkind WHEN 'SQL' THEN jstcode ELSE sh.shell END, -- pgagent executes batch steps in the system shell
+	    	CASE jstkind WHEN 'SQL' THEN jstcode ELSE sh.shell END, -- execute batches the shell
 	    	jstconnstr
 	    FROM
 	    	pga_step, cte_shell sh
