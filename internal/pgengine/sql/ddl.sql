@@ -109,6 +109,7 @@ CREATE UNLOGGED TABLE timetable.active_session(
     client_pid  BIGINT  NOT NULL,
     client_name TEXT    NOT NULL,
     server_pid  BIGINT  NOT NULL,
+    client_addr INET  NOT NULL,
     started_at  TIMESTAMPTZ DEFAULT now()
 );
 
@@ -187,7 +188,7 @@ BEGIN
     PERFORM 1
         FROM timetable.active_session s
         WHERE
-            s.client_pid <> worker_pid
+            s.client_addr <> inet_client_addr()
             AND s.client_name = worker_name
         LIMIT 1;
     IF FOUND THEN
@@ -195,7 +196,7 @@ BEGIN
         RETURN FALSE;
     END IF;
     -- insert current session information
-    INSERT INTO timetable.active_session(client_pid, client_name, server_pid) VALUES (worker_pid, worker_name, pg_backend_pid());
+    INSERT INTO timetable.active_session(client_pid, client_name, server_pid, client_addr) VALUES (worker_pid, worker_name, pg_backend_pid(), inet_client_addr());
     RETURN TRUE;
 END;
 $CODE$
