@@ -245,8 +245,8 @@ github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyua
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc h1:BU12v9x5hvONtYU2R2LnlkxmWSsjzco046NzJLcWMHg=
 github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc/go.mod h1:vAPEMm1zIQKGmM9hcZTSlOU/CDVCXHGOw6SFxPlSoHw=
-github.com/pashagolub/pgxmock v1.6.0 h1:4zugVDde5sBKEsuDog0e7aqQRu/mGpxxQP4GMZ1F7Kk=
-github.com/pashagolub/pgxmock v1.6.0/go.mod h1:4vnPWyFlZ0Z3au5yk9AmBXNOxLVBgRGxb33HBp+K34Y=
+github.com/pashagolub/pgxmock v1.7.0 h1:YFnyONrcx8TsXM6dejha3vbdRdiMK0FNJKSJkJfFX0k=
+github.com/pashagolub/pgxmock v1.7.0/go.mod h1:4vnPWyFlZ0Z3au5yk9AmBXNOxLVBgRGxb33HBp+K34Y=
 github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pelletier/go-toml/v2 v2.0.1 h1:8e3L2cCQzLFi2CR4g7vGFuFxX7Jl1kKX8gW+iV0GUKU=
