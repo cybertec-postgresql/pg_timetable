@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
+	"math/rand"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
@@ -51,6 +51,18 @@ type PgEngine struct {
 	config.CmdOptions
 	// NOTIFY messages passed verification are pushed to this channel
 	chainSignalChan chan ChainSignal
+	pid             int32
+}
+
+// Getpid returns the pseudo-random process ID to use for the session identification.
+// Previously `os.Getpid()` used but this approach is not producing unique IDs for docker containers
+// where all IDs are the same across all running containers, e.g. 1
+func (pge *PgEngine) Getpid() int32 {
+	if pge.pid == 0 {
+		rand.Seed(time.Now().UnixNano())
+		pge.pid = rand.Int31()
+	}
+	return pge.pid
 }
 
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlCronFunctions, sqlJobFunctions}
@@ -61,12 +73,12 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 	var wt int = WaitTime
 	var err error
 	pge := &PgEngine{
-		logger,
-		nil,
-		cmdOpts,
-		make(chan ChainSignal, 64),
+		l:               logger,
+		ConfigDb:        nil,
+		CmdOptions:      cmdOpts,
+		chainSignalChan: make(chan ChainSignal, 64),
 	}
-	pge.l.WithField("PID", os.Getpid()).Debug("Starting new session... ")
+	pge.l.WithField("PID", pge.Getpid()).Info("Starting new session... ")
 	connctx, conncancel := context.WithTimeout(ctx, time.Duration(cmdOpts.Connection.Timeout)*time.Second)
 	defer conncancel()
 
@@ -106,7 +118,12 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 // NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.
 // We assume here all checks for proper schema validation are done beforehannd
 func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
-	return &PgEngine{log.Init(config.LoggingOpts{LogLevel: "error"}), DB, *config.NewCmdOptions(args...), make(chan ChainSignal, 64)}
+	return &PgEngine{
+		l:               log.Init(config.LoggingOpts{LogLevel: "error"}),
+		ConfigDb:        DB,
+		CmdOptions:      *config.NewCmdOptions(args...),
+		chainSignalChan: make(chan ChainSignal, 64),
+	}
 }
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
@@ -159,7 +176,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 
 // AddLogHook adds a new pgx log hook to logrus logger
 func (pge *PgEngine) AddLogHook(ctx context.Context) {
-	pge.l.AddHook(NewHook(ctx, pge.ConfigDb, pge.ClientName, 500, pge.Logging.LogDBLevel))
+	pge.l.AddHook(NewHook(ctx, pge, pge.Logging.LogDBLevel))
 }
 
 // QueryRowIface specifies interface to use QueryRow method
@@ -182,7 +199,7 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 	}
 	var wt int = WaitTime
 	for {
-		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", os.Getpid(), pge.ClientName)
+		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", pge.Getpid(), pge.ClientName)
 		var locked bool
 		err = conn.QueryRow(ctx, sql).Scan(&locked)
 		if err != nil {
@@ -262,7 +279,7 @@ DELETE FROM timetable.active_session WHERE client_name = $1`
 	pge.ConfigDb = nil
 }
 
-//Reconnect keeps trying reconnecting every `waitTime` seconds till connection established
+// Reconnect keeps trying reconnecting every `waitTime` seconds till connection established
 func (pge *PgEngine) Reconnect(ctx context.Context) bool {
 	for pge.ConfigDb.Ping(ctx) != nil {
 		pge.l.Info("Connection to the server was lost. Waiting for ", WaitTime, " sec...")
