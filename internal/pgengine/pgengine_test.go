@@ -29,10 +29,10 @@ func SetupTestCaseEx(t *testing.T, fc func(c *config.CmdOptions)) func(t *testin
 	return SetupTestCase(t)
 }
 
-//SetupTestCase used to connect and to initialize test PostgreSQL database
+// SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
 	t.Helper()
-	timeout := time.After(6 * time.Second)
+	timeout := time.After(30 * time.Second)
 	done := make(chan bool)
 	go func() {
 		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
