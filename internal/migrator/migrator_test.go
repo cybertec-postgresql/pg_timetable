@@ -86,6 +86,8 @@ func TestBadMigrations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer pge.Finalize()
+
 	ctx := context.Background()
 	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
@@ -143,6 +145,7 @@ func TestPending(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer pge.Finalize()
 	ctx := context.Background()
 	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {

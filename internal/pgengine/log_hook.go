@@ -3,7 +3,6 @@ package pgengine
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"time"
 
 	pgx "github.com/jackc/pgx/v4"
@@ -19,23 +18,24 @@ type LogHook struct {
 	input           chan logrus.Entry
 	ctx             context.Context
 	lastError       chan error
-	pid             int
+	pid             int32
 	client          string
 	level           string
 }
 
 // NewHook creates a LogHook to be added to an instance of logger
-func NewHook(ctx context.Context, db PgxPoolIface, client string, cacheLimit int, level string) *LogHook {
+func NewHook(ctx context.Context, pge *PgEngine, level string) *LogHook {
+	cacheLimit := 500
 	l := &LogHook{
 		cacheLimit:      cacheLimit,
 		cacheTimeout:    2 * time.Second,
 		highLoadTimeout: 200 * time.Millisecond,
-		db:              db,
+		db:              pge.ConfigDb,
 		input:           make(chan logrus.Entry, cacheLimit),
 		lastError:       make(chan error),
 		ctx:             ctx,
-		pid:             os.Getpid(),
-		client:          client,
+		pid:             pge.Getpid(),
+		client:          pge.ClientName,
 		level:           level,
 	}
 	go l.poll(l.input)

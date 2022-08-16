@@ -107,8 +107,8 @@ COMMENT ON TABLE timetable.parameter IS
 
 CREATE UNLOGGED TABLE timetable.active_session(
     client_pid  BIGINT  NOT NULL,
-    client_name TEXT    NOT NULL,
     server_pid  BIGINT  NOT NULL,
+    client_name TEXT    NOT NULL,
     started_at  TIMESTAMPTZ DEFAULT now()
 );
 

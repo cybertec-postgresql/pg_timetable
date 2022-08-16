@@ -3,7 +3,6 @@ package pgengine
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/georgysavva/scany/pgxscan"
@@ -35,7 +34,7 @@ chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, c
 VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10)`,
 		task.ChainID, task.TaskID, task.Script, task.Kind,
 		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
-		retCode, os.Getpid(), strings.TrimSpace(output), pge.ClientName, task.Txid)
+		retCode, pge.Getpid(), strings.TrimSpace(output), pge.ClientName, task.Txid)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to log chain element execution status")
 	}
@@ -65,7 +64,7 @@ func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int) {
 	}
 }
 
-//Select live chains with proper client_name value
+// Select live chains with proper client_name value
 const sqlSelectLiveChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances
 FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
 
