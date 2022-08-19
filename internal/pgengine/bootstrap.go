@@ -2,6 +2,7 @@ package pgengine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -13,13 +14,17 @@ import (
 	pgconn "github.com/jackc/pgconn"
 	pgx "github.com/jackc/pgx/v4"
 	pgxpool "github.com/jackc/pgx/v4/pgxpool"
+	retry "github.com/sethvargo/go-retry"
 )
 
 // WaitTime specifies amount of time in seconds to wait before reconnecting to DB
-const WaitTime = 5
+const WaitTime = 5 * time.Second
 
 // maximum wait time before reconnect attempts
 const maxWaitTime = WaitTime * 16
+
+// create a new exponential backoff to be used in retry attempts
+var backoff = retry.WithCappedDuration(maxWaitTime, retry.NewExponential(WaitTime))
 
 // PgxIface is common interface for every pgx class
 type PgxIface interface {
@@ -70,7 +75,6 @@ var sqlNames = []string{"DDL", "JSON Schema", "Cron Functions", "Job Functions"}
 
 // New opens connection and creates schema
 func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
-	var wt int = WaitTime
 	var err error
 	pge := &PgEngine{
 		l:               logger,
@@ -83,24 +87,14 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 	defer conncancel()
 
 	config := pge.getPgxConnConfig()
-	pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config)
-	if connctx.Err() != nil {
-		pge.l.WithError(connctx.Err()).Error("Connection cancelled")
-		return nil, connctx.Err()
-	}
-	for err != nil {
-		pge.l.WithError(err).Error("Connection failed")
-		pge.l.Info("Reconnecting in ", wt, " sec...")
-		select {
-		case <-time.After(time.Duration(wt) * time.Second):
-			pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config)
-		case <-connctx.Done():
-			pge.l.WithError(connctx.Err()).Error("Connection request cancelled")
-			return nil, connctx.Err()
+	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
+		if pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config); err != nil {
+			pge.l.Info("Sleeping before reconnecting...")
+			return retry.RetryableError(err)
 		}
-		if wt < maxWaitTime {
-			wt = wt * 2
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 	pge.l.Info("Database connection established")
 	if err := pge.ExecuteSchemaScripts(ctx); err != nil {
@@ -186,39 +180,26 @@ type QueryRowIface interface {
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
 func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) error {
-	// check if the schema is available already first
-	var procoid int
-	err := conn.QueryRow(ctx, "SELECT COALESCE(to_regproc('timetable.try_lock_client_name')::int4, 0)").Scan(&procoid)
-	if err != nil {
+	sql := "SELECT COALESCE(to_regproc('timetable.try_lock_client_name')::int4, 0)"
+	var procoid int // check if the schema is available first
+	if err := conn.QueryRow(ctx, sql).Scan(&procoid); err != nil {
 		return err
 	}
-	if procoid == 0 {
-		//there is no schema yet, will lock after bootstrapping
+	if procoid == 0 { //there is no schema yet, will lock after bootstrapping
 		pge.l.Debug("There is no schema yet, will lock after bootstrapping")
 		return nil
 	}
-	var wt int = WaitTime
-	for {
-		sql := fmt.Sprintf("SELECT timetable.try_lock_client_name(%d, $worker$%s$worker$)", pge.Getpid(), pge.ClientName)
+	sql = "SELECT timetable.try_lock_client_name($1, $2)"
+	return retry.Do(ctx, backoff, func(ctx context.Context) error {
 		var locked bool
-		err = conn.QueryRow(ctx, sql).Scan(&locked)
-		if err != nil {
-			pge.l.WithError(err).Error("Client name locking failed")
-			return err
+		if e := conn.QueryRow(ctx, sql, pge.Getpid(), pge.ClientName).Scan(&locked); e != nil {
+			return e
 		} else if !locked {
 			pge.l.Info("Cannot obtain lock for a session")
-		} else {
-			return nil
+			return retry.RetryableError(errors.New("Cannot obtain lock for a session"))
 		}
-		select {
-		case <-time.After(time.Duration(wt) * time.Second):
-			if wt < maxWaitTime {
-				wt = wt * 2
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
+		return nil
+	})
 }
 
 // ExecuteCustomScripts executes SQL scripts in files
@@ -277,20 +258,4 @@ DELETE FROM timetable.active_session WHERE client_name = $1`
 	}
 	pge.ConfigDb.Close()
 	pge.ConfigDb = nil
-}
-
-// Reconnect keeps trying reconnecting every `waitTime` seconds till connection established
-func (pge *PgEngine) Reconnect(ctx context.Context) bool {
-	for pge.ConfigDb.Ping(ctx) != nil {
-		pge.l.Info("Connection to the server was lost. Waiting for ", WaitTime, " sec...")
-		select {
-		case <-time.After(WaitTime * time.Second):
-			pge.l.Info("Reconnecting...")
-		case <-ctx.Done():
-			pge.l.WithError(ctx.Err()).Info("Request cancelled")
-			return false
-		}
-	}
-	pge.l.Info("Connection reestablished...")
-	return true
 }

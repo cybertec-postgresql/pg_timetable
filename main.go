@@ -33,6 +33,7 @@ func SetupCloseHandler(cancel context.CancelFunc) {
 		<-c
 		cancel()
 	}()
+	exitCode = ExitCodeUserCancel
 }
 
 const (
@@ -40,7 +41,11 @@ const (
 	ExitCodeConfigError
 	ExitCodeDBEngineError
 	ExitCodeUpgradeError
+	ExitCodeUserCancel
+	ExitCodeShutdownCommand
 )
+
+var exitCode = ExitCodeOK
 
 // version output variables
 var (
@@ -60,7 +65,6 @@ func printVersion() {
 }
 
 func main() {
-	exitCode := ExitCodeOK
 	defer func() { os.Exit(exitCode) }()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -86,6 +90,7 @@ func main() {
 	apiserver := api.Init(cmdOpts.RestApi, logger)
 
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
+		logger.WithError(err).Error("Connection failed")
 		exitCode = ExitCodeDBEngineError
 		return
 	}
@@ -94,7 +99,7 @@ func main() {
 	if cmdOpts.Start.Upgrade {
 		if err := pge.MigrateDb(ctx); err != nil {
 			logger.WithError(err).Error("Upgrade failed")
-			exitCode = 3
+			exitCode = ExitCodeUpgradeError
 			return
 		}
 	} else {
@@ -115,10 +120,7 @@ func main() {
 	sch := scheduler.New(pge, logger)
 	apiserver.Reporter = sch
 
-	for sch.Run(ctx) == scheduler.RunningStatus {
-		if !pge.Reconnect(ctx) {
-			exitCode = ExitCodeDBEngineError
-			return
-		}
+	if sch.Run(ctx) == scheduler.ShutdownStatus {
+		exitCode = ExitCodeShutdownCommand
 	}
 }

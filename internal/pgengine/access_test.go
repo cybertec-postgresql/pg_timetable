@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/pashagolub/pgxmock"
@@ -17,14 +16,14 @@ func TestDeleteChainConfig(t *testing.T) {
 	defer mockPool.Close()
 
 	t.Run("Check DeleteChainConfig if everyhing fine", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
 		defer cancel()
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		assert.True(t, pge.DeleteChainConfig(ctx, 0))
 	})
 
 	t.Run("Check DeleteChainConfig if sql fails", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*time.Second+2)
+		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
 		defer cancel()
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain").WillReturnError(errors.New("error"))
 		assert.False(t, pge.DeleteChainConfig(ctx, 0))

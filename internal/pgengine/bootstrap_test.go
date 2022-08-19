@@ -66,27 +66,6 @@ func TestExecuteCustomScripts(t *testing.T) {
 	})
 }
 
-func TestReconnectAndFixLeftovers(t *testing.T) {
-	initmockdb(t)
-	defer mockPool.Close()
-	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	t.Run("Check ReconnectAndFixLeftovers if everything fine", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		mockPool.ExpectPing()
-		assert.True(t, mockpge.Reconnect(ctx))
-	})
-
-	t.Run("Check ReconnectAndFixLeftovers if error returned", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), (pgengine.WaitTime+2)*time.Second)
-		defer cancel()
-		mockPool.ExpectPing().WillReturnError(errors.New("expected"))
-		mockPool.ExpectPing().WillDelayFor(pgengine.WaitTime * time.Second * 2)
-		assert.False(t, mockpge.Reconnect(ctx))
-	})
-	assert.NoError(t, mockPool.ExpectationsWereMet())
-}
-
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
 	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
@@ -166,9 +145,10 @@ func TestTryLockClientName(t *testing.T) {
 			1,     //procoid
 			false, //locked
 			false, //locked
+			false, //locked
 		}}
 		m := mockpgconn{r}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
+		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*2)
 		defer cancel()
 		assert.ErrorIs(t, pge.TryLockClientName(ctx, m), ctx.Err())
 	})
