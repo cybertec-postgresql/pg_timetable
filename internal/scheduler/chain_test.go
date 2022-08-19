@@ -82,7 +82,7 @@ func TestChainWorker(t *testing.T) {
 	})
 
 	t.Run("Check chainWorker if cannot proceed with chain execution", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), (pgengine.WaitTime+2)*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
 		defer cancel()
 		mock.ExpectQuery("SELECT count").WillReturnError(errors.New("expected"))
 		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("INSERT", 1))

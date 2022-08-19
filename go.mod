@@ -12,6 +12,7 @@ require (
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock v1.8.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
+	github.com/sethvargo/go-retry v0.2.3
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.8.0

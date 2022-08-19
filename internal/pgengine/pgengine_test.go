@@ -118,15 +118,11 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
 	})
 
-	t.Run("Check Reconnecting Database", func(t *testing.T) {
-		assert.Equal(t, true, pge.Reconnect(ctx),
-			"Should succeed for reconnect")
-	})
 }
 
 func TestFailedConnect(t *testing.T) {
 	c := config.NewCmdOptions("-h", "fake", "-c", "pgengine_test")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*pgengine.WaitTime*2)
+	ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*2)
 	defer cancel()
 	_, err := pgengine.New(ctx, *c, log.Init(config.LoggingOpts{LogLevel: "error"}))
 	assert.ErrorIs(t, err, ctx.Err())
