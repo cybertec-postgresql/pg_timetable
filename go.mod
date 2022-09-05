@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
-	github.com/georgysavva/scany v1.1.0
+	github.com/georgysavva/scany v1.2.0
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgtype v1.12.0
 	github.com/jackc/pgx/v4 v4.17.2
