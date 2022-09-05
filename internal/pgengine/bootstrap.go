@@ -11,9 +11,9 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 
-	pgconn "github.com/jackc/pgconn"
-	pgx "github.com/jackc/pgx/v4"
-	pgxpool "github.com/jackc/pgx/v4/pgxpool"
+	pgx "github.com/jackc/pgx/v5"
+	pgconn "github.com/jackc/pgx/v5/pgconn"
+	pgxpool "github.com/jackc/pgx/v5/pgxpool"
 	retry "github.com/sethvargo/go-retry"
 )
 
@@ -88,7 +88,7 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 
 	config := pge.getPgxConnConfig()
 	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
-		if pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config); err != nil {
+		if pge.ConfigDb, err = pgxpool.NewWithConfig(connctx, config); err != nil {
 			pge.l.Info("Sleeping before reconnecting...")
 			return retry.RetryableError(err)
 		}

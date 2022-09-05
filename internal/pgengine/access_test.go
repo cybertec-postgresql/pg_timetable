@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/pashagolub/pgxmock"
+	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 )
 
