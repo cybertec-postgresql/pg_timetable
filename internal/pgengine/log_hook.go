@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	pgx "github.com/jackc/pgx/v4"
+	pgx "github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
 )
 

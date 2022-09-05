@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-
-	"github.com/georgysavva/scany/pgxscan"
 )
 
 // InvalidOid specifies value for non-existent objects
@@ -71,13 +69,13 @@ FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
 // SelectRebootChains returns a list of chains should be executed after reboot
 func (pge *PgEngine) SelectRebootChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = '@reboot'`
-	return pgxscan.Select(ctx, pge.ConfigDb, dest, sqlSelectRebootChains, pge.ClientName)
+	return Select(ctx, pge.ConfigDb, dest, sqlSelectRebootChains, pge.ClientName)
 }
 
 // SelectChains returns a list of chains should be executed at the current moment
 func (pge *PgEngine) SelectChains(ctx context.Context, dest interface{}) error {
 	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
-	return pgxscan.Select(ctx, pge.ConfigDb, dest, sqlSelectChains, pge.ClientName)
+	return Select(ctx, pge.ConfigDb, dest, sqlSelectChains, pge.ClientName)
 }
 
 // SelectIntervalChains returns list of interval chains to be executed
@@ -88,7 +86,7 @@ COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances,
 EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
 starts_with(run_at, '@after') as repeat_after
 FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
-	return pgxscan.Select(ctx, pge.ConfigDb, dest, sqlSelectIntervalChains, pge.ClientName)
+	return Select(ctx, pge.ConfigDb, dest, sqlSelectIntervalChains, pge.ClientName)
 }
 
 // SelectChain returns the chain with the specified ID
@@ -96,5 +94,5 @@ func (pge *PgEngine) SelectChain(ctx context.Context, dest interface{}, chainID 
 	// we accept not only live chains here because we want to run them in debug mode
 	const sqlSelectSingleChain = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances
 FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_id = $2`
-	return pgxscan.Get(ctx, pge.ConfigDb, dest, sqlSelectSingleChain, pge.ClientName, chainID)
+	return Get(ctx, pge.ConfigDb, dest, sqlSelectSingleChain, pge.ClientName, chainID)
 }

@@ -7,18 +7,10 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	pgx "github.com/jackc/pgx/v4"
+	pgx "github.com/jackc/pgx/v5"
 )
 
-// Chain structure used to represent tasks chains
-type Chain struct {
-	ChainID            int    `db:"chain_id"`
-	ChainName          string `db:"chain_name"`
-	SelfDestruct       bool   `db:"self_destruct"`
-	ExclusiveExecution bool   `db:"exclusive_execution"`
-	MaxInstances       int    `db:"max_instances"`
-	Timeout            int    `db:"timeout"`
-}
+type Chain = pgengine.Chain
 
 // SendChain sends chain to the channel for workers
 func (sch *Scheduler) SendChain(c Chain) {
@@ -54,9 +46,9 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 		if chainSignal.ConfigID == 0 {
 			return
 		}
+		var c Chain
 		switch chainSignal.Command {
 		case "START":
-			var c Chain
 			err := sch.pgengine.SelectChain(ctx, &c, chainSignal.ConfigID)
 			if err != nil {
 				sch.l.WithError(err).Error("Could not query pending tasks")
@@ -73,11 +65,11 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 
 func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 	var err error
+	var headChains []Chain
 	msg := "Retrieve scheduled chains to run"
 	if reboot {
 		msg = msg + " @reboot"
 	}
-	headChains := []Chain{}
 	if reboot {
 		err = sch.pgengine.SelectRebootChains(ctx, &headChains)
 	} else {
@@ -184,7 +176,9 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 	chainL = chainL.WithField("txid", txid)
 
-	if !sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.ChainID) {
+	err = sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.ChainID)
+	if err != nil {
+		chainL.WithError(err).Error("Failed to retrieve chain elements")
 		sch.pgengine.RollbackTransaction(ctx, tx)
 		return
 	}
@@ -229,7 +223,10 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 	)
 
 	l := log.GetLogger(ctx)
-	if !sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task) {
+
+	err = sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task)
+	if err != nil {
+		l.WithError(err).Error("cannot fetch parameters values for chain: ", err)
 		return -1
 	}
 

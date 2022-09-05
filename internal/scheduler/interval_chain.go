@@ -5,23 +5,10 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
-// IntervalChain structure used to represent repeated chains.
-type IntervalChain struct {
-	Chain
-	Interval    int  `db:"interval_seconds"`
-	RepeatAfter bool `db:"repeat_after"`
-}
-
-func (ichain IntervalChain) isListed(ichains []IntervalChain) bool {
-	for _, ic := range ichains {
-		if ichain.ChainID == ic.ChainID {
-			return true
-		}
-	}
-	return false
-}
+type IntervalChain = pgengine.IntervalChain
 
 // SendIntervalChain sends interval chain to the channel for workers
 func (sch *Scheduler) SendIntervalChain(c IntervalChain) {
@@ -56,7 +43,7 @@ func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 }
 
 func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
-	ichains := []IntervalChain{}
+	var ichains []IntervalChain
 	err := sch.pgengine.SelectIntervalChains(ctx, &ichains)
 	if err != nil {
 		sch.l.WithError(err).Error("Could not query pending interval tasks")
@@ -67,7 +54,7 @@ func (sch *Scheduler) retrieveIntervalChainsAndRun(ctx context.Context) {
 	// delete chains that are not returned from the database
 	sch.intervalChainMutex.Lock()
 	for id, ichain := range sch.intervalChains {
-		if !ichain.isListed(ichains) {
+		if !ichain.IsListed(ichains) {
 			delete(sch.intervalChains, id)
 		}
 	}
