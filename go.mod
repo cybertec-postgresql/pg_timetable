@@ -7,7 +7,7 @@ require (
 	github.com/georgysavva/scany v1.1.0
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgtype v1.12.0
-	github.com/jackc/pgx/v4 v4.17.1
+	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock v1.8.0
