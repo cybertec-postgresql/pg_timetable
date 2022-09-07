@@ -43,7 +43,7 @@ func (ichain IntervalChain) IsListed(ichains []IntervalChain) bool {
 
 // ChainTask structure describes each chain task
 type ChainTask struct {
-	ChainID       int
+	ChainID       int         `db:"-"`
 	TaskID        int         `db:"task_id"`
 	Script        string      `db:"command"`
 	Kind          string      `db:"kind"`
@@ -52,9 +52,9 @@ type ChainTask struct {
 	Autonomous    bool        `db:"autonomous"`
 	ConnectString pgtype.Text `db:"database_connection"`
 	Timeout       int         `db:"timeout"` // in milliseconds
-	StartedAt     time.Time
-	Duration      int64 // in microseconds
-	Txid          int
+	StartedAt     time.Time   `db:"-"`
+	Duration      int64       `db:"-"` // in microseconds
+	Txid          int         `db:"-"`
 }
 
 // StartTransaction returns transaction object, transaction id and error
@@ -108,16 +108,28 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 }
 
 // GetChainElements returns all elements for a given chain
-func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks interface{}, chainID int) error {
+func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks *[]ChainTask, chainID int) error {
 	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
-	return Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
+	// return Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
+	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
+	if err != nil {
+		return err
+	}
+	*chainTasks, err = pgx.CollectRows(rows, RowToStructByName[ChainTask])
+	return err
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, task *ChainTask) error {
+func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues *[]string, task *ChainTask) error {
 	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
-	return Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
+	// return Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
+	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
+	if err != nil {
+		return err
+	}
+	*paramValues, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	return err
 }
 
 type executor interface {

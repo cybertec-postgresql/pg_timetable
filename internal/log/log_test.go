@@ -7,7 +7,6 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
-	"github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,10 +30,10 @@ func TestFileLogger(t *testing.T) {
 	_ = os.Remove("test.log")
 }
 
-func TestPgxLog(t *testing.T) {
-	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: "trace"}))
-	var level pgx.LogLevel
-	for level = pgx.LogLevelNone; level <= pgx.LogLevelTrace; level++ {
-		pgxl.Log(context.Background(), level, "foo", map[string]interface{}{"func": "TestPgxLog"})
-	}
-}
+// func TestPgxLog(t *testing.T) {
+// 	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: "trace"}))
+// 	var level pgx.LogLevel
+// 	for level = pgx.LogLevelNone; level <= pgx.LogLevelTrace; level++ {
+// 		pgxl.Log(context.Background(), level, "foo", map[string]interface{}{"func": "TestPgxLog"})
+// 	}
+// }

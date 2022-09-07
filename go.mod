@@ -4,13 +4,10 @@ go 1.18
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
-	github.com/georgysavva/scany v1.1.0
-	github.com/jackc/pgconn v1.13.0
-	github.com/jackc/pgtype v1.12.0
-	github.com/jackc/pgx/v4 v4.17.0
+	github.com/jackc/pgx/v5 v5.0.0-beta.5
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
-	github.com/pashagolub/pgxmock/v2 v2.0.0-beta1
+	github.com/pashagolub/pgxmock/v2 v2.0.0-beta2
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sethvargo/go-retry v0.2.3
 	github.com/sirupsen/logrus v1.9.0
@@ -22,13 +19,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgx/v5 v5.0.0-beta.4 // indirect
-	github.com/jackc/puddle v1.2.1 // indirect
 	github.com/jackc/puddle/v2 v2.0.0-beta.2 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

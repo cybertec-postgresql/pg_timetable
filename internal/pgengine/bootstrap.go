@@ -88,7 +88,11 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 
 	config := pge.getPgxConnConfig()
 	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
-		if pge.ConfigDb, err = pgxpool.NewWithConfig(connctx, config); err != nil {
+		if pge.ConfigDb, err = pgxpool.NewWithConfig(connctx, config); err == nil {
+			err = pge.ConfigDb.Ping(connctx)
+		}
+		if err != nil {
+			pge.l.WithError(err).Error("Connection failed")
 			pge.l.Info("Sleeping before reconnecting...")
 			return retry.RetryableError(err)
 		}
