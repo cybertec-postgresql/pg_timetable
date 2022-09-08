@@ -162,7 +162,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		}
 		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(pge.ClientName))
 		if pge.logTypeOID == InvalidOid {
-			err = pgconn.QueryRow(ctx, "select 'timetable.log_type'::regtype::oid;").Scan(&pge.logTypeOID)
+			err = pgconn.QueryRow(ctx, "select coalesce(to_regtype('timetable.log_type')::oid, 0)").Scan(&pge.logTypeOID)
 		}
 		pgconn.TypeMap().RegisterType(&pgtype.Type{Name: "timetable.log_type", OID: pge.logTypeOID, Codec: &pgtype.EnumCodec{}})
 		return err
