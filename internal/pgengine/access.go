@@ -34,7 +34,7 @@ chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, c
 VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10)`,
 		task.ChainID, task.TaskID, task.Script, task.Kind,
 		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
-		retCode, pge.Getpid(), strings.TrimSpace(output), pge.ClientName, task.Txid)
+		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Txid)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to log chain element execution status")
 	}

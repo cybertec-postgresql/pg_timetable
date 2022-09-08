@@ -16,8 +16,7 @@ func TestRowToStructByNameEmbeddedStruct(t *testing.T) {
 	}
 
 	type person struct {
-		Ignore    bool `db:"-"`
-		unxported bool
+		Ignore bool `db:"-"`
 		Name
 		Age int32
 	}

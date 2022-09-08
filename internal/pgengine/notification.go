@@ -42,7 +42,7 @@ var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{})
 
 // NotificationHandler consumes notifications from the PostgreSQL server
 func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
-	l := pge.l.WithField("ConnPID", c.PID()).WithField("notification", *n)
+	l := pge.l.WithField("pid", c.PID()).WithField("notification", *n)
 	l.Debug("Notification received")
 	var signal ChainSignal
 	var err error

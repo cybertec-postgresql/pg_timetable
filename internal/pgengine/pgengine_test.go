@@ -3,7 +3,7 @@ package pgengine_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -221,7 +221,7 @@ func TestSamplesScripts(t *testing.T) {
 	teardownTestCase := SetupTestCase(t)
 	defer teardownTestCase(t)
 
-	files, err := ioutil.ReadDir("../../samples")
+	files, err := os.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
 	l := log.Init(config.LoggingOpts{LogLevel: "error"})
 	for _, f := range files {
