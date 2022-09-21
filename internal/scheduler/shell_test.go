@@ -12,7 +12,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
-	"github.com/pashagolub/pgxmock"
+	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 )
 

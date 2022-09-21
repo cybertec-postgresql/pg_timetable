@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/pashagolub/pgxmock"
+	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,18 +61,20 @@ func TestRemoveChainRunStatus(t *testing.T) {
 }
 
 func TestSelectChains(t *testing.T) {
+	var c *[]pgengine.Chain
+	var ic *[]pgengine.IntervalChain
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
 	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectChains(context.Background(), struct{}{}))
+	assert.Error(t, pge.SelectChains(context.Background(), c))
 
 	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectRebootChains(context.Background(), struct{}{}))
+	assert.Error(t, pge.SelectRebootChains(context.Background(), c))
 
 	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectIntervalChains(context.Background(), struct{}{}))
+	assert.Error(t, pge.SelectIntervalChains(context.Background(), ic))
 }
 
 func TestSelectChain(t *testing.T) {

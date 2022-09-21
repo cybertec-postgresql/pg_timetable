@@ -12,8 +12,8 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	pgx "github.com/jackc/pgx/v4"
-	"github.com/pashagolub/pgxmock"
+	pgx "github.com/jackc/pgx/v5"
+	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 )
 

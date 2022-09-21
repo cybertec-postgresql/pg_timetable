@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
@@ -60,7 +60,7 @@ func NewPgxLogger(l LoggerIface) *PgxLogger {
 }
 
 // Log transforms logging calls from pgx to logrus
-func (pgxlogger *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
+func (pgxlogger *PgxLogger) Log(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]any) {
 	logger := GetLogger(ctx)
 	if logger == FallbackLogger { //switch from standard to specified
 		logger = pgxlogger.l
@@ -69,13 +69,13 @@ func (pgxlogger *PgxLogger) Log(ctx context.Context, level pgx.LogLevel, msg str
 		logger = logger.WithFields(data)
 	}
 	switch level {
-	case pgx.LogLevelTrace:
+	case tracelog.LogLevelTrace:
 		logger.WithField("PGX_LOG_LEVEL", level).Debug(msg)
-	case pgx.LogLevelDebug, pgx.LogLevelInfo: //pgx is way too chatty on INFO level
+	case tracelog.LogLevelDebug, tracelog.LogLevelInfo: //pgx is way too chatty on INFO level
 		logger.Debug(msg)
-	case pgx.LogLevelWarn:
+	case tracelog.LogLevelWarn:
 		logger.Warn(msg)
-	case pgx.LogLevelError:
+	case tracelog.LogLevelError:
 		logger.Error(msg)
 	default:
 		logger.WithField("INVALID_PGX_LOG_LEVEL", level).Error(msg)

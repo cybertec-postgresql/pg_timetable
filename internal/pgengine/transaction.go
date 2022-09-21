@@ -10,26 +10,51 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
-	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgtype"
-	pgx "github.com/jackc/pgx/v4"
+	pgx "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// Chain structure used to represent tasks chains
+type Chain struct {
+	ChainID            int    `db:"chain_id"`
+	ChainName          string `db:"chain_name"`
+	SelfDestruct       bool   `db:"self_destruct"`
+	ExclusiveExecution bool   `db:"exclusive_execution"`
+	MaxInstances       int    `db:"max_instances"`
+	Timeout            int    `db:"timeout"`
+}
+
+// IntervalChain structure used to represent repeated chains.
+type IntervalChain struct {
+	Chain
+	Interval    int  `db:"interval_seconds"`
+	RepeatAfter bool `db:"repeat_after"`
+}
+
+func (ichain IntervalChain) IsListed(ichains []IntervalChain) bool {
+	for _, ic := range ichains {
+		if ichain.ChainID == ic.ChainID {
+			return true
+		}
+	}
+	return false
+}
 
 // ChainTask structure describes each chain task
 type ChainTask struct {
-	ChainID       int
-	TaskID        int            `db:"task_id"`
-	Script        string         `db:"command"`
-	Kind          string         `db:"kind"`
-	RunAs         pgtype.Varchar `db:"run_as"`
-	IgnoreError   bool           `db:"ignore_error"`
-	Autonomous    bool           `db:"autonomous"`
-	ConnectString pgtype.Varchar `db:"database_connection"`
-	Timeout       int            `db:"timeout"` // in milliseconds
-	StartedAt     time.Time
-	Duration      int64 // in microseconds
-	Txid          int
+	ChainID       int         `db:"-"`
+	TaskID        int         `db:"task_id"`
+	Script        string      `db:"command"`
+	Kind          string      `db:"kind"`
+	RunAs         pgtype.Text `db:"run_as"`
+	IgnoreError   bool        `db:"ignore_error"`
+	Autonomous    bool        `db:"autonomous"`
+	ConnectString pgtype.Text `db:"database_connection"`
+	Timeout       int         `db:"timeout"` // in milliseconds
+	StartedAt     time.Time   `db:"-"`
+	Duration      int64       `db:"-"` // in microseconds
+	Txid          int         `db:"-"`
 }
 
 // StartTransaction returns transaction object, transaction id and error
@@ -38,7 +63,7 @@ func (pge *PgEngine) StartTransaction(ctx context.Context, chainID int) (tx pgx.
 	if err != nil {
 		return
 	}
-	err = pgxscan.Get(ctx, tx, &txid, "SELECT txid_current()")
+	err = tx.QueryRow(ctx, "SELECT txid_current()").Scan(&txid)
 	if err != nil {
 		return
 	}
@@ -83,26 +108,28 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 }
 
 // GetChainElements returns all elements for a given chain
-func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks interface{}, chainID int) bool {
+func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks *[]ChainTask, chainID int) error {
 	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
-	err := pgxscan.Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
+	// return Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
+	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
 	if err != nil {
-		log.GetLogger(ctx).WithError(err).Error("Failed to retrieve chain elements")
-		return false
+		return err
 	}
-	return true
+	*chainTasks, err = pgx.CollectRows(rows, RowToStructByName[ChainTask])
+	return err
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues interface{}, task *ChainTask) bool {
+func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues *[]string, task *ChainTask) error {
 	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
-	err := pgxscan.Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
+	// return Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
+	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
 	if err != nil {
-		log.GetLogger(ctx).WithError(err).Error("cannot fetch parameters values for chain: ", err)
-		return false
+		return err
 	}
-	return true
+	*paramValues, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	return err
 }
 
 type executor interface {
@@ -123,7 +150,7 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainT
 	}
 
 	//Connect to Remote DB
-	if task.ConnectString.Status != pgtype.Null {
+	if task.ConnectString.Valid {
 		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, task.ConnectString.String)
 		if err != nil {
 			return
@@ -153,12 +180,12 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainT
 	}
 
 	//Reset The Role
-	if task.RunAs.Status != pgtype.Null && !task.Autonomous {
+	if task.RunAs.Valid && !task.Autonomous {
 		pge.ResetRole(ctx, execTx)
 	}
 
 	// Commit changes on remote server
-	if task.ConnectString.Status != pgtype.Null && !task.Autonomous {
+	if task.ConnectString.Valid && !task.Autonomous {
 		pge.CommitTransaction(ctx, execTx)
 	}
 
@@ -175,7 +202,7 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, c
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		ct, err = executor.Exec(ctx, command)
-		out = string(ct)
+		out = ct.String()
 	} else {
 		for _, val := range paramValues {
 			if val > "" {
@@ -183,14 +210,14 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, c
 					return
 				}
 				ct, err = executor.Exec(ctx, command, params...)
-				out = out + string(ct) + "\n"
+				out = out + ct.String() + "\n"
 			}
 		}
 	}
 	return
 }
 
-//GetRemoteDBTransaction create a remote db connection and returns transaction object
+// GetRemoteDBTransaction create a remote db connection and returns transaction object
 func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionString string) (PgxConnIface, pgx.Tx, error) {
 	if strings.TrimSpace(connectionString) == "" {
 		return nil, nil, errors.New("Connection string is blank")
@@ -199,12 +226,12 @@ func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionStrin
 	if err != nil {
 		return nil, nil, err
 	}
-	connConfig.Logger = log.NewPgxLogger(pge.l)
-	if pge.Verbose() {
-		connConfig.LogLevel = pgx.LogLevelDebug
-	} else {
-		connConfig.LogLevel = pgx.LogLevelWarn
-	}
+	// connConfig.Logger = log.NewPgxLogger(pge.l)
+	// if pge.Verbose() {
+	// 	connConfig.LogLevel = pgx.LogLevelDebug
+	// } else {
+	// 	connConfig.LogLevel = pgx.LogLevelWarn
+	// }
 	l := log.GetLogger(ctx)
 	remoteDb, err := pgx.ConnectConfig(ctx, connConfig)
 	if err != nil {
@@ -231,8 +258,8 @@ func (pge *PgEngine) FinalizeRemoteDBConnection(ctx context.Context, remoteDb Pg
 }
 
 // SetRole - set the current user identifier of the current session
-func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varchar) {
-	if runUID.Status == pgtype.Null {
+func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Text) {
+	if !runUID.Valid {
 		return
 	}
 	l := log.GetLogger(ctx)
@@ -243,7 +270,7 @@ func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Varch
 	}
 }
 
-//ResetRole - RESET forms reset the current user identifier to be the current session user identifier
+// ResetRole - RESET forms reset the current user identifier to be the current session user identifier
 func (pge *PgEngine) ResetRole(ctx context.Context, tx pgx.Tx) {
 	l := log.GetLogger(ctx)
 	l.Info("Resetting Role")

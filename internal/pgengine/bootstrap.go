@@ -4,16 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 
-	pgconn "github.com/jackc/pgconn"
-	pgx "github.com/jackc/pgx/v4"
-	pgxpool "github.com/jackc/pgx/v4/pgxpool"
+	pgx "github.com/jackc/pgx/v5"
+	pgconn "github.com/jackc/pgx/v5/pgconn"
+	pgtype "github.com/jackc/pgx/v5/pgtype"
+	pgxpool "github.com/jackc/pgx/v5/pgxpool"
+	tracelog "github.com/jackc/pgx/v5/tracelog"
 	retry "github.com/sethvargo/go-retry"
 )
 
@@ -56,18 +58,19 @@ type PgEngine struct {
 	config.CmdOptions
 	// NOTIFY messages passed verification are pushed to this channel
 	chainSignalChan chan ChainSignal
-	pid             int32
+	sid             int32
+	logTypeOID      uint32
 }
 
-// Getpid returns the pseudo-random process ID to use for the session identification.
+// Getsid returns the pseudo-random session ID to use for the session identification.
 // Previously `os.Getpid()` used but this approach is not producing unique IDs for docker containers
 // where all IDs are the same across all running containers, e.g. 1
-func (pge *PgEngine) Getpid() int32 {
-	if pge.pid == 0 {
+func (pge *PgEngine) Getsid() int32 {
+	if pge.sid == 0 {
 		rand.Seed(time.Now().UnixNano())
-		pge.pid = rand.Int31()
+		pge.sid = rand.Int31()
 	}
-	return pge.pid
+	return pge.sid
 }
 
 var sqls = []string{sqlDDL, sqlJSONSchema, sqlCronFunctions, sqlJobFunctions}
@@ -82,13 +85,17 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 		CmdOptions:      cmdOpts,
 		chainSignalChan: make(chan ChainSignal, 64),
 	}
-	pge.l.WithField("PID", pge.Getpid()).Info("Starting new session... ")
+	pge.l.WithField("sid", pge.Getsid()).Info("Starting new session... ")
 	connctx, conncancel := context.WithTimeout(ctx, time.Duration(cmdOpts.Connection.Timeout)*time.Second)
 	defer conncancel()
 
 	config := pge.getPgxConnConfig()
 	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
-		if pge.ConfigDb, err = pgxpool.ConnectConfig(connctx, config); err != nil {
+		if pge.ConfigDb, err = pgxpool.NewWithConfig(connctx, config); err == nil {
+			err = pge.ConfigDb.Ping(connctx)
+		}
+		if err != nil {
+			pge.l.WithError(err).Error("Connection failed")
 			pge.l.Info("Sleeping before reconnecting...")
 			return retry.RetryableError(err)
 		}
@@ -147,24 +154,27 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		pge.l.WithField("severity", n.Severity).WithField("notice", n.Message).Info("Notice received")
 	}
 	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
-		pge.l.WithField("ConnPID", pgconn.PgConn().PID()).
+		pge.l.WithField("pid", pgconn.PgConn().PID()).
 			WithField("client", pge.ClientName).
 			Debug("Trying to get lock for the session")
 		if err = pge.TryLockClientName(ctx, pgconn); err != nil {
 			return err
 		}
 		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(pge.ClientName))
+		if pge.logTypeOID == InvalidOid {
+			err = pgconn.QueryRow(ctx, "select coalesce(to_regtype('timetable.log_type')::oid, 0)").Scan(&pge.logTypeOID)
+		}
+		pgconn.TypeMap().RegisterType(&pgtype.Type{Name: "timetable.log_type", OID: pge.logTypeOID, Codec: &pgtype.EnumCodec{}})
 		return err
 	}
 	if !pge.Start.Debug { //will handle notification in HandleNotifications directly
 		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
 	}
-	connConfig.ConnConfig.Logger = log.NewPgxLogger(pge.l)
-	if pge.Verbose() {
-		connConfig.ConnConfig.LogLevel = pgx.LogLevelDebug
-	} else {
-		connConfig.ConnConfig.LogLevel = pgx.LogLevelWarn
+	tracelogger := &tracelog.TraceLog{
+		Logger:   log.NewPgxLogger(pge.l),
+		LogLevel: map[bool]tracelog.LogLevel{false: tracelog.LogLevelWarn, true: tracelog.LogLevelDebug}[pge.Verbose()],
 	}
+	connConfig.ConnConfig.Tracer = tracelogger
 	return connConfig
 }
 
@@ -192,7 +202,7 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 	sql = "SELECT timetable.try_lock_client_name($1, $2)"
 	return retry.Do(ctx, backoff, func(ctx context.Context) error {
 		var locked bool
-		if e := conn.QueryRow(ctx, sql, pge.Getpid(), pge.ClientName).Scan(&locked); e != nil {
+		if e := conn.QueryRow(ctx, sql, pge.Getsid(), pge.ClientName).Scan(&locked); e != nil {
 			return e
 		} else if !locked {
 			pge.l.Info("Cannot obtain lock for a session")
@@ -205,7 +215,7 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 // ExecuteCustomScripts executes SQL scripts in files
 func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error {
 	for _, f := range filename {
-		sql, err := ioutil.ReadFile(f)
+		sql, err := os.ReadFile(f)
 		if err != nil {
 			pge.l.WithError(err).Error("Cannot read command file")
 			return err

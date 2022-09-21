@@ -3,12 +3,12 @@ package pgengine_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgtype"
-	pgx "github.com/jackc/pgx/v4"
+	pgx "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -143,7 +143,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		tx, txid, err := pge.StartTransaction(ctx, 0)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, 0, "Should return transaction id")
-		assert.True(t, pge.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
+		assert.NoError(t, pge.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
 		pge.CommitTransaction(ctx, tx)
 	})
@@ -153,7 +153,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		tx, txid, err := pge.StartTransaction(ctx, 0)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, 0, "Should return transaction id")
-		assert.True(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainTask{
+		assert.NoError(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainTask{
 			TaskID:  0,
 			ChainID: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")
@@ -205,7 +205,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	})
 
 	t.Run("Check set role function", func(t *testing.T) {
-		var runUID pgtype.Varchar
+		var runUID pgtype.Text
 		runUID.String = cmdOpts.Connection.User
 		assert.NotPanics(t, func() { pge.SetRole(ctx, tx, runUID) }, "Set Role failed")
 	})
@@ -221,7 +221,7 @@ func TestSamplesScripts(t *testing.T) {
 	teardownTestCase := SetupTestCase(t)
 	defer teardownTestCase(t)
 
-	files, err := ioutil.ReadDir("../../samples")
+	files, err := os.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
 	l := log.Init(config.LoggingOpts{LogLevel: "error"})
 	for _, f := range files {

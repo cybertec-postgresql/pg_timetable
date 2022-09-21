@@ -6,7 +6,7 @@
         {
             "label": "Unit Test",
             "type": "shell",
-            "command": "gotest -failfast -timeout=300s -parallel=1 ./${relativeFileDirname}/... -coverprofile='coverage.out' && go tool cover -func='coverage.out'",
+            "command": "go test -failfast -timeout=300s -parallel=1 ./${relativeFileDirname}/... -coverprofile='coverage.out' -json | tparse -all",
             "problemMatcher": [
                 "$go"
             ],
@@ -23,7 +23,7 @@
         {
             "label": "Coverage Report",
             "type": "shell",
-            "command": "go tool cover -html='coverage.out'",
+            "command": "go tool cover -func='coverage.out' && go tool cover -html='coverage.out'",
             "problemMatcher": [
                 "$go"
             ],

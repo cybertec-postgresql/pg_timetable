@@ -24,7 +24,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v3
       with:
-        go-version: '1.18'
+        go-version: '1.19'
 
     # despite the fact docker will build binary internally 
     # we want to stop workflow in case of any error before pushing to registry 

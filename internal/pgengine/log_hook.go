@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	pgx "github.com/jackc/pgx/v4"
+	pgx "github.com/jackc/pgx/v5"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,7 +34,7 @@ func NewHook(ctx context.Context, pge *PgEngine, level string) *LogHook {
 		input:           make(chan logrus.Entry, cacheLimit),
 		lastError:       make(chan error),
 		ctx:             ctx,
-		pid:             pge.Getpid(),
+		pid:             pge.Getsid(),
 		client:          pge.ClientName,
 		level:           level,
 	}

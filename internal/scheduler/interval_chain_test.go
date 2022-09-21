@@ -7,7 +7,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/pashagolub/pgxmock"
+	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +18,8 @@ func TestIntervalChain(t *testing.T) {
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
 	ichain := IntervalChain{Interval: 42}
-	assert.True(t, ichain.isListed([]IntervalChain{ichain}))
-	assert.False(t, ichain.isListed([]IntervalChain{}))
+	assert.True(t, ichain.IsListed([]IntervalChain{ichain}))
+	assert.False(t, ichain.IsListed([]IntervalChain{}))
 
 	assert.False(t, sch.isValid(ichain))
 	sch.intervalChains[ichain.ChainID] = ichain

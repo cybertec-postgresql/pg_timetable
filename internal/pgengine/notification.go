@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	pgconn "github.com/jackc/pgconn"
+	pgconn "github.com/jackc/pgx/v5/pgconn"
 )
 
 // NotifyTTL specifies how long processed NOTIFY messages should be stored
@@ -20,9 +20,9 @@ type ChainSignal struct {
 	Ts       int64  // timestamp NOTIFY sent
 }
 
-//  Since there are usually multiple opened connections to the database, all of them will receive NOTIFY messages.
-//  To process each NOTIFY message only once we store each message with TTL 1 minute because the max idle period for a
-//  a connection is the main loop period of 1 minute.
+// Since there are usually multiple opened connections to the database, all of them will receive NOTIFY messages.
+// To process each NOTIFY message only once we store each message with TTL 1 minute because the max idle period for a
+// a connection is the main loop period of 1 minute.
 var mutex sync.Mutex
 var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{}) {
 	m = make(map[ChainSignal]struct{})
@@ -42,7 +42,7 @@ var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{})
 
 // NotificationHandler consumes notifications from the PostgreSQL server
 func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification) {
-	l := pge.l.WithField("ConnPID", c.PID()).WithField("notification", *n)
+	l := pge.l.WithField("pid", c.PID()).WithField("notification", *n)
 	l.Debug("Notification received")
 	var signal ChainSignal
 	var err error

@@ -4,7 +4,7 @@ $BODY$
 BEGIN 
    RAISE NOTICE 'Sleeping for 5 sec in %', $1;
    PERFORM pg_sleep_for('5 seconds');
-   RAISE NOTICE 'Waiking up in %', $1;
+   RAISE NOTICE 'Waking up in %', $1;
 END; 
 $BODY$;
 
