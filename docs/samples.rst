@@ -10,12 +10,22 @@ This sample demonstrates how to create a basic one-step chain with parameters. I
     :linenos:
     :language: SQL
 
-Download, Transform and Import
+Send email
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This sample demonstrates how to create enhanced three-step chain with parameters. It uses DO statement to directly update the
+This sample demonstrates how to create a basic one-step chain with parameters. It uses CTE to directly update the
 **timetable** schema tables.
 
-.. literalinclude:: ../samples/Download.sql
+.. literalinclude:: ../samples/Basic.sql
+    :linenos:
+    :language: SQL    
+
+Download, Transform and Import
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This sample demonstrates how to create advanced email job. It will check if there are emails to send,
+will send them and log the status of the command execution. You don't need to setup anything, every parameter
+can be specified during the chain creation.
+
+.. literalinclude:: ../samples/Mail.sql
     :linenos:
     :language: SQL
 
