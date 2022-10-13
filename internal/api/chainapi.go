@@ -6,7 +6,7 @@ import (
 )
 
 func (Server *RestApiServer) chainHandler(w http.ResponseWriter, r *http.Request) {
-	Server.l.Debugf("Received /%s REST API request", r.URL.Path)
+	Server.l.Debug("Received chain REST API request")
 	chainID, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
