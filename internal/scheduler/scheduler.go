@@ -84,6 +84,20 @@ func (sch *Scheduler) IsReady() bool {
 	return sch.status == RunningStatus
 }
 
+func (sch *Scheduler) StartChain(ctx context.Context, chainId int) error {
+	return sch.processAsyncChain(ctx, ChainSignal{
+		ConfigID: chainId,
+		Command:  "START",
+		Ts:       time.Now().Unix()})
+}
+
+func (sch *Scheduler) StopChain(ctx context.Context, chainId int) error {
+	return sch.processAsyncChain(ctx, ChainSignal{
+		ConfigID: chainId,
+		Command:  "STOP",
+		Ts:       time.Now().Unix()})
+}
+
 // Run executes jobs. Returns RunStatus why it terminated.
 // There are only two possibilities: dropped connection and cancelled context.
 func (sch *Scheduler) Run(ctx context.Context) RunStatus {

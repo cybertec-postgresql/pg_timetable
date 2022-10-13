@@ -118,7 +118,7 @@ func main() {
 		return
 	}
 	sch := scheduler.New(pge, logger)
-	apiserver.Reporter = sch
+	apiserver.ApiHandler = sch
 
 	if sch.Run(ctx) == scheduler.ShutdownStatus {
 		exitCode = ExitCodeShutdownCommand
