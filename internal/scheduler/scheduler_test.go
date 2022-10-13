@@ -15,7 +15,7 @@ import (
 
 var pge *pgengine.PgEngine
 
-//SetupTestCase used to connect and to initialize test PostgreSQL database
+// SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
 	cmdOpts := config.NewCmdOptions("-c", "pgengine_unit_test", "--password=somestrong")
 	t.Log("Setup test case")
@@ -53,6 +53,8 @@ func TestRun(t *testing.T) {
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/ManyTasks.sql")
 	assert.NoError(t, err, "Creating many tasks failed")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	assert.NoError(t, sch.StartChain(context.Background(), 1))
+	assert.ErrorContains(t, sch.StopChain(context.Background(), -1), "No running chain found")
 	go func() {
 		time.Sleep(10 * time.Second)
 		sch.Shutdown()
