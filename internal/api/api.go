@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,14 +10,16 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 )
 
-// StatusReporter is a common interface describing the current status of a connection
-type StatusReporter interface {
+// RestHandler is a common interface describing the current status of a connection
+type RestHandler interface {
 	IsReady() bool
+	StartChain(context.Context, int) error
+	StopChain(context.Context, int) error
 }
 
 type RestApiServer struct {
-	Reporter StatusReporter
-	l        log.LoggerIface
+	ApiHandler RestHandler
+	l          log.LoggerIface
 	http.Server
 }
 
@@ -35,6 +38,8 @@ func Init(opts config.RestApiOpts, logger log.LoggerIface) *RestApiServer {
 		w.WriteHeader(http.StatusOK) // i'm serving hence I'm alive
 	})
 	http.HandleFunc("/readiness", s.readinessHandler)
+	http.HandleFunc("/startchain", s.chainHandler)
+	http.HandleFunc("/stopchain", s.chainHandler)
 	if opts.Port != 0 {
 		logger.WithField("port", opts.Port).Info("Starting REST API server...")
 		go func() { logger.Error(s.ListenAndServe()) }()
@@ -44,9 +49,10 @@ func Init(opts config.RestApiOpts, logger log.LoggerIface) *RestApiServer {
 
 func (Server *RestApiServer) readinessHandler(w http.ResponseWriter, r *http.Request) {
 	Server.l.Debug("Received /readiness REST API request")
-	if Server.Reporter == nil || !Server.Reporter.IsReady() {
+	if Server.ApiHandler == nil || !Server.ApiHandler.IsReady() {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	r.Context()
 }

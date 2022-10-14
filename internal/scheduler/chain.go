@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,7 +11,10 @@ import (
 	pgx "github.com/jackc/pgx/v5"
 )
 
-type Chain = pgengine.Chain
+type (
+	Chain       = pgengine.Chain
+	ChainSignal = pgengine.ChainSignal
+)
 
 // SendChain sends chain to the channel for workers
 func (sch *Scheduler) SendChain(c Chain) {
@@ -46,21 +50,29 @@ func (sch *Scheduler) retrieveAsyncChainsAndRun(ctx context.Context) {
 		if chainSignal.ConfigID == 0 {
 			return
 		}
-		var c Chain
-		switch chainSignal.Command {
-		case "START":
-			err := sch.pgengine.SelectChain(ctx, &c, chainSignal.ConfigID)
-			if err != nil {
-				sch.l.WithError(err).Error("Could not query pending tasks")
-			} else {
-				sch.SendChain(c)
-			}
-		case "STOP":
-			if cancel, ok := sch.activeChains[chainSignal.ConfigID]; ok {
-				cancel()
-			}
+		err := sch.processAsyncChain(ctx, chainSignal)
+		if err != nil {
+			sch.l.WithError(err).Error("Could not process async chain command")
 		}
 	}
+}
+
+func (sch *Scheduler) processAsyncChain(ctx context.Context, chainSignal ChainSignal) error {
+	switch chainSignal.Command {
+	case "START":
+		var c Chain
+		if err := sch.pgengine.SelectChain(ctx, &c, chainSignal.ConfigID); err != nil {
+			return err
+		}
+		sch.SendChain(c)
+	case "STOP":
+		if cancel, ok := sch.activeChains[chainSignal.ConfigID]; ok {
+			cancel()
+			return nil
+		}
+		return fmt.Errorf("Cannot stop chain with ID: %d. No running chain found", chainSignal.ConfigID)
+	}
+	return nil
 }
 
 func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {

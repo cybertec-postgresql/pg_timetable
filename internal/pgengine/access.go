@@ -107,9 +107,14 @@ FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL) AN
 }
 
 // SelectChain returns the chain with the specified ID
-func (pge *PgEngine) SelectChain(ctx context.Context, dest interface{}, chainID int) error {
+func (pge *PgEngine) SelectChain(ctx context.Context, dest *Chain, chainID int) error {
 	// we accept not only live chains here because we want to run them in debug mode
 	const sqlSelectSingleChain = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances
 FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_id = $2`
-	return pge.ConfigDb.QueryRow(ctx, sqlSelectSingleChain, pge.ClientName, chainID).Scan(dest)
+	rows, err := pge.ConfigDb.Query(ctx, sqlSelectSingleChain, pge.ClientName, chainID)
+	if err != nil {
+		return err
+	}
+	*dest, err = pgx.CollectOneRow(rows, RowToStructByName[Chain])
+	return err
 }

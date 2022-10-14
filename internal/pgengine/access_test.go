@@ -83,7 +83,7 @@ func TestSelectChain(t *testing.T) {
 	defer mockPool.Close()
 
 	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectChain(context.Background(), struct{}{}, 42))
+	assert.Error(t, pge.SelectChain(context.Background(), &pgengine.Chain{}, 42))
 }
 
 func TestIsAlive(t *testing.T) {
