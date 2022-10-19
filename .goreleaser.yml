@@ -39,11 +39,6 @@ changelog:
 nfpms:
   # note that this is an array of nfpm configs
   -
-
-    # Replacements for GOOS and GOARCH in the package name.
-    # Keys should be valid GOOSs or GOARCHs.
-    # Values are the respective replacements.
-    # Default is empty.
     replacements:
       darwin: Darwin
       linux: Linux
@@ -51,7 +46,7 @@ nfpms:
       386: i386
       amd64: x86_64
 
-    vendor: Cybertec Schönig & Schönig GmbH
+    vendor: CYBERTEC PostgreSQL International GmbH
     homepage: https://www.cybertec-postgresql.com/en/products/pg_timetable/
 
     maintainer: Pavlo Golub <pavlo.golub@cybertec.at>
@@ -63,11 +58,3 @@ nfpms:
     formats:
       - deb
       - rpm
-
-    # Files to add to your package (beyond the binary).
-    # Keys are source paths/globs to get the files from.
-    # Values are the destination locations of the files in the package.
-    # Use globs to add all contents of a folder.
-    # files:
-    #   "scripts/etc/init.d/**": "/etc/init.d"
-    #   "path/**/glob": "/var/foo/glob"

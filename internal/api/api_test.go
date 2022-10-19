@@ -20,21 +20,21 @@ func (r *apihandler) IsReady() bool {
 	return true
 }
 
-func (sch *apihandler) StartChain(ctx context.Context, chainId int) error {
-	if chainId == 0 {
+func (r *apihandler) StartChain(ctx context.Context, chainID int) error {
+	if chainID == 0 {
 		return errors.New("invalid chain id")
 	}
 	return nil
 }
 
-func (sch *apihandler) StopChain(ctx context.Context, chainId int) error {
+func (r *apihandler) StopChain(ctx context.Context, chainID int) error {
 	return nil
 }
 
-var restsrv *api.RestApiServer
+var restsrv *api.RestAPIServer
 
 func init() {
-	restsrv = api.Init(config.RestApiOpts{Port: 8080}, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	restsrv = api.Init(config.RestAPIOpts{Port: 8080}, log.Init(config.LoggingOpts{LogLevel: "error"}))
 }
 
 func TestStatus(t *testing.T) {
@@ -47,14 +47,14 @@ func TestStatus(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusServiceUnavailable, r.StatusCode)
 
-	restsrv.ApiHandler = &apihandler{}
+	restsrv.APIHandler = &apihandler{}
 	r, err = http.Get("http://localhost:8080/readiness")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
 
 func TestChainManager(t *testing.T) {
-	restsrv.ApiHandler = &apihandler{}
+	restsrv.APIHandler = &apihandler{}
 	r, err := http.Get("http://localhost:8080/startchain")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, r.StatusCode)

@@ -84,16 +84,16 @@ func (sch *Scheduler) IsReady() bool {
 	return sch.status == RunningStatus
 }
 
-func (sch *Scheduler) StartChain(ctx context.Context, chainId int) error {
+func (sch *Scheduler) StartChain(ctx context.Context, chainID int) error {
 	return sch.processAsyncChain(ctx, ChainSignal{
-		ConfigID: chainId,
+		ConfigID: chainID,
 		Command:  "START",
 		Ts:       time.Now().Unix()})
 }
 
-func (sch *Scheduler) StopChain(ctx context.Context, chainId int) error {
+func (sch *Scheduler) StopChain(ctx context.Context, chainID int) error {
 	return sch.processAsyncChain(ctx, ChainSignal{
-		ConfigID: chainId,
+		ConfigID: chainID,
 		Command:  "STOP",
 		Ts:       time.Now().Unix()})
 }
