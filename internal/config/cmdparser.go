@@ -43,8 +43,8 @@ type ResourceOpts struct {
 	TaskTimeout     int `long:"task-timeout" mapstructure:"task-timeout" description:"Abort any task within a chain that takes more than the specified number of milliseconds"`
 }
 
-// RestApiOpts fot internal web server impleenting REST API
-type RestApiOpts struct {
+// RestAPIOpts fot internal web server impleenting REST API
+type RestAPIOpts struct {
 	Port int `long:"rest-port" mapstructure:"rest-port" description:"REST API port" env:"PGTT_RESTPORT" default:"0"`
 }
 
@@ -56,7 +56,7 @@ type CmdOptions struct {
 	Logging        LoggingOpts    `group:"Logging" mapstructure:"Logging"`
 	Start          StartOpts      `group:"Start" mapstructure:"Start"`
 	Resource       ResourceOpts   `group:"Resource" mapstructure:"Resource"`
-	RestApi        RestApiOpts    `group:"REST" mapstructure:"REST"`
+	RESTApi        RestAPIOpts    `group:"REST" mapstructure:"REST"`
 	NoProgramTasks bool           `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
 	Version        bool           `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`

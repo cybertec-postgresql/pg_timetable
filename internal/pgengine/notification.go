@@ -24,7 +24,7 @@ type ChainSignal struct {
 // To process each NOTIFY message only once we store each message with TTL 1 minute because the max idle period for a
 // a connection is the main loop period of 1 minute.
 var mutex sync.Mutex
-var notifications map[ChainSignal]struct{} = func() (m map[ChainSignal]struct{}) {
+var notifications = func() (m map[ChainSignal]struct{}) {
 	m = make(map[ChainSignal]struct{})
 	go func() {
 		for now := range time.Tick(time.Duration(NotifyTTL) * time.Second) {

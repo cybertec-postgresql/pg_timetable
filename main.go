@@ -49,10 +49,10 @@ var exitCode = ExitCodeOK
 
 // version output variables
 var (
-	commit  string = "000000"
-	version string = "master"
-	date    string = "unknown"
-	dbapi   string = "00436"
+	commit  = "000000"
+	version = "master"
+	date    = "unknown"
+	dbapi   = "00436"
 )
 
 func printVersion() {
@@ -87,7 +87,7 @@ func main() {
 	}
 
 	logger := log.Init(cmdOpts.Logging)
-	apiserver := api.Init(cmdOpts.RestApi, logger)
+	apiserver := api.Init(cmdOpts.RESTApi, logger)
 
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
 		logger.WithError(err).Error("Connection failed")
@@ -118,7 +118,7 @@ func main() {
 		return
 	}
 	sch := scheduler.New(pge, logger)
-	apiserver.ApiHandler = sch
+	apiserver.APIHandler = sch
 
 	if sch.Run(ctx) == scheduler.ShutdownStatus {
 		exitCode = ExitCodeShutdownCommand

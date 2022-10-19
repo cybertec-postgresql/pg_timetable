@@ -37,7 +37,7 @@ type Dialer interface {
 }
 
 // NewDialer returns a new gomail dialer instance
-var NewDialer func(host string, port int, username, password string) Dialer = func(host string, port int, username, password string) Dialer {
+var NewDialer = func(host string, port int, username, password string) Dialer {
 	return gomail.NewDialer(host, port, username, password)
 }
 

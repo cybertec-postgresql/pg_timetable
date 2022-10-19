@@ -17,14 +17,14 @@ type RestHandler interface {
 	StopChain(context.Context, int) error
 }
 
-type RestApiServer struct {
-	ApiHandler RestHandler
+type RestAPIServer struct {
+	APIHandler RestHandler
 	l          log.LoggerIface
 	http.Server
 }
 
-func Init(opts config.RestApiOpts, logger log.LoggerIface) *RestApiServer {
-	s := &RestApiServer{
+func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
+	s := &RestAPIServer{
 		nil,
 		logger,
 		http.Server{
@@ -47,9 +47,9 @@ func Init(opts config.RestApiOpts, logger log.LoggerIface) *RestApiServer {
 	return s
 }
 
-func (Server *RestApiServer) readinessHandler(w http.ResponseWriter, r *http.Request) {
+func (Server *RestAPIServer) readinessHandler(w http.ResponseWriter, r *http.Request) {
 	Server.l.Debug("Received /readiness REST API request")
-	if Server.ApiHandler == nil || !Server.ApiHandler.IsReady() {
+	if Server.APIHandler == nil || !Server.APIHandler.IsReady() {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
