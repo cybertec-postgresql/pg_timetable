@@ -62,7 +62,7 @@ func (sch *Scheduler) processAsyncChain(ctx context.Context, chainSignal ChainSi
 	case "START":
 		var c Chain
 		if err := sch.pgengine.SelectChain(ctx, &c, chainSignal.ConfigID); err != nil {
-			return err
+			return fmt.Errorf("Cannot start chain with ID: %d; %w", chainSignal.ConfigID, err)
 		}
 		sch.SendChain(c)
 	case "STOP":
