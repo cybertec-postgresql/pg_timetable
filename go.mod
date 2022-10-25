@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
-	github.com/jackc/pgx/v5 v5.0.3
+	github.com/jackc/pgx/v5 v5.0.4
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock/v2 v2.1.0
@@ -35,7 +35,7 @@ require (
 	github.com/subosito/gotenv v1.4.1 // indirect
 	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0 // indirect
 	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
