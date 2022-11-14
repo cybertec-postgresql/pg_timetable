@@ -232,7 +232,7 @@ func TestTableExists(t *testing.T) {
 	}
 	var expectederr error
 	for _, res := range sqlresults {
-		if q := mock.ExpectQuery("SELECT to_regclass"); res.tableerr != nil {
+		if q := mock.ExpectQuery("SELECT to_regclass").WithArgs(pgxmock.AnyArg()); res.tableerr != nil {
 			q.WillReturnError(res.tableerr)
 			expectederr = res.tableerr
 		} else {

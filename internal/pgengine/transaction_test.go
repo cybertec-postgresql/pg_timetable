@@ -112,42 +112,22 @@ func TestExecuteSQLCommand(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	sqlresults := []struct {
-		sql    string
-		params []string
-		err    error
-	}{
-		{
-			sql:    "",
-			params: []string{},
-			err:    errors.New("SQL command cannot be empty"),
-		},
-		{
-			sql:    "foo",
-			params: []string{},
-			err:    nil,
-		},
-		{
-			sql:    "correct json",
-			params: []string{`["John", 30, null]`},
-			err:    nil,
-		},
-		{
-			sql:    "incorrect json",
-			params: []string{"foo"},
-			err: func(s string) error {
-				return json.Unmarshal([]byte(s), &struct{}{})
-			}("foo"),
-		},
-	}
 	ctx := context.Background()
-	for _, res := range sqlresults {
-		if res.sql != "" {
-			mockPool.ExpectExec(res.sql).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-		}
-		_, err := pge.ExecuteSQLCommand(ctx, mockPool, res.sql, res.params)
-		assert.Equal(t, res.err, err)
-	}
+
+	_, err := pge.ExecuteSQLCommand(ctx, mockPool, "", []string{})
+	assert.Error(t, err)
+
+	mockPool.ExpectExec("correct json").WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
+	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "correct json", []string{})
+	assert.NoError(t, err)
+
+	mockPool.ExpectExec("correct json").WithArgs("John", 30.0, nil).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
+	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "correct json", []string{`["John", 30, null]`})
+	assert.NoError(t, err)
+
+	mockPool.ExpectExec("incorrect json").WillReturnError(json.Unmarshal([]byte("foo"), &struct{}{}))
+	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "incorrect json", []string{"foo"})
+	assert.Error(t, err)
 }
 
 func TestGetChainElements(t *testing.T) {
@@ -157,7 +137,7 @@ func TestGetChainElements(t *testing.T) {
 	ctx := context.Background()
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("SELECT").WillReturnError(errors.New("error"))
+	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.Error(t, pge.GetChainElements(ctx, tx, &[]pgengine.ChainTask{}, 0))
@@ -172,7 +152,7 @@ func TestGetChainElements(t *testing.T) {
 	assert.NoError(t, pge.GetChainElements(ctx, tx, &[]pgengine.ChainTask{}, 0))
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("SELECT").WillReturnError(errors.New("error"))
+	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.Error(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))

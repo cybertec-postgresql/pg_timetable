@@ -69,7 +69,9 @@ func TestExecuteCustomScripts(t *testing.T) {
 func TestFinalizeConnection(t *testing.T) {
 	initmockdb(t)
 	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	mockPool.ExpectExec(`DELETE FROM timetable\.active_session`).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
+	mockPool.ExpectExec(`DELETE FROM timetable\.active_session`).
+		WithArgs(mockpge.ClientName).
+		WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
 	mockPool.ExpectClose()
 	mockpge.Finalize()
 	assert.NoError(t, mockPool.ExpectationsWereMet())
