@@ -115,6 +115,6 @@ FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_i
 	if err != nil {
 		return err
 	}
-	*dest, err = pgx.CollectOneRow(rows, RowToStructByName[Chain])
+	*dest, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[Chain])
 	return err
 }
