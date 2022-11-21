@@ -116,7 +116,7 @@ FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
 	if err != nil {
 		return err
 	}
-	*chainTasks, err = pgx.CollectRows(rows, RowToStructByName[ChainTask])
+	*chainTasks, err = pgx.CollectRows(rows, pgx.RowToStructByName[ChainTask])
 	return err
 }
 
