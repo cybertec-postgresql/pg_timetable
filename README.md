@@ -96,13 +96,13 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 ## Supported Environments
 | Cloud Service    | Supported | PostgreSQL Version | Supported | OS | Supported |
 | ---------------- |:---------:| ------------------ |:---------:| -- |:---------:|
-| [Alibaba Cloud]  | ✅       | [15 (devel)]   | ✅ | Linux    | ✅ |
-| [Amazon RDS]     | ✅       | [14 (current)] | ✅ | Darwin   | ✅ |
-| [Amazon Aurora]  | ✅       | [13]           | ✅ | Windows  | ✅ |
-| [Azure]          | ✅       | [12]           | ✅ | FreeBSD\*| ✅ |
-| [Citus Cloud]    | ✅       | [11]           | ✅ | NetBSD\* | ✅ |
-| [Crunchy Bridge] | ✅       | [10]          | ✅ | OpenBSD\*| ✅ | 
-| [DigitalOcean]   | ✅       |                |    | Solaris\* | ✅ |
+| [Alibaba Cloud]  | ✅       | [16 (devel)]   | ✅ | Linux    | ✅ |
+| [Amazon RDS]     | ✅       | [15 (current)] | ✅ | Darwin   | ✅ |
+| [Amazon Aurora]  | ✅       | [14]           | ✅ | Windows  | ✅ |
+| [Azure]          | ✅       | [13]           | ✅ | FreeBSD\*| ✅ |
+| [Citus Cloud]    | ✅       | [12]           | ✅ | NetBSD\* | ✅ |
+| [Crunchy Bridge] | ✅       | [11]          | ✅ | OpenBSD\*| ✅ | 
+| [DigitalOcean]   | ✅       | [10]          | ✅ | Solaris\* | ✅ |
 | [Google Cloud]   | ✅       |
 | [Heroku]         | ✅       |
 | [Supabase]       | ✅       |
@@ -121,8 +121,9 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Google Cloud]: https://cloud.google.com/sql/docs/postgres/
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
-[15 (devel)]: https://www.postgresql.org/docs/devel/index.html
-[14 (current)]: https://www.postgresql.org/docs/14/index.html
+[16 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[15 (current)]: https://www.postgresql.org/docs/15/index.html
+[14]: https://www.postgresql.org/docs/14/index.html
 [13]: https://www.postgresql.org/docs/13/index.html
 [12]: https://www.postgresql.org/docs/12/index.html
 [11]: https://www.postgresql.org/docs/11/index.html
