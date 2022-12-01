@@ -40,7 +40,7 @@ jobs:
         echo "RELEASE_TIME=$(git show -s --format=%cI HEAD)" >> $GITHUB_OUTPUT
 
     - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@v4
+      uses: elgohr/Publish-Docker-Github-Action@v5
       env:
         VERSION: ${{ github.ref_name }}
         COMMIT: ${{ github.sha }}
