@@ -134,7 +134,7 @@ jobs:
         path-to-profile: profile.cov      
 
     - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v3
+      uses: goreleaser/goreleaser-action@v4
       with:
         version: latest
         args: release --snapshot --skip-publish --rm-dist
