@@ -131,6 +131,16 @@ CREATE OR REPLACE FUNCTION timetable.cron_runs(
     ORDER BY 1 ASC;
 $$ LANGUAGE SQL STRICT;
 
+CREATE DOMAIN timetable.cron AS TEXT CHECK(
+    VALUE = '@reboot'
+    OR substr(VALUE, 1, 6) IN ('@every', '@after') 
+       AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
+    OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
+       AND timetable.cron_split_to_arrays(VALUE) IS NOT NULL
+);
+
+COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support of interval values';
+
 -- is_cron_in_time returns TRUE if timestamp is listed in cron expression
 CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(
     run_at timetable.cron, 

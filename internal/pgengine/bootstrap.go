@@ -73,8 +73,8 @@ func (pge *PgEngine) Getsid() int32 {
 	return pge.sid
 }
 
-var sqls = []string{sqlDDL, sqlJSONSchema, sqlCronFunctions, sqlJobFunctions}
-var sqlNames = []string{"DDL", "JSON Schema", "Cron Functions", "Job Functions"}
+var sqls = []string{sqlInit, sqlCron, sqlDDL, sqlJSONSchema, sqlJobFunctions}
+var sqlNames = []string{"Schema Init", "Cron Functions", "Tables and Views", "JSON Schema", "Job Functions"}
 
 // New opens connection and creates schema
 func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
