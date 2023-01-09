@@ -1,36 +1,3 @@
-CREATE SCHEMA timetable;
-
--- define migrations you need to apply
--- every change to this file should populate this table.
--- Version value should contain issue number zero padded followed by
--- short description of the issue\feature\bug implemented\resolved
-CREATE TABLE timetable.migration(
-    id INT8 NOT NULL,
-    version TEXT NOT NULL,
-    PRIMARY KEY (id)
-);
-
-INSERT INTO
-    timetable.migration (id, version)
-VALUES
-    (0, '00259 Restart migrations for v4'),
-    (1, '00305 Fix timetable.is_cron_in_time'),
-    (2, '00323 Append timetable.delete_job function'),
-    (3, '00329 Migration required for some new added functions'),
-    (4, '00334 Refactor timetable.task as plain schema without tree-like dependencies'),
-    (5, '00381 Rewrite active chain handling'),
-    (6, '00394 Add started_at column to active_session and active_chain tables'),
-    (7, '00417 Rename LOG database log level to INFO'),
-    (8, '00436 Add txid column to timetable.execution_log');
-
-CREATE DOMAIN timetable.cron AS TEXT CHECK(
-    substr(VALUE, 1, 6) IN ('@every', '@after') AND (substr(VALUE, 7) :: INTERVAL) IS NOT NULL
-    OR VALUE = '@reboot'
-    OR VALUE ~ '^(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) +){4}(((\d+,)+\d+|(\d+(\/|-)\d+)|(\*(\/|-)\d+)|\d+|\*) ?)$'
-);
-
-COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support of interval values';
-
 CREATE TABLE timetable.chain (
     chain_id            BIGSERIAL   PRIMARY KEY,
     chain_name          TEXT        NOT NULL UNIQUE,

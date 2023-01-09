@@ -97,7 +97,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 			"SELECT '0 1 1 * 1,2' :: timetable.cron",
 			"SELECT '0 1 1 * 1,2,3' :: timetable.cron",
 			"SELECT '0 1 * * 1/4' :: timetable.cron",
-			"SELECT '0 * * 0 1-4' :: timetable.cron",
+			"SELECT '0 * * 7 1-4' :: timetable.cron",
 			"SELECT '0 * * * 2/4' :: timetable.cron",
 			"SELECT '* * * * *' :: timetable.cron",
 			"SELECT '*/2 */2 * * *' :: timetable.cron",

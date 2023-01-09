@@ -52,7 +52,7 @@ var (
 	commit  = "000000"
 	version = "master"
 	date    = "unknown"
-	dbapi   = "00436"
+	dbapi   = "00534"
 )
 
 func printVersion() {
