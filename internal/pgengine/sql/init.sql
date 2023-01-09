@@ -21,4 +21,5 @@ VALUES
     (5, '00381 Rewrite active chain handling'),
     (6, '00394 Add started_at column to active_session and active_chain tables'),
     (7, '00417 Rename LOG database log level to INFO'),
-    (8, '00436 Add txid column to timetable.execution_log');
+    (8, '00436 Add txid column to timetable.execution_log'),
+    (9, '00534 Use cron_split_to_arrays() in cron domain check');

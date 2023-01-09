@@ -114,7 +114,13 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00436.sql")
 			},
 		},
-		// adding new migration here, update "timetable"."migration" in "sql/ddl.sql"
+		&migrator.Migration{
+			Name: "00534 Use cron_split_to_arrays() in cron domain check",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00534.sql")
+			},
+		},
+		// adding new migration here, update "timetable"."migration" in "sql/init.sql"
 		// and "dbapi" variable in main.go!
 
 		// &migrator.Migration{
