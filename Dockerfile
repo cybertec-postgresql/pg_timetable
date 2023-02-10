@@ -1,5 +1,5 @@
 # When building an image it is recommended to provide version arguments, e.g.
-# docker build --no-cached -t <tagname> \
+# docker build --no-cache -t cybertecpostgresql/pg_timetable:<tagname> \
 #     --build-arg COMMIT=`git show -s --format=%H HEAD` \
 #     --build-arg VERSION=`git describe --tags --abbrev=0` \
 #     --build-arg DATE=`git show -s --format=%cI HEAD` .
@@ -35,7 +35,7 @@ RUN go build -buildvcs=false -ldflags "-X main.commit=${COMMIT} -X main.version=
 FROM alpine
 
 # Install psql client
-RUN apk --no-cache add postgresql-client
+RUN apk --no-cache add postgresql-client curl
 
 # Copy the binary and certificates into the container
 COPY --from=builder /build/pg_timetable /
