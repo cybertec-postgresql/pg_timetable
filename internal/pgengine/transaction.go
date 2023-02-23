@@ -172,7 +172,7 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainT
 		}
 	}
 
-	pge.SetCurrentTaskContext(ctx, execTx, task.TaskID)
+	pge.SetCurrentTaskContext(ctx, executor, task.TaskID)
 	out, err = pge.ExecuteSQLCommand(ctx, executor, task.Script, paramValues)
 
 	if err != nil && task.IgnoreError && !task.Autonomous {
@@ -282,10 +282,10 @@ func (pge *PgEngine) ResetRole(ctx context.Context, tx pgx.Tx) {
 }
 
 // SetCurrentTaskContext - set the working transaction "pg_timetable.current_task_id" run-time parameter
-func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, tx pgx.Tx, taskID int) {
+func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, executor executor, taskID int) {
 	l := log.GetLogger(ctx)
 	l.Debug("Setting current task context to ", taskID)
-	_, err := tx.Exec(ctx, "SELECT set_config('pg_timetable.current_task_id', $1, true)", strconv.Itoa(taskID))
+	_, err := executor.Exec(ctx, "SELECT set_config('pg_timetable.current_task_id', $1, true)", strconv.Itoa(taskID))
 	if err != nil {
 		l.WithError(err).Error("Failed to set current task context", err)
 	}
