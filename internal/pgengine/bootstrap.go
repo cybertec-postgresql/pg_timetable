@@ -67,8 +67,8 @@ type PgEngine struct {
 // where all IDs are the same across all running containers, e.g. 1
 func (pge *PgEngine) Getsid() int32 {
 	if pge.sid == 0 {
-		rand.Seed(time.Now().UnixNano())
-		pge.sid = rand.Int31()
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		pge.sid = r.Int31()
 	}
 	return pge.sid
 }
