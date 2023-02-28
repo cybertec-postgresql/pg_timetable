@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
-	github.com/jackc/pgx/v5 v5.3.0
+	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock/v2 v2.4.0
