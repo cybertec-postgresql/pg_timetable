@@ -66,7 +66,7 @@ Command line options
     -d, --dbname=                               PostgreSQL database name (default: timetable) [$PGTT_PGDATABASE]
     -u, --user=                                 PostgreSQL user (default: scheduler) [$PGTT_PGUSER]
         --password=                             PostgreSQL user password [$PGTT_PGPASSWORD]
-        --sslmode=[disable|require]             What SSL priority use for connection (default: disable)
+        --sslmode=[disable|require]             What SSL mode to use for connection (default: disable) [$PGTT_PGSSLMODE]
         --pgurl=                                PostgreSQL connection URL [$PGTT_URL]
         --timeout=                              PostgreSQL connection timeout in seconds (default: 90) [$PGTT_TIMEOUT]
 
