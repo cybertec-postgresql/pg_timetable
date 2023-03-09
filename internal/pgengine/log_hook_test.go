@@ -43,6 +43,10 @@ func TestLogHook(t *testing.T) {
 		h.level = level
 		assert.NotEmpty(t, h.Levels())
 	}
+
+	h.level = "none"
+	assert.Empty(t, h.Levels())
+
 	<-time.After(time.Second)
 }
 
