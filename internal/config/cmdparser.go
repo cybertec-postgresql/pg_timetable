@@ -22,7 +22,7 @@ type ConnectionOpts struct {
 // LoggingOpts specifies the logging configuration
 type LoggingOpts struct {
 	LogLevel      string `long:"log-level" mapstructure:"log-level" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
-	LogDBLevel    string `long:"log-database-level" mapstructure:"log-database-level" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" default:"info"`
+	LogDBLevel    string `long:"log-database-level" mapstructure:"log-database-level" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" choice:"none" default:"info"`
 	LogFile       string `long:"log-file" mapstructure:"log-file" description:"File name to store logs"`
 	LogFileFormat string `long:"log-file-format" mapstructure:"log-file-format" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
 }

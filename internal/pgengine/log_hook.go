@@ -64,6 +64,8 @@ func (hook *LogHook) Fire(entry *logrus.Entry) error {
 // Levels returns the available logging levels
 func (hook *LogHook) Levels() []logrus.Level {
 	switch hook.level {
+	case "none":
+		return []logrus.Level{}
 	case "debug":
 		return logrus.AllLevels
 	case "info":
