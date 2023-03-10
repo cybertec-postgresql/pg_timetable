@@ -14,7 +14,7 @@ type ConnectionOpts struct {
 	DBName   string `short:"d" long:"dbname" description:"PostgreSQL database name" default:"timetable" env:"PGTT_PGDATABASE"`
 	User     string `short:"u" long:"user" description:"PostgreSQL user" default:"scheduler" env:"PGTT_PGUSER"`
 	Password string `long:"password" description:"PostgreSQL user password" env:"PGTT_PGPASSWORD"`
-	SSLMode  string `long:"sslmode" default:"disable" description:"What SSL mode to use for connection" env:"PGTT_PGSSLMODE" choice:"disable" choice:"require"`
+	SSLMode  string `long:"sslmode" default:"disable" description:"Connection SSL mode" env:"PGTT_PGSSLMODE" choice:"disable" choice:"require"`
 	PgURL    string `long:"pgurl" description:"PostgreSQL connection URL" env:"PGTT_URL"`
 	Timeout  int    `long:"timeout" description:"PostgreSQL connection timeout" env:"PGTT_TIMEOUT" default:"90"`
 }
@@ -25,6 +25,7 @@ type LoggingOpts struct {
 	LogDBLevel    string `long:"log-database-level" mapstructure:"log-database-level" description:"Verbosity level for database storing" choice:"debug" choice:"info" choice:"error" choice:"none" default:"info"`
 	LogFile       string `long:"log-file" mapstructure:"log-file" description:"File name to store logs"`
 	LogFileFormat string `long:"log-file-format" mapstructure:"log-file-format" description:"Format of file logs" choice:"json" choice:"text" default:"json"`
+	LogFileRotate bool   `long:"log-file-rotate" mapstructure:"log-file-rotate" description:"Rotate log files"`
 }
 
 // StartOpts specifies the application startup options

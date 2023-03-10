@@ -59,39 +59,42 @@ Command line options
     -c, --clientname=                                Unique name for application instance [$PGTT_CLIENTNAME]
         --config=                                    YAML configuration file
         --no-program-tasks                           Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
-
+    -v, --version                                    Output detailed version information [$PGTT_VERSION]
+  
   Connection:
     -h, --host=                                      PostgreSQL host (default: localhost) [$PGTT_PGHOST]
     -p, --port=                                      PostgreSQL port (default: 5432) [$PGTT_PGPORT]
     -d, --dbname=                                    PostgreSQL database name (default: timetable) [$PGTT_PGDATABASE]
     -u, --user=                                      PostgreSQL user (default: scheduler) [$PGTT_PGUSER]
         --password=                                  PostgreSQL user password [$PGTT_PGPASSWORD]
-        --sslmode=[disable|require]                  What SSL mode to use for connection (default: disable) [$PGTT_PGSSLMODE]
+        --sslmode=[disable|require]                  Connection SSL mode (default: disable) [$PGTT_PGSSLMODE]
         --pgurl=                                     PostgreSQL connection URL [$PGTT_URL]
-        --timeout=                                   PostgreSQL connection timeout in seconds (default: 90) [$PGTT_TIMEOUT]
-
+        --timeout=                                   PostgreSQL connection timeout (default: 90) [$PGTT_TIMEOUT]
+  
   Logging:
         --log-level=[debug|info|error]               Verbosity level for stdout and log file (default: info)
         --log-database-level=[debug|info|error|none] Verbosity level for database storing (default: info)
         --log-file=                                  File name to store logs
         --log-file-format=[json|text]                Format of file logs (default: json)
-
+        --log-file-rotate                            Rotate log files
+  
   Start:
     -f, --file=                                      SQL script file to execute during startup
-        --init                                       Initialize database schema to the latest version and exit. Can be used
-                                                     with --upgrade
+        --init                                       Initialize database schema to the latest version and exit.   
+                                                     Can be used with --upgrade
         --upgrade                                    Upgrade database to the latest version
-        --debug                                      Run in debug mode. Only asynchronous chains will be executed
-
+        --debug                                      Run in debug mode. Only asynchronous chains will be executed     
+  
   Resource:
-        --cron-workers=                              Number of parallel workers for scheduled chains (default: 16)
-        --interval-workers=                          Number of parallel workers for interval chains (default: 16)
-        --chain-timeout=                             Abort any chain that takes more than the specified number of milliseconds
-        --task-timeout=                              Abort any task within a chain that takes more than the specified number
-                                                     of milliseconds  
-
+        --cron-workers=                              Number of parallel workers for scheduled chains (default: 16)    
+        --interval-workers=                          Number of parallel workers for interval chains (default: 16)     
+        --chain-timeout=                             Abort any chain that takes more than the specified number of     
+                                                     milliseconds
+        --task-timeout=                              Abort any task within a chain that takes more than the specified 
+                                                     number of milliseconds
+  
   REST:
-        --rest-port=                                 REST API port (default: 0) [%PGTT_RESTPORT%]
+        --rest-port=                                 REST API port (default: 0) [$PGTT_RESTPORT]
 
 
 Contributing

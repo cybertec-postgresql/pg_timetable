@@ -13,6 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
