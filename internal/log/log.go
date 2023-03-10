@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/tracelog"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type (
@@ -22,18 +23,32 @@ type (
 	loggerKey struct{}
 )
 
+func getLogFileWriter(opts config.LoggingOpts) any {
+	if opts.LogFileRotate {
+		return &lumberjack.Logger{
+			Filename:   opts.LogFile,
+			MaxSize:    10, // megabytes after which new file is created
+			MaxBackups: 10, // number of backups
+			MaxAge:     7,  //days
+		}
+	}
+	return opts.LogFile
+}
+
+func getLogFileFormatter(opts config.LoggingOpts) logrus.Formatter {
+	if opts.LogFileFormat == "text" {
+		return &logrus.TextFormatter{}
+	}
+	return &logrus.JSONFormatter{}
+}
+
 // Init creates logging facilities for the application
 func Init(opts config.LoggingOpts) LoggerHookerIface {
 	var err error
 	l := logrus.New()
 	l.Out = os.Stdout
 	if opts.LogFile > "" {
-		var f logrus.Formatter
-		f = &logrus.JSONFormatter{}
-		if opts.LogFileFormat == "text" {
-			f = &logrus.TextFormatter{}
-		}
-		l.AddHook(lfshook.NewHook(opts.LogFile, f))
+		l.AddHook(lfshook.NewHook(getLogFileWriter(opts), getLogFileFormatter(opts)))
 	}
 	l.Level, err = logrus.ParseLevel(opts.LogLevel)
 	if err != nil {
