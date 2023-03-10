@@ -27,12 +27,20 @@ connection:
 logging:
   # log-level:[debug|info|error]   Verbosity level for stdout and log file (default: info)
   log-level: debug
-  # log-database-level:[debug|info|error]  Verbosity level for database storing (default: info)
+  # log-database-level:[debug|info|error|none]  Verbosity level for database storing (default: info)
   log-database-level: debug
   # log-file:                      File name to store logs
   log-file: session.log
   # log-file-format:[json|text]    Format of file logs (default: json)
   log-file-format: text
+  # log-file-rotate                Rotate log files
+  log-file-rotate: true
+  # log-file-size:                 Maximum size in MB of the log file before it gets rotated (default: 100)
+  log-file-size: 10
+  # log-file-age:                  Number of days to retain old log files, 0 means forever (default: 0)
+  log-file-age: 28
+  # log-file-number:               Maximum number of old log files to retain, 0 to retain all (default: 0)
+  log-file-number: 10
 
 # - Bootstrap Settings -
 start:
