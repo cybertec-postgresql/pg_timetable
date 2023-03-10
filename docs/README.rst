@@ -77,21 +77,24 @@ Command line options
         --log-file=                                  File name to store logs
         --log-file-format=[json|text]                Format of file logs (default: json)
         --log-file-rotate                            Rotate log files
+        --log-file-size=                             Maximum size in MB of the log file before it gets rotated (default: 100)
+        --log-file-age=                              Number of days to retain old log files, 0 means forever (default: 0)
+        --log-file-number=                           Maximum number of old log files to retain, 0 to retain all (default: 0)
   
   Start:
     -f, --file=                                      SQL script file to execute during startup
-        --init                                       Initialize database schema to the latest version and exit.   
-                                                     Can be used with --upgrade
+        --init                                       Initialize database schema to the latest version and exit. Can be used
+                                                     with --upgrade
         --upgrade                                    Upgrade database to the latest version
-        --debug                                      Run in debug mode. Only asynchronous chains will be executed     
+        --debug                                      Run in debug mode. Only asynchronous chains will be executed
   
   Resource:
-        --cron-workers=                              Number of parallel workers for scheduled chains (default: 16)    
-        --interval-workers=                          Number of parallel workers for interval chains (default: 16)     
-        --chain-timeout=                             Abort any chain that takes more than the specified number of     
+        --cron-workers=                              Number of parallel workers for scheduled chains (default: 16)
+        --interval-workers=                          Number of parallel workers for interval chains (default: 16)
+        --chain-timeout=                             Abort any chain that takes more than the specified number of
                                                      milliseconds
-        --task-timeout=                              Abort any task within a chain that takes more than the specified 
-                                                     number of milliseconds
+        --task-timeout=                              Abort any task within a chain that takes more than the specified number
+                                                     of milliseconds
   
   REST:
         --rest-port=                                 REST API port (default: 0) [$PGTT_RESTPORT]

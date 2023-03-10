@@ -27,9 +27,9 @@ func getLogFileWriter(opts config.LoggingOpts) any {
 	if opts.LogFileRotate {
 		return &lumberjack.Logger{
 			Filename:   opts.LogFile,
-			MaxSize:    10, // megabytes after which new file is created
-			MaxBackups: 10, // number of backups
-			MaxAge:     7,  //days
+			MaxSize:    opts.LogFileSize,
+			MaxBackups: opts.LogFileNumber,
+			MaxAge:     opts.LogFileAge,
 		}
 	}
 	return opts.LogFile
