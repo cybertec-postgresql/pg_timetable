@@ -19,7 +19,7 @@ import (
 type testCommander struct{}
 
 // overwrite CombinedOutput function of os/exec so only parameter syntax and return codes are checked...
-func (c testCommander) CombinedOutput(ctx context.Context, command string, args ...string) ([]byte, error) {
+func (c testCommander) CombinedOutput(_ context.Context, command string, args ...string) ([]byte, error) {
 	if strings.HasPrefix(command, "ping") {
 		return []byte(fmt.Sprint(command, args)), nil
 	}

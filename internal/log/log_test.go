@@ -31,7 +31,7 @@ func TestFileLogger(t *testing.T) {
 	_ = os.Remove("test.log")
 }
 
-func TestPgxLog(t *testing.T) {
+func TestPgxLog(*testing.T) {
 	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: "trace"}))
 	var level tracelog.LogLevel
 	for level = tracelog.LogLevelNone; level <= tracelog.LogLevelTrace; level++ {

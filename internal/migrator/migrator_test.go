@@ -61,11 +61,7 @@ func migrateTest() error {
 		return err
 	}
 	defer db.Release()
-	if err := migrator.Migrate(ctx, db.Conn()); err != nil {
-		return err
-	}
-
-	return nil
+	return migrator.Migrate(ctx, db.Conn())
 }
 
 func mustMigrator(migrator *migrator.Migrator, err error) *migrator.Migrator {

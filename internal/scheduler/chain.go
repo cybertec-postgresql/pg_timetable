@@ -188,7 +188,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 	chainL = chainL.WithField("txid", txid)
 
-	err = sch.pgengine.GetChainElements(ctx, tx, &ChainTasks, chain.ChainID)
+	err = sch.pgengine.GetChainElements(ctx, &ChainTasks, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Failed to retrieve chain elements")
 		sch.pgengine.RollbackTransaction(ctx, tx)
@@ -236,7 +236,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 
 	l := log.GetLogger(ctx)
 
-	err = sch.pgengine.GetChainParamValues(ctx, tx, &paramValues, task)
+	err = sch.pgengine.GetChainParamValues(ctx, &paramValues, task)
 	if err != nil {
 		l.WithError(err).Error("cannot fetch parameters values for chain: ", err)
 		return -1

@@ -12,7 +12,7 @@ type fakeDialer struct {
 	Dialer
 }
 
-func (d *fakeDialer) DialAndSend(ctx context.Context, m ...*gomail.Message) error {
+func (d *fakeDialer) DialAndSend(context.Context, ...*gomail.Message) error {
 	return nil
 }
 

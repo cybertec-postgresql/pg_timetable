@@ -143,7 +143,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		tx, txid, err := pge.StartTransaction(ctx, 0)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, 0, "Should return transaction id")
-		assert.NoError(t, pge.GetChainElements(ctx, tx, &chains, 0), "Should no error in clean database")
+		assert.NoError(t, pge.GetChainElements(ctx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
 		pge.CommitTransaction(ctx, tx)
 	})
@@ -153,7 +153,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		tx, txid, err := pge.StartTransaction(ctx, 0)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, 0, "Should return transaction id")
-		assert.NoError(t, pge.GetChainParamValues(ctx, tx, &paramVals, &pgengine.ChainTask{
+		assert.NoError(t, pge.GetChainParamValues(ctx, &paramVals, &pgengine.ChainTask{
 			TaskID:  0,
 			ChainID: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")

@@ -20,14 +20,14 @@ func (r *apihandler) IsReady() bool {
 	return true
 }
 
-func (r *apihandler) StartChain(ctx context.Context, chainID int) error {
+func (r *apihandler) StartChain(_ context.Context, chainID int) error {
 	if chainID == 0 {
 		return errors.New("invalid chain id")
 	}
 	return nil
 }
 
-func (r *apihandler) StopChain(ctx context.Context, chainID int) error {
+func (r *apihandler) StopChain(context.Context, int) error {
 	return nil
 }
 

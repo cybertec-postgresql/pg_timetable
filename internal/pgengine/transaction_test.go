@@ -136,32 +136,20 @@ func TestGetChainElements(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	ctx := context.Background()
 
-	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnError(errors.New("error"))
-	tx, err := mockPool.Begin(ctx)
-	assert.NoError(t, err)
-	assert.Error(t, pge.GetChainElements(ctx, tx, &[]pgengine.ChainTask{}, 0))
+	assert.Error(t, pge.GetChainElements(ctx, &[]pgengine.ChainTask{}, 0))
 
-	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnRows(
 		pgxmock.NewRows([]string{"task_id", "command", "kind", "run_as",
 			"ignore_error", "autonomous", "database_connection", "timeout"}).
 			AddRow(24, "foo", "sql", "user", false, false, "postgres://foo@boo/bar", 0))
-	tx, err = mockPool.Begin(ctx)
-	assert.NoError(t, err)
-	assert.NoError(t, pge.GetChainElements(ctx, tx, &[]pgengine.ChainTask{}, 0))
+	assert.NoError(t, pge.GetChainElements(ctx, &[]pgengine.ChainTask{}, 0))
 
-	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnError(errors.New("error"))
-	tx, err = mockPool.Begin(ctx)
-	assert.NoError(t, err)
-	assert.Error(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))
+	assert.Error(t, pge.GetChainParamValues(ctx, &[]string{}, &pgengine.ChainTask{}))
 
-	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{"s"}).AddRow("foo"))
-	tx, err = mockPool.Begin(ctx)
-	assert.NoError(t, err)
-	assert.NoError(t, pge.GetChainParamValues(ctx, tx, &[]string{}, &pgengine.ChainTask{}))
+	assert.NoError(t, pge.GetChainParamValues(ctx, &[]string{}, &pgengine.ChainTask{}))
 }
 
 func TestSetRole(t *testing.T) {
