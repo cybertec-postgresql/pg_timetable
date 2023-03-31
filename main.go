@@ -32,8 +32,8 @@ func SetupCloseHandler(cancel context.CancelFunc) {
 	go func() {
 		<-c
 		cancel()
+		exitCode = ExitCodeUserCancel
 	}()
-	exitCode = ExitCodeUserCancel
 }
 
 const (
