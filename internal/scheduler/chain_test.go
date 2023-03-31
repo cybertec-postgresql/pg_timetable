@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSchedulerExclusiveLocking(t *testing.T) {
+func TestSchedulerExclusiveLocking(*testing.T) {
 	sch := &Scheduler{exclusiveMutex: sync.RWMutex{}}
 	sch.Lock(true)
 	sch.Unlock(true)

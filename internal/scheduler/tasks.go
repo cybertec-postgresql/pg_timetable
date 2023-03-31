@@ -43,26 +43,30 @@ func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues 
 	return
 }
 
-func taskNoOp(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+func taskNoOp(_ context.Context, _ *Scheduler, val string) (stdout string, err error) {
 	return "NoOp task called with value: " + val, nil
 }
 
-func taskSleep(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+func taskSleep(ctx context.Context, _ *Scheduler, val string) (stdout string, err error) {
 	var d int
 	if d, err = strconv.Atoi(val); err != nil {
 		return "", err
 	}
 	dur := time.Duration(d) * time.Second
-	time.Sleep(dur)
-	return "Sleep task called for " + dur.String(), nil
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case <-time.After(dur):
+		return "Sleep task called for " + dur.String(), nil
+	}
 }
 
-func taskLog(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+func taskLog(ctx context.Context, _ *Scheduler, val string) (stdout string, err error) {
 	log.GetLogger(ctx).Print(val)
 	return "Logged: " + val, nil
 }
 
-func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error) {
+func taskSendMail(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
 	conn := tasks.EmailConn{ServerPort: 587, ContentType: "text/plain"}
 	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
 		return "", err
@@ -102,7 +106,7 @@ func taskCopyToFile(ctx context.Context, sch *Scheduler, val string) (stdout str
 	return stdout, err
 }
 
-func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error) {
+func taskDownload(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
 	type downloadOpts struct {
 		WorkersNum int      `json:"workersnum"`
 		FileUrls   []string `json:"fileurls"`
@@ -118,8 +122,8 @@ func taskDownload(ctx context.Context, sch *Scheduler, paramValues string) (stdo
 	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
 }
 
-func taskShutdown(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
-	sch.l.Debug("Shutdown command received...")
+func taskShutdown(_ context.Context, sch *Scheduler, val string) (stdout string, err error) {
+	sch.l.WithField("message", val).Info("Shutdown command received")
 	sch.Shutdown()
 	return "Shutdown task called", nil
 }

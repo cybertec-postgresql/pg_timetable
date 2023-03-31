@@ -24,10 +24,7 @@ func (pge *PgEngine) MigrateDb(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := m.Migrate(ctx, conn.Conn()); err != nil {
-		return err
-	}
-	return nil
+	return m.Migrate(ctx, conn.Conn())
 }
 
 // CheckNeedMigrateDb checks need of upgrading database and throws error if that's true

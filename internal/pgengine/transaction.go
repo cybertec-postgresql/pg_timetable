@@ -108,7 +108,7 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 }
 
 // GetChainElements returns all elements for a given chain
-func (pge *PgEngine) GetChainElements(ctx context.Context, tx pgx.Tx, chainTasks *[]ChainTask, chainID int) error {
+func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
 	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
 	// return Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
@@ -121,7 +121,7 @@ FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
 }
 
 // GetChainParamValues returns parameter values to pass for task being executed
-func (pge *PgEngine) GetChainParamValues(ctx context.Context, tx pgx.Tx, paramValues *[]string, task *ChainTask) error {
+func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error {
 	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
 	// return Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
 	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
