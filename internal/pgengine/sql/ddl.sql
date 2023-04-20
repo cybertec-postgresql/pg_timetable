@@ -106,7 +106,7 @@ COMMENT ON TABLE timetable.log IS
 CREATE TABLE timetable.execution_log (
     chain_id    BIGINT,
     task_id     BIGINT,
-    txid        INTEGER NOT NULL,
+    txid        BIGINT NOT NULL,
     last_run    TIMESTAMPTZ DEFAULT now(),
     finished    TIMESTAMPTZ,
     pid         BIGINT,

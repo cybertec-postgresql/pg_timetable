@@ -54,11 +54,11 @@ type ChainTask struct {
 	Timeout       int         `db:"timeout"` // in milliseconds
 	StartedAt     time.Time   `db:"-"`
 	Duration      int64       `db:"-"` // in microseconds
-	Txid          int         `db:"-"`
+	Txid          int64       `db:"-"`
 }
 
 // StartTransaction returns transaction object, transaction id and error
-func (pge *PgEngine) StartTransaction(ctx context.Context, chainID int) (tx pgx.Tx, txid int, err error) {
+func (pge *PgEngine) StartTransaction(ctx context.Context, chainID int) (tx pgx.Tx, txid int64, err error) {
 	tx, err = pge.ConfigDb.Begin(ctx)
 	if err != nil {
 		return
