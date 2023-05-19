@@ -141,17 +141,4 @@ func TestTryLockClientName(t *testing.T) {
 		m := mockpgconn{r}
 		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
 	})
-
-	t.Run("retry locking", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
-			1,     //procoid
-			false, //locked
-			false, //locked
-			false, //locked
-		}}
-		m := mockpgconn{r}
-		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*2)
-		defer cancel()
-		assert.ErrorIs(t, pge.TryLockClientName(ctx, m), ctx.Err())
-	})
 }

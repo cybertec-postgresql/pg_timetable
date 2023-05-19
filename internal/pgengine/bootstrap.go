@@ -78,7 +78,11 @@ var sqlNames = []string{"Schema Init", "Cron Functions", "Tables and Views", "JS
 
 // New opens connection and creates schema
 func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
-	var err error
+	var (
+		err        error
+		connctx    = ctx
+		conncancel context.CancelFunc
+	)
 	pge := &PgEngine{
 		l:               logger,
 		ConfigDb:        nil,
@@ -86,8 +90,10 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 		chainSignalChan: make(chan ChainSignal, 64),
 	}
 	pge.l.WithField("sid", pge.Getsid()).Info("Starting new session... ")
-	connctx, conncancel := context.WithTimeout(ctx, time.Duration(cmdOpts.Connection.Timeout)*time.Second)
-	defer conncancel()
+	if cmdOpts.Connection.Timeout > 0 { // Timeout less than 0 allows endless connection attempts
+		connctx, conncancel = context.WithTimeout(ctx, time.Duration(cmdOpts.Connection.Timeout)*time.Second)
+		defer conncancel()
+	}
 
 	config := pge.getPgxConnConfig()
 	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
@@ -200,16 +206,13 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 		return nil
 	}
 	sql = "SELECT timetable.try_lock_client_name($1, $2)"
-	return retry.Do(ctx, backoff, func(ctx context.Context) error {
-		var locked bool
-		if e := conn.QueryRow(ctx, sql, pge.Getsid(), pge.ClientName).Scan(&locked); e != nil {
-			return e
-		} else if !locked {
-			pge.l.Info("Cannot obtain lock for a session")
-			return retry.RetryableError(errors.New("Cannot obtain lock for a session"))
-		}
-		return nil
-	})
+	var locked bool
+	if e := conn.QueryRow(ctx, sql, pge.Getsid(), pge.ClientName).Scan(&locked); e != nil {
+		return e
+	} else if !locked {
+		return errors.New("Cannot obtain lock for a session")
+	}
+	return nil
 }
 
 // ExecuteCustomScripts executes SQL scripts in files

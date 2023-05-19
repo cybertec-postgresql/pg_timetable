@@ -12,8 +12,9 @@
             "program": "${workspaceFolder}",
             "env": {},
             "args": ["postgresql://scheduler@localhost:5432/timetable",
-                "--clientname=loader", 
-                "--log-level=debug"]
+                "--clientname=worker001", 
+                "--log-level=debug",
+                "--timeout=-1"]
         }
     ]
 }
