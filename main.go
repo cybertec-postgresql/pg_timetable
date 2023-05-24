@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/api"
@@ -43,6 +44,7 @@ const (
 	ExitCodeUpgradeError
 	ExitCodeUserCancel
 	ExitCodeShutdownCommand
+	ExitCodeFatalError
 )
 
 var exitCode = ExitCodeOK
@@ -65,12 +67,6 @@ func printVersion() {
 }
 
 func main() {
-	defer func() { os.Exit(exitCode) }()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	SetupCloseHandler(cancel)
-	defer cancel()
-
 	cmdOpts, err := config.NewConfig(os.Stdout)
 	if err != nil {
 		if cmdOpts != nil && cmdOpts.VersionOnly() {
@@ -81,12 +77,22 @@ func main() {
 		exitCode = ExitCodeConfigError
 		return
 	}
-
 	if cmdOpts.Version {
 		printVersion()
 	}
 
 	logger := log.Init(cmdOpts.Logging)
+	ctx, cancel := context.WithCancel(context.Background())
+	SetupCloseHandler(cancel)
+	defer func() {
+		cancel()
+		if err := recover(); err != nil {
+			exitCode = ExitCodeFatalError
+			logger.WithField("callstack", string(debug.Stack())).Error(err)
+		}
+		os.Exit(exitCode)
+	}()
+
 	apiserver := api.Init(cmdOpts.RESTApi, logger)
 
 	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
