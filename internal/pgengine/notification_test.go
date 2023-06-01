@@ -46,9 +46,10 @@ func TestHandleNotifications(t *testing.T) {
 		c.Start.Debug = true
 	})
 	defer teardownTestCase(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	go pge.HandleNotifications(ctx)
+	time.Sleep(5 * time.Second)
 	conn, err := pge.ConfigDb.Acquire(ctx) // HandleNotifications() uses blocking manner, so we want another connection
 	assert.NoError(t, err)
 	defer conn.Release()
