@@ -23,4 +23,5 @@ VALUES
     (7,  '00417 Rename LOG database log level to INFO'),
     (8,  '00436 Add txid column to timetable.execution_log'),
     (9,  '00534 Use cron_split_to_arrays() in cron domain check'),
-    (10, '00560 Alter txid column to bigint');
+    (10, '00560 Alter txid column to bigint'),
+    (11, '00573 Add ability to start a chain with delay');
