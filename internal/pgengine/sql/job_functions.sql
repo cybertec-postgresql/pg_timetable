@@ -49,14 +49,17 @@ COMMENT ON FUNCTION timetable.add_job IS 'Add one-task chain (aka job) to the sy
 
 -- notify_chain_start() will send notification to the worker to start the chain
 CREATE OR REPLACE FUNCTION timetable.notify_chain_start(
-    chain_id BIGINT, 
-    worker_name TEXT
+    chain_id    BIGINT, 
+    worker_name TEXT,
+    start_delay INTERVAL DEFAULT NULL
 ) RETURNS void AS $$
     SELECT pg_notify(
         worker_name, 
-        format('{"ConfigID": %s, "Command": "START", "Ts": %s}', 
-        chain_id, 
-        EXTRACT(epoch FROM clock_timestamp())::bigint)
+        format('{"ConfigID": %s, "Command": "START", "Ts": %s, "Delay": %s}', 
+            chain_id, 
+            EXTRACT(epoch FROM clock_timestamp())::bigint,
+            COALESCE(EXTRACT(epoch FROM start_delay)::bigint, 0)
+        )
     )
 $$ LANGUAGE SQL;
 

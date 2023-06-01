@@ -18,6 +18,7 @@ type ChainSignal struct {
 	ConfigID int    // chain configuration ifentifier
 	Command  string // allowed: START, STOP
 	Ts       int64  // timestamp NOTIFY sent
+	Delay    int64  // delay in seconds before start
 }
 
 // Since there are usually multiple opened connections to the database, all of them will receive NOTIFY messages.
@@ -62,8 +63,10 @@ func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notificatio
 				pge.chainSignalChan <- signal
 				return
 			}
+			err = fmt.Errorf("Unknown chain ID: %d", signal.ConfigID)
+		default:
+			err = fmt.Errorf("Unknown command: %s", signal.Command)
 		}
-		err = fmt.Errorf("Unknown command: %s", signal.Command)
 	}
 	l.WithError(err).Error("Syntax error in payload")
 }
@@ -72,7 +75,7 @@ func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notificatio
 func (pge *PgEngine) WaitForChainSignal(ctx context.Context) ChainSignal {
 	select {
 	case <-ctx.Done():
-		return ChainSignal{0, "", 0}
+		return ChainSignal{}
 	case signal := <-pge.chainSignalChan:
 		return signal
 	}
