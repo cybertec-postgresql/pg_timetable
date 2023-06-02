@@ -7,7 +7,8 @@ CREATE TABLE timetable.chain (
     live                BOOLEAN     DEFAULT FALSE,
     self_destruct       BOOLEAN     DEFAULT FALSE,
     exclusive_execution BOOLEAN     DEFAULT FALSE,
-    client_name         TEXT
+    client_name         TEXT,
+    on_error            TEXT
 );
 
 COMMENT ON TABLE timetable.chain IS

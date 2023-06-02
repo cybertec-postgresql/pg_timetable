@@ -1,7 +1,7 @@
 CREATE SCHEMA timetable;
 
 -- define migrations you need to apply
--- every change to this file should populate this table.
+-- every change to the database schema should populate this table.
 -- Version value should contain issue number zero padded followed by
 -- short description of the issue\feature\bug implemented\resolved
 CREATE TABLE timetable.migration(
@@ -24,4 +24,5 @@ VALUES
     (8,  '00436 Add txid column to timetable.execution_log'),
     (9,  '00534 Use cron_split_to_arrays() in cron domain check'),
     (10, '00560 Alter txid column to bigint'),
-    (11, '00573 Add ability to start a chain with delay');
+    (11, '00573 Add ability to start a chain with delay'),
+    (12, '00575 Add on_error handling');

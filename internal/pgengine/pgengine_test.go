@@ -135,7 +135,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
-		assert.Equal(t, false, pge.DeleteChainConfig(ctx, 0), "Should not delete in clean database")
+		assert.Equal(t, false, pge.DeleteChain(ctx, 0), "Should not delete in clean database")
 	})
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
 		tx, txid, err := pge.StartTransaction(ctx, 0)
 		assert.NoError(t, err, "Should start transaction")
-		assert.Greater(t, txid, int64(0) , "Should return transaction id")
+		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		f := func(sql string, params []string) error {
 			_, err := pge.ExecuteSQLCommand(ctx, tx, sql, params)
 			return err

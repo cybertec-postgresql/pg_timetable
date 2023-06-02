@@ -17,12 +17,13 @@ import (
 
 // Chain structure used to represent tasks chains
 type Chain struct {
-	ChainID            int    `db:"chain_id"`
-	ChainName          string `db:"chain_name"`
-	SelfDestruct       bool   `db:"self_destruct"`
-	ExclusiveExecution bool   `db:"exclusive_execution"`
-	MaxInstances       int    `db:"max_instances"`
-	Timeout            int    `db:"timeout"`
+	ChainID            int         `db:"chain_id"`
+	ChainName          string      `db:"chain_name"`
+	SelfDestruct       bool        `db:"self_destruct"`
+	ExclusiveExecution bool        `db:"exclusive_execution"`
+	MaxInstances       int         `db:"max_instances"`
+	Timeout            int         `db:"timeout"`
+	OnErrorSQL         pgtype.Text `db:"on_error"`
 }
 
 // IntervalChain structure used to represent repeated chains.

@@ -174,6 +174,28 @@ func getTimeoutContext(ctx context.Context, t1 int, t2 int) (context.Context, co
 	return ctx, nil
 }
 
+func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
+	if ctx.Err() != nil || !chain.OnErrorSQL.Valid {
+		return
+	}
+	l := sch.l.WithField("chain", chain.ChainID)
+	tx, txid, err := sch.pgengine.StartTransaction(ctx, chain.ChainID)
+	if err != nil {
+		l.WithError(err).Error("Cannot start error handling transaction")
+		return
+	}
+	l = l.WithField("txid", txid)
+	l.Info("Starting error handling")
+	ctx = log.WithLogger(ctx, l)
+	if _, err := tx.Exec(ctx, chain.OnErrorSQL.String); err != nil {
+		sch.pgengine.RollbackTransaction(ctx, tx)
+		l.Info("Error handler failed")
+		return
+	}
+	sch.pgengine.CommitTransaction(ctx, tx)
+	l.Info("Error handler executed successfully")
+}
+
 /* execute a chain of tasks */
 func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
@@ -181,24 +203,23 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var cancel context.CancelFunc
 	var txid int64
 
-	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.ChainTimeout, chain.Timeout)
+	chainCtx, cancel := getTimeoutContext(ctx, sch.Config().Resource.ChainTimeout, chain.Timeout)
 	if cancel != nil {
 		defer cancel()
 	}
 
 	chainL := sch.l.WithField("chain", chain.ChainID)
-
-	tx, txid, err := sch.pgengine.StartTransaction(ctx, chain.ChainID)
+	tx, txid, err := sch.pgengine.StartTransaction(chainCtx, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
 		return
 	}
 	chainL = chainL.WithField("txid", txid)
 
-	err = sch.pgengine.GetChainElements(ctx, &ChainTasks, chain.ChainID)
+	err = sch.pgengine.GetChainElements(chainCtx, &ChainTasks, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Failed to retrieve chain elements")
-		sch.pgengine.RollbackTransaction(ctx, tx)
+		sch.pgengine.RollbackTransaction(chainCtx, tx)
 		return
 	}
 
@@ -208,30 +229,32 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		task.Txid = txid
 		l := chainL.WithField("task", task.TaskID)
 		l.Info("Starting task")
-		ctx = log.WithLogger(ctx, l)
-		retCode := sch.executeСhainElement(ctx, tx, &task)
+		taskCtx := log.WithLogger(chainCtx, l)
+		retCode := sch.executeСhainElement(taskCtx, tx, &task)
 
-		// we use background context here because current one (ctx) might be cancelled
-		bctx = log.WithLogger(context.Background(), l)
+		// we use background context here because current one (chainCtx) might be cancelled
+		bctx = log.WithLogger(ctx, l)
 		if retCode != 0 {
 			if !task.IgnoreError {
 				chainL.Error("Chain failed")
 				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 				sch.pgengine.RollbackTransaction(bctx, tx)
+				sch.executeOnErrorHandler(bctx, chain)
 				return
 			}
 			l.Info("Ignoring task failure")
 		}
 	}
-	bctx = log.WithLogger(context.Background(), chainL)
+	bctx = log.WithLogger(chainCtx, chainL)
 	sch.pgengine.CommitTransaction(bctx, tx)
 	chainL.Info("Chain executed successfully")
 	sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 	if chain.SelfDestruct {
-		sch.pgengine.DeleteChainConfig(bctx, chain.ChainID)
+		sch.pgengine.DeleteChain(bctx, chain.ChainID)
 	}
 }
 
+/* execute a task */
 func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
 	var (
 		paramValues []string
@@ -242,7 +265,6 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 	)
 
 	l := log.GetLogger(ctx)
-
 	err = sch.pgengine.GetChainParamValues(ctx, &paramValues, task)
 	if err != nil {
 		l.WithError(err).Error("cannot fetch parameters values for chain: ", err)
@@ -278,6 +300,6 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 	} else {
 		l.Info("Task executed successfully")
 	}
-	sch.pgengine.LogChainElementExecution(context.Background(), task, retCode, out)
+	sch.pgengine.LogTaskExecution(context.Background(), task, retCode, out)
 	return retCode
 }

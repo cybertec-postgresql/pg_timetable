@@ -28,7 +28,7 @@ func (sch *Scheduler) isValid(ichain IntervalChain) bool {
 
 func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain) {
 	if ichain.SelfDestruct {
-		sch.pgengine.DeleteChainConfig(ctx, ichain.ChainID)
+		sch.pgengine.DeleteChain(ctx, ichain.ChainID)
 		return
 	}
 	log.GetLogger(ctx).Debug("Sleeping before next execution of interval chain")
