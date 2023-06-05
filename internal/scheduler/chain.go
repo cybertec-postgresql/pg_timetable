@@ -230,7 +230,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		l := chainL.WithField("task", task.TaskID)
 		l.Info("Starting task")
 		taskCtx := log.WithLogger(chainCtx, l)
-		retCode := sch.executeСhainElement(taskCtx, tx, &task)
+		retCode := sch.executeTask(taskCtx, tx, &task)
 
 		// we use background context here because current one (chainCtx) might be cancelled
 		bctx = log.WithLogger(ctx, l)
@@ -255,7 +255,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 }
 
 /* execute a task */
-func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
+func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
 	var (
 		paramValues []string
 		err         error
@@ -287,7 +287,7 @@ func (sch *Scheduler) executeСhainElement(ctx context.Context, tx pgx.Tx, task 
 		}
 		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Script, paramValues)
 	case "BUILTIN":
-		out, err = sch.executeTask(ctx, task.Script, paramValues)
+		out, err = sch.executeBuiltinTask(ctx, task.Script, paramValues)
 	}
 	task.Duration = time.Since(task.StartedAt).Microseconds()
 

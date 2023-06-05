@@ -18,7 +18,7 @@ func TestExecuteTask(t *testing.T) {
 	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
 	et := func(task string, params []string) (err error) {
-		_, err = mocksch.executeTask(context.TODO(), task, params)
+		_, err = mocksch.executeBuiltinTask(context.TODO(), task, params)
 		return
 	}
 
