@@ -12,8 +12,8 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 )
 
-// Tasks maps builtin task names with event handlers
-var Tasks = map[string](func(context.Context, *Scheduler, string) (string, error)){
+// BuiltinTasks maps builtin task names with event handlers
+var BuiltinTasks = map[string](func(context.Context, *Scheduler, string) (string, error)){
 	"NoOp":         taskNoOp,
 	"Sleep":        taskSleep,
 	"Log":          taskLog,
@@ -23,9 +23,9 @@ var Tasks = map[string](func(context.Context, *Scheduler, string) (string, error
 	"CopyToFile":   taskCopyToFile,
 	"Shutdown":     taskShutdown}
 
-func (sch *Scheduler) executeTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
+func (sch *Scheduler) executeBuiltinTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
 	var s string
-	f := Tasks[name]
+	f := BuiltinTasks[name]
 	if f == nil {
 		return "", errors.New("No built-in task found: " + name)
 	}

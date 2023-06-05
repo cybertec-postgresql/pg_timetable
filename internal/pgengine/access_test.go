@@ -19,14 +19,14 @@ func TestDeleteChainConfig(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
 		defer cancel()
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain").WithArgs(pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
-		assert.True(t, pge.DeleteChainConfig(ctx, 0))
+		assert.True(t, pge.DeleteChain(ctx, 0))
 	})
 
 	t.Run("Check DeleteChainConfig if sql fails", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
 		defer cancel()
 		mockPool.ExpectExec("DELETE FROM timetable\\.chain").WithArgs(pgxmock.AnyArg()).WillReturnError(errors.New("error"))
-		assert.False(t, pge.DeleteChainConfig(ctx, 0))
+		assert.False(t, pge.DeleteChain(ctx, 0))
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
@@ -104,7 +104,7 @@ func TestLogChainElementExecution(t *testing.T) {
 			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(),
 			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
 			WillReturnError(errors.New("Failed to log chain element execution status"))
-		pge.LogChainElementExecution(context.Background(), &pgengine.ChainTask{}, 0, "STATUS")
+		pge.LogTaskExecution(context.Background(), &pgengine.ChainTask{}, 0, "STATUS")
 	})
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")

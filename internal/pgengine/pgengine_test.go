@@ -81,7 +81,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 		funcNames := []string{"_validate_json_schema_type(text, jsonb)",
 			"validate_json_schema(jsonb, jsonb, jsonb)",
 			"add_task(timetable.command_kind, TEXT, BIGINT, DOUBLE PRECISION)",
-			"add_job(TEXT, timetable.cron, TEXT, JSONB, timetable.command_kind, TEXT, INTEGER, BOOLEAN, BOOLEAN, BOOLEAN, BOOLEAN)",
+			"add_job(TEXT, timetable.cron, TEXT, JSONB, timetable.command_kind, TEXT, INTEGER, BOOLEAN, BOOLEAN, BOOLEAN, BOOLEAN, TEXT)",
 			"is_cron_in_time(timetable.cron, timestamptz)"}
 		for _, funcName := range funcNames {
 			err := pge.ConfigDb.QueryRow(ctx, fmt.Sprintf("SELECT COALESCE(to_regprocedure('timetable.%s'), 0) :: int", funcName)).Scan(&oid)
@@ -135,7 +135,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
-		assert.Equal(t, false, pge.DeleteChainConfig(ctx, 0), "Should not delete in clean database")
+		assert.Equal(t, false, pge.DeleteChain(ctx, 0), "Should not delete in clean database")
 	})
 
 	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
 		tx, txid, err := pge.StartTransaction(ctx, 0)
 		assert.NoError(t, err, "Should start transaction")
-		assert.Greater(t, txid, int64(0) , "Should return transaction id")
+		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		f := func(sql string, params []string) error {
 			_, err := pge.ExecuteSQLCommand(ctx, tx, sql, params)
 			return err

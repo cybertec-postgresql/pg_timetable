@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"errors"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,7 +58,7 @@ func TestAsyncChains(t *testing.T) {
 }
 
 func TestChainWorker(t *testing.T) {
-	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
+	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
@@ -94,7 +96,7 @@ func TestChainWorker(t *testing.T) {
 }
 
 func TestExecuteChain(t *testing.T) {
-	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
+	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
@@ -105,7 +107,7 @@ func TestExecuteChain(t *testing.T) {
 }
 
 func TestExecuteChainElement(t *testing.T) {
-	mock, err := pgxmock.NewPool() //pgxmock.MonitorPingsOption(true)
+	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
@@ -113,5 +115,45 @@ func TestExecuteChainElement(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow("foo"))
-	sch.executeСhainElement(ctx, mock, &pgengine.ChainTask{Timeout: 1})
+	sch.executeTask(ctx, mock, &pgengine.ChainTask{Timeout: 1})
+}
+
+func TestExecuteOnErrorHandler(t *testing.T) {
+	c := Chain{ChainID: 42, OnErrorSQL: pgtype.Text{String: "FOO", Valid: true}}
+	mock, err := pgxmock.NewPool()
+	assert.NoError(t, err)
+	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+
+	t.Run("check error handler if everything is fine", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+		mock.ExpectExec("SELECT set_config").WithArgs(strconv.Itoa(c.ChainID)).WillReturnResult(pgxmock.NewResult("SELECT", 1))
+		mock.ExpectExec("FOO").WillReturnResult(pgxmock.NewResult("FOO", 1))
+		mock.ExpectCommit()
+		sch.executeOnErrorHandler(context.Background(), c)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("check error handler if context cancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		sch.executeOnErrorHandler(ctx, c)
+	})
+
+	t.Run("check error handler if cannot start tx", func(t *testing.T) {
+		mock.ExpectBegin().WillReturnError(errors.New("cannot start tx"))
+		sch.executeOnErrorHandler(context.Background(), c)
+	})
+
+	t.Run("check error handler if error", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+		mock.ExpectExec("SELECT set_config").WithArgs(strconv.Itoa(c.ChainID)).WillReturnResult(pgxmock.NewResult("SELECT", 1))
+		mock.ExpectExec("FOO").WillReturnError(errors.New("Syntax error near FOO"))
+		mock.ExpectRollback()
+		sch.executeOnErrorHandler(context.Background(), c)
+	})
+
+	assert.NoError(t, mock.ExpectationsWereMet())
 }
