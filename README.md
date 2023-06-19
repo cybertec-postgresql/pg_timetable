@@ -94,16 +94,16 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 5. PROFIT!
 
 ## Supported Environments
-| Cloud Service    | Supported | PostgreSQL Version | Supported | OS | Supported |
-| ---------------- |:---------:| ------------------ |:---------:| -- |:---------:|
-| [Alibaba Cloud]  | ✅       | [16 (devel)]   | ✅ | Linux    | ✅ |
-| [Amazon RDS]     | ✅       | [15 (current)] | ✅ | Darwin   | ✅ |
-| [Amazon Aurora]  | ✅       | [14]           | ✅ | Windows  | ✅ |
-| [Azure]          | ✅       | [13]           | ✅ | FreeBSD\*| ✅ |
-| [Citus Cloud]    | ✅       | [12]           | ✅ | NetBSD\* | ✅ |
-| [Crunchy Bridge] | ✅       | [11]          | ✅ | OpenBSD\*| ✅ | 
-| [DigitalOcean]   | ✅       | [10]          | ✅ | Solaris\* | ✅ |
-| [Google Cloud]   | ✅       |
+| Cloud Service    | Supported | PostgreSQL Version  | Supported | OS | Supported |
+| ---------------- |:---------:| ------------------- |:---------:| -- |:---------:|
+| [Alibaba Cloud]  | ✅       | [17 (devel)]         | ✅       | Linux     | ✅ |
+| [Amazon RDS]     | ✅       | [16 (beta)]          | ✅       | Darwin    | ✅ |
+| [Amazon Aurora]  | ✅       | [15 (current)]       | ✅       | Windows   | ✅ |
+| [Azure]          | ✅       | [14]                 | ✅       | FreeBSD\* | ✅ |
+| [Citus Cloud]    | ✅       | [13]                 | ✅       | NetBSD\*  | ✅ |
+| [Crunchy Bridge] | ✅       | [12]                 | ✅       | OpenBSD\* | ✅ | 
+| [DigitalOcean]   | ✅       | [11]                 | ✅       | Solaris\* | ✅ |
+| [Google Cloud]   | ✅       | [10]                 | ✅ 
 | [Heroku]         | ✅       |
 | [Supabase]       | ✅       |
 
@@ -121,7 +121,8 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Google Cloud]: https://cloud.google.com/sql/docs/postgres/
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
-[16 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[17 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[16 (beta)]: https://www.postgresql.org/docs/16/index.html
 [15 (current)]: https://www.postgresql.org/docs/15/index.html
 [14]: https://www.postgresql.org/docs/14/index.html
 [13]: https://www.postgresql.org/docs/13/index.html
