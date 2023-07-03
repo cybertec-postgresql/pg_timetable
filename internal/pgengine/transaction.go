@@ -244,8 +244,8 @@ func (pge *PgEngine) FinalizeRemoteDBConnection(ctx context.Context, remoteDb Pg
 
 // SetRole - set the current user identifier of the current session
 func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID pgtype.Text) error {
-	if !runUID.Valid {
-		return errors.New("Empty Run As value")
+	if !runUID.Valid || strings.TrimSpace(runUID.String) == "" {
+		return nil
 	}
 	l := log.GetLogger(ctx)
 	l.Info("Setting Role to ", runUID.String)
