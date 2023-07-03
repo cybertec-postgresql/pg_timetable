@@ -1,8 +1,11 @@
 CREATE OR REPLACE FUNCTION raise_func(text)
   RETURNS void LANGUAGE plpgsql AS
 $BODY$ 
-BEGIN 
-   RAISE NOTICE '%', $1; 
+BEGIN
+   RAISE NOTICE 'Message by % from chain %: "%"', 
+    current_setting('pg_timetable.current_client_name')::text, 
+    current_setting('pg_timetable.current_chain_id')::text, 
+    $1; 
 END; 
 $BODY$;
 

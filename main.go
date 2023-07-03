@@ -19,7 +19,7 @@ import (
  * pg_timetable is the daemon application responsible to execute scheduled SQL tasks that cannot be triggered by the
  * PostgreSQL server (PostgreSQL does not support time triggers).
  *
- * This application may run in the same machine as PostgreSQL server and must grant full access permission to the
+ * This application may run on the same machine as PostgreSQL server and must grant full access permission to the
  * timetable tables.
  */
 var pge *pgengine.PgEngine

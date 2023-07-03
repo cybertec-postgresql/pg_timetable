@@ -179,20 +179,11 @@ func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 		return
 	}
 	l := sch.l.WithField("chain", chain.ChainID)
-	tx, txid, err := sch.pgengine.StartTransaction(ctx, chain.ChainID)
-	if err != nil {
-		l.WithError(err).Error("Cannot start error handling transaction")
-		return
-	}
-	l = l.WithField("txid", txid)
 	l.Info("Starting error handling")
-	ctx = log.WithLogger(ctx, l)
-	if _, err := tx.Exec(ctx, chain.OnErrorSQL.String); err != nil {
-		sch.pgengine.RollbackTransaction(ctx, tx)
+	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnErrorSQL.String); err != nil {
 		l.Info("Error handler failed")
 		return
 	}
-	sch.pgengine.CommitTransaction(ctx, tx)
 	l.Info("Error handler executed successfully")
 }
 
@@ -209,7 +200,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 
 	chainL := sch.l.WithField("chain", chain.ChainID)
-	tx, txid, err := sch.pgengine.StartTransaction(chainCtx, chain.ChainID)
+	tx, txid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
 		return

@@ -58,17 +58,17 @@ type ChainTask struct {
 	Txid          int64       `db:"-"`
 }
 
+func (task *ChainTask) IsRemote() bool {
+	return task.ConnectString.Valid && strings.TrimSpace(task.ConnectString.String) != ""
+}
+
 // StartTransaction returns transaction object, transaction id and error
-func (pge *PgEngine) StartTransaction(ctx context.Context, chainID int) (tx pgx.Tx, txid int64, err error) {
+func (pge *PgEngine) StartTransaction(ctx context.Context) (tx pgx.Tx, txid int64, err error) {
 	tx, err = pge.ConfigDb.Begin(ctx)
 	if err != nil {
 		return
 	}
 	err = tx.QueryRow(ctx, "SELECT txid_current()").Scan(&txid)
-	if err != nil {
-		return
-	}
-	_, err = tx.Exec(ctx, `SELECT set_config('pg_timetable.current_chain_id', $1, true)`, strconv.Itoa(chainID))
 	return
 }
 
@@ -93,17 +93,15 @@ func quoteIdent(s string) string {
 }
 
 // MustSavepoint creates SAVDEPOINT in transaction and log error in the case of error
-func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	_, err := tx.Exec(ctx, "SAVEPOINT "+quoteIdent(savepoint))
-	if err != nil {
+func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, taskID int) {
+	if _, err := tx.Exec(ctx, fmt.Sprintf("SAVEPOINT task_%d", taskID)); err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Savepoint failed")
 	}
 }
 
 // MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
-func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, savepoint string) {
-	_, err := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT "+quoteIdent(savepoint))
-	if err != nil {
+func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, taskID int) {
+	if _, err := tx.Exec(ctx, fmt.Sprintf("ROLLBACK TO SAVEPOINT task_%d", taskID)); err != nil {
 		log.GetLogger(ctx).WithError(err).Error("Rollback to savepoint failed")
 	}
 }
@@ -112,7 +110,6 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, sav
 func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
 	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
-	// return Select(ctx, tx, chainTasks, sqlSelectChainTasks, chainID)
 	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
 	if err != nil {
 		return err
@@ -124,7 +121,6 @@ FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
 // GetChainParamValues returns parameter values to pass for task being executed
 func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error {
 	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
-	// return Select(ctx, tx, paramValues, sqlGetParamValues, task.TaskID)
 	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
 	if err != nil {
 		return err
@@ -137,60 +133,63 @@ type executor interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error)
 }
 
+// execRemoteSQLTask executes task against remote connection
+func (pge *PgEngine) execRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
+	remoteDb, err := pge.GetRemoteDBConnection(ctx, task.ConnectString.String)
+	if err != nil {
+		return "", err
+	}
+	defer pge.FinalizeRemoteDBConnection(ctx, remoteDb)
+	if err := pge.SetRole(ctx, remoteDb, task.RunAs); err != nil {
+		return "", err
+	}
+	pge.SetCurrentTaskContext(ctx, remoteDb, task.ChainID, task.TaskID)
+	return pge.ExecuteSQLCommand(ctx, remoteDb, task.Script, paramValues)
+}
+
+// execAutonomousSQLTask executes autonomous task in an acquired connection from pool
+func (pge *PgEngine) execAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
+	conn, err := pge.ConfigDb.Acquire(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Release()
+	if err := pge.SetRole(ctx, conn, task.RunAs); err != nil {
+		return "", err
+	}
+	pge.SetCurrentTaskContext(ctx, conn, task.ChainID, task.TaskID)
+	return pge.ExecuteSQLCommand(ctx, conn, task.Script, paramValues)
+}
+
+// execAutonomousSQLTask executes autonomous task in an acquired connection from pool
+func (pge *PgEngine) execLocalSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error) {
+	if err := pge.SetRole(ctx, tx, task.RunAs); err != nil {
+		return "", err
+	}
+	if task.IgnoreError {
+		pge.MustSavepoint(ctx, tx, task.TaskID)
+	}
+	pge.SetCurrentTaskContext(ctx, tx, task.ChainID, task.TaskID)
+	out, err = pge.ExecuteSQLCommand(ctx, tx, task.Script, paramValues)
+	if err != nil && task.IgnoreError {
+		pge.MustRollbackToSavepoint(ctx, tx, task.TaskID)
+	}
+	if task.RunAs.Valid {
+		pge.ResetRole(ctx, tx)
+	}
+	return
+}
+
 // ExecuteSQLTask executes SQL task
 func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error) {
-	var execTx pgx.Tx
-	var remoteDb PgxConnIface
-	var executor executor
-
-	execTx = tx
-	if task.Autonomous {
-		executor = pge.ConfigDb
-	} else {
-		executor = tx
+	switch {
+	case task.IsRemote():
+		return pge.execRemoteSQLTask(ctx, task, paramValues)
+	case task.Autonomous:
+		return pge.execAutonomousSQLTask(ctx, task, paramValues)
+	default:
+		return pge.execLocalSQLTask(ctx, tx, task, paramValues)
 	}
-
-	//Connect to Remote DB
-	if task.ConnectString.Valid {
-		remoteDb, execTx, err = pge.GetRemoteDBTransaction(ctx, task.ConnectString.String)
-		if err != nil {
-			return
-		}
-		if task.Autonomous {
-			executor = remoteDb
-			_ = execTx.Rollback(ctx)
-		} else {
-			executor = execTx
-		}
-
-		defer pge.FinalizeRemoteDBConnection(ctx, remoteDb)
-	}
-
-	if !task.Autonomous {
-		pge.SetRole(ctx, execTx, task.RunAs)
-		if task.IgnoreError {
-			pge.MustSavepoint(ctx, execTx, fmt.Sprintf("task_%d", task.TaskID))
-		}
-	}
-
-	pge.SetCurrentTaskContext(ctx, executor, task.TaskID)
-	out, err = pge.ExecuteSQLCommand(ctx, executor, task.Script, paramValues)
-
-	if err != nil && task.IgnoreError && !task.Autonomous {
-		pge.MustRollbackToSavepoint(ctx, execTx, fmt.Sprintf("task_%d", task.TaskID))
-	}
-
-	//Reset The Role
-	if task.RunAs.Valid && !task.Autonomous {
-		pge.ResetRole(ctx, execTx)
-	}
-
-	// Commit changes on remote server
-	if task.ConnectString.Valid && !task.Autonomous {
-		pge.CommitTransaction(ctx, execTx)
-	}
-
-	return
 }
 
 // ExecuteSQLCommand executes chain command with parameters inside transaction
@@ -218,34 +217,19 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, c
 	return
 }
 
-// GetRemoteDBTransaction create a remote db connection and returns transaction object
-func (pge *PgEngine) GetRemoteDBTransaction(ctx context.Context, connectionString string) (PgxConnIface, pgx.Tx, error) {
-	if strings.TrimSpace(connectionString) == "" {
-		return nil, nil, errors.New("Connection string is blank")
+// GetRemoteDBConnection create a remote db connection and returns transaction object
+func (pge *PgEngine) GetRemoteDBConnection(ctx context.Context, connectionString string) (conn PgxConnIface, err error) {
+	var connConfig *pgx.ConnConfig
+	if connConfig, err = pgx.ParseConfig(connectionString); err != nil {
+		return nil, err
 	}
-	connConfig, err := pgx.ParseConfig(connectionString)
-	if err != nil {
-		return nil, nil, err
-	}
-	// connConfig.Logger = log.NewPgxLogger(pge.l)
-	// if pge.Verbose() {
-	// 	connConfig.LogLevel = pgx.LogLevelDebug
-	// } else {
-	// 	connConfig.LogLevel = pgx.LogLevelWarn
-	// }
 	l := log.GetLogger(ctx)
-	remoteDb, err := pgx.ConnectConfig(ctx, connConfig)
+	conn, err = pgx.ConnectConfig(ctx, connConfig)
 	if err != nil {
-		l.WithError(err).Error("Failed to establish remote connection")
-		return nil, nil, err
+		return nil, err
 	}
 	l.Info("Remote connection established...")
-	remoteTx, err := remoteDb.Begin(ctx)
-	if err != nil {
-		l.WithError(err).Error("Failed to start remote transaction")
-		return nil, nil, err
-	}
-	return remoteDb, remoteTx, nil
+	return
 }
 
 // FinalizeRemoteDBConnection closes session
@@ -259,34 +243,33 @@ func (pge *PgEngine) FinalizeRemoteDBConnection(ctx context.Context, remoteDb Pg
 }
 
 // SetRole - set the current user identifier of the current session
-func (pge *PgEngine) SetRole(ctx context.Context, tx pgx.Tx, runUID pgtype.Text) {
+func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID pgtype.Text) error {
 	if !runUID.Valid {
-		return
+		return errors.New("Empty Run As value")
 	}
 	l := log.GetLogger(ctx)
 	l.Info("Setting Role to ", runUID.String)
-	_, err := tx.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
-	if err != nil {
-		l.WithError(err).Error("Error in Setting role", err)
-	}
+	_, err := executor.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
+	return err
 }
 
 // ResetRole - RESET forms reset the current user identifier to be the current session user identifier
-func (pge *PgEngine) ResetRole(ctx context.Context, tx pgx.Tx) {
+func (pge *PgEngine) ResetRole(ctx context.Context, executor executor) {
 	l := log.GetLogger(ctx)
 	l.Info("Resetting Role")
-	const sqlResetRole = `RESET ROLE`
-	_, err := tx.Exec(ctx, sqlResetRole)
+	_, err := executor.Exec(ctx, `RESET ROLE`)
 	if err != nil {
 		l.WithError(err).Error("Failed to set a role", err)
 	}
 }
 
 // SetCurrentTaskContext - set the working transaction "pg_timetable.current_task_id" run-time parameter
-func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, executor executor, taskID int) {
+func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, executor executor, chainID int, taskID int) {
 	l := log.GetLogger(ctx)
-	l.Debug("Setting current task context to ", taskID)
-	_, err := executor.Exec(ctx, "SELECT set_config('pg_timetable.current_task_id', $1, true)", strconv.Itoa(taskID))
+	_, err := executor.Exec(ctx, `SELECT 
+set_config('pg_timetable.current_task_id', $1, false),
+set_config('pg_timetable.current_chain_id', $2, false),
+set_config('pg_timetable.current_client_name', $3, false)`, strconv.Itoa(taskID), strconv.Itoa(chainID), pge.ClientName)
 	if err != nil {
 		l.WithError(err).Error("Failed to set current task context", err)
 	}

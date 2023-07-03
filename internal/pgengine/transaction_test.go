@@ -47,13 +47,13 @@ func TestMustTransaction(t *testing.T) {
 	mockPool.ExpectExec("SAVEPOINT").WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pge.MustSavepoint(ctx, tx, "foo")
+	pge.MustSavepoint(ctx, tx, 42)
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("ROLLBACK TO SAVEPOINT").WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pge.MustRollbackToSavepoint(ctx, tx, "foo")
+	pge.MustRollbackToSavepoint(ctx, tx, 42)
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
@@ -161,7 +161,8 @@ func TestSetRole(t *testing.T) {
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	pge.SetRole(ctx, tx, pgtype.Text{String: "foo", Valid: true})
+	assert.Error(t, pge.SetRole(ctx, tx, pgtype.Text{String: "foo", Valid: true}))
+	assert.Error(t, pge.SetRole(ctx, tx, pgtype.Text{String: "", Valid: false}))
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))

@@ -7,8 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pgx "github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
+	pgtype "github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -51,11 +50,11 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 }
 
 // setupTestRenoteDBFunc used to connect to remote postgreSQL database
-var setupTestRemoteDBFunc = func() (pgengine.PgxConnIface, pgx.Tx, error) {
+var setupTestRemoteDBFunc = func() (pgengine.PgxConnIface, error) {
 	c := cmdOpts.Connection
 	connstr := fmt.Sprintf("host='%s' port='%d' sslmode='%s' dbname='%s' user='%s' password='%s'",
 		c.Host, c.Port, c.SSLMode, c.DBName, c.User, c.Password)
-	return pge.GetRemoteDBTransaction(context.Background(), connstr)
+	return pge.GetRemoteDBConnection(context.Background(), connstr)
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
@@ -134,13 +133,13 @@ func TestSchedulerFunctions(t *testing.T) {
 
 	ctx := context.Background()
 
-	t.Run("Check DeleteChainConfig funсtion", func(t *testing.T) {
+	t.Run("Check DeleteChainConfig function", func(t *testing.T) {
 		assert.Equal(t, false, pge.DeleteChain(ctx, 0), "Should not delete in clean database")
 	})
 
-	t.Run("Check GetChainElements funсtion", func(t *testing.T) {
+	t.Run("Check GetChainElements function", func(t *testing.T) {
 		var chains []pgengine.ChainTask
-		tx, txid, err := pge.StartTransaction(ctx, 0)
+		tx, txid, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		assert.NoError(t, pge.GetChainElements(ctx, &chains, 0), "Should no error in clean database")
@@ -148,9 +147,9 @@ func TestSchedulerFunctions(t *testing.T) {
 		pge.CommitTransaction(ctx, tx)
 	})
 
-	t.Run("Check GetChainParamValues funсtion", func(t *testing.T) {
+	t.Run("Check GetChainParamValues function", func(t *testing.T) {
 		var paramVals []string
-		tx, txid, err := pge.StartTransaction(ctx, 0)
+		tx, txid, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		assert.NoError(t, pge.GetChainParamValues(ctx, &paramVals, &pgengine.ChainTask{
@@ -160,7 +159,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		pge.CommitTransaction(ctx, tx)
 	})
 
-	t.Run("Check InsertChainRunStatus funсtion", func(t *testing.T) {
+	t.Run("Check InsertChainRunStatus function", func(t *testing.T) {
 		var res bool
 		assert.NotPanics(t, func() { res = pge.InsertChainRunStatus(ctx, 0, 1) },
 			"Should no error in clean database")
@@ -168,7 +167,7 @@ func TestSchedulerFunctions(t *testing.T) {
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
-		tx, txid, err := pge.StartTransaction(ctx, 0)
+		tx, txid, err := pge.StartTransaction(ctx)
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		f := func(sql string, params []string) error {
@@ -191,30 +190,17 @@ func TestSchedulerFunctions(t *testing.T) {
 func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := SetupTestCase(t)
 	defer teardownTestCase(t)
-
 	ctx := context.Background()
-
-	remoteDb, tx, err := setupTestRemoteDBFunc()
+	remoteDb, err := setupTestRemoteDBFunc()
 	defer pge.FinalizeRemoteDBConnection(ctx, remoteDb)
 	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
-	t.Run("Check connection closing", func(t *testing.T) {
-		pge.FinalizeRemoteDBConnection(ctx, remoteDb)
-		assert.NotNil(t, remoteDb, "Connection isn't closed properly")
-	})
-
-	t.Run("Check set role function", func(t *testing.T) {
-		var runUID pgtype.Text
-		runUID.String = cmdOpts.Connection.User
-		assert.NotPanics(t, func() { pge.SetRole(ctx, tx, runUID) }, "Set Role failed")
-	})
-
-	t.Run("Check reset role function", func(t *testing.T) {
-		assert.NotPanics(t, func() { pge.ResetRole(ctx, tx) }, "Reset Role failed")
-	})
-
-	pge.CommitTransaction(ctx, tx)
+	assert.NoError(t, pge.SetRole(ctx, remoteDb, pgtype.Text{String: cmdOpts.Connection.User, Valid: true}),
+		"Set Role failed")
+	assert.NotPanics(t, func() { pge.ResetRole(ctx, remoteDb) }, "Reset Role failed")
+	pge.FinalizeRemoteDBConnection(ctx, remoteDb)
+	assert.NotNil(t, remoteDb, "Connection isn't closed properly")
 }
 
 func TestSamplesScripts(t *testing.T) {
