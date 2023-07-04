@@ -11,14 +11,13 @@ builds:
     - windows
 
 archives:
-- name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+- name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
   wrap_in_directory: true
-  replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
   format_overrides:
     - goos: windows
       format: zip
@@ -39,12 +38,12 @@ changelog:
 nfpms:
   # note that this is an array of nfpm configs
   -
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+    file_name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
 
     vendor: CYBERTEC PostgreSQL International GmbH
     homepage: https://www.cybertec-postgresql.com/en/products/pg_timetable/
