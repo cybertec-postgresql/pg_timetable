@@ -25,6 +25,14 @@ func initmockdb(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestIsIntervalChainListed(t *testing.T) {
+	var a, b pgengine.IntervalChain
+	a.ChainID = 42
+	b.ChainID = 24
+	assert.True(t, a.IsListed([]pgengine.IntervalChain{a, b}))
+	assert.False(t, a.IsListed([]pgengine.IntervalChain{b}))
+}
+
 func TestMustTransaction(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()

@@ -64,8 +64,7 @@ func (task *ChainTask) IsRemote() bool {
 
 // StartTransaction returns transaction object, transaction id and error
 func (pge *PgEngine) StartTransaction(ctx context.Context) (tx pgx.Tx, txid int64, err error) {
-	tx, err = pge.ConfigDb.Begin(ctx)
-	if err != nil {
+	if tx, err = pge.ConfigDb.Begin(ctx); err != nil {
 		return
 	}
 	err = tx.QueryRow(ctx, "SELECT txid_current()").Scan(&txid)
