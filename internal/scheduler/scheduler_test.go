@@ -44,6 +44,10 @@ func TestRun(t *testing.T) {
 
 	err := pge.ExecuteCustomScripts(context.Background(), "../../samples/Exclusive.sql")
 	assert.NoError(t, err, "Creating interval tasks failed")
+	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/Autonomous.sql")
+	assert.NoError(t, err, "Creating autonomous tasks failed")
+	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/RemoteDB.sql")
+	assert.NoError(t, err, "Creating remote tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/Basic.sql")
 	assert.NoError(t, err, "Creating sql tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/NoOp.sql")

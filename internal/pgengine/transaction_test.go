@@ -162,7 +162,7 @@ func TestSetRole(t *testing.T) {
 	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
 	assert.Error(t, pge.SetRole(ctx, tx, pgtype.Text{String: "foo", Valid: true}))
-	assert.Error(t, pge.SetRole(ctx, tx, pgtype.Text{String: "", Valid: false}))
+	assert.NoError(t, pge.SetRole(ctx, tx, pgtype.Text{String: "", Valid: false}), "Should ignore empty run_as")
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))
