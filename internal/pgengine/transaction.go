@@ -108,7 +108,7 @@ func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, par
 // ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
 func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
 	return pge.ExecStandaloneTask(ctx,
-		func()  ,
+		func() (PgxConnIface, error) { return pge.GetLocalDBConnection(ctx) },
 		task, paramValues)
 }
 
