@@ -192,14 +192,14 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	defer teardownTestCase(t)
 	ctx := context.Background()
 	remoteDb, err := setupTestRemoteDBFunc()
-	defer pge.FinalizeRemoteDBConnection(ctx, remoteDb)
+	defer pge.FinalizeDBConnection(ctx, remoteDb)
 	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
 	assert.NoError(t, pge.SetRole(ctx, remoteDb, pgtype.Text{String: cmdOpts.Connection.User, Valid: true}),
 		"Set Role failed")
 	assert.NotPanics(t, func() { pge.ResetRole(ctx, remoteDb) }, "Reset Role failed")
-	pge.FinalizeRemoteDBConnection(ctx, remoteDb)
+	pge.FinalizeDBConnection(ctx, remoteDb)
 	assert.NotNil(t, remoteDb, "Connection isn't closed properly")
 }
 

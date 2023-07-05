@@ -119,3 +119,26 @@ FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_i
 	*dest, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[Chain])
 	return err
 }
+
+// GetChainElements returns all elements for a given chain
+func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
+	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
+FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
+	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
+	if err != nil {
+		return err
+	}
+	*chainTasks, err = pgx.CollectRows(rows, pgx.RowToStructByName[ChainTask])
+	return err
+}
+
+// GetChainParamValues returns parameter values to pass for task being executed
+func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error {
+	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
+	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
+	if err != nil {
+		return err
+	}
+	*paramValues, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	return err
+}

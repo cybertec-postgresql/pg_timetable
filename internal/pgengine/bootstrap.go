@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
@@ -133,6 +134,10 @@ func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
 	}
 }
 
+func quoteIdent(s string) string {
+	return `"` + strings.Replace(s, `"`, `""`, -1) + `"`
+}
+
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
 func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	var connstr string
@@ -166,6 +171,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		if err = pge.TryLockClientName(ctx, pgconn); err != nil {
 			return err
 		}
+
 		_, err = pgconn.Exec(ctx, "LISTEN "+quoteIdent(pge.ClientName))
 		if pge.logTypeOID == InvalidOid {
 			err = pgconn.QueryRow(ctx, "select coalesce(to_regtype('timetable.log_type')::oid, 0)").Scan(&pge.logTypeOID)
