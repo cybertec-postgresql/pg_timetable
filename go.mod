@@ -7,7 +7,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
-	github.com/pashagolub/pgxmock/v2 v2.8.0
+	github.com/pashagolub/pgxmock/v2 v2.9.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/sirupsen/logrus v1.9.3
