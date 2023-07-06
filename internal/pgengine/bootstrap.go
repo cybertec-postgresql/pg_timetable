@@ -179,6 +179,23 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		pgconn.TypeMap().RegisterType(&pgtype.Type{Name: "timetable.log_type", OID: pge.logTypeOID, Codec: &pgtype.EnumCodec{}})
 		return err
 	}
+	// reset session before returning connection to the pool
+	// after task completion, if the task is not properly finalized (especially when running in autonomous mode), some objects and/or setting changes will still exist in the session
+	// if this session is then reused it can cause task failure / unintended side effects
+	connConfig.AfterRelease = func(pgconn *pgx.Conn) bool {
+
+		batch := pgx.Batch{}
+		batch.Queue("CLOSE ALL;")
+		batch.Queue("SET SESSION AUTHORIZATION DEFAULT;")
+		batch.Queue("RESET ALL;")
+		batch.Queue("SELECT pg_advisory_unlock_all();")
+		batch.Queue("DISCARD TEMP;")
+		batch.Queue("UNLISTEN *;")
+
+		batchResult := pgconn.SendBatch(context.Background(), &batch)
+		_, err := batchResult.Exec()
+		return err != nil
+	}
 	if !pge.Start.Debug { //will handle notification in HandleNotifications directly
 		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
 	}
