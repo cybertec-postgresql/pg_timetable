@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pashagolub/pgxmock/v2"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,34 @@ func initmockdb(t *testing.T) {
 	mockPool, err = pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
 	assert.NoError(t, err)
 	mockConn, err = pgxmock.NewConn()
+	assert.NoError(t, err)
+}
+
+func TestIsIntervalChainListed(t *testing.T) {
+	var a, b pgengine.IntervalChain
+	a.ChainID = 42
+	b.ChainID = 24
+	assert.True(t, a.IsListed([]pgengine.IntervalChain{a, b}))
+	assert.False(t, a.IsListed([]pgengine.IntervalChain{b}))
+}
+
+func TestStartTransaction(t *testing.T) {
+	initmockdb(t)
+	defer mockPool.Close()
+	ctx := context.Background()
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+
+	mockPool.ExpectBegin().WillReturnError(errors.New("foo"))
+	tx, txid, err := pge.StartTransaction(ctx)
+	assert.Nil(t, tx)
+	assert.Zero(t, txid)
+	assert.Error(t, err)
+
+	mockPool.ExpectBegin()
+	mockPool.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+	tx, txid, err = pge.StartTransaction(ctx)
+	assert.NotNil(t, tx)
+	assert.Equal(t, int64(42), txid)
 	assert.NoError(t, err)
 }
 
@@ -47,13 +76,13 @@ func TestMustTransaction(t *testing.T) {
 	mockPool.ExpectExec("SAVEPOINT").WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pge.MustSavepoint(ctx, tx, "foo")
+	pge.MustSavepoint(ctx, tx, 42)
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("ROLLBACK TO SAVEPOINT").WillReturnError(errors.New("error"))
 	tx, err = mockPool.Begin(context.Background())
 	assert.NoError(t, err)
-	pge.MustRollbackToSavepoint(ctx, tx, "foo")
+	pge.MustRollbackToSavepoint(ctx, tx, 42)
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
@@ -61,49 +90,93 @@ func TestMustTransaction(t *testing.T) {
 func TestExecuteSQLTask(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	ctx := context.Background()
 
-	elements := []pgengine.ChainTask{
-		{
-			Autonomous:  true,
-			IgnoreError: true,
-			ConnectString: pgtype.Text{
-				String: "foo",
-				Valid:  true},
-		},
-		{
-			Autonomous:  false,
-			IgnoreError: true,
-			ConnectString: pgtype.Text{
-				String: "foo",
-				Valid:  true},
-		},
-		{
-			Autonomous:  false,
-			IgnoreError: true,
-			ConnectString: pgtype.Text{
-				String: "error",
-				Valid:  true},
-		},
-		{
-			RunAs:         pgtype.Text{String: "foo", Valid: true},
-			ConnectString: pgtype.Text{Valid: false},
-		},
-		{Autonomous: false, IgnoreError: true, ConnectString: pgtype.Text{Valid: false}},
-	}
+	t.Run("Check autonomous SQL task", func(t *testing.T) {
+		_, err := pge.ExecuteSQLTask(ctx, nil, &pgengine.ChainTask{Autonomous: true}, []string{})
+		assert.ErrorContains(t, err, "pgpool.Acquire() method is not implemented")
+	})
 
-	for _, element := range elements {
+	t.Run("Check remote SQL task", func(t *testing.T) {
+		task := pgengine.ChainTask{ConnectString: pgtype.Text{String: "foo", Valid: true}}
+		_, err := pge.ExecuteSQLTask(ctx, nil, &task, []string{})
+		assert.ErrorContains(t, err, "cannot parse")
+	})
+
+	t.Run("Check local SQL task", func(t *testing.T) {
 		mockPool.ExpectBegin()
-		tx, err := mockPool.Begin(context.Background())
+		tx, err := mockPool.Begin(ctx)
 		assert.NoError(t, err)
-		_, _ = pge.ExecuteSQLTask(context.Background(), tx, &element, []string{})
+		_, err = pge.ExecuteSQLTask(ctx, tx, &pgengine.ChainTask{IgnoreError: true}, []string{})
+		assert.ErrorContains(t, err, "SQL command cannot be empty")
+	})
+}
+
+func TestExecLocalSQLTask(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	ctx := context.Background()
+	mockPool.ExpectExec("SET ROLE").WillReturnResult(pgconn.NewCommandTag("SET"))
+	mockPool.ExpectExec("SAVEPOINT task").WillReturnResult(pgconn.NewCommandTag("SAVEPOINT"))
+	mockPool.ExpectExec("SELECT set_config").
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+		WillReturnResult(pgconn.NewCommandTag("SELECT"))
+	mockPool.ExpectExec("FOO").WillReturnError(errors.New(`ERROR:  syntax error at or near "FOO"`))
+	mockPool.ExpectExec("ROLLBACK TO SAVEPOINT").WillReturnResult(pgconn.NewCommandTag("ROLLBACK"))
+	mockPool.ExpectExec("RESET ROLE").WillReturnResult(pgconn.NewCommandTag("RESET"))
+	task := pgengine.ChainTask{
+		TaskID:      42,
+		IgnoreError: true,
+		Script:      "FOO",
+		RunAs:       pgtype.Text{String: "Bob", Valid: true},
 	}
+	_, err := pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
+	assert.Error(t, err)
+
+	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("unknown role Bob"))
+	_, err = pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
+	assert.ErrorContains(t, err, "unknown role Bob")
+	assert.NoError(t, mockPool.ExpectationsWereMet())
+}
+
+func TestExecStandaloneTask(t *testing.T) {
+	initmockdb(t)
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+	ctx := context.Background()
+	mockPool.ExpectExec("SET ROLE").WillReturnResult(pgconn.NewCommandTag("SET"))
+	mockPool.ExpectExec("SELECT set_config").
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+		WillReturnResult(pgconn.NewCommandTag("SELECT"))
+	mockPool.ExpectExec("FOO").WillReturnError(errors.New(`ERROR:  syntax error at or near "FOO"`))
+	mockPool.ExpectClose()
+	task := pgengine.ChainTask{
+		TaskID:      42,
+		IgnoreError: true,
+		Script:      "FOO",
+		RunAs:       pgtype.Text{String: "Bob", Valid: true},
+	}
+	cf := func() (pgengine.PgxConnIface, error) { return mockPool.AsConn(), nil }
+
+	_, err := pge.ExecStandaloneTask(ctx, cf, &task, []string{})
+	assert.Error(t, err)
+
+	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("unknown role Bob"))
+	mockPool.ExpectClose()
+	_, err = pge.ExecStandaloneTask(ctx, cf, &task, []string{})
+	assert.ErrorContains(t, err, "unknown role Bob")
+
+	cf = func() (pgengine.PgxConnIface, error) { return nil, errors.New("no connection") }
+	_, err = pge.ExecStandaloneTask(ctx, cf, &task, []string{})
+	assert.ErrorContains(t, err, "no connection")
+
+	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
 
 func TestExpectedCloseError(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockConn.ExpectClose().WillReturnError(errors.New("Close failed"))
-	pge.FinalizeRemoteDBConnection(context.TODO(), mockConn)
+	pge.FinalizeDBConnection(context.TODO(), mockConn)
 
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "there were unfulfilled expectations")
 }
@@ -161,7 +234,8 @@ func TestSetRole(t *testing.T) {
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	pge.SetRole(ctx, tx, pgtype.Text{String: "foo", Valid: true})
+	assert.Error(t, pge.SetRole(ctx, tx, pgtype.Text{String: "foo", Valid: true}))
+	assert.NoError(t, pge.SetRole(ctx, tx, pgtype.Text{String: "", Valid: false}), "Should ignore empty run_as")
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))

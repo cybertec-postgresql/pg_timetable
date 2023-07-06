@@ -61,20 +61,25 @@ func TestRemoveChainRunStatus(t *testing.T) {
 }
 
 func TestSelectChains(t *testing.T) {
-	var c *[]pgengine.Chain
-	var ic *[]pgengine.IntervalChain
+	var c []pgengine.Chain
+	var ic []pgengine.IntervalChain
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectChains(context.Background(), c))
+	for i := 0; i < 3; i++ {
+		mockPool.ExpectQuery("SELECT.+chain_id").WithArgs(pgxmock.AnyArg()).WillReturnError(errors.New("error"))
+		mockPool.ExpectQuery("SELECT.+chain_id").WithArgs(pgxmock.AnyArg()).WillReturnRows(pgxmock.NewRows([]string{"foo"}).AddRow("baz"))
+	}
 
-	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectRebootChains(context.Background(), c))
+	assert.Error(t, pge.SelectChains(context.Background(), &c))
+	assert.Error(t, pge.SelectChains(context.Background(), &c), "unacceptable columns")
 
-	mockPool.ExpectExec("SELECT.+chain_id").WillReturnError(errors.New("error"))
-	assert.Error(t, pge.SelectIntervalChains(context.Background(), ic))
+	assert.Error(t, pge.SelectRebootChains(context.Background(), &c))
+	assert.Error(t, pge.SelectRebootChains(context.Background(), &c), "unacceptable columns")
+
+	assert.Error(t, pge.SelectIntervalChains(context.Background(), &ic))
+	assert.Error(t, pge.SelectIntervalChains(context.Background(), &ic), "unacceptable columns")
 }
 
 func TestSelectChain(t *testing.T) {

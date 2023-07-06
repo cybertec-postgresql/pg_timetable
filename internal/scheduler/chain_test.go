@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -126,11 +125,7 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
 	t.Run("check error handler if everything is fine", func(t *testing.T) {
-		mock.ExpectBegin()
-		mock.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
-		mock.ExpectExec("SELECT set_config").WithArgs(strconv.Itoa(c.ChainID)).WillReturnResult(pgxmock.NewResult("SELECT", 1))
 		mock.ExpectExec("FOO").WillReturnResult(pgxmock.NewResult("FOO", 1))
-		mock.ExpectCommit()
 		sch.executeOnErrorHandler(context.Background(), c)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -141,17 +136,8 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 		sch.executeOnErrorHandler(ctx, c)
 	})
 
-	t.Run("check error handler if cannot start tx", func(t *testing.T) {
-		mock.ExpectBegin().WillReturnError(errors.New("cannot start tx"))
-		sch.executeOnErrorHandler(context.Background(), c)
-	})
-
 	t.Run("check error handler if error", func(t *testing.T) {
-		mock.ExpectBegin()
-		mock.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
-		mock.ExpectExec("SELECT set_config").WithArgs(strconv.Itoa(c.ChainID)).WillReturnResult(pgxmock.NewResult("SELECT", 1))
 		mock.ExpectExec("FOO").WillReturnError(errors.New("Syntax error near FOO"))
-		mock.ExpectRollback()
 		sch.executeOnErrorHandler(context.Background(), c)
 	})
 
