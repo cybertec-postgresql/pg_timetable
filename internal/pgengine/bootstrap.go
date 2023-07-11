@@ -179,6 +179,17 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		pgconn.TypeMap().RegisterType(&pgtype.Type{Name: "timetable.log_type", OID: pge.logTypeOID, Codec: &pgtype.EnumCodec{}})
 		return err
 	}
+	// reset session before returning connection to the pool
+	// after task completion, if the task is not properly finalized (especially when running in autonomous mode),
+	// some objects and/or setting changes will still exist in the session
+	connConfig.AfterRelease = func(pgconn *pgx.Conn) bool {
+		var err error
+		if _, err = pgconn.Exec(context.Background(), "DISCARD ALL"); err == nil {
+			_, err = pgconn.Exec(context.Background(), "LISTEN "+quoteIdent(pge.ClientName))
+		}
+		return err != nil
+	}
+
 	if !pge.Start.Debug { //will handle notification in HandleNotifications directly
 		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
 	}

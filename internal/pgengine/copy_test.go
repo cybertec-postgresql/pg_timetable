@@ -15,8 +15,12 @@ func TestCopyFromFile(t *testing.T) {
 	ctx := context.Background()
 	_, err := pge.CopyFromFile(ctx, "fake.csv", "COPY location FROM STDIN")
 	assert.Error(t, err, "Should fail for missing file")
-	_, err = pge.ConfigDb.Exec(ctx, "CREATE TEMP TABLE csv_test(id integer, val text)")
+	_, err = pge.ConfigDb.Exec(ctx, "CREATE UNLOGGED TABLE csv_test(id integer, val text)")
 	assert.NoError(t, err, "Should create temporary table")
+	defer func() {
+		_, err = pge.ConfigDb.Exec(ctx, "DROP TABLE csv_test")
+		assert.NoError(t, err, "Should drop temporary table")
+	}()
 	assert.NoError(t, os.WriteFile("test.csv", []byte("1,foo\n2,bar"), 0666), "Should create source CSV file")
 	cnt, err := pge.CopyFromFile(ctx, "test.csv", "COPY csv_test FROM STDIN (FORMAT csv)")
 	assert.NoError(t, err, "Should copy from file")
