@@ -167,7 +167,7 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 }
 
 func getTimeoutContext(ctx context.Context, t1 int, t2 int) (context.Context, context.CancelFunc) {
-	timeout := Max(t1, t2)
+	timeout := max(t1, t2)
 	if timeout > 0 {
 		return context.WithTimeout(ctx, time.Millisecond*time.Duration(timeout))
 	}
