@@ -17,7 +17,7 @@ jobs:
         go-version: '1.21'
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Unshallow
       run: git fetch --prune --unshallow
@@ -36,7 +36,7 @@ jobs:
     steps:
         
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Version strings
       id: version
