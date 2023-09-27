@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pashagolub/pgxmock/v2"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLogHook(t *testing.T) {
 	var h LogHook
-	mockPool, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
+	mockPool, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	func() { //fake NewHook
 		h = LogHook{ctx: context.Background(),

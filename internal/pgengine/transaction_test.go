@@ -9,18 +9,19 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/pashagolub/pgxmock/v2"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	mockPool pgxmock.PgxPoolIface
 	mockConn pgxmock.PgxConnIface
+	ctx      context.Context = context.Background()
 )
 
 func initmockdb(t *testing.T) {
 	var err error
-	mockPool, err = pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
+	mockPool, err = pgxmock.NewPool()
 	assert.NoError(t, err)
 	mockConn, err = pgxmock.NewConn()
 	assert.NoError(t, err)
@@ -36,28 +37,24 @@ func TestIsIntervalChainListed(t *testing.T) {
 
 func TestStartTransaction(t *testing.T) {
 	initmockdb(t)
-	defer mockPool.Close()
-	ctx := context.Background()
-	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectBegin().WillReturnError(errors.New("foo"))
-	tx, txid, err := pge.StartTransaction(ctx)
-	assert.Nil(t, tx)
+	_, txid, err := pge.StartTransaction(ctx)
 	assert.Zero(t, txid)
 	assert.Error(t, err)
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
-	tx, txid, err = pge.StartTransaction(ctx)
+	tx, txid, err := pge.StartTransaction(ctx)
 	assert.NotNil(t, tx)
-	assert.Equal(t, int64(42), txid)
+	assert.EqualValues(t, 42, txid)
 	assert.NoError(t, err)
 }
 
 func TestMustTransaction(t *testing.T) {
 	initmockdb(t)
-	defer mockPool.Close()
-	ctx := context.Background()
+
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	mockPool.ExpectBegin()
@@ -90,7 +87,6 @@ func TestMustTransaction(t *testing.T) {
 func TestExecuteSQLTask(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	ctx := context.Background()
 
 	t.Run("Check autonomous SQL task", func(t *testing.T) {
 		_, err := pge.ExecuteSQLTask(ctx, nil, &pgengine.ChainTask{Autonomous: true}, []string{})
@@ -115,7 +111,7 @@ func TestExecuteSQLTask(t *testing.T) {
 func TestExecLocalSQLTask(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	ctx := context.Background()
+
 	mockPool.ExpectExec("SET ROLE").WillReturnResult(pgconn.NewCommandTag("SET"))
 	mockPool.ExpectExec("SAVEPOINT task").WillReturnResult(pgconn.NewCommandTag("SAVEPOINT"))
 	mockPool.ExpectExec("SELECT set_config").
@@ -142,7 +138,7 @@ func TestExecLocalSQLTask(t *testing.T) {
 func TestExecStandaloneTask(t *testing.T) {
 	initmockdb(t)
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	ctx := context.Background()
+
 	mockPool.ExpectExec("SET ROLE").WillReturnResult(pgconn.NewCommandTag("SET"))
 	mockPool.ExpectExec("SELECT set_config").
 		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
@@ -183,9 +179,8 @@ func TestExpectedCloseError(t *testing.T) {
 
 func TestExecuteSQLCommand(t *testing.T) {
 	initmockdb(t)
-	defer mockPool.Close()
+
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	ctx := context.Background()
 
 	_, err := pge.ExecuteSQLCommand(ctx, mockPool, "", []string{})
 	assert.Error(t, err)
@@ -205,9 +200,8 @@ func TestExecuteSQLCommand(t *testing.T) {
 
 func TestGetChainElements(t *testing.T) {
 	initmockdb(t)
-	defer mockPool.Close()
+
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
-	ctx := context.Background()
 
 	mockPool.ExpectQuery("SELECT").WithArgs(0).WillReturnError(errors.New("error"))
 	assert.Error(t, pge.GetChainElements(ctx, &[]pgengine.ChainTask{}, 0))
@@ -227,8 +221,7 @@ func TestGetChainElements(t *testing.T) {
 
 func TestSetRole(t *testing.T) {
 	initmockdb(t)
-	defer mockPool.Close()
-	ctx := context.Background()
+
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
