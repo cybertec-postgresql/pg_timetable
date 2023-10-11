@@ -7,12 +7,12 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/pashagolub/pgxmock/v2"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIntervalChain(t *testing.T) {
-	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
+	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))

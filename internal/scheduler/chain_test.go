@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/pashagolub/pgxmock/v2"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +26,7 @@ func TestSchedulerExclusiveLocking(*testing.T) {
 }
 
 func TestAsyncChains(t *testing.T) {
-	mock, err := pgxmock.NewPool(pgxmock.MonitorPingsOption(true))
+	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))

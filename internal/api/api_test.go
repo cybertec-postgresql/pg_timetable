@@ -1,13 +1,12 @@
-package api_test
+package api
 
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/api"
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/stretchr/testify/assert"
@@ -31,47 +30,30 @@ func (r *apihandler) StopChain(context.Context, int) error {
 	return nil
 }
 
-var restsrv *api.RestAPIServer
+var restsrv = Init(config.RestAPIOpts{Port: 8080}, log.Init(config.LoggingOpts{LogLevel: "error"}))
 
-func init() {
-	restsrv = api.Init(config.RestAPIOpts{Port: 8080}, log.Init(config.LoggingOpts{LogLevel: "error"}))
-}
+const turl = "http://localhost:8080/"
 
 func TestStatus(t *testing.T) {
-
-	r, err := http.Get("http://localhost:8080/liveness")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, r.StatusCode)
-
-	r, err = http.Get("http://localhost:8080/readiness")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusServiceUnavailable, r.StatusCode)
+	assert.HTTPSuccess(t, restsrv.livenessHandler, "GET", turl+"liveness", nil)
+	assert.HTTPStatusCode(t, restsrv.readinessHandler, "GET", turl+"readiness", nil, http.StatusServiceUnavailable)
 
 	restsrv.APIHandler = &apihandler{}
-	r, err = http.Get("http://localhost:8080/readiness")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.HTTPSuccess(t, restsrv.readinessHandler, "GET", turl+"readiness", nil)
 }
 
 func TestChainManager(t *testing.T) {
 	restsrv.APIHandler = &apihandler{}
-	r, err := http.Get("http://localhost:8080/startchain")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, r.StatusCode)
-	b, _ := io.ReadAll(r.Body)
-	assert.Contains(t, string(b), "invalid syntax")
+	assert.HTTPStatusCode(t, restsrv.chainHandler, "GET", turl+"startchain", nil, http.StatusBadRequest)
+	assert.HTTPBodyContains(t, restsrv.chainHandler, "GET", turl+"startchain", nil, "invalid syntax")
 
-	r, err = http.Get("http://localhost:8080/startchain?id=1")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, r.StatusCode)
+	assert.HTTPSuccess(t, restsrv.chainHandler, "GET", turl+"startchain",
+		url.Values{"id": []string{"1"}})
+	assert.HTTPSuccess(t, restsrv.chainHandler, "GET", turl+"stopchain",
+		url.Values{"id": []string{"1"}})
 
-	r, err = http.Get("http://localhost:8080/stopchain?id=1")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, r.StatusCode)
-
-	r, err = http.Get("http://localhost:8080/startchain?id=0")
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, r.StatusCode)
-	b, _ = io.ReadAll(r.Body)
-	assert.Contains(t, string(b), "invalid chain id")
+	assert.HTTPError(t, restsrv.chainHandler, "GET", turl+"startchain",
+		url.Values{"id": []string{"0"}})
+	assert.HTTPBodyContains(t, restsrv.chainHandler, "GET", turl+"startchain",
+		url.Values{"id": []string{"0"}}, "invalid chain id")
 }
