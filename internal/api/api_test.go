@@ -39,37 +39,37 @@ func init() {
 
 func TestStatus(t *testing.T) {
 
-	r, err := http.Get("http://127.0.0.1:8080/liveness")
+	r, err := http.Get("http://localhost:8080/liveness")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 
-	r, err = http.Get("http://127.0.0.1:8080/readiness")
+	r, err = http.Get("http://localhost:8080/readiness")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusServiceUnavailable, r.StatusCode)
 
 	restsrv.APIHandler = &apihandler{}
-	r, err = http.Get("http://127.0.0.1:8080/readiness")
+	r, err = http.Get("http://localhost:8080/readiness")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
 
 func TestChainManager(t *testing.T) {
 	restsrv.APIHandler = &apihandler{}
-	r, err := http.Get("http://127.0.0.1:8080/startchain")
+	r, err := http.Get("http://localhost:8080/startchain")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, r.StatusCode)
 	b, _ := io.ReadAll(r.Body)
 	assert.Contains(t, string(b), "invalid syntax")
 
-	r, err = http.Get("http://127.0.0.1:8080/startchain?id=1")
+	r, err = http.Get("http://localhost:8080/startchain?id=1")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 
-	r, err = http.Get("http://127.0.0.1:8080/stopchain?id=1")
+	r, err = http.Get("http://localhost:8080/stopchain?id=1")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, r.StatusCode)
 
-	r, err = http.Get("http://127.0.0.1:8080/startchain?id=0")
+	r, err = http.Get("http://localhost:8080/startchain?id=0")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, r.StatusCode)
 	b, _ = io.ReadAll(r.Body)

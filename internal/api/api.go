@@ -47,12 +47,11 @@ func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
 	return s
 }
 
-func (Server *RestAPIServer) readinessHandler(w http.ResponseWriter, r *http.Request) {
+func (Server *RestAPIServer) readinessHandler(w http.ResponseWriter, _ *http.Request) {
 	Server.l.Debug("Received /readiness REST API request")
 	if Server.APIHandler == nil || !Server.APIHandler.IsReady() {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	r.Context()
 }
