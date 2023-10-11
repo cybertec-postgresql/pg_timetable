@@ -20,7 +20,7 @@ epub_show_urls = "footnote"
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 htmlhelp_basename = 'pg-timetable'
-html_theme = 'sphinx_rtd_theme'
+# html_theme = 'sphinx_rtd_theme'
 file_insertion_enabled = False
 latex_documents = [
   ('index', 'pg-timetable.tex', u'pg_timetable Documentation',
