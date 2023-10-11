@@ -9,6 +9,9 @@ from __future__ import division, print_function, unicode_literals
 from datetime import datetime
 
 extensions = ['recommonmark']
+
+from recommonmark.parser import CommonMarkParser
+
 templates_path = ['templates', '_templates', '.templates']
 source_suffix = ['.rst', '.md']
 source_parsers = {
