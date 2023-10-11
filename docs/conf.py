@@ -8,14 +8,9 @@ from __future__ import division, print_function, unicode_literals
 
 from datetime import datetime
 
-from recommonmark.parser import CommonMarkParser
-
 extensions = []
 templates_path = ['templates', '_templates', '.templates']
 source_suffix = ['.rst', '.md']
-source_parsers = {
-            '.md': CommonMarkParser,
-        }
 project = u'pg_timetable'
 copyright = str(datetime.now().year)
 
@@ -25,7 +20,7 @@ epub_show_urls = "footnote"
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 htmlhelp_basename = 'pg-timetable'
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 file_insertion_enabled = False
 latex_documents = [
   ('index', 'pg-timetable.tex', u'pg_timetable Documentation',
