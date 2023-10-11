@@ -97,8 +97,8 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 | Cloud Service    | Supported | PostgreSQL Version  | Supported | OS | Supported |
 | ---------------- |:---------:| ------------------- |:---------:| -- |:---------:|
 | [Alibaba Cloud]  | ✅       | [17 (devel)]         | ✅       | Linux     | ✅ |
-| [Amazon RDS]     | ✅       | [16 (beta)]          | ✅       | Darwin    | ✅ |
-| [Amazon Aurora]  | ✅       | [15 (current)]       | ✅       | Windows   | ✅ |
+| [Amazon RDS]     | ✅       | [16 (current)]          | ✅       | Darwin    | ✅ |
+| [Amazon Aurora]  | ✅       | [15]       | ✅       | Windows   | ✅ |
 | [Azure]          | ✅       | [14]                 | ✅       | FreeBSD\* | ✅ |
 | [Citus Cloud]    | ✅       | [13]                 | ✅       | NetBSD\*  | ✅ |
 | [Crunchy Bridge] | ✅       | [12]                 | ✅       | OpenBSD\* | ✅ | 
@@ -122,8 +122,8 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
 [17 (devel)]: https://www.postgresql.org/docs/devel/index.html
-[16 (beta)]: https://www.postgresql.org/docs/16/index.html
-[15 (current)]: https://www.postgresql.org/docs/15/index.html
+[16 (current)]: https://www.postgresql.org/docs/16/index.html
+[15]: https://www.postgresql.org/docs/15/index.html
 [14]: https://www.postgresql.org/docs/14/index.html
 [13]: https://www.postgresql.org/docs/13/index.html
 [12]: https://www.postgresql.org/docs/12/index.html
