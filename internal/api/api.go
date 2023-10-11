@@ -34,9 +34,7 @@ func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
 			MaxHeaderBytes: 1 << 20,
 		},
 	}
-	http.HandleFunc("/liveness", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK) // i'm serving hence I'm alive
-	})
+	http.HandleFunc("/liveness", s.livenessHandler)
 	http.HandleFunc("/readiness", s.readinessHandler)
 	http.HandleFunc("/startchain", s.chainHandler)
 	http.HandleFunc("/stopchain", s.chainHandler)
@@ -45,6 +43,11 @@ func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
 		go func() { logger.Error(s.ListenAndServe()) }()
 	}
 	return s
+}
+
+func (Server *RestAPIServer) livenessHandler(w http.ResponseWriter, _ *http.Request) {
+	Server.l.Debug("Received /liveness REST API request")
+	w.WriteHeader(http.StatusOK) // i'm serving hence I'm alive
 }
 
 func (Server *RestAPIServer) readinessHandler(w http.ResponseWriter, _ *http.Request) {
