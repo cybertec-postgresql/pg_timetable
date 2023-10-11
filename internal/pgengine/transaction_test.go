@@ -16,7 +16,7 @@ import (
 var (
 	mockPool pgxmock.PgxPoolIface
 	mockConn pgxmock.PgxConnIface
-	ctx      context.Context = context.Background()
+	ctx      = context.Background()
 )
 
 func initmockdb(t *testing.T) {
