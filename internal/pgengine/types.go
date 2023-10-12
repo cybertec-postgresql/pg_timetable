@@ -2,6 +2,7 @@ package pgengine
 
 import (
 	"context"
+	"github.com/jackc/pgx/v5"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 type executor interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
 // Chain structure used to represent tasks chains

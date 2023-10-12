@@ -120,8 +120,12 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, c
 		return "", errors.New("SQL command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		ct, err = executor.Exec(ctx, command)
-		out = ct.String()
+		if isSelectCommand(command) {
+			err = executor.QueryRow(ctx, command).Scan(&out)
+		} else {
+			ct, err = executor.Exec(ctx, command)
+			out = ct.String()
+		}
 		return
 	}
 	for _, val := range paramValues {
@@ -129,11 +133,21 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, c
 			if err = json.Unmarshal([]byte(val), &params); err != nil {
 				return
 			}
-			ct, err = executor.Exec(ctx, command, params...)
-			out = out + ct.String() + "\n"
+			if isSelectCommand(command) {
+				var tmp string
+				err = executor.QueryRow(ctx, command, params...).Scan(&tmp)
+				out = out + tmp + "\n"
+			} else {
+				ct, err = executor.Exec(ctx, command, params...)
+				out = out + ct.String() + "\n"
+			}
 		}
 	}
 	return
+}
+
+func isSelectCommand(command string) bool {
+	return strings.HasPrefix(strings.ToUpper(command), "SELECT")
 }
 
 // GetLocalDBConnection acquires a connection from a local pool and returns it

@@ -198,6 +198,24 @@ func TestExecuteSQLCommand(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestExecuteSQLCommandWithQuery(t *testing.T) {
+	initmockdb(t)
+
+	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+
+	mockPool.ExpectQuery("select 1").WillReturnRows(pgxmock.NewRows([]string{"x"}).AddRow("1"))
+	_, err := pge.ExecuteSQLCommand(ctx, mockPool, "select 1", []string{})
+	assert.NoError(t, err)
+
+	mockPool.ExpectQuery("select public.my_function()").WillReturnRows(pgxmock.NewRows([]string{"response"}).AddRow("{\"foo\":\"bar\"}"))
+	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "select public.my_function()", []string{})
+	assert.NoError(t, err)
+
+	mockPool.ExpectQuery("select with params").WithArgs("first", "second").WillReturnRows(pgxmock.NewRows([]string{"response"}).AddRow("{\"foo\":\"bar\"}"))
+	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "select with params", []string{`["first", "second"]`})
+	assert.NoError(t, err)
+}
+
 func TestGetChainElements(t *testing.T) {
 	initmockdb(t)
 
