@@ -77,7 +77,8 @@ This code of conduct and its related procedures also applies to unacceptable beh
 
 ## 10. Contact info
 
-Pavlo Golub
+[Pavlo Golub](https://pashagolub.github.io/)
+[Cybertec](https://www.cybertec-postgresql.com/)
 
 ## 11. License and attribution
 
