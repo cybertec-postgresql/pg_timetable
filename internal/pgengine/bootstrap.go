@@ -187,7 +187,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		if pgconn.DeallocateAll(context.Background()) != nil {
 			return false // destroy the connection in case of error
 		}
-		_, err = pgconn.Exec(context.Background(), "DISCARD ALL")
+		if _, err = pgconn.Exec(context.Background(), "DISCARD ALL"); err == nil {
 			_, err = pgconn.Exec(context.Background(), "LISTEN "+quoteIdent(pge.ClientName))
 		}
 		return err == nil
