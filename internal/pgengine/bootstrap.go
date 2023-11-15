@@ -187,7 +187,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		if _, err = pgconn.Exec(context.Background(), "DISCARD ALL"); err == nil {
 			_, err = pgconn.Exec(context.Background(), "LISTEN "+quoteIdent(pge.ClientName))
 		}
-		return err != nil
+		return err == nil
 	}
 
 	if !pge.Start.Debug { //will handle notification in HandleNotifications directly
