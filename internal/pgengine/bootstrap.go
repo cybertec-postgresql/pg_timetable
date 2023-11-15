@@ -184,7 +184,10 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	// some objects and/or setting changes will still exist in the session
 	connConfig.AfterRelease = func(pgconn *pgx.Conn) bool {
 		var err error
-		if _, err = pgconn.Exec(context.Background(), "DISCARD ALL"); err == nil {
+		if pgconn.DeallocateAll(context.Background()) != nil {
+			return false // destroy the connection in case of error
+		}
+		_, err = pgconn.Exec(context.Background(), "DISCARD ALL")
 			_, err = pgconn.Exec(context.Background(), "LISTEN "+quoteIdent(pge.ClientName))
 		}
 		return err == nil
