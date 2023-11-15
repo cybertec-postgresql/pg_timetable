@@ -55,6 +55,7 @@ func migrateTest() error {
 	if err != nil {
 		return err
 	}
+	defer pge.Finalize()
 	_, _ = pge.ConfigDb.Exec(ctx, "DROP TABLE IF EXISTS foo, bar, baz, migration")
 	db, err := pge.ConfigDb.Acquire(ctx)
 	if err != nil {
