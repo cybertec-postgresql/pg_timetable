@@ -1,5 +1,5 @@
 -- Prepare the destination table 'location'
-CREATE TABLE IF NOT EXISTS city(
+CREATE TABLE IF NOT EXISTS public.city(
     city text,
     lat numeric,
     lng numeric,
@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS city(
     capital text,
     population bigint,
     population_proper bigint);
+   
+GRANT ALL ON public.city TO scheduler;
 
 -- An enhanced example consisting of three tasks:
 -- 1. Download text file from internet using BUILT-IN command
@@ -16,7 +18,6 @@ CREATE TABLE IF NOT EXISTS city(
 -- 3. Import text file as CSV file using BUILT-IN command (can be down with `psql -c /copy`)
 DO $$
 DECLARE
-    v_head_id bigint;
     v_task_id bigint;
     v_chain_id bigint;
 BEGIN
@@ -73,5 +74,7 @@ BEGIN
 
     INSERT INTO timetable.parameter (task_id, order_id, value)
     VALUES (v_task_id, 1, '["-c", "rm *.csv"]'::jsonb);
+   
+   RAISE NOTICE 'Step 4 completed. Cleanup task added with ID: %', v_task_id;
 END;
 $$ LANGUAGE PLPGSQL;
