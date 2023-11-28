@@ -100,6 +100,7 @@ func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxCo
 
 // ExecRemoteSQLTask executes task against remote connection
 func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
+	log.GetLogger(ctx).Info("Switching to remote task mode")
 	return pge.ExecStandaloneTask(ctx,
 		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, task.ConnectString.String) },
 		task, paramValues)
@@ -107,6 +108,7 @@ func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, par
 
 // ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
 func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
+	log.GetLogger(ctx).Info("Switching to autonomous task mode")
 	return pge.ExecStandaloneTask(ctx,
 		func() (PgxConnIface, error) { return pge.GetLocalDBConnection(ctx) },
 		task, paramValues)
@@ -158,7 +160,7 @@ func (pge *PgEngine) GetRemoteDBConnection(ctx context.Context, connectionString
 // FinalizeDBConnection closes session
 func (pge *PgEngine) FinalizeDBConnection(ctx context.Context, remoteDb PgxConnIface) {
 	l := log.GetLogger(ctx)
-	l.Info("Closing remote session")
+	l.Info("Closing standalone session")
 	if err := remoteDb.Close(ctx); err != nil {
 		l.WithError(err).Error("Cannot close database connection:", err)
 	}
@@ -170,7 +172,7 @@ func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID pgty
 	if !runUID.Valid || strings.TrimSpace(runUID.String) == "" {
 		return nil
 	}
-	log.GetLogger(ctx).Info("Setting Role to ", runUID.String)
+	log.GetLogger(ctx).Info("Setting role to ", runUID.String)
 	_, err := executor.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
 	return err
 }
@@ -178,7 +180,7 @@ func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID pgty
 // ResetRole - RESET forms reset the current user identifier to be the current session user identifier
 func (pge *PgEngine) ResetRole(ctx context.Context, executor executor) {
 	l := log.GetLogger(ctx)
-	l.Info("Resetting Role")
+	l.Info("Resetting role")
 	_, err := executor.Exec(ctx, `RESET ROLE`)
 	if err != nil {
 		l.WithError(err).Error("Failed to set a role", err)
