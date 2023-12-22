@@ -107,7 +107,7 @@ func TestLogChainElementExecution(t *testing.T) {
 	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
 		mockPool.ExpectExec("INSERT INTO .*execution_log").WithArgs(
 			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(),
-			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
 			WillReturnError(errors.New("Failed to log chain element execution status"))
 		pge.LogTaskExecution(context.Background(), &pgengine.ChainTask{}, 0, "STATUS")
 	})
