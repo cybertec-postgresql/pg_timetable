@@ -105,17 +105,18 @@ COMMENT ON TABLE timetable.log IS
     'Stores log entries of active sessions';
 
 CREATE TABLE timetable.execution_log (
-    chain_id    BIGINT,
-    task_id     BIGINT,
-    txid        BIGINT NOT NULL,
-    last_run    TIMESTAMPTZ DEFAULT now(),
-    finished    TIMESTAMPTZ,
-    pid         BIGINT,
-    returncode  INTEGER,
-    kind        timetable.command_kind,
-    command     TEXT,
-    output      TEXT,
-    client_name TEXT        NOT NULL
+    chain_id        BIGINT,
+    task_id         BIGINT,
+    txid            BIGINT NOT NULL,
+    last_run        TIMESTAMPTZ DEFAULT now(),
+    finished        TIMESTAMPTZ,
+    pid             BIGINT,
+    returncode      INTEGER,
+    ignore_error    BOOLEAN,
+    kind            timetable.command_kind,
+    command         TEXT,
+    output          TEXT,
+    client_name     TEXT        NOT NULL
 );
 
 COMMENT ON TABLE timetable.execution_log IS

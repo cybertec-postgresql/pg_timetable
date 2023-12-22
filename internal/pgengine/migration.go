@@ -135,6 +135,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00575.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00629 Add ignore_error column to timetable.execution_log",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00629.sql")
+			},
+		},
 		// adding new migration here, update "timetable"."migration" in "sql/init.sql"
 		// and "dbapi" variable in main.go!
 

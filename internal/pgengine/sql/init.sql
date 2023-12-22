@@ -25,4 +25,5 @@ VALUES
     (9,  '00534 Use cron_split_to_arrays() in cron domain check'),
     (10, '00560 Alter txid column to bigint'),
     (11, '00573 Add ability to start a chain with delay'),
-    (12, '00575 Add on_error handling');
+    (12, '00575 Add on_error handling'),
+    (13, '00629 Add ignore_error column to timetable.execution_log');
