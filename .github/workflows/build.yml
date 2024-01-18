@@ -141,4 +141,4 @@ jobs:
       uses: goreleaser/goreleaser-action@v5
       with:
         version: latest
-        args: release --snapshot --skip-publish --clean
+        args: release --snapshot --skip=publish --clean
