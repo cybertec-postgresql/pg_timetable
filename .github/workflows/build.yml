@@ -125,7 +125,7 @@ jobs:
         go version
 
     - name: GolangCI-Lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v4
       with:
         version: latest
         
