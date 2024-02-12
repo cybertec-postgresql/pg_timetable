@@ -58,7 +58,7 @@ var Migrations func() migrator.Option = func() migrator.Option {
 	return migrator.Migrations(
 		&migrator.Migration{
 			Name: "00259 Restart migrations for v4",
-			Func: func(ctx context.Context, tx pgx.Tx) error {
+			Func: func(context.Context, pgx.Tx) error {
 				// "migrations" table will be created automatically
 				return nil
 			},
