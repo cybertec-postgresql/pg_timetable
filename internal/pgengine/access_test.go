@@ -104,7 +104,7 @@ func TestLogChainElementExecution(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	t.Run("Check LogChainElementExecution if sql fails", func(t *testing.T) {
+	t.Run("Check LogChainElementExecution if sql fails", func(*testing.T) {
 		mockPool.ExpectExec("INSERT INTO .*execution_log").WithArgs(
 			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(),
 			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).

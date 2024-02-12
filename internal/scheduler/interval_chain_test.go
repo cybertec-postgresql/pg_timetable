@@ -25,21 +25,21 @@ func TestIntervalChain(t *testing.T) {
 	sch.intervalChains[ichain.ChainID] = ichain
 	assert.True(t, sch.isValid(ichain))
 
-	t.Run("Check reschedule if self destructive", func(t *testing.T) {
+	t.Run("Check reschedule if self destructive", func(*testing.T) {
 		mock.ExpectExec("INSERT INTO timetable\\.log").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		mock.ExpectExec("DELETE").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		ichain.SelfDestruct = true
 		sch.reschedule(context.Background(), ichain)
 	})
 
-	t.Run("Check reschedule if context cancelled", func(t *testing.T) {
+	t.Run("Check reschedule if context cancelled", func(*testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		ichain.SelfDestruct = false
 		sch.reschedule(ctx, ichain)
 	})
 
-	t.Run("Check reschedule if everything fine", func(t *testing.T) {
+	t.Run("Check reschedule if everything fine", func(*testing.T) {
 		ichain.Interval = 1
 		sch.reschedule(context.Background(), ichain)
 	})

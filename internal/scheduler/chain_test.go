@@ -63,14 +63,14 @@ func TestChainWorker(t *testing.T) {
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
 	chains := make(chan Chain, 16)
 
-	t.Run("Check chainWorker if context cancelled", func(t *testing.T) {
+	t.Run("Check chainWorker if context cancelled", func(*testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		chains <- Chain{}
 		sch.chainWorker(ctx, chains)
 	})
 
-	t.Run("Check chainWorker if everything fine", func(t *testing.T) {
+	t.Run("Check chainWorker if everything fine", func(*testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		mock.ExpectQuery("SELECT count").WillReturnError(pgx.ErrNoRows)
@@ -82,7 +82,7 @@ func TestChainWorker(t *testing.T) {
 		sch.chainWorker(ctx, chains)
 	})
 
-	t.Run("Check chainWorker if cannot proceed with chain execution", func(t *testing.T) {
+	t.Run("Check chainWorker if cannot proceed with chain execution", func(*testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
 		defer cancel()
 		mock.ExpectQuery("SELECT count").WillReturnError(errors.New("expected"))
@@ -130,13 +130,13 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("check error handler if context cancelled", func(t *testing.T) {
+	t.Run("check error handler if context cancelled", func(*testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 		sch.executeOnErrorHandler(ctx, c)
 	})
 
-	t.Run("check error handler if error", func(t *testing.T) {
+	t.Run("check error handler if error", func(*testing.T) {
 		mock.ExpectExec("FOO").WillReturnError(errors.New("Syntax error near FOO"))
 		sch.executeOnErrorHandler(context.Background(), c)
 	})

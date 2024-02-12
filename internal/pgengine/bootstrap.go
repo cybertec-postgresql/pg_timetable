@@ -98,7 +98,7 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 
 	config := pge.getPgxConnConfig()
 	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
-		if pge.ConfigDb, err = pgxpool.NewWithConfig(connctx, config); err == nil {
+		if pge.ConfigDb, err = pgxpool.NewWithConfig(ctx, config); err == nil {
 			err = pge.ConfigDb.Ping(connctx)
 		}
 		if err != nil {
@@ -161,7 +161,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 	// and another connection for LogHook.send()
 	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers) + 3
 	connConfig.ConnConfig.RuntimeParams["application_name"] = "pg_timetable"
-	connConfig.ConnConfig.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
+	connConfig.ConnConfig.OnNotice = func(_ *pgconn.PgConn, n *pgconn.Notice) {
 		pge.l.WithField("severity", n.Severity).WithField("notice", n.Message).Info("Notice received")
 	}
 	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
