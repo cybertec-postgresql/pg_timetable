@@ -60,6 +60,8 @@ COMMENT ON COLUMN timetable.task.command IS
     'Contains either an SQL command, or command string to be executed';
 COMMENT ON COLUMN timetable.task.timeout IS
     'Abort any task within a chain that takes more than the specified number of milliseconds';
+COMMENT ON COLUMN timetable.task.autonomous IS
+    'Specify if the task should be executed out of the chain transaction. Useful for VACUUM, CREATE DATABASE, CALL etc.';
 
 -- parameter passing for a chain task
 CREATE TABLE timetable.parameter(
