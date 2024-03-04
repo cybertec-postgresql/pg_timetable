@@ -29,7 +29,7 @@ func DownloadUrls(ctx context.Context, urls []string, dest string, workers int) 
 		if err = resp.Err(); err != nil {
 			errstrings = append(errstrings, err.Error())
 		} else {
-			out = out + fmt.Sprintf("Downloaded %s to %s\n", resp.Request.URL(), resp.Filename)
+			out += fmt.Sprintf("Downloaded %s to %s\n", resp.Request.URL(), resp.Filename)
 		}
 	}
 	if len(errstrings) > 0 {

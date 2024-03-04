@@ -87,7 +87,7 @@ func (sch *Scheduler) retrieveChainsAndRun(ctx context.Context, reboot bool) {
 	var headChains []Chain
 	msg := "Retrieve scheduled chains to run"
 	if reboot {
-		msg = msg + " @reboot"
+		msg += " @reboot"
 	}
 	if reboot {
 		err = sch.pgengine.SelectRebootChains(ctx, &headChains)
