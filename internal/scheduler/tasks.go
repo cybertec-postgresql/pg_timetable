@@ -38,7 +38,7 @@ func (sch *Scheduler) executeBuiltinTask(ctx context.Context, name string, param
 		if s, err = f(ctx, sch, val); err != nil {
 			return
 		}
-		stdout = stdout + fmt.Sprintln(s)
+		stdout += fmt.Sprintln(s)
 	}
 	return
 }

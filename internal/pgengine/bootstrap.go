@@ -147,7 +147,7 @@ func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
 		connstr = fmt.Sprintf("host='%s' port='%d' dbname='%s' sslmode='%s' user='%s'",
 			pge.Connection.Host, pge.Connection.Port, pge.Connection.DBName, pge.Connection.SSLMode, pge.Connection.User)
 		if pge.Connection.Password != "" {
-			connstr = connstr + fmt.Sprintf(" password='%s'", pge.Connection.Password)
+			connstr += fmt.Sprintf(" password='%s'", pge.Connection.Password)
 		}
 	}
 	connConfig, err := pgxpool.ParseConfig(connstr)
