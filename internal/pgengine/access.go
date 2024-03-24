@@ -83,7 +83,7 @@ func (pge *PgEngine) SelectRebootChains(ctx context.Context, dest *[]Chain) erro
 
 // SelectChains returns a list of chains should be executed at the current moment
 func (pge *PgEngine) SelectChains(ctx context.Context, dest *[]Chain) error {
-	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now())`
+	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, '@'), FALSE) AND timetable.is_cron_in_time(run_at, now() AT TIME ZONE run_at_time_zone)`
 	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChains, pge.ClientName)
 	if err != nil {
 		return err

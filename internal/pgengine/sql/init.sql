@@ -26,4 +26,5 @@ VALUES
     (10, '00560 Alter txid column to bigint'),
     (11, '00573 Add ability to start a chain with delay'),
     (12, '00575 Add on_error handling'),
-    (13, '00629 Add ignore_error column to timetable.execution_log');
+    (13, '00629 Add ignore_error column to timetable.execution_log'),
+    (14, '00645 Change is_cron_in_time ts param to timestamp without time zone');

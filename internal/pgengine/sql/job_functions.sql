@@ -25,12 +25,13 @@ CREATE OR REPLACE FUNCTION timetable.add_job(
     job_self_destruct   BOOLEAN DEFAULT FALSE,
     job_ignore_errors   BOOLEAN DEFAULT TRUE,
     job_exclusive       BOOLEAN DEFAULT FALSE,
-    job_on_error        TEXT DEFAULT NULL
+    job_on_error        TEXT DEFAULT NULL,
+    job_time_zone       TEXT DEFAULT current_setting('TIMEZONE')
 ) RETURNS BIGINT AS $$
     WITH 
         cte_chain (v_chain_id) AS (
-            INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct, client_name, exclusive_execution, on_error) 
-            VALUES (job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name, job_exclusive, job_on_error)
+            INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct, client_name, exclusive_execution, on_error, run_at_time_zone) 
+            VALUES (job_name, job_schedule,job_max_instances, job_live, job_self_destruct, job_client_name, job_exclusive, job_on_error, job_time_zone)
             RETURNING chain_id
         ),
         cte_task(v_task_id) AS (

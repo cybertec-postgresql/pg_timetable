@@ -8,7 +8,8 @@ CREATE TABLE timetable.chain (
     self_destruct       BOOLEAN     DEFAULT FALSE,
     exclusive_execution BOOLEAN     DEFAULT FALSE,
     client_name         TEXT,
-    on_error            TEXT
+    on_error            TEXT,
+    run_at_time_zone    TEXT        NOT NULL DEFAULT current_setting('TIMEZONE')
 );
 
 COMMENT ON TABLE timetable.chain IS

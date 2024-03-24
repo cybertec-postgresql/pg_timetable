@@ -144,7 +144,7 @@ COMMENT ON DOMAIN timetable.cron IS 'Extended CRON-style notation with support o
 -- is_cron_in_time returns TRUE if timestamp is listed in cron expression
 CREATE OR REPLACE FUNCTION timetable.is_cron_in_time(
     run_at timetable.cron, 
-    ts timestamptz
+    ts timestamp
 ) RETURNS BOOLEAN AS $$
     SELECT
     CASE WHEN run_at IS NULL THEN
