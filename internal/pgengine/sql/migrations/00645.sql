@@ -19,7 +19,7 @@ $$ LANGUAGE SQL;
 DROP FUNCTION timetable.is_cron_in_time(timetable.cron, timestamp with time zone);
 
 ALTER TABLE timetable.chain
-    ADD COLUMN run_at_time_zone TEXT DEFAULT current_setting('TIMEZONE') NOT NULL USING current_setting('TIMEZONE');
+    ADD COLUMN run_at_time_zone TEXT DEFAULT current_setting('TIMEZONE') NOT NULL;
 
 CREATE OR REPLACE FUNCTION timetable.add_job(
     job_name            TEXT,
