@@ -142,7 +142,7 @@ var Migrations func() migrator.Option = func() migrator.Option {
 			},
 		},
 		&migrator.Migration{
-			Name: "00645 Change is_cron_in_time ts param to timestamp without time zone",
+			Name: "00645 Add option to specify time zone per chain",
 			Func: func(ctx context.Context, tx pgx.Tx) error {
 				return ExecuteMigrationScript(ctx, tx, "00645.sql")
 			},
