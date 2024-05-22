@@ -5,7 +5,7 @@ import (
 	"embed"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
-	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
+	migrator "github.com/cybertec-postgresql/pgx-migrator"
 	pgx "github.com/jackc/pgx/v5"
 )
 

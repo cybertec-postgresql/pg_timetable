@@ -5,8 +5,8 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/migrator"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	migrator "github.com/cybertec-postgresql/pgx-migrator"
 	"github.com/stretchr/testify/assert"
 )
 
