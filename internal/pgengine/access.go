@@ -19,7 +19,7 @@ func (pge *PgEngine) DeleteChain(ctx context.Context, chainID int) bool {
 		pge.l.WithError(err).Error("Failed to delete self destructive chain")
 		return false
 	}
-	return err == nil && res.RowsAffected() == 1
+	return res.RowsAffected() == 1
 }
 
 // IsAlive returns true if the connection to the database is alive
