@@ -9,7 +9,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/pashagolub/pgxmock/v3"
+	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 )
 
