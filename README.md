@@ -41,7 +41,7 @@ SELECT timetable.add_job('reindex-job', '0 0 * * 7', 'reindexdb',
 
 --  passing password using environment variable through bash shell
 SELECT timetable.add_job('reindex-job', '0 0 * * 7', 'bash',
-    '["-c", "PGPASSWORD=5m3R7K4754p4m reindexdb -U postgres -h 192.168.0.221 -v'::jsonb,
+    '["-c", "PGPASSWORD=5m3R7K4754p4m reindexdb -U postgres -h 192.168.0.221 -v"]'::jsonb,
     'PROGRAM');    
 ```      
 ## Documentation
