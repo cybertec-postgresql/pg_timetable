@@ -96,15 +96,15 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 ## Supported Environments
 | Cloud Service    | Supported | PostgreSQL Version  | Supported | OS | Supported |
 | ---------------- |:---------:| ------------------- |:---------:| -- |:---------:|
-| [Alibaba Cloud]  | ✅       | [17 (devel)]         | ✅       | Linux     | ✅ |
-| [Amazon RDS]     | ✅       | [16 (current)]          | ✅       | Darwin    | ✅ |
-| [Amazon Aurora]  | ✅       | [15]       | ✅       | Windows   | ✅ |
-| [Azure]          | ✅       | [14]                 | ✅       | FreeBSD\* | ✅ |
-| [Citus Cloud]    | ✅       | [13]                 | ✅       | NetBSD\*  | ✅ |
-| [Crunchy Bridge] | ✅       | [12]                 | ✅       | OpenBSD\* | ✅ | 
-| [DigitalOcean]   | ✅       | [11]                 | ✅       | Solaris\* | ✅ |
-| [Google Cloud]   | ✅       | [10]                 | ✅ 
-| [Heroku]         | ✅       |
+| [Alibaba Cloud]  | ✅       | [18 (devel)]         | ✅       | Linux     | ✅ |
+| [Amazon RDS]     | ✅       | [17 (current)]       | ✅       | Darwin    | ✅ |
+| [Amazon Aurora]  | ✅       | [16]       	         | ✅       | Windows   | ✅ |
+| [Azure]          | ✅       | [15]                 | ✅       | FreeBSD\* | ✅ |
+| [Citus Cloud]    | ✅       | [14]                 | ✅       | NetBSD\*  | ✅ |
+| [Crunchy Bridge] | ✅       | [13]                 | ✅       | OpenBSD\* | ✅ | 
+| [DigitalOcean]   | ✅       | [12]                 | ✅       | Solaris\* | ✅ |
+| [Google Cloud]   | ✅       | [11]                 | ✅ 
+| [Heroku]         | ✅       | [10]
 | [Supabase]       | ✅       |
 | [Tembo]          | ✅       |
 
@@ -123,8 +123,9 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
 [Tembo]: https://cloud.tembo.io/
-[17 (devel)]: https://www.postgresql.org/docs/devel/index.html
-[16 (current)]: https://www.postgresql.org/docs/16/index.html
+[18 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[17 (current)]: https://www.postgresql.org/docs/17/index.html
+[16]: https://www.postgresql.org/docs/16/index.html
 [15]: https://www.postgresql.org/docs/15/index.html
 [14]: https://www.postgresql.org/docs/14/index.html
 [13]: https://www.postgresql.org/docs/13/index.html
