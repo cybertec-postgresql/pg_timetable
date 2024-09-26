@@ -106,6 +106,7 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 | [Google Cloud]   | ✅       | [10]                 | ✅ 
 | [Heroku]         | ✅       |
 | [Supabase]       | ✅       |
+| [Tembo]          | ✅       |
 
 \* - there are no official release binaries made for these OSes. One would need to [build them from sources](https://pg-timetable.readthedocs.io/en/master/installation.html#build-from-sources).
 
@@ -121,6 +122,7 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Google Cloud]: https://cloud.google.com/sql/docs/postgres/
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
+[Tembo]: https://cloud.tembo.io/
 [17 (devel)]: https://www.postgresql.org/docs/devel/index.html
 [16 (current)]: https://www.postgresql.org/docs/16/index.html
 [15]: https://www.postgresql.org/docs/15/index.html
