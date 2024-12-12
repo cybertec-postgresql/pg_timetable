@@ -6,7 +6,7 @@ require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/cybertec-postgresql/pgx-migrator v1.0.0
 	github.com/jackc/pgx/v5 v5.6.0
-	github.com/jessevdk/go-flags v1.5.0
+	github.com/jessevdk/go-flags v1.6.1
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock/v4 v4.0.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
@@ -40,7 +40,7 @@ require (
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
