@@ -1,7 +1,7 @@
 github.com/cavaliercoder/grab v2.0.0+incompatible h1:wZHbBQx56+Yxjx2TCGDcenhh3cJn7cCLMfkEPmySTSE=
 github.com/cavaliercoder/grab v2.0.0+incompatible/go.mod h1:tTBkfNqSBfuMmMBFaO2phgyhdYhiZQ/+iXCZDzcDsMI=
-github.com/cybertec-postgresql/pgx-migrator v1.0.0 h1:RCRMWhOqA5V4TaLYNEEqRAO6ou+N0IHvmNjOSSS2cfM=
-github.com/cybertec-postgresql/pgx-migrator v1.0.0/go.mod h1:Wop9kQYAmVibyprt1R2/5idAeqgyUmN9TN5y0kp8KlQ=
+github.com/cybertec-postgresql/pgx-migrator v1.0.2 h1:zYMEGm2OJmz3iOZ4/C8VR8xqvg772PsDwQekW0a2tLk=
+github.com/cybertec-postgresql/pgx-migrator v1.0.2/go.mod h1:6HGXoguH5ktGynVE6XCQSJJgTSWStSHeJGaRzNyI/zY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
