@@ -45,7 +45,7 @@ func TestStartTransaction(t *testing.T) {
 	assert.Error(t, err)
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("SELECT txid_current()").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+	mockPool.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
 	tx, txid, err := pge.StartTransaction(ctx)
 	assert.NotNil(t, tx)
 	assert.EqualValues(t, 42, txid)

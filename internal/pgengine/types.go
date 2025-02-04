@@ -53,7 +53,7 @@ type ChainTask struct {
 	Timeout       int         `db:"timeout"` // in milliseconds
 	StartedAt     time.Time   `db:"-"`
 	Duration      int64       `db:"-"` // in microseconds
-	Txid          int64       `db:"-"`
+	Vxid          int64       `db:"-"`
 }
 
 func (task *ChainTask) IsRemote() bool {
