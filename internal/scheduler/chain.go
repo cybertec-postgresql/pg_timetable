@@ -192,7 +192,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
 	var bctx context.Context
 	var cancel context.CancelFunc
-	var txid int64
+	var vxid int64
 
 	chainCtx, cancel := getTimeoutContext(ctx, sch.Config().Resource.ChainTimeout, chain.Timeout)
 	if cancel != nil {
@@ -200,12 +200,12 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 
 	chainL := sch.l.WithField("chain", chain.ChainID)
-	tx, txid, err := sch.pgengine.StartTransaction(chainCtx)
+	tx, vxid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
 		return
 	}
-	chainL = chainL.WithField("txid", txid)
+	chainL = chainL.WithField("vxid", vxid)
 
 	err = sch.pgengine.GetChainElements(chainCtx, &ChainTasks, chain.ChainID)
 	if err != nil {
@@ -217,7 +217,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	/* now we can loop through every element of the task chain */
 	for _, task := range ChainTasks {
 		task.ChainID = chain.ChainID
-		task.Txid = txid
+		task.Vxid = vxid
 		l := chainL.WithField("task", task.TaskID)
 		l.Info("Starting task")
 		taskCtx := log.WithLogger(chainCtx, l)
