@@ -37,7 +37,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.24'
 
     - name: Test
       run: go test -v -p 1 -parallel 1 -failfast ./...
@@ -87,7 +87,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.24'
 
     - name: Test
       run: go test -v -p 1 -parallel 1 -failfast ./...
@@ -120,7 +120,7 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v5
       with:
-        go-version: '1.21'
+        go-version: '1.24'
 
     - name: Get dependencies
       run: |
