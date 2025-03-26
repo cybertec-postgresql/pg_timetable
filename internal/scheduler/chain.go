@@ -62,7 +62,7 @@ func (sch *Scheduler) processAsyncChain(ctx context.Context, chainSignal ChainSi
 	case "START":
 		var c Chain
 		if err := sch.pgengine.SelectChain(ctx, &c, chainSignal.ConfigID); err != nil {
-			return fmt.Errorf("Cannot start chain with ID: %d; %w", chainSignal.ConfigID, err)
+			return fmt.Errorf("cannot start chain with ID: %d; %w", chainSignal.ConfigID, err)
 		}
 		go func() {
 			select {
@@ -77,7 +77,7 @@ func (sch *Scheduler) processAsyncChain(ctx context.Context, chainSignal ChainSi
 			cancel()
 			return nil
 		}
-		return fmt.Errorf("Cannot stop chain with ID: %d. No running chain found", chainSignal.ConfigID)
+		return fmt.Errorf("cannot stop chain with ID: %d. No running chain found", chainSignal.ConfigID)
 	}
 	return nil
 }

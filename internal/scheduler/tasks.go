@@ -117,7 +117,7 @@ func taskDownload(ctx context.Context, _ *Scheduler, paramValues string) (stdout
 		return "", err
 	}
 	if len(opts.FileUrls) == 0 {
-		return "", errors.New("Files to download are not specified")
+		return "", errors.New("files to download are not specified")
 	}
 	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
 }

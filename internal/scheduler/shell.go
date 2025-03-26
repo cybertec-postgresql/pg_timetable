@@ -30,7 +30,7 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string,
 
 	command = strings.TrimSpace(command)
 	if command == "" {
-		return -1, "", errors.New("Program command cannot be empty")
+		return -1, "", errors.New("program command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		paramValues = []string{""}
@@ -50,7 +50,7 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string,
 		if err != nil {
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {
-				exitCode := exitError.ProcessState.ExitCode()
+				exitCode := exitError.ExitCode()
 				l.WithField("retcode", exitCode).Debug("Program run", cmdLine, exitCode)
 				return exitCode, stdout, exitError
 			}

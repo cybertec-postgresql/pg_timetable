@@ -63,12 +63,12 @@ func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notificatio
 				pge.chainSignalChan <- signal
 				return
 			}
-			err = fmt.Errorf("Unknown chain ID: %d", signal.ConfigID)
+			err = fmt.Errorf("unknown chain ID: %d", signal.ConfigID)
 		default:
-			err = fmt.Errorf("Unknown command: %s", signal.Command)
+			err = fmt.Errorf("unknown command: %s", signal.Command)
 		}
 	}
-	l.WithError(err).Error("Syntax error in payload")
+	l.WithError(err).Error("syntax error in payload")
 }
 
 // WaitForChainSignal returns configuration id from the notifications

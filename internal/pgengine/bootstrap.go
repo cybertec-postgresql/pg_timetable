@@ -135,7 +135,7 @@ func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
 }
 
 func quoteIdent(s string) string {
-	return `"` + strings.Replace(s, `"`, `""`, -1) + `"`
+	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`
 }
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
@@ -230,7 +230,7 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 	if e := conn.QueryRow(ctx, sql, pge.Getsid(), pge.ClientName).Scan(&locked); e != nil {
 		return e
 	} else if !locked {
-		return errors.New("Cannot obtain lock for a session")
+		return errors.New("cannot obtain lock for a session")
 	}
 	return nil
 }
@@ -240,12 +240,12 @@ func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...strin
 	for _, f := range filename {
 		sql, err := os.ReadFile(f)
 		if err != nil {
-			pge.l.WithError(err).Error("Cannot read command file")
+			pge.l.WithError(err).Error("cannot read command file")
 			return err
 		}
 		pge.l.Info("Executing script: ", f)
 		if _, err = pge.ConfigDb.Exec(ctx, string(sql)); err != nil {
-			pge.l.WithError(err).Error("Script execution failed")
+			pge.l.WithError(err).Error("script execution failed")
 			return err
 		}
 		pge.l.Info("Script file executed: ", f)
