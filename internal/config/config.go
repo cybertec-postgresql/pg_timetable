@@ -53,22 +53,22 @@ func eachOption(g *flags.Group, f func(*flags.Group, *flags.Option)) {
 // VisitAll will execute fn() for all options found in command line.
 // Since we have only two level of nesting it's enough to use simplified group-prefixed name.
 func (cmdSet cmdArgSet) VisitAll(fn func(viper.FlagValue)) {
-	root := cmdSet.Parser.Group.Find("Application Options")
+	root := cmdSet.Group.Find("Application Options")
 	eachOption(root, func(g *flags.Group, o *flags.Option) {
 		name := o.LongName
 		if g != root {
-			name = g.ShortDescription + cmdSet.Parser.NamespaceDelimiter + name
+			name = g.ShortDescription + cmdSet.NamespaceDelimiter + name
 		}
 		fn(cmdArg{name, o})
 	})
 }
 
 func (cmdSet cmdArgSet) setDefaults(v *viper.Viper) {
-	eachOption(cmdSet.Parser.Group, func(g *flags.Group, o *flags.Option) {
+	eachOption(cmdSet.Group, func(g *flags.Group, o *flags.Option) {
 		if o.Default != nil && o.IsSetDefault() {
 			name := o.LongName
-			if g != cmdSet.Parser.Group {
-				name = g.ShortDescription + cmdSet.Parser.NamespaceDelimiter + name
+			if g != cmdSet.Group {
+				name = g.ShortDescription + cmdSet.NamespaceDelimiter + name
 			}
 			v.SetDefault(name, o.Value())
 		}
@@ -91,12 +91,12 @@ func NewConfig(writer io.Writer) (*CmdOptions, error) {
 		v.SetConfigFile(v.GetString("config"))
 		err := v.ReadInConfig() // Find and read the config file
 		if err != nil {         // Handle errors reading the config file
-			return nil, fmt.Errorf("Fatal error reading config file: %w", err)
+			return nil, fmt.Errorf("fatal error reading config file: %w", err)
 		}
 	}
 	conf := &CmdOptions{}
 	if err = v.Unmarshal(conf); err != nil {
-		return nil, fmt.Errorf("Fatal error unmarshalling config file: %w", err)
+		return nil, fmt.Errorf("fatal error unmarshalling config file: %w", err)
 	}
 	if conf.ClientName == "" {
 		buf := bytes.NewBufferString("The required flag `-c, --clientname` was not specified\n")
