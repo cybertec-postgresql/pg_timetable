@@ -43,7 +43,7 @@ func TestExecuteTask(t *testing.T) {
 
 	assert.Error(t, et("Download", []string{"foo"}), "Invalid json")
 	assert.EqualError(t, et("Download", []string{`{"workersnum": 0, "fileurls": [] }`}),
-		"Files to download are not specified", "Download with empty files should fail")
+		"files to download are not specified", "Download with empty files should fail")
 	assert.Error(t, et("Download", []string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "" }`}),
 		"Downlod incorrect url should fail")
 
