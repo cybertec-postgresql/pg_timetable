@@ -29,6 +29,14 @@ func (pge *PgEngine) IsAlive() bool {
 
 // LogTaskExecution will log current chain element execution status including retcode
 func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string) {
+	switch pge.Logging.LogDBLevel {
+	case "none":
+		return
+	case "error":
+		if task.IgnoreError || retCode == 0 {
+			return
+		}
+	}
 	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
 chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error) 
 VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10, $11)`,
