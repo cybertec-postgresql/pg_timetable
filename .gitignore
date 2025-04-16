@@ -1,10 +1,6 @@
-# Binaries for programs and plugins
+# Binaries
 pg_timetable
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+pg_timetable.exe
 
 # Test binary, build with `go test -c`
 *.test
