@@ -152,8 +152,6 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 
 ## Contributing
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/cybertec-postgresql/pg_timetable)
-
 If you want to contribute to **pg_timetable** and help make it better, feel free to open an [issue][issue] or even consider submitting a [pull request][PR].
 
 [issue]: https://github.com/cybertec-postgresql/pg_timetable/issues
