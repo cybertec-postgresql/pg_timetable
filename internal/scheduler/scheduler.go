@@ -122,6 +122,9 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 	sch.l.Debug("Checking for @reboot task chains...")
 	sch.retrieveChainsAndRun(ctx, true)
 
+	// Use ticker for strict intervals
+	ticker := time.NewTicker(refetchTimeout * time.Second)
+	defer ticker.Stop()
 	for {
 		sch.l.Debug("Checking for task chains...")
 		go sch.retrieveChainsAndRun(ctx, false)
@@ -129,7 +132,7 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 		go sch.retrieveIntervalChainsAndRun(ctx)
 
 		select {
-		case <-time.After(refetchTimeout * time.Second):
+		case <-ticker.C:
 			// pass
 		case <-ctx.Done():
 			sch.status = ContextCancelledStatus
@@ -137,7 +140,6 @@ func (sch *Scheduler) Run(ctx context.Context) RunStatus {
 			sch.status = ShutdownStatus
 			sch.terminateChains()
 		}
-
 		if sch.status != RunningStatus {
 			return sch.status
 		}
