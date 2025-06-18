@@ -3,7 +3,6 @@ package pgengine
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"os"
 	"strings"
@@ -80,9 +79,7 @@ var sqlNames = []string{"Schema Init", "Cron Functions", "Tables and Views", "JS
 // New opens connection and creates schema
 func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error) {
 	var (
-		err        error
-		connctx    = ctx
-		conncancel context.CancelFunc
+		err error
 	)
 	pge := &PgEngine{
 		l:               logger,
@@ -91,15 +88,10 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 		chainSignalChan: make(chan ChainSignal, 64),
 	}
 	pge.l.WithField("sid", pge.Getsid()).Info("Starting new session... ")
-	if cmdOpts.Connection.Timeout > 0 { // Timeout less than 0 allows endless connection attempts
-		connctx, conncancel = context.WithTimeout(ctx, time.Duration(cmdOpts.Connection.Timeout)*time.Second)
-		defer conncancel()
-	}
-
 	config := pge.getPgxConnConfig()
-	if err = retry.Do(connctx, backoff, func(ctx context.Context) error {
+	if err = retry.Do(ctx, backoff, func(ctx context.Context) error {
 		if pge.ConfigDb, err = pgxpool.NewWithConfig(ctx, config); err == nil {
-			err = pge.ConfigDb.Ping(connctx)
+			err = pge.ConfigDb.Ping(ctx)
 		}
 		if err != nil {
 			pge.l.WithError(err).Error("Connection failed")
@@ -140,17 +132,7 @@ func quoteIdent(s string) string {
 
 // getPgxConnConfig transforms standard connestion string to pgx specific one with
 func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
-	var connstr string
-	if pge.Connection.PgURL != "" {
-		connstr = pge.Connection.PgURL
-	} else {
-		connstr = fmt.Sprintf("host='%s' port='%d' dbname='%s' sslmode='%s' user='%s'",
-			pge.Connection.Host, pge.Connection.Port, pge.Connection.DBName, pge.Connection.SSLMode, pge.Connection.User)
-		if pge.Connection.Password != "" {
-			connstr += fmt.Sprintf(" password='%s'", pge.Connection.Password)
-		}
-	}
-	connConfig, err := pgxpool.ParseConfig(connstr)
+	connConfig, err := pgxpool.ParseConfig(pge.ConnStr)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot parse connection string")
 		return nil

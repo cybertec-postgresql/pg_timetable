@@ -17,7 +17,7 @@ var pge *pgengine.PgEngine
 
 // SetupTestCase used to connect and to initialize test PostgreSQL database
 func SetupTestCase(t *testing.T) func(t *testing.T) {
-	cmdOpts := config.NewCmdOptions("-c", "pgengine_unit_test", "--password=somestrong")
+	cmdOpts := config.NewCmdOptions("-c", "pgengine_unit_test", "--connstr=postgresql://scheduler:somestrong@localhost/timetable")
 	t.Log("Setup test case")
 	timeout := time.After(6 * time.Second)
 	done := make(chan bool)
