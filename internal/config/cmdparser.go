@@ -7,18 +7,6 @@ import (
 	flags "github.com/jessevdk/go-flags"
 )
 
-// ConnectionOpts specifies the database connection options
-type ConnectionOpts struct {
-	Host     string `short:"h" long:"host" description:"PostgreSQL host" default:"localhost" env:"PGTT_PGHOST"`
-	Port     int    `short:"p" long:"port" description:"PostgreSQL port" default:"5432" env:"PGTT_PGPORT"`
-	DBName   string `short:"d" long:"dbname" description:"PostgreSQL database name" default:"timetable" env:"PGTT_PGDATABASE"`
-	User     string `short:"u" long:"user" description:"PostgreSQL user" default:"scheduler" env:"PGTT_PGUSER"`
-	Password string `long:"password" description:"PostgreSQL user password" env:"PGTT_PGPASSWORD"`
-	SSLMode  string `long:"sslmode" default:"disable" description:"Connection SSL mode" env:"PGTT_PGSSLMODE" choice:"disable" choice:"require"`
-	PgURL    string `long:"pgurl" description:"PostgreSQL connection URL" env:"PGTT_URL"`
-	Timeout  int    `long:"timeout" description:"PostgreSQL connection timeout" env:"PGTT_TIMEOUT" default:"90"`
-}
-
 // LoggingOpts specifies the logging configuration
 type LoggingOpts struct {
 	LogLevel      string `long:"log-level" mapstructure:"log-level" description:"Verbosity level for stdout and log file" choice:"debug" choice:"info" choice:"error" default:"info"`
@@ -54,16 +42,16 @@ type RestAPIOpts struct {
 
 // CmdOptions holds command line options passed
 type CmdOptions struct {
-	ClientName     string         `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
-	Config         string         `long:"config" description:"YAML configuration file"`
-	Connection     ConnectionOpts `group:"Connection" mapstructure:"Connection"`
-	Logging        LoggingOpts    `group:"Logging" mapstructure:"Logging"`
-	Start          StartOpts      `group:"Start" mapstructure:"Start"`
-	Resource       ResourceOpts   `group:"Resource" mapstructure:"Resource"`
-	RESTApi        RestAPIOpts    `group:"REST" mapstructure:"REST"`
-	NoProgramTasks bool           `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
-	NoHelpMessage  bool           `long:"no-help" mapstructure:"no-help" hidden:"system use"`
-	Version        bool           `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
+	ClientName     string       `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
+	Config         string       `long:"config" description:"YAML configuration file"`
+	ConnStr        string       `long:"connstr" description:"Connection string" env:"PGTT_CONNSTR"`
+	Logging        LoggingOpts  `group:"Logging" mapstructure:"Logging"`
+	Start          StartOpts    `group:"Start" mapstructure:"Start"`
+	Resource       ResourceOpts `group:"Resource" mapstructure:"Resource"`
+	RESTApi        RestAPIOpts  `group:"REST" mapstructure:"REST"`
+	NoProgramTasks bool         `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
+	NoHelpMessage  bool         `long:"no-help" mapstructure:"no-help" hidden:"system use"`
+	Version        bool         `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
 }
 
 // Verbose returns true if the debug log is enabled
@@ -102,8 +90,8 @@ func Parse(writer io.Writer) (*flags.Parser, error) {
 		}
 	}
 	//non-option arguments
-	if len(nonOptionArgs) > 0 && cmdOpts.Connection.PgURL == "" {
-		cmdOpts.Connection.PgURL = nonOptionArgs[0]
+	if len(nonOptionArgs) > 0 && cmdOpts.ConnStr == "" {
+		cmdOpts.ConnStr = nonOptionArgs[0]
 	}
 	return parser, nil
 }

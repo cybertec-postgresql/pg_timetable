@@ -20,7 +20,7 @@ import (
 // this instance used for all engine tests
 var pge *pgengine.PgEngine
 
-var cmdOpts *config.CmdOptions = config.NewCmdOptions("--clientname=pgengine_unit_test", "--password=somestrong")
+var cmdOpts *config.CmdOptions = config.NewCmdOptions("--clientname=pgengine_unit_test", "--connstr=postgresql://scheduler:somestrong@localhost/timetable")
 
 // SetupTestCaseEx allows to configure the test case before execution
 func SetupTestCaseEx(t *testing.T, fc func(c *config.CmdOptions)) func(t *testing.T) {
@@ -47,14 +47,6 @@ func SetupTestCase(t *testing.T) func(t *testing.T) {
 		pge.ConfigDb.Close()
 		t.Log("Test schema dropped")
 	}
-}
-
-// setupTestRenoteDBFunc used to connect to remote postgreSQL database
-var setupTestRemoteDBFunc = func() (pgengine.PgxConnIface, error) {
-	c := cmdOpts.Connection
-	connstr := fmt.Sprintf("host='%s' port='%d' sslmode='%s' dbname='%s' user='%s' password='%s'",
-		c.Host, c.Port, c.SSLMode, c.DBName, c.User, c.Password)
-	return pge.GetRemoteDBConnection(context.Background(), connstr)
 }
 
 func TestInitAndTestConfigDBConnection(t *testing.T) {
@@ -120,7 +112,7 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 }
 
 func TestFailedConnect(t *testing.T) {
-	c := config.NewCmdOptions("-h", "fake", "-c", "pgengine_test")
+	c := config.NewCmdOptions("--connstr='host=fake'", "-c", "pgengine_test")
 	ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*2)
 	defer cancel()
 	_, err := pgengine.New(ctx, *c, log.Init(config.LoggingOpts{LogLevel: "error"}))
@@ -191,12 +183,12 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	teardownTestCase := SetupTestCase(t)
 	defer teardownTestCase(t)
 	ctx := context.Background()
-	remoteDb, err := setupTestRemoteDBFunc()
+	remoteDb, err := pge.GetRemoteDBConnection(context.Background(), cmdOpts.ConnStr)
 	defer pge.FinalizeDBConnection(ctx, remoteDb)
 	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
-	assert.NoError(t, pge.SetRole(ctx, remoteDb, pgtype.Text{String: cmdOpts.Connection.User, Valid: true}),
+	assert.NoError(t, pge.SetRole(ctx, remoteDb, pgtype.Text{String: "scheduler", Valid: true}),
 		"Set Role failed")
 	assert.NotPanics(t, func() { pge.ResetRole(ctx, remoteDb) }, "Reset Role failed")
 	pge.FinalizeDBConnection(ctx, remoteDb)
