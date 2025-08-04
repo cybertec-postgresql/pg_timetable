@@ -13,8 +13,9 @@
             "env": {},
             "args": ["postgresql://scheduler@localhost:5432/timetable",
                 "--clientname=worker001", 
-                "--log-level=debug",
-                "--timeout=-1"]
+                // "--log-level=debug",
+                // "--timeout=-1"
+            ]
         }
     ]
 }
