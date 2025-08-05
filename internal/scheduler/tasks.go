@@ -14,14 +14,16 @@ import (
 
 // BuiltinTasks maps builtin task names with event handlers
 var BuiltinTasks = map[string](func(context.Context, *Scheduler, string) (string, error)){
-	"NoOp":         taskNoOp,
-	"Sleep":        taskSleep,
-	"Log":          taskLog,
-	"SendMail":     taskSendMail,
-	"Download":     taskDownload,
-	"CopyFromFile": taskCopyFromFile,
-	"CopyToFile":   taskCopyToFile,
-	"Shutdown":     taskShutdown}
+	"NoOp":            taskNoOp,
+	"Sleep":           taskSleep,
+	"Log":             taskLog,
+	"SendMail":        taskSendMail,
+	"Download":        taskDownload,
+	"CopyFromFile":    taskCopyFromFile,
+	"CopyToFile":      taskCopyToFile,
+	"CopyToProgram":   taskCopyToProgram,
+	"CopyFromProgram": taskCopyFromProgram,
+	"Shutdown":        taskShutdown}
 
 func (sch *Scheduler) executeBuiltinTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
 	var s string
@@ -102,6 +104,40 @@ func taskCopyToFile(ctx context.Context, sch *Scheduler, val string) (stdout str
 	count, err := sch.pgengine.CopyToFile(ctx, ct.Filename, ct.SQL)
 	if err == nil {
 		stdout = fmt.Sprintf("%d rows copied to %s", count, ct.Filename)
+	}
+	return stdout, err
+}
+
+func taskCopyToProgram(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+	type copyToProgram struct {
+		SQL  string   `json:"sql"`
+		Cmd  string   `json:"cmd"`
+		Args []string `json:"args"`
+	}
+	var ctp copyToProgram
+	if err := json.Unmarshal([]byte(val), &ctp); err != nil {
+		return "", err
+	}
+	count, err := sch.pgengine.CopyToProgram(ctx, ctp.SQL, ctp.Cmd, ctp.Args...)
+	if err == nil {
+		stdout = fmt.Sprintf("%d rows copied to program %s", count, ctp.Cmd)
+	}
+	return stdout, err
+}
+
+func taskCopyFromProgram(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+	type copyFromProgram struct {
+		SQL  string   `json:"sql"`
+		Cmd  string   `json:"cmd"`
+		Args []string `json:"args"`
+	}
+	var cfp copyFromProgram
+	if err := json.Unmarshal([]byte(val), &cfp); err != nil {
+		return "", err
+	}
+	count, err := sch.pgengine.CopyFromProgram(ctx, cfp.SQL, cfp.Cmd, cfp.Args...)
+	if err == nil {
+		stdout = fmt.Sprintf("%d rows copied from program %s", count, cfp.Cmd)
 	}
 	return stdout, err
 }

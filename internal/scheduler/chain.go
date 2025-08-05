@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"strings"
@@ -166,8 +167,8 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 	}
 }
 
-func getTimeoutContext(ctx context.Context, t1 int, t2 int) (context.Context, context.CancelFunc) {
-	timeout := max(t1, t2)
+func getTimeoutContext(ctx context.Context, globalTimeout int, customTimeout int) (context.Context, context.CancelFunc) {
+	timeout := cmp.Or(customTimeout, globalTimeout)
 	if timeout > 0 {
 		return context.WithTimeout(ctx, time.Millisecond*time.Duration(timeout))
 	}
