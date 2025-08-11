@@ -32,7 +32,7 @@ jobs:
         & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable
 
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up Golang
       uses: actions/setup-go@v5
@@ -82,7 +82,7 @@ jobs:
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
 
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up Golang
       uses: actions/setup-go@v5
@@ -115,7 +115,7 @@ jobs:
         PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
 
     - name: Check out code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up Golang
       uses: actions/setup-go@v5
