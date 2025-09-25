@@ -1,7 +1,7 @@
 [![Documentation](https://img.shields.io/badge/Documentation-%F0%9F%93%9C-666?logo=github)](https://cybertec-postgresql.github.io/pg_timetable/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build and Test](https://github.com/cybertec-postgresql/pg_timetable/actions/workflows/build.yml/badge.svg)](https://github.com/cybertec-postgresql/pg_timetable/actions/workflows/build.yml)
-[![Coverage Status](https://img.shields.io/coverallsCoverage/github/cybertec-postgresql/pg_timetable?branch=master&label=Coverage&color=yellow)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
+[![Coverage Status](https://img.shields.io/coverallsCoverage/github/cybertec-postgresql/pg_timetable?branch=master&label=Coverage&color=green)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
 [![Github All Releases](https://img.shields.io/github/downloads/cybertec-postgresql/pg_timetable/total?label=Downloads)](https://github.com/cybertec-postgresql/pg_timetable/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable?label=Docker%20Pulls)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
@@ -42,7 +42,7 @@ SELECT timetable.add_job('reindex-job', '0 0 * * 7', 'bash',
 
 ## Documentation
 
-<https://pg-timetable.readthedocs.io/>
+<https://cybertec-postgresql.github.io/pg_timetable/>
 
 ## Main features
 
@@ -57,19 +57,19 @@ SELECT timetable.add_job('reindex-job', '0 0 * * 7', 'bash',
 - Enhanced cron-style scheduling
 - Optional concurrency protection
 
-## [Installation](https://pg-timetable.readthedocs.io/en/master/installation.html)
+## Installation
 
-Complete installation guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/master/installation.html).
+Complete installation guide can be found in the [documentation](https://cybertec-postgresql.github.io/pg_timetable/latest/installation/).
 
 Possible choices are:
 
 - official [release packages](https://github.com/cybertec-postgresql/pg_timetable/releases);
 - [Docker images](https://hub.docker.com/r/cybertecpostgresql/pg_timetable);
-- [build from sources](https://pg-timetable.readthedocs.io/en/master/installation.html#build-from-sources).
+- [build from sources](https://cybertec-postgresql.github.io/pg_timetable/latest/installation/#build-from-sources).
 
-## [Quick Start](https://pg-timetable.readthedocs.io/en/master/README.html#quick-start)
+## Quick Start
 
-Complete usage guide can be found in the [documentation](https://pg-timetable.readthedocs.io/en/master/basic_jobs.html).
+Complete usage guide can be found in the [documentation](https://cybertec-postgresql.github.io/pg_timetable/latest/basic_jobs/).
 
 1. Download **pg_timetable** executable
 
@@ -102,19 +102,18 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 
 | Cloud Service    | Supported | PostgreSQL Version  | Supported | OS | Supported |
 | ---------------- |:---------:| ------------------- |:---------:| -- |:---------:|
-| [Alibaba Cloud]  | ✅       | [18 (devel)]         | ✅       | Linux     | ✅ |
-| [Amazon RDS]     | ✅       | [17 (current)]       | ✅       | Darwin    | ✅ |
-| [Amazon Aurora]  | ✅       | [16]                 | ✅       | Windows   | ✅ |
-| [Azure]          | ✅       | [15]                 | ✅       | FreeBSD\* | ✅ |
-| [Citus Cloud]    | ✅       | [14]                 | ✅       | NetBSD\*  | ✅ |
-| [Crunchy Bridge] | ✅       | [13]                 | ✅       | OpenBSD\* | ✅ |
-| [DigitalOcean]   | ✅       | [12]                 | ✅       | Solaris\* | ✅ |
-| [Google Cloud]   | ✅       | [11]                 | ✅       |           |     |
-| [Heroku]         | ✅       | [10]                 |          |           |     |
-| [Supabase]       | ✅       |                      |          |           |     |
-| [Tembo]          | ✅       |                      |          |           |     |
+| [Alibaba Cloud]  | ✅       | [19 (devel)]         | ✅       | Linux     | ✅ |
+| [Amazon RDS]     | ✅       | [18 (current)]       | ✅       | Darwin    | ✅ |
+| [Amazon Aurora]  | ✅       | [17]                 | ✅       | Windows   | ✅ |
+| [Azure]          | ✅       | [16]                 | ✅       | FreeBSD\* | ✅ |
+| [Citus Cloud]    | ✅       | [15]                 | ✅       | NetBSD\*  | ✅ |
+| [Crunchy Bridge] | ✅       | [14]                 | ✅       | OpenBSD\* | ✅ |
+| [DigitalOcean]   | ✅       | [13]                 | ✅       | Solaris\* | ✅ |
+| [Google Cloud]   | ✅       | [12]                 | ✅       |           |     |
+| [Heroku]         | ✅       | [11]                 | ✅       |           |     |
+| [Supabase]       | ✅       | [10]                 | ✅       |           |     |
 
-\* - there are no official release binaries made for these OSes. One would need to [build them from sources](https://pg-timetable.readthedocs.io/en/master/installation.html#build-from-sources).
+\* - there are no official release binaries made for these OSes. One would need to build them from sources.
 
 \** - previous PostgreSQL versions may and should work smoothly. Only [officially supported PostgreSQL versions](https://www.postgresql.org/support/versioning/) are listed in this table.
 
@@ -128,9 +127,9 @@ Complete usage guide can be found in the [documentation](https://pg-timetable.re
 [Google Cloud]: https://cloud.google.com/sql/docs/postgres/
 [Heroku]: https://elements.heroku.com/addons/heroku-postgresql
 [Supabase]: https://supabase.io/docs/guides/database
-[Tembo]: https://cloud.tembo.io/
-[18 (devel)]: https://www.postgresql.org/docs/devel/index.html
-[17 (current)]: https://www.postgresql.org/docs/17/index.html
+[19 (devel)]: https://www.postgresql.org/docs/devel/index.html
+[18 (current)]: https://www.postgresql.org/docs/18/index.html
+[17]: https://www.postgresql.org/docs/17/index.html
 [16]: https://www.postgresql.org/docs/16/index.html
 [15]: https://www.postgresql.org/docs/15/index.html
 [14]: https://www.postgresql.org/docs/14/index.html

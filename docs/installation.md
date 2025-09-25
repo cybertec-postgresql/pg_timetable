@@ -1,6 +1,6 @@
 # Installation
 
-**pg_timetable** is compatible with the latest supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/): 11, 12, 13, 14 (stable); 15 (dev).
+**pg_timetable** is compatible with all supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/).
 
 !!! note "Older PostgreSQL versions (9.5, 9.6, and 10)"
 
@@ -28,7 +28,7 @@ You may find binary package for your platform on the official [Releases](https:/
 
 ## Docker
 
-The official docker image can be found here: https://hub.docker.com/r/cybertecpostgresql/pg_timetable
+The official docker image can be found here: <https://hub.docker.com/r/cybertecpostgresql/pg_timetable>
 
 !!! note
 
@@ -58,27 +58,27 @@ cybertecpostgresql/pg_timetable:latest \
 2. Clone **pg_timetable** repo:
 
     ```bash
-    $ git clone https://github.com/cybertec-postgresql/pg_timetable.git
-    $ cd pg_timetable
+    git clone https://github.com/cybertec-postgresql/pg_timetable.git
+    cd pg_timetable
     ```
 
 3. Run **pg_timetable**:
-    
+
     ```bash
-    $ go run main.go --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
+    go run main.go --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
     ```
 
 4. Alternatively, build a binary and run it:
 
     ```bash
-    $ go build
-    $ ./pg_timetable --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
+    go build
+    ./pg_timetable --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
     ```
 
 5. (Optional) Run tests in all sub-folders of the project:
 
     ```bash
-    $ psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
-    $ createdb --owner=scheduler timetable
-    $ go test -failfast -timeout=300s -count=1 -p 1 ./...
+    psql --command="CREATE USER scheduler PASSWORD 'somestrong'"
+    createdb --owner=scheduler timetable
+    go test -failfast -timeout=300s -count=1 -p 1 ./...
     ```
