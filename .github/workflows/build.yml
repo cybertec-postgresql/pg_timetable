@@ -96,7 +96,7 @@ jobs:
       run: go test -v -p 1 -parallel 1 -failfast ./...
 
   test-postgresql-ubuntu:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     name: Test and Build on Ubuntu
     runs-on: ubuntu-latest
     steps:
@@ -171,7 +171,7 @@ jobs:
       run: go install github.com/johnstarich/go/gopages@v0.1.29
     
     - name: Build Developer Docs
-      run: gopages -out "docs/godoc" -base "/devel/godoc" -internal
+      run: gopages -out "docs/godoc" -base "/pg_timetable/devel/godoc" -internal
 
     - name: Set up Python
       uses: actions/setup-python@v6
