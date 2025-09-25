@@ -1,11 +1,9 @@
+[![Documentation](https://img.shields.io/badge/Documentation-%F0%9F%93%9C-666?logo=github)](https://cybertec-postgresql.github.io/pg_timetable/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-![Build & Test](https://github.com/cybertec-postgresql/pg_timetable/workflows/Go%20Build%20&%20Test/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/cybertec-postgresql/pg_timetable/badge.svg?branch=master&service=github)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/pg-timetable/badge/?version=master)](https://pg-timetable.readthedocs.io/en/master/?badge=master)
-[![Release](https://img.shields.io/github/v/release/cybertec-postgresql/pg_timetable?include_prereleases)](https://github.com/cybertec-postgresql/pg_timetable/releases)
-[![Github All Releases](https://img.shields.io/github/downloads/cybertec-postgresql/pg_timetable/total?style=flat-square)](https://github.com/cybertec-postgresql/pg_timetable/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
-[![Go Report Card](https://goreportcard.com/badge/github.com/cybertec-postgresql/pg_timetable)](https://goreportcard.com/report/github.com/cybertec-postgresql/pg_timetable)
+[![Build and Test](https://github.com/cybertec-postgresql/pg_timetable/actions/workflows/build.yml/badge.svg)](https://github.com/cybertec-postgresql/pg_timetable/actions/workflows/build.yml)
+[![Coverage Status](https://img.shields.io/coverallsCoverage/github/cybertec-postgresql/pg_timetable?branch=master&label=Coverage&color=yellow)](https://coveralls.io/github/cybertec-postgresql/pg_timetable?branch=master)
+[![Github All Releases](https://img.shields.io/github/downloads/cybertec-postgresql/pg_timetable/total?label=Downloads)](https://github.com/cybertec-postgresql/pg_timetable/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/cybertecpostgresql/pg_timetable?label=Docker%20Pulls)](https://hub.docker.com/r/cybertecpostgresql/pg_timetable)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 # pg_timetable: Advanced scheduling for PostgreSQL

@@ -1,6 +1,16 @@
-name: Go Build & Test
+name: Build and Test
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+
 on:
+  push:
+    branches:
+      - master
   pull_request:
+    paths-ignore: ['docs/**', 'mkdocs.yml']
   workflow_dispatch:
 
 concurrency:
@@ -92,8 +102,6 @@ jobs:
     - name: Test
       run: go test -v -p 1 -parallel 1 -failfast ./...
 
-
-
   test-postgresql-ubuntu:
     if: true # false to skip job during debug
     name: Test and Build on Ubuntu
@@ -145,3 +153,48 @@ jobs:
       with:
         version: latest
         args: release --snapshot --skip=publish --clean
+
+  build-docs:
+    if: true # false to skip job during debug
+    needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
+    name: Build Docs
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v5
+
+    - name: Configure Git
+      run: |
+        git config user.name "${GITHUB_ACTOR}"
+        git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+    - name: Set up Golang
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.25'      
+    
+    - name: Set up gopages
+      run: go install github.com/johnstarich/go/gopages@v0.1.29
+    
+    - name: Build Developer Docs
+      run: gopages -out "docs/godoc" -base "/pg_timetable/devel/godoc" -internal
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: 3.13
+        cache: 'pip'
+        cache-dependency-path: '**/requirements-doc.txt'
+
+    - name: Install dependencies
+      run: pip install -r docs/requirements-doc.txt
+
+    - name: Check if we should push to gh-pages
+      # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: |
+        git fetch origin gh-pages --depth=1
+        echo "push_opt=--push" >> $GITHUB_ENV 
+
+    - name: Build mkdocs
+      run: mike deploy ${{ env.push_opt }} devel

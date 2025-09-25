@@ -1,0 +1,78 @@
+site_name: 🕰️ pg_timetable
+site_description: Advanced job scheduler for PostgreSQL
+site_url: https://cybertec-postgresql.github.io/pg_timetable/
+repo_url: https://github.com/cybertec-postgresql/pg_timetable
+repo_name: cybertec-postgresql/pg_timetable
+copyright: Made by and for PostgreSQL lovers! 🐘❤️
+
+theme:
+  name: material
+  language: en
+  include_search_page: false
+  search_index_only: true
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - navigation.instant
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: light)" # Light mode
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)" # Dark mode
+      scheme: slate
+      primary: light blue
+      accent: indigo
+      toggle:
+        icon: material/lightbulb
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Intro:
+    - Introduction: index.md
+    - Background: background.md
+  - Concepts:
+    - Components: components.md
+    - Database Schema: database_schema.md
+  - Tutorials:
+    - Installation: installation.md
+    - Basic Jobs: basic_jobs.md
+    - Migration: migration.md
+    - Samples: samples.md
+  - Reference:
+    - API: api.md
+  - Developer:
+    - License: license.md
+    - Documentation: ../devel/godoc/index.html
+
+extra:
+  version:
+    provider: mike
+    alias: true
