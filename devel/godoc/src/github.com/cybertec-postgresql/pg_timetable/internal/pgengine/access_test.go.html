@@ -1,0 +1,185 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access_test.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">pgengine</a>/<span class="text-muted">access_test.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">github.com/cybertec-postgresql/pg_timetable/internal/pgengine</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package pgengine_test
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;errors&#34;
+<span id="L6" class="ln">     6  </span>	&#34;testing&#34;
+<span id="L7" class="ln">     7  </span>
+<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L9" class="ln">     9  </span>	&#34;github.com/pashagolub/pgxmock/v4&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L11" class="ln">    11  </span>)
+<span id="L12" class="ln">    12  </span>
+<span id="L13" class="ln">    13  </span>func TestDeleteChainConfig(t *testing.T) {
+<span id="L14" class="ln">    14  </span>	initmockdb(t)
+<span id="L15" class="ln">    15  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L16" class="ln">    16  </span>	defer mockPool.Close()
+<span id="L17" class="ln">    17  </span>
+<span id="L18" class="ln">    18  </span>	t.Run(&#34;Check DeleteChainConfig if everyhing fine&#34;, func(t *testing.T) {
+<span id="L19" class="ln">    19  </span>		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
+<span id="L20" class="ln">    20  </span>		defer cancel()
+<span id="L21" class="ln">    21  </span>		mockPool.ExpectExec(&#34;DELETE FROM timetable\\.chain&#34;).WithArgs(pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
+<span id="L22" class="ln">    22  </span>		assert.True(t, pge.DeleteChain(ctx, 0))
+<span id="L23" class="ln">    23  </span>	})
+<span id="L24" class="ln">    24  </span>
+<span id="L25" class="ln">    25  </span>	t.Run(&#34;Check DeleteChainConfig if sql fails&#34;, func(t *testing.T) {
+<span id="L26" class="ln">    26  </span>		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
+<span id="L27" class="ln">    27  </span>		defer cancel()
+<span id="L28" class="ln">    28  </span>		mockPool.ExpectExec(&#34;DELETE FROM timetable\\.chain&#34;).WithArgs(pgxmock.AnyArg()).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L29" class="ln">    29  </span>		assert.False(t, pge.DeleteChain(ctx, 0))
+<span id="L30" class="ln">    30  </span>	})
+<span id="L31" class="ln">    31  </span>
+<span id="L32" class="ln">    32  </span>	assert.NoError(t, mockPool.ExpectationsWereMet(), &#34;there were unfulfilled expectations&#34;)
+<span id="L33" class="ln">    33  </span>}
+<span id="L34" class="ln">    34  </span>
+<span id="L35" class="ln">    35  </span>func TestInsertChainRunStatus(t *testing.T) {
+<span id="L36" class="ln">    36  </span>	initmockdb(t)
+<span id="L37" class="ln">    37  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L38" class="ln">    38  </span>	pge.ClientName = &#34;test_client&#34;
+<span id="L39" class="ln">    39  </span>	defer mockPool.Close()
+<span id="L40" class="ln">    40  </span>
+<span id="L41" class="ln">    41  </span>	mockPool.ExpectExec(&#34;INSERT INTO timetable\\.active_chain&#34;).
+<span id="L42" class="ln">    42  </span>		WithArgs(0, pge.ClientName, 1).
+<span id="L43" class="ln">    43  </span>		WillReturnError(errors.New(&#34;error&#34;))
+<span id="L44" class="ln">    44  </span>	pge.InsertChainRunStatus(context.Background(), 0, 1)
+<span id="L45" class="ln">    45  </span>
+<span id="L46" class="ln">    46  </span>	assert.NoError(t, mockPool.ExpectationsWereMet(), &#34;there were unfulfilled expectations&#34;)
+<span id="L47" class="ln">    47  </span>}
+<span id="L48" class="ln">    48  </span>
+<span id="L49" class="ln">    49  </span>func TestRemoveChainRunStatus(t *testing.T) {
+<span id="L50" class="ln">    50  </span>	initmockdb(t)
+<span id="L51" class="ln">    51  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L52" class="ln">    52  </span>	pge.ClientName = &#34;test_client&#34;
+<span id="L53" class="ln">    53  </span>	defer mockPool.Close()
+<span id="L54" class="ln">    54  </span>
+<span id="L55" class="ln">    55  </span>	mockPool.ExpectExec(&#34;DELETE FROM timetable\\.active_chain&#34;).
+<span id="L56" class="ln">    56  </span>		WithArgs(0, pge.ClientName).
+<span id="L57" class="ln">    57  </span>		WillReturnError(errors.New(&#34;error&#34;))
+<span id="L58" class="ln">    58  </span>	pge.RemoveChainRunStatus(context.Background(), 0)
+<span id="L59" class="ln">    59  </span>
+<span id="L60" class="ln">    60  </span>	assert.NoError(t, mockPool.ExpectationsWereMet(), &#34;there were unfulfilled expectations&#34;)
+<span id="L61" class="ln">    61  </span>}
+<span id="L62" class="ln">    62  </span>
+<span id="L63" class="ln">    63  </span>func TestSelectChains(t *testing.T) {
+<span id="L64" class="ln">    64  </span>	var c []pgengine.Chain
+<span id="L65" class="ln">    65  </span>	var ic []pgengine.IntervalChain
+<span id="L66" class="ln">    66  </span>	initmockdb(t)
+<span id="L67" class="ln">    67  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L68" class="ln">    68  </span>	defer mockPool.Close()
+<span id="L69" class="ln">    69  </span>
+<span id="L70" class="ln">    70  </span>	for i := 0; i &lt; 3; i++ {
+<span id="L71" class="ln">    71  </span>		mockPool.ExpectQuery(&#34;SELECT.+chain_id&#34;).WithArgs(pgxmock.AnyArg()).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L72" class="ln">    72  </span>		mockPool.ExpectQuery(&#34;SELECT.+chain_id&#34;).WithArgs(pgxmock.AnyArg()).WillReturnRows(pgxmock.NewRows([]string{&#34;foo&#34;}).AddRow(&#34;baz&#34;))
+<span id="L73" class="ln">    73  </span>	}
+<span id="L74" class="ln">    74  </span>
+<span id="L75" class="ln">    75  </span>	assert.Error(t, pge.SelectChains(context.Background(), &amp;c))
+<span id="L76" class="ln">    76  </span>	assert.Error(t, pge.SelectChains(context.Background(), &amp;c), &#34;unacceptable columns&#34;)
+<span id="L77" class="ln">    77  </span>
+<span id="L78" class="ln">    78  </span>	assert.Error(t, pge.SelectRebootChains(context.Background(), &amp;c))
+<span id="L79" class="ln">    79  </span>	assert.Error(t, pge.SelectRebootChains(context.Background(), &amp;c), &#34;unacceptable columns&#34;)
+<span id="L80" class="ln">    80  </span>
+<span id="L81" class="ln">    81  </span>	assert.Error(t, pge.SelectIntervalChains(context.Background(), &amp;ic))
+<span id="L82" class="ln">    82  </span>	assert.Error(t, pge.SelectIntervalChains(context.Background(), &amp;ic), &#34;unacceptable columns&#34;)
+<span id="L83" class="ln">    83  </span>}
+<span id="L84" class="ln">    84  </span>
+<span id="L85" class="ln">    85  </span>func TestSelectChain(t *testing.T) {
+<span id="L86" class="ln">    86  </span>	initmockdb(t)
+<span id="L87" class="ln">    87  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L88" class="ln">    88  </span>	defer mockPool.Close()
+<span id="L89" class="ln">    89  </span>
+<span id="L90" class="ln">    90  </span>	mockPool.ExpectExec(&#34;SELECT.+chain_id&#34;).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L91" class="ln">    91  </span>	assert.Error(t, pge.SelectChain(context.Background(), &amp;pgengine.Chain{}, 42))
+<span id="L92" class="ln">    92  </span>}
+<span id="L93" class="ln">    93  </span>
+<span id="L94" class="ln">    94  </span>func TestIsAlive(t *testing.T) {
+<span id="L95" class="ln">    95  </span>	initmockdb(t)
+<span id="L96" class="ln">    96  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L97" class="ln">    97  </span>	defer mockPool.Close()
+<span id="L98" class="ln">    98  </span>	mockPool.ExpectPing()
+<span id="L99" class="ln">    99  </span>	assert.True(t, pge.IsAlive())
+<span id="L100" class="ln">   100  </span>}
+<span id="L101" class="ln">   101  </span>
+<span id="L102" class="ln">   102  </span>func TestLogChainElementExecution(t *testing.T) {
+<span id="L103" class="ln">   103  </span>	initmockdb(t)
+<span id="L104" class="ln">   104  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L105" class="ln">   105  </span>	defer mockPool.Close()
+<span id="L106" class="ln">   106  </span>
+<span id="L107" class="ln">   107  </span>	t.Run(&#34;Check LogChainElementExecution if sql fails&#34;, func(*testing.T) {
+<span id="L108" class="ln">   108  </span>		mockPool.ExpectExec(&#34;INSERT INTO .*execution_log&#34;).WithArgs(
+<span id="L109" class="ln">   109  </span>			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(),
+<span id="L110" class="ln">   110  </span>			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+<span id="L111" class="ln">   111  </span>			WillReturnError(errors.New(&#34;Failed to log chain element execution status&#34;))
+<span id="L112" class="ln">   112  </span>		pge.LogTaskExecution(context.Background(), &amp;pgengine.ChainTask{}, 0, &#34;STATUS&#34;)
+<span id="L113" class="ln">   113  </span>	})
+<span id="L114" class="ln">   114  </span>
+<span id="L115" class="ln">   115  </span>	assert.NoError(t, mockPool.ExpectationsWereMet(), &#34;there were unfulfilled expectations&#34;)
+<span id="L116" class="ln">   116  </span>}
+<span id="L117" class="ln">   117  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

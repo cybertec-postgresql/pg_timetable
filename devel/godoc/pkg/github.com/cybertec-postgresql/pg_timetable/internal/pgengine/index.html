@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>pgengine - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer></script>
+
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package pgengine
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/cybertec-postgresql/pg_timetable/internal/pgengine"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+				<dd><a href="#pkg-constants">Constants</a></dd>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#ExecuteMigrationScript">func ExecuteMigrationScript(ctx context.Context, tx pgx.Tx, fname string) error</a></dd>
+			
+				
+				<dd><a href="#adaptEntryLevel">func adaptEntryLevel(level logrus.Level) string</a></dd>
+			
+				
+				<dd><a href="#quoteIdent">func quoteIdent(s string) string</a></dd>
+			
+			
+				
+				<dd><a href="#Chain">type Chain</a></dd>
+				
+				
+			
+				
+				<dd><a href="#ChainSignal">type ChainSignal</a></dd>
+				
+				
+			
+				
+				<dd><a href="#ChainTask">type ChainTask</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ChainTask.IsRemote">func (task *ChainTask) IsRemote() bool</a></dd>
+				
+			
+				
+				<dd><a href="#IntervalChain">type IntervalChain</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#IntervalChain.IsListed">func (ichain IntervalChain) IsListed(ichains []IntervalChain) bool</a></dd>
+				
+			
+				
+				<dd><a href="#LogHook">type LogHook</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewHook">func NewHook(ctx context.Context, pge *PgEngine, level string) *LogHook</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#LogHook.Fire">func (hook *LogHook) Fire(entry *logrus.Entry) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#LogHook.Levels">func (hook *LogHook) Levels() []logrus.Level</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#LogHook.poll">func (hook *LogHook) poll(input &lt;-chan logrus.Entry)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#LogHook.send">func (hook *LogHook) send(cache []logrus.Entry)</a></dd>
+				
+			
+				
+				<dd><a href="#PgEngine">type PgEngine</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#New">func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHookerIface) (*PgEngine, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewDB">func NewDB(DB PgxPoolIface, args ...string) *PgEngine</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.AddLogHook">func (pge *PgEngine) AddLogHook(ctx context.Context)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CheckNeedMigrateDb">func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CommitTransaction">func (pge *PgEngine) CommitTransaction(ctx context.Context, tx pgx.Tx)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CopyFromFile">func (pge *PgEngine) CopyFromFile(ctx context.Context, filename string, sql string) (int64, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CopyFromProgram">func (pge *PgEngine) CopyFromProgram(ctx context.Context, sql string, cmd string, args ...string) (int64, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CopyToFile">func (pge *PgEngine) CopyToFile(ctx context.Context, filename string, sql string) (int64, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CopyToProgram">func (pge *PgEngine) CopyToProgram(ctx context.Context, sql string, cmd string, args ...string) (int64, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.DeleteChain">func (pge *PgEngine) DeleteChain(ctx context.Context, chainID int) bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecAutonomousSQLTask">func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecLocalSQLTask">func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecRemoteSQLTask">func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecStandaloneTask">func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxConnIface, error), task *ChainTask, paramValues []string) (string, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteCustomScripts">func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLCommand">func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, command string, paramValues []string) (out string, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLTask">func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSchemaScripts">func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.Finalize">func (pge *PgEngine) Finalize()</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.FinalizeDBConnection">func (pge *PgEngine) FinalizeDBConnection(ctx context.Context, remoteDb PgxConnIface)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.GetChainElements">func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.GetChainParamValues">func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.GetLocalDBConnection">func (pge *PgEngine) GetLocalDBConnection(ctx context.Context) (conn PgxConnIface, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.GetRemoteDBConnection">func (pge *PgEngine) GetRemoteDBConnection(ctx context.Context, connectionString string) (conn PgxConnIface, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.Getsid">func (pge *PgEngine) Getsid() int32</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.HandleNotifications">func (pge *PgEngine) HandleNotifications(ctx context.Context)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.InsertChainRunStatus">func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int, maxInstances int) bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.IsAlive">func (pge *PgEngine) IsAlive() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.LogTaskExecution">func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.MigrateDb">func (pge *PgEngine) MigrateDb(ctx context.Context) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.MustRollbackToSavepoint">func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, taskID int)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.MustSavepoint">func (pge *PgEngine) MustSavepoint(ctx context.Context, tx pgx.Tx, taskID int)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.NotificationHandler">func (pge *PgEngine) NotificationHandler(c *pgconn.PgConn, n *pgconn.Notification)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.RemoveChainRunStatus">func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ResetRole">func (pge *PgEngine) ResetRole(ctx context.Context, executor executor)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.RollbackTransaction">func (pge *PgEngine) RollbackTransaction(ctx context.Context, tx pgx.Tx)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.SelectChain">func (pge *PgEngine) SelectChain(ctx context.Context, dest *Chain, chainID int) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.SelectChains">func (pge *PgEngine) SelectChains(ctx context.Context, dest *[]Chain) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.SelectIntervalChains">func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest *[]IntervalChain) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.SelectRebootChains">func (pge *PgEngine) SelectRebootChains(ctx context.Context, dest *[]Chain) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.SetCurrentTaskContext">func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, executor executor, chainID int, taskID int)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.SetRole">func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID pgtype.Text) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.StartTransaction">func (pge *PgEngine) StartTransaction(ctx context.Context) (tx pgx.Tx, vxid int64, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.TryLockClientName">func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.WaitForChainSignal">func (pge *PgEngine) WaitForChainSignal(ctx context.Context) ChainSignal</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.getPgxConnConfig">func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.initMigrator">func (pge *PgEngine) initMigrator() (*migrator.Migrator, error)</a></dd>
+				
+			
+				
+				<dd><a href="#PgxConnIface">type PgxConnIface</a></dd>
+				
+				
+			
+				
+				<dd><a href="#PgxIface">type PgxIface</a></dd>
+				
+				
+			
+				
+				<dd><a href="#PgxPoolIface">type PgxPoolIface</a></dd>
+				
+				
+			
+				
+				<dd><a href="#QueryRowIface">type QueryRowIface</a></dd>
+				
+				
+			
+				
+				<dd><a href="#executor">type executor</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html">access.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html">bootstrap.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/copy.go.html">copy.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html">log_hook.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html">migration.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/notification.go.html">notification.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/sql_embed.go.html">sql_embed.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html">transaction.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html">types.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+			<h2 id="pkg-constants">Constants</h2>
+			
+				<p>InvalidOid specifies value for non-existent objects
+
+				<pre>const <span id="InvalidOid">InvalidOid</span> = 0</pre>
+			
+				<p>WaitTime specifies amount of time in seconds to wait before reconnecting to DB
+
+				<pre>const <span id="WaitTime">WaitTime</span> = 5 * <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Second">Second</a></pre>
+			
+				<p>maximum wait time before reconnect attempts
+
+				<pre>const <span id="maxWaitTime">maxWaitTime</span> = <a href="#WaitTime">WaitTime</a> * 16</pre>
+			
+				<p>Select live chains with proper client_name value
+
+				<pre>const <span id="sqlSelectLiveChains">sqlSelectLiveChains</span> = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
+COALESCE(max_instances, 16) as max_instances, COALESCE(timeout, 0) as timeout, on_error
+FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`</pre>
+			
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<p>Migrations holds function returning all updgrade migrations needed
+
+				<pre>var <span id="Migrations">Migrations</span> func() <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Option">Option</a> = func() <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Option">Option</a> {
+    return <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migrations">Migrations</a>(
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00259 Restart migrations for v4&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+
+                return <a href="https://pkg.go.dev/builtin/#nil">nil</a>
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00305 Fix timetable.is_cron_in_time&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00305.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00323 Append timetable.delete_job function&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00323.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00329 Migration required for some new added functions&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00329.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00334 Refactor timetable.task as plain schema without tree-like dependencies&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00334.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00381 Rewrite active chain handling&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00381.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00394 Add started_at column to active_session and active_chain tables&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00394.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00417 Rename LOG database log level to INFO&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00417.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00436 Add txid column to timetable.execution_log&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00436.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00534 Use cron_split_to_arrays() in cron domain check&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00534.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00560 Alter txid column to bigint&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00560.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00573 Add ability to start a chain with delay&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00573.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00575 Add on_error handling&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00575.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00629 Add ignore_error column to timetable.execution_log&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00629.sql&#34;)
+            },
+        },
+    )
+}</pre>
+			
+				<p>NotifyTTL specifies how long processed NOTIFY messages should be stored
+
+				<pre>var <span id="NotifyTTL">NotifyTTL</span> <a href="https://pkg.go.dev/builtin/#int64">int64</a> = 60</pre>
+			
+				<p>create a new exponential backoff to be used in retry attempts
+
+				<pre>var <span id="backoff">backoff</span> = <a href="https://pkg.go.dev/github.com/sethvargo/go-retry/">retry</a>.<a href="https://pkg.go.dev/github.com/sethvargo/go-retry/#WithCappedDuration">WithCappedDuration</a>(maxWaitTime, <a href="https://pkg.go.dev/github.com/sethvargo/go-retry/">retry</a>.<a href="https://pkg.go.dev/github.com/sethvargo/go-retry/#NewExponential">NewExponential</a>(<a href="#WaitTime">WaitTime</a>))</pre>
+			
+				
+				<pre>var <span id="migrationsFiles">migrationsFiles</span> <a href="https://pkg.go.dev/embed/">embed</a>.<a href="https://pkg.go.dev/embed/#FS">FS</a></pre>
+			
+				<p>Since there are usually multiple opened connections to the database, all of them will receive NOTIFY messages.
+To process each NOTIFY message only once we store each message with TTL 1 minute because the max idle period for a
+a connection is the main loop period of 1 minute.
+
+				<pre>var <span id="mutex">mutex</span> <a href="https://pkg.go.dev/sync/">sync</a>.<a href="https://pkg.go.dev/sync/#Mutex">Mutex</a></pre>
+			
+				
+				<pre>var <span id="notifications">notifications</span> = func() (m map[<a href="#ChainSignal">ChainSignal</a>]struct{}) {
+    m = <a href="https://pkg.go.dev/builtin/#make">make</a>(map[<a href="#ChainSignal">ChainSignal</a>]struct{})
+    go func() {
+        for now := range <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Tick">Tick</a>(<a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Duration">Duration</a>(<a href="#NotifyTTL">NotifyTTL</a>) * <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Second">Second</a>) {
+            mutex.<a href="#Lock">Lock</a>()
+            for k := range m {
+                if now.<a href="#Unix">Unix</a>()-k.<a href="#Ts">Ts</a> &gt; <a href="#NotifyTTL">NotifyTTL</a> {
+                    <a href="https://pkg.go.dev/builtin/#delete">delete</a>(m, k)
+                }
+            }
+            mutex.<a href="#Unlock">Unlock</a>()
+        }
+    }()
+    return
+}()</pre>
+			
+				
+				<pre>var <span id="sqlCron">sqlCron</span> <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+				
+				<pre>var <span id="sqlDDL">sqlDDL</span> <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+				
+				<pre>var <span id="sqlInit">sqlInit</span> <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+				
+				<pre>var <span id="sqlJSONSchema">sqlJSONSchema</span> <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+				
+				<pre>var <span id="sqlJobFunctions">sqlJobFunctions</span> <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+				
+				<pre>var <span id="sqlNames">sqlNames</span> = []<a href="https://pkg.go.dev/builtin/#string">string</a>{&#34;Schema Init&#34;, &#34;Cron Functions&#34;, &#34;Tables and Views&#34;, &#34;JSON Schema&#34;, &#34;Job Functions&#34;}</pre>
+			
+				
+				<pre>var <span id="sqls">sqls</span> = []<a href="https://pkg.go.dev/builtin/#string">string</a>{sqlInit, sqlCron, sqlDDL, sqlJSONSchema, sqlJobFunctions}</pre>
+			
+		
+		
+			
+			
+			<h2 id="ExecuteMigrationScript">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L47">ExecuteMigrationScript</a>
+				<a class="permalink" href="#ExecuteMigrationScript">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func ExecuteMigrationScript(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, fname <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+			<p>ExecuteMigrationScript executes the migration script specified by fname within transaction tx
+
+			
+			
+
+		
+			
+			
+			<h2 id="adaptEntryLevel">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L119">adaptEntryLevel</a>
+				<a class="permalink" href="#adaptEntryLevel">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func adaptEntryLevel(level <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Level">Level</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="quoteIdent">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L129">quoteIdent</a>
+				<a class="permalink" href="#quoteIdent">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func quoteIdent(s <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+			
+			
+
+		
+		
+			
+			
+			<h2 id="Chain">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L17">Chain</a>
+				<a class="permalink" href="#Chain">&#xb6;</a>
+				
+				
+			</h2>
+			<p>Chain structure used to represent tasks chains
+
+			<pre>type Chain struct {
+<span id="Chain.ChainID"></span>    ChainID            <a href="https://pkg.go.dev/builtin/#int">int</a>         `db:&#34;chain_id&#34;`
+<span id="Chain.ChainName"></span>    ChainName          <a href="https://pkg.go.dev/builtin/#string">string</a>      `db:&#34;chain_name&#34;`
+<span id="Chain.SelfDestruct"></span>    SelfDestruct       <a href="https://pkg.go.dev/builtin/#bool">bool</a>        `db:&#34;self_destruct&#34;`
+<span id="Chain.ExclusiveExecution"></span>    ExclusiveExecution <a href="https://pkg.go.dev/builtin/#bool">bool</a>        `db:&#34;exclusive_execution&#34;`
+<span id="Chain.MaxInstances"></span>    MaxInstances       <a href="https://pkg.go.dev/builtin/#int">int</a>         `db:&#34;max_instances&#34;`
+<span id="Chain.Timeout"></span>    Timeout            <a href="https://pkg.go.dev/builtin/#int">int</a>         `db:&#34;timeout&#34;`
+<span id="Chain.OnErrorSQL"></span>    OnErrorSQL         <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/">pgtype</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/#Text">Text</a> `db:&#34;on_error&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ChainSignal">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/notification.go.html#L17">ChainSignal</a>
+				<a class="permalink" href="#ChainSignal">&#xb6;</a>
+				
+				
+			</h2>
+			<p>ChainSignal used to hold asynchronous notifications from PostgreSQL server
+
+			<pre>type ChainSignal struct {
+<span id="ChainSignal.ConfigID"></span>    ConfigID <a href="https://pkg.go.dev/builtin/#int">int</a>    <span class="comment">// chain configuration ifentifier</span>
+<span id="ChainSignal.Command"></span>    Command  <a href="https://pkg.go.dev/builtin/#string">string</a> <span class="comment">// allowed: START, STOP</span>
+<span id="ChainSignal.Ts"></span>    Ts       <a href="https://pkg.go.dev/builtin/#int64">int64</a>  <span class="comment">// timestamp NOTIFY sent</span>
+<span id="ChainSignal.Delay"></span>    Delay    <a href="https://pkg.go.dev/builtin/#int64">int64</a>  <span class="comment">// delay in seconds before start</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ChainTask">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L44">ChainTask</a>
+				<a class="permalink" href="#ChainTask">&#xb6;</a>
+				
+				
+			</h2>
+			<p>ChainTask structure describes each chain task
+
+			<pre>type ChainTask struct {
+<span id="ChainTask.ChainID"></span>    ChainID       <a href="https://pkg.go.dev/builtin/#int">int</a>         `db:&#34;-&#34;`
+<span id="ChainTask.TaskID"></span>    TaskID        <a href="https://pkg.go.dev/builtin/#int">int</a>         `db:&#34;task_id&#34;`
+<span id="ChainTask.Script"></span>    Script        <a href="https://pkg.go.dev/builtin/#string">string</a>      `db:&#34;command&#34;`
+<span id="ChainTask.Kind"></span>    Kind          <a href="https://pkg.go.dev/builtin/#string">string</a>      `db:&#34;kind&#34;`
+<span id="ChainTask.RunAs"></span>    RunAs         <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/">pgtype</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/#Text">Text</a> `db:&#34;run_as&#34;`
+<span id="ChainTask.IgnoreError"></span>    IgnoreError   <a href="https://pkg.go.dev/builtin/#bool">bool</a>        `db:&#34;ignore_error&#34;`
+<span id="ChainTask.Autonomous"></span>    Autonomous    <a href="https://pkg.go.dev/builtin/#bool">bool</a>        `db:&#34;autonomous&#34;`
+<span id="ChainTask.ConnectString"></span>    ConnectString <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/">pgtype</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/#Text">Text</a> `db:&#34;database_connection&#34;`
+<span id="ChainTask.Timeout"></span>    Timeout       <a href="https://pkg.go.dev/builtin/#int">int</a>         `db:&#34;timeout&#34;` <span class="comment">// in milliseconds</span>
+<span id="ChainTask.StartedAt"></span>    StartedAt     <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Time">Time</a>   `db:&#34;-&#34;`
+<span id="ChainTask.Duration"></span>    Duration      <a href="https://pkg.go.dev/builtin/#int64">int64</a>       `db:&#34;-&#34;` <span class="comment">// in microseconds</span>
+<span id="ChainTask.Vxid"></span>    Vxid          <a href="https://pkg.go.dev/builtin/#int64">int64</a>       `db:&#34;-&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="ChainTask.IsRemote">func (*ChainTask) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L59">IsRemote</a>
+					<a class="permalink" href="#ChainTask.IsRemote">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (task *<a href="#ChainTask">ChainTask</a>) IsRemote() <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="IntervalChain">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L28">IntervalChain</a>
+				<a class="permalink" href="#IntervalChain">&#xb6;</a>
+				
+				
+			</h2>
+			<p>IntervalChain structure used to represent repeated chains.
+
+			<pre>type IntervalChain struct {
+    <a href="#Chain">Chain</a>
+<span id="IntervalChain.Interval"></span>    Interval    <a href="https://pkg.go.dev/builtin/#int">int</a>  `db:&#34;interval_seconds&#34;`
+<span id="IntervalChain.RepeatAfter"></span>    RepeatAfter <a href="https://pkg.go.dev/builtin/#bool">bool</a> `db:&#34;repeat_after&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="IntervalChain.IsListed">func (IntervalChain) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L34">IsListed</a>
+					<a class="permalink" href="#IntervalChain.IsListed">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (ichain <a href="#IntervalChain">IntervalChain</a>) IsListed(ichains []<a href="#IntervalChain">IntervalChain</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="LogHook">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L13">LogHook</a>
+				<a class="permalink" href="#LogHook">&#xb6;</a>
+				
+				
+			</h2>
+			<p>LogHook is the implementation of the logrus hook for pgx
+
+			<pre>type LogHook struct {
+<span id="LogHook.cacheLimit"></span>    cacheLimit      <a href="https://pkg.go.dev/builtin/#int">int</a>           <span class="comment">// hold this number of entries before flush to database</span>
+<span id="LogHook.cacheTimeout"></span>    cacheTimeout    <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Duration">Duration</a> <span class="comment">// wait this amount of time before flush to database</span>
+<span id="LogHook.highLoadTimeout"></span>    highLoadTimeout <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Duration">Duration</a> <span class="comment">// wait this amount of time before skip log entry</span>
+<span id="LogHook.db"></span>    db              <a href="#PgxPoolIface">PgxPoolIface</a>
+<span id="LogHook.input"></span>    input           chan <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>
+<span id="LogHook.ctx"></span>    ctx             <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>
+<span id="LogHook.lastError"></span>    lastError       chan <a href="https://pkg.go.dev/builtin/#error">error</a>
+<span id="LogHook.pid"></span>    pid             <a href="https://pkg.go.dev/builtin/#int32">int32</a>
+<span id="LogHook.client"></span>    client          <a href="https://pkg.go.dev/builtin/#string">string</a>
+<span id="LogHook.level"></span>    level           <a href="https://pkg.go.dev/builtin/#string">string</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewHook">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L27">NewHook</a>
+					<a class="permalink" href="#NewHook">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewHook(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, pge *<a href="#PgEngine">PgEngine</a>, level <a href="https://pkg.go.dev/builtin/#string">string</a>) *<a href="#LogHook">LogHook</a></pre>
+				<p>NewHook creates a LogHook to be added to an instance of logger
+
+				
+				
+			
+
+			
+				
+				<h3 id="LogHook.Fire">func (*LogHook) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L46">Fire</a>
+					<a class="permalink" href="#LogHook.Fire">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (hook *<a href="#LogHook">LogHook</a>) Fire(entry *<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>Fire adds logrus log message to the internal queue for processing
+
+				
+				
+				
+			
+				
+				<h3 id="LogHook.Levels">func (*LogHook) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L65">Levels</a>
+					<a class="permalink" href="#LogHook.Levels">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (hook *<a href="#LogHook">LogHook</a>) Levels() []<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Level">Level</a></pre>
+				<p>Levels returns the available logging levels
+
+				
+				
+				
+			
+				
+				<h3 id="LogHook.poll">func (*LogHook) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L90">poll</a>
+					<a class="permalink" href="#LogHook.poll">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (hook *<a href="#LogHook">LogHook</a>) poll(input &lt;-chan <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>)</pre>
+				<p>poll checks for incoming messages and caches them internally
+until either a maximum amount is reached, or a timeout occurs.
+
+				
+				
+				
+			
+				
+				<h3 id="LogHook.send">func (*LogHook) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/log_hook.go.html#L134">send</a>
+					<a class="permalink" href="#LogHook.send">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (hook *<a href="#LogHook">LogHook</a>) send(cache []<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>)</pre>
+				<p>send sends cached messages to the postgres server
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="PgEngine">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L55">PgEngine</a>
+				<a class="permalink" href="#PgEngine">&#xb6;</a>
+				
+				
+			</h2>
+			<p>PgEngine is responsible for every database-related action
+
+			<pre>type PgEngine struct {
+<span id="PgEngine.l"></span>    l        <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/">log</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/#LoggerHookerIface">LoggerHookerIface</a>
+<span id="PgEngine.ConfigDb"></span>    ConfigDb <a href="#PgxPoolIface">PgxPoolIface</a>
+    <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#CmdOptions">CmdOptions</a>
+    <span class="comment">// NOTIFY messages passed verification are pushed to this channel</span>
+<span id="PgEngine.chainSignalChan"></span>    chainSignalChan chan <a href="#ChainSignal">ChainSignal</a>
+<span id="PgEngine.sid"></span>    sid             <a href="https://pkg.go.dev/builtin/#int32">int32</a>
+<span id="PgEngine.logTypeOID"></span>    logTypeOID      <a href="https://pkg.go.dev/builtin/#uint32">uint32</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="New">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L80">New</a>
+					<a class="permalink" href="#New">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func New(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, cmdOpts <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#CmdOptions">CmdOptions</a>, logger <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/">log</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/#LoggerHookerIface">LoggerHookerIface</a>) (*<a href="#PgEngine">PgEngine</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>New opens connection and creates schema
+
+				
+				
+			
+				
+				<h3 id="NewDB">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L120">NewDB</a>
+					<a class="permalink" href="#NewDB">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewDB(DB <a href="#PgxPoolIface">PgxPoolIface</a>, args ...<a href="https://pkg.go.dev/builtin/#string">string</a>) *<a href="#PgEngine">PgEngine</a></pre>
+				<p>NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.
+We assume here all checks for proper schema validation are done beforehannd
+
+				
+				
+			
+
+			
+				
+				<h3 id="PgEngine.AddLogHook">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L190">AddLogHook</a>
+					<a class="permalink" href="#PgEngine.AddLogHook">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) AddLogHook(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>)</pre>
+				<p>AddLogHook adds a new pgx log hook to logrus logger
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.CheckNeedMigrateDb">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L31">CheckNeedMigrateDb</a>
+					<a class="permalink" href="#PgEngine.CheckNeedMigrateDb">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CheckNeedMigrateDb(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) (<a href="https://pkg.go.dev/builtin/#bool">bool</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>CheckNeedMigrateDb checks need of upgrading database and throws error if that&apos;s true
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.CommitTransaction">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L30">CommitTransaction</a>
+					<a class="permalink" href="#PgEngine.CommitTransaction">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CommitTransaction(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>)</pre>
+				<p>CommitTransaction commits transaction and log error in the case of error
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.CopyFromFile">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/copy.go.html#L27">CopyFromFile</a>
+					<a class="permalink" href="#PgEngine.CopyFromFile">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CopyFromFile(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, filename <a href="https://pkg.go.dev/builtin/#string">string</a>, sql <a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>CopyFromFile copies data from local file into database using COPY format specified by sql
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.CopyFromProgram">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/copy.go.html#L64">CopyFromProgram</a>
+					<a class="permalink" href="#PgEngine.CopyFromProgram">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CopyFromProgram(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, sql <a href="https://pkg.go.dev/builtin/#string">string</a>, cmd <a href="https://pkg.go.dev/builtin/#string">string</a>, args ...<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>CopyFromProgram copies data from the standard output of the command into database using COPY format specified by sql
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.CopyToFile">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/copy.go.html#L11">CopyToFile</a>
+					<a class="permalink" href="#PgEngine.CopyToFile">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CopyToFile(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, filename <a href="https://pkg.go.dev/builtin/#string">string</a>, sql <a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>CopyToFile copies data from database into local file using COPY format specified by sql
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.CopyToProgram">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/copy.go.html#L43">CopyToProgram</a>
+					<a class="permalink" href="#PgEngine.CopyToProgram">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CopyToProgram(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, sql <a href="https://pkg.go.dev/builtin/#string">string</a>, cmd <a href="https://pkg.go.dev/builtin/#string">string</a>, args ...<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>CopyToProgram copies data from database to the standard input of the command using COPY format specified by sql
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.DeleteChain">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L15">DeleteChain</a>
+					<a class="permalink" href="#PgEngine.DeleteChain">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) DeleteChain(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				<p>DeleteChain delete chain configuration for self destructive chains
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L113">ExecAutonomousSQLTask</a>
+					<a class="permalink" href="#PgEngine.ExecAutonomousSQLTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecAutonomousSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecLocalSQLTask">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L72">ExecLocalSQLTask</a>
+					<a class="permalink" href="#PgEngine.ExecLocalSQLTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecLocalSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ExecLocalSQLTask executes local task in the chain transaction
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L105">ExecRemoteSQLTask</a>
+					<a class="permalink" href="#PgEngine.ExecRemoteSQLTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecRemoteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ExecRemoteSQLTask executes task against remote connection
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecStandaloneTask">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L91">ExecStandaloneTask</a>
+					<a class="permalink" href="#PgEngine.ExecStandaloneTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecStandaloneTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, connf func() (<a href="#PgxConnIface">PgxConnIface</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>), task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ExecStandaloneTask executes task against the provided connection interface, it can be remote connection or acquired connection from the pool
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecuteCustomScripts">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L221">ExecuteCustomScripts</a>
+					<a class="permalink" href="#PgEngine.ExecuteCustomScripts">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteCustomScripts(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, filename ...<a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>ExecuteCustomScripts executes SQL scripts in files
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L121">ExecuteSQLCommand</a>
+					<a class="permalink" href="#PgEngine.ExecuteSQLCommand">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLCommand(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor, command <a href="https://pkg.go.dev/builtin/#string">string</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ExecuteSQLCommand executes chain command with parameters inside transaction
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecuteSQLTask">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L60">ExecuteSQLTask</a>
+					<a class="permalink" href="#PgEngine.ExecuteSQLTask">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ExecuteSQLTask executes SQL task
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ExecuteSchemaScripts">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L239">ExecuteSchemaScripts</a>
+					<a class="permalink" href="#PgEngine.ExecuteSchemaScripts">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSchemaScripts(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>ExecuteSchemaScripts executes initial schema scripts
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.Finalize">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L266">Finalize</a>
+					<a class="permalink" href="#PgEngine.Finalize">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) Finalize()</pre>
+				<p>Finalize closes session
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L164">FinalizeDBConnection</a>
+					<a class="permalink" href="#PgEngine.FinalizeDBConnection">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) FinalizeDBConnection(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, remoteDb <a href="#PgxConnIface">PgxConnIface</a>)</pre>
+				<p>FinalizeDBConnection closes session
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.GetChainElements">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L133">GetChainElements</a>
+					<a class="permalink" href="#PgEngine.GetChainElements">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) GetChainElements(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, chainTasks *[]<a href="#ChainTask">ChainTask</a>, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>GetChainElements returns all elements for a given chain
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.GetChainParamValues">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L145">GetChainParamValues</a>
+					<a class="permalink" href="#PgEngine.GetChainParamValues">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) GetChainParamValues(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, paramValues *[]<a href="https://pkg.go.dev/builtin/#string">string</a>, task *<a href="#ChainTask">ChainTask</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>GetChainParamValues returns parameter values to pass for task being executed
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L145">GetLocalDBConnection</a>
+					<a class="permalink" href="#PgEngine.GetLocalDBConnection">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) GetLocalDBConnection(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) (conn <a href="#PgxConnIface">PgxConnIface</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>GetLocalDBConnection acquires a connection from a local pool and returns it
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L154">GetRemoteDBConnection</a>
+					<a class="permalink" href="#PgEngine.GetRemoteDBConnection">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) GetRemoteDBConnection(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, connectionString <a href="https://pkg.go.dev/builtin/#string">string</a>) (conn <a href="#PgxConnIface">PgxConnIface</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>GetRemoteDBConnection create a remote db connection object
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.Getsid">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L68">Getsid</a>
+					<a class="permalink" href="#PgEngine.Getsid">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) Getsid() <a href="https://pkg.go.dev/builtin/#int32">int32</a></pre>
+				<p>Getsid returns the pseudo-random session ID to use for the session identification.
+Previously `os.Getpid()` used but this approach is not producing unique IDs for docker containers
+where all IDs are the same across all running containers, e.g. 1
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.HandleNotifications">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/notification.go.html#L85">HandleNotifications</a>
+					<a class="permalink" href="#PgEngine.HandleNotifications">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) HandleNotifications(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>)</pre>
+				<p>HandleNotifications consumes notifications in blocking mode
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.InsertChainRunStatus">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L53">InsertChainRunStatus</a>
+					<a class="permalink" href="#PgEngine.InsertChainRunStatus">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) InsertChainRunStatus(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>, maxInstances <a href="https://pkg.go.dev/builtin/#int">int</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				<p>InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.IsAlive">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L26">IsAlive</a>
+					<a class="permalink" href="#PgEngine.IsAlive">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) IsAlive() <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				<p>IsAlive returns true if the connection to the database is alive
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.LogTaskExecution">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L31">LogTaskExecution</a>
+					<a class="permalink" href="#PgEngine.LogTaskExecution">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) LogTaskExecution(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, retCode <a href="https://pkg.go.dev/builtin/#int">int</a>, output <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<p>LogTaskExecution will log current chain element execution status including retcode
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.MigrateDb">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L16">MigrateDb</a>
+					<a class="permalink" href="#PgEngine.MigrateDb">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) MigrateDb(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>MigrateDb upgrades database with all migrations
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.MustRollbackToSavepoint">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L53">MustRollbackToSavepoint</a>
+					<a class="permalink" href="#PgEngine.MustRollbackToSavepoint">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) MustRollbackToSavepoint(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, taskID <a href="https://pkg.go.dev/builtin/#int">int</a>)</pre>
+				<p>MustRollbackToSavepoint rollbacks transaction to SAVEPOINT and log error in the case of error
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.MustSavepoint">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L46">MustSavepoint</a>
+					<a class="permalink" href="#PgEngine.MustSavepoint">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) MustSavepoint(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, taskID <a href="https://pkg.go.dev/builtin/#int">int</a>)</pre>
+				<p>MustSavepoint creates SAVDEPOINT in transaction and log error in the case of error
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.NotificationHandler">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/notification.go.html#L45">NotificationHandler</a>
+					<a class="permalink" href="#PgEngine.NotificationHandler">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) NotificationHandler(c *<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/">pgconn</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/#PgConn">PgConn</a>, n *<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/">pgconn</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/#Notification">Notification</a>)</pre>
+				<p>NotificationHandler consumes notifications from the PostgreSQL server
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.RemoveChainRunStatus">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L68">RemoveChainRunStatus</a>
+					<a class="permalink" href="#PgEngine.RemoveChainRunStatus">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) RemoveChainRunStatus(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L184">ResetRole</a>
+					<a class="permalink" href="#PgEngine.ResetRole">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ResetRole(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor)</pre>
+				<p>ResetRole - RESET forms reset the current user identifier to be the current session user identifier
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.RollbackTransaction">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L38">RollbackTransaction</a>
+					<a class="permalink" href="#PgEngine.RollbackTransaction">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) RollbackTransaction(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>)</pre>
+				<p>RollbackTransaction rollbacks transaction and log error in the case of error
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.SelectChain">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L119">SelectChain</a>
+					<a class="permalink" href="#PgEngine.SelectChain">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) SelectChain(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, dest *<a href="#Chain">Chain</a>, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>SelectChain returns the chain with the specified ID
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.SelectChains">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L93">SelectChains</a>
+					<a class="permalink" href="#PgEngine.SelectChains">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) SelectChains(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, dest *[]<a href="#Chain">Chain</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>SelectChains returns a list of chains should be executed at the current moment
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.SelectIntervalChains">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L104">SelectIntervalChains</a>
+					<a class="permalink" href="#PgEngine.SelectIntervalChains">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) SelectIntervalChains(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, dest *[]<a href="#IntervalChain">IntervalChain</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>SelectIntervalChains returns list of interval chains to be executed
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.SelectRebootChains">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L82">SelectRebootChains</a>
+					<a class="permalink" href="#PgEngine.SelectRebootChains">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) SelectRebootChains(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, dest *[]<a href="#Chain">Chain</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>SelectRebootChains returns a list of chains should be executed after reboot
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L194">SetCurrentTaskContext</a>
+					<a class="permalink" href="#PgEngine.SetCurrentTaskContext">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) SetCurrentTaskContext(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>, taskID <a href="https://pkg.go.dev/builtin/#int">int</a>)</pre>
+				<p>SetCurrentTaskContext - set the working transaction &quot;pg_timetable.current_task_id&quot; run-time parameter
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L174">SetRole</a>
+					<a class="permalink" href="#PgEngine.SetRole">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) SetRole(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor, runUID <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/">pgtype</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype/#Text">Text</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>SetRole - set the current user identifier of the current session
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.StartTransaction">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L18">StartTransaction</a>
+					<a class="permalink" href="#PgEngine.StartTransaction">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) StartTransaction(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) (tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, vxid <a href="https://pkg.go.dev/builtin/#int64">int64</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>StartTransaction returns transaction object, virtual transaction id and error
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.TryLockClientName">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L200">TryLockClientName</a>
+					<a class="permalink" href="#PgEngine.TryLockClientName">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) TryLockClientName(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, conn <a href="#QueryRowIface">QueryRowIface</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>TryLockClientName obtains lock on the server to prevent another client with the same name
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.WaitForChainSignal">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/notification.go.html#L75">WaitForChainSignal</a>
+					<a class="permalink" href="#PgEngine.WaitForChainSignal">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) WaitForChainSignal(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="#ChainSignal">ChainSignal</a></pre>
+				<p>WaitForChainSignal returns configuration id from the notifications
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.getPgxConnConfig">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L134">getPgxConnConfig</a>
+					<a class="permalink" href="#PgEngine.getPgxConnConfig">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) getPgxConnConfig() *<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgxpool/">pgxpool</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgxpool/#Config">Config</a></pre>
+				<p>getPgxConnConfig transforms standard connestion string to pgx specific one with
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L156">initMigrator</a>
+					<a class="permalink" href="#PgEngine.initMigrator">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) initMigrator() (*<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migrator">Migrator</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="PgxConnIface">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L42">PgxConnIface</a>
+				<a class="permalink" href="#PgxConnIface">&#xb6;</a>
+				
+				
+			</h2>
+			<p>PgxConnIface is interface representing pgx connection
+
+			<pre>type PgxConnIface interface {
+    <a href="#PgxIface">PgxIface</a>
+    Close(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="PgxIface">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L32">PgxIface</a>
+				<a class="permalink" href="#PgxIface">&#xb6;</a>
+				
+				
+			</h2>
+			<p>PgxIface is common interface for every pgx class
+
+			<pre>type PgxIface interface {
+    Begin(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+    Exec(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...interface{}) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/">pgconn</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/#CommandTag">CommandTag</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+    QueryRow(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...interface{}) <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Row">Row</a>
+    Query(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, query <a href="https://pkg.go.dev/builtin/#string">string</a>, args ...interface{}) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Rows">Rows</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+    Ping(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a>
+    CopyFrom(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tableName <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Identifier">Identifier</a>, columnNames []<a href="https://pkg.go.dev/builtin/#string">string</a>, rowSrc <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#CopyFromSource">CopyFromSource</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="PgxPoolIface">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L48">PgxPoolIface</a>
+				<a class="permalink" href="#PgxPoolIface">&#xb6;</a>
+				
+				
+			</h2>
+			<p>PgxPoolIface is interface representing pgx pool
+
+			<pre>type PgxPoolIface interface {
+    <a href="#PgxIface">PgxIface</a>
+    Acquire(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) (*<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgxpool/">pgxpool</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgxpool/#Conn">Conn</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+    Close()
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="QueryRowIface">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L195">QueryRowIface</a>
+				<a class="permalink" href="#QueryRowIface">&#xb6;</a>
+				
+				
+			</h2>
+			<p>QueryRowIface specifies interface to use QueryRow method
+
+			<pre>type QueryRowIface interface {
+    QueryRow(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...interface{}) <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Row">Row</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="executor">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L12">executor</a>
+				<a class="permalink" href="#executor">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type executor interface {
+    Exec(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, sql <a href="https://pkg.go.dev/builtin/#string">string</a>, arguments ...interface{}) (commandTag <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/">pgconn</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/#CommandTag">CommandTag</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.25.1.<br>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

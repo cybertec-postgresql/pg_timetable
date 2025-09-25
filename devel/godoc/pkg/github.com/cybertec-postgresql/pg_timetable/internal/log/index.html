@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>log - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer></script>
+
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package log
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/cybertec-postgresql/pg_timetable/internal/log"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+				<dd><a href="#pkg-examples" class="examplesLink">Examples</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+				<dd><a href="#pkg-constants">Constants</a></dd>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#WithLogger">func WithLogger(ctx context.Context, logger LoggerIface) context.Context</a></dd>
+			
+				
+				<dd><a href="#getColorByLevel">func getColorByLevel(level logrus.Level) int</a></dd>
+			
+				
+				<dd><a href="#getLogFileFormatter">func getLogFileFormatter(opts config.LoggingOpts) logrus.Formatter</a></dd>
+			
+				
+				<dd><a href="#getLogFileWriter">func getLogFileWriter(opts config.LoggingOpts) any</a></dd>
+			
+				
+				<dd><a href="#trimFilename">func trimFilename(s string) string</a></dd>
+			
+			
+				
+				<dd><a href="#Formatter">type Formatter</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Formatter.Format">func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Formatter.writeCaller">func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Formatter.writeField">func (f *Formatter) writeField(b *bytes.Buffer, entry *logrus.Entry, field string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Formatter.writeFields">func (f *Formatter) writeFields(b *bytes.Buffer, entry *logrus.Entry)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Formatter.writeOrderedFields">func (f *Formatter) writeOrderedFields(b *bytes.Buffer, entry *logrus.Entry)</a></dd>
+				
+			
+				
+				<dd><a href="#LoggerHookerIface">type LoggerHookerIface</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Init">func Init(opts config.LoggingOpts) LoggerHookerIface</a></dd>
+				
+				
+			
+				
+				<dd><a href="#LoggerIface">type LoggerIface</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#GetLogger">func GetLogger(ctx context.Context) LoggerIface</a></dd>
+				
+				
+			
+				
+				<dd><a href="#PgxLogger">type PgxLogger</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewPgxLogger">func NewPgxLogger(l LoggerIface) *PgxLogger</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgxLogger.Log">func (pgxlogger *PgxLogger) Log(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]any)</a></dd>
+				
+			
+				
+				<dd><a href="#loggerKey">type loggerKey</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+		<div id="pkg-examples">
+			<h3>Examples</h3>
+			<div class="js-expandAll expandAll collapsed">(Expand All)</div>
+			<dl>
+			
+			<dd><a class="exampleLink" href="#example_Formatter_Format_default">Formatter.Format (Default)</a></dd>
+			
+			</dl>
+		</div>
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html">formatter.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html">log.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+			<h2 id="pkg-constants">Constants</h2>
+			
+				
+				<pre>const (
+    <span id="colorRed">colorRed</span>     = 31
+    <span id="colorBlue">colorBlue</span>    = 36
+    <span id="colorMagenta">colorMagenta</span> = 35
+    <span id="colorGreen">colorGreen</span>   = 32
+)</pre>
+			
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<p>FallbackLogger is an alias for the standard logger
+
+				<pre>var <span id="FallbackLogger">FallbackLogger</span> = <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#StandardLogger">StandardLogger</a>()</pre>
+			
+		
+		
+			
+			
+			<h2 id="WithLogger">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L102">WithLogger</a>
+				<a class="permalink" href="#WithLogger">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func WithLogger(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, logger <a href="#LoggerIface">LoggerIface</a>) <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a></pre>
+			<p>WithLogger returns a new context with the provided logger. Use in
+combination with logger.WithField(s) for great effect
+
+			
+			
+
+		
+			
+			
+			<h2 id="getColorByLevel">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L220">getColorByLevel</a>
+				<a class="permalink" href="#getColorByLevel">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func getColorByLevel(level <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Level">Level</a>) <a href="https://pkg.go.dev/builtin/#int">int</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="getLogFileFormatter">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L38">getLogFileFormatter</a>
+				<a class="permalink" href="#getLogFileFormatter">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func getLogFileFormatter(opts <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#LoggingOpts">LoggingOpts</a>) <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Formatter">Formatter</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="getLogFileWriter">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L26">getLogFileWriter</a>
+				<a class="permalink" href="#getLogFileWriter">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func getLogFileWriter(opts <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#LoggingOpts">LoggingOpts</a>) <a href="https://pkg.go.dev/builtin/#any">any</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="trimFilename">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L129">trimFilename</a>
+				<a class="permalink" href="#trimFilename">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func trimFilename(s <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+			
+			
+
+		
+		
+			
+			
+			<h2 id="Formatter">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L16">Formatter</a>
+				<a class="permalink" href="#Formatter">&#xb6;</a>
+				
+				
+			</h2>
+			<p>Formatter - logrus formatter, implements logrus.Formatter
+Forked from &quot;github.com/antonfisher/nested-logrus-formatter&quot;
+
+			<pre>type Formatter struct {
+<span id="Formatter.FieldsOrder"></span>    <span class="comment">// FieldsOrder - default: fields sorted alphabetically</span>
+    FieldsOrder []<a href="https://pkg.go.dev/builtin/#string">string</a>
+
+<span id="Formatter.TimestampFormat"></span>    <span class="comment">// TimestampFormat - default: time.StampMilli = &#34;Jan _2 15:04:05.000&#34;</span>
+    TimestampFormat <a href="https://pkg.go.dev/builtin/#string">string</a>
+
+<span id="Formatter.HideKeys"></span>    <span class="comment">// HideKeys - show [fieldValue] instead of [fieldKey:fieldValue]</span>
+    HideKeys <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.NoColors"></span>    <span class="comment">// NoColors - disable colors</span>
+    NoColors <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.NoFieldsColors"></span>    <span class="comment">// NoFieldsColors - apply colors only to the level, default is level + fields</span>
+    NoFieldsColors <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.NoFieldsSpace"></span>    <span class="comment">// NoFieldsSpace - no space between fields</span>
+    NoFieldsSpace <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.ShowFullLevel"></span>    <span class="comment">// ShowFullLevel - show a full level [WARNING] instead of [WARN]</span>
+    ShowFullLevel <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.NoUppercaseLevel"></span>    <span class="comment">// NoUppercaseLevel - no upper case for level value</span>
+    NoUppercaseLevel <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.TrimMessages"></span>    <span class="comment">// TrimMessages - trim whitespaces on messages</span>
+    TrimMessages <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.CallerFirst"></span>    <span class="comment">// CallerFirst - print caller info first</span>
+    CallerFirst <a href="https://pkg.go.dev/builtin/#bool">bool</a>
+
+<span id="Formatter.CustomCallerFormatter"></span>    <span class="comment">// CustomCallerFormatter - set custom formatter for caller info</span>
+    CustomCallerFormatter func(*<a href="https://pkg.go.dev/runtime/">runtime</a>.<a href="https://pkg.go.dev/runtime/#Frame">Frame</a>) <a href="https://pkg.go.dev/builtin/#string">string</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="Formatter.Format">func (*Formatter) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L52">Format</a>
+					<a class="permalink" href="#Formatter.Format">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (f *<a href="#Formatter">Formatter</a>) Format(entry *<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>) ([]<a href="https://pkg.go.dev/builtin/#byte">byte</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>Format an log entry
+
+				
+				<div id="example_Formatter_Format_default" class="toggle">
+	<div class="collapsed">
+		<p class="exampleHeading toggleButton">▹ <span class="text">Example (Default)</span></p>
+	</div>
+	<div class="expanded">
+		<p class="exampleHeading toggleButton">▾ <span class="text">Example (Default)</span></p>
+		
+		
+		
+			<p>Code:</p>
+			<pre class="code">l := logrus.New()
+l.SetOutput(os.Stdout)
+l.SetLevel(logrus.DebugLevel)
+l.SetFormatter(&amp;formatter.Formatter{
+    NoColors:        true,
+    TimestampFormat: &#34;-&#34;,
+})
+
+l.Debug(&#34;test1&#34;)
+l.Info(&#34;test2&#34;)
+l.Warn(&#34;test3&#34;)
+l.Error(&#34;test4&#34;)
+
+<span class="comment"></pre>
+			
+			<p>Output:</p>
+			<pre class="output">- [DEBU] test1
+- [INFO] test2
+- [WARN] test3
+- [ERRO] test4
+</pre>
+			
+		
+	</div>
+</div>
+
+				
+			
+				
+				<h3 id="Formatter.writeCaller">func (*Formatter) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L138">writeCaller</a>
+					<a class="permalink" href="#Formatter.writeCaller">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (f *<a href="#Formatter">Formatter</a>) writeCaller(b *<a href="https://pkg.go.dev/bytes/">bytes</a>.<a href="https://pkg.go.dev/bytes/#Buffer">Buffer</a>, entry *<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="Formatter.writeField">func (*Formatter) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L199">writeField</a>
+					<a class="permalink" href="#Formatter.writeField">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (f *<a href="#Formatter">Formatter</a>) writeField(b *<a href="https://pkg.go.dev/bytes/">bytes</a>.<a href="https://pkg.go.dev/bytes/#Buffer">Buffer</a>, entry *<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>, field <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="Formatter.writeFields">func (*Formatter) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L157">writeFields</a>
+					<a class="permalink" href="#Formatter.writeFields">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (f *<a href="#Formatter">Formatter</a>) writeFields(b *<a href="https://pkg.go.dev/bytes/">bytes</a>.<a href="https://pkg.go.dev/bytes/#Buffer">Buffer</a>, entry *<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>)</pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="Formatter.writeOrderedFields">func (*Formatter) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/formatter.go.html#L172">writeOrderedFields</a>
+					<a class="permalink" href="#Formatter.writeOrderedFields">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (f *<a href="#Formatter">Formatter</a>) writeOrderedFields(b *<a href="https://pkg.go.dev/bytes/">bytes</a>.<a href="https://pkg.go.dev/bytes/#Buffer">Buffer</a>, entry *<a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Entry">Entry</a>)</pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="LoggerHookerIface">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L18">LoggerHookerIface</a>
+				<a class="permalink" href="#LoggerHookerIface">&#xb6;</a>
+				
+				
+			</h2>
+			<p>LoggerHookerIface adds AddHook method to LoggerIface for database logging hook
+
+			<pre>type LoggerHookerIface interface {
+    <a href="#LoggerIface">LoggerIface</a>
+    AddHook(hook <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#Hook">Hook</a>)
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="Init">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L46">Init</a>
+					<a class="permalink" href="#Init">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func Init(opts <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#LoggingOpts">LoggingOpts</a>) <a href="#LoggerHookerIface">LoggerHookerIface</a></pre>
+				<p>Init creates logging facilities for the application
+
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="LoggerIface">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L16">LoggerIface</a>
+				<a class="permalink" href="#LoggerIface">&#xb6;</a>
+				
+				
+			</h2>
+			<p>LoggerIface is the interface used by all components
+
+			<pre>type LoggerIface <a href="https://pkg.go.dev/github.com/sirupsen/logrus/">logrus</a>.<a href="https://pkg.go.dev/github.com/sirupsen/logrus/#FieldLogger">FieldLogger</a></pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="GetLogger">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L111">GetLogger</a>
+					<a class="permalink" href="#GetLogger">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func GetLogger(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="#LoggerIface">LoggerIface</a></pre>
+				<p>GetLogger retrieves the current logger from the context. If no logger is
+available, the default logger is returned
+
+				
+				
+			
+
+			
+		
+			
+			
+			<h2 id="PgxLogger">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L68">PgxLogger</a>
+				<a class="permalink" href="#PgxLogger">&#xb6;</a>
+				
+				
+			</h2>
+			<p>PgxLogger is the struct used to log using pgx postgres driver
+
+			<pre>type PgxLogger struct {
+<span id="PgxLogger.l"></span>    l <a href="#LoggerIface">LoggerIface</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewPgxLogger">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L73">NewPgxLogger</a>
+					<a class="permalink" href="#NewPgxLogger">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewPgxLogger(l <a href="#LoggerIface">LoggerIface</a>) *<a href="#PgxLogger">PgxLogger</a></pre>
+				<p>NewPgxLogger returns a new instance of PgxLogger
+
+				
+				
+			
+
+			
+				
+				<h3 id="PgxLogger.Log">func (*PgxLogger) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L78">Log</a>
+					<a class="permalink" href="#PgxLogger.Log">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pgxlogger *<a href="#PgxLogger">PgxLogger</a>) Log(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, level <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/tracelog/">tracelog</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/tracelog/#LogLevel">LogLevel</a>, msg <a href="https://pkg.go.dev/builtin/#string">string</a>, data map[<a href="https://pkg.go.dev/builtin/#string">string</a>]<a href="https://pkg.go.dev/builtin/#any">any</a>)</pre>
+				<p>Log transforms logging calls from pgx to logrus
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="loggerKey">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L23">loggerKey</a>
+				<a class="permalink" href="#loggerKey">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type loggerKey struct{}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.25.1.<br>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

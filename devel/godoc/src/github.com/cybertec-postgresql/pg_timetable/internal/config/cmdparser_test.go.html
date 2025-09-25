@@ -1,0 +1,120 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser_test.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config">config</a>/<span class="text-muted">cmdparser_test.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config">github.com/cybertec-postgresql/pg_timetable/internal/config</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package config
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;os&#34;
+<span id="L5" class="ln">     5  </span>	&#34;testing&#34;
+<span id="L6" class="ln">     6  </span>
+<span id="L7" class="ln">     7  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L8" class="ln">     8  </span>)
+<span id="L9" class="ln">     9  </span>
+<span id="L10" class="ln">    10  </span>func TestParseFail(t *testing.T) {
+<span id="L11" class="ln">    11  </span>	tests := [][]string{
+<span id="L12" class="ln">    12  </span>		{0: &#34;go-test&#34;, &#34;--unknown-oprion&#34;},
+<span id="L13" class="ln">    13  </span>		{0: &#34;go-test&#34;, &#34;-c&#34;, &#34;client01&#34;, &#34;-f&#34;, &#34;foo&#34;},
+<span id="L14" class="ln">    14  </span>	}
+<span id="L15" class="ln">    15  </span>	for _, d := range tests {
+<span id="L16" class="ln">    16  </span>		os.Args = d
+<span id="L17" class="ln">    17  </span>		_, err := Parse(nil)
+<span id="L18" class="ln">    18  </span>		assert.Error(t, err)
+<span id="L19" class="ln">    19  </span>	}
+<span id="L20" class="ln">    20  </span>}
+<span id="L21" class="ln">    21  </span>
+<span id="L22" class="ln">    22  </span>func TestParseSuccess(t *testing.T) {
+<span id="L23" class="ln">    23  </span>	tests := [][]string{
+<span id="L24" class="ln">    24  </span>		{0: &#34;go-test&#34;, &#34;non-optional-value&#34;},
+<span id="L25" class="ln">    25  </span>	}
+<span id="L26" class="ln">    26  </span>	for _, d := range tests {
+<span id="L27" class="ln">    27  </span>		os.Args = d
+<span id="L28" class="ln">    28  </span>		_, err := Parse(nil)
+<span id="L29" class="ln">    29  </span>		assert.NoError(t, err)
+<span id="L30" class="ln">    30  </span>	}
+<span id="L31" class="ln">    31  </span>}
+<span id="L32" class="ln">    32  </span>
+<span id="L33" class="ln">    33  </span>func TestLogLevel(t *testing.T) {
+<span id="L34" class="ln">    34  </span>	c := &amp;CmdOptions{Logging: LoggingOpts{LogLevel: &#34;debug&#34;}}
+<span id="L35" class="ln">    35  </span>	assert.True(t, c.Verbose())
+<span id="L36" class="ln">    36  </span>	c = &amp;CmdOptions{Logging: LoggingOpts{LogLevel: &#34;info&#34;}}
+<span id="L37" class="ln">    37  </span>	assert.False(t, c.Verbose())
+<span id="L38" class="ln">    38  </span>}
+<span id="L39" class="ln">    39  </span>
+<span id="L40" class="ln">    40  </span>func TestVersionOnly(t *testing.T) {
+<span id="L41" class="ln">    41  </span>	c := &amp;CmdOptions{Version: true}
+<span id="L42" class="ln">    42  </span>	os.Args = []string{0: &#34;go-test&#34;, &#34;-v&#34;}
+<span id="L43" class="ln">    43  </span>	assert.True(t, c.VersionOnly())
+<span id="L44" class="ln">    44  </span>	c = &amp;CmdOptions{Version: false}
+<span id="L45" class="ln">    45  </span>	assert.False(t, c.VersionOnly())
+<span id="L46" class="ln">    46  </span>}
+<span id="L47" class="ln">    47  </span>
+<span id="L48" class="ln">    48  </span>func TestNewCmdOptions(t *testing.T) {
+<span id="L49" class="ln">    49  </span>	c := NewCmdOptions(&#34;-c&#34;, &#34;config_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L50" class="ln">    50  </span>	assert.NotNil(t, c)
+<span id="L51" class="ln">    51  </span>}
+<span id="L52" class="ln">    52  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

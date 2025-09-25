@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>tasks - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer></script>
+
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package tasks
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/cybertec-postgresql/pg_timetable/internal/tasks"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#DownloadUrls">func DownloadUrls(ctx context.Context, urls []string, dest string, workers int) (out string, err error)</a></dd>
+			
+				
+				<dd><a href="#SendMail">func SendMail(ctx context.Context, conn EmailConn) error</a></dd>
+			
+			
+				
+				<dd><a href="#Dialer">type Dialer</a></dd>
+				
+				
+			
+				
+				<dd><a href="#EmailAttachmentData">type EmailAttachmentData</a></dd>
+				
+				
+			
+				
+				<dd><a href="#EmailConn">type EmailConn</a></dd>
+				
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/files.go.html">files.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/mail.go.html">mail.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				<p>NewDialer returns a new gomail dialer instance
+
+				<pre>var <span id="NewDialer">NewDialer</span> = func(host <a href="https://pkg.go.dev/builtin/#string">string</a>, port <a href="https://pkg.go.dev/builtin/#int">int</a>, username, password <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="#Dialer">Dialer</a> {
+    return <a href="https://pkg.go.dev/github.com/ory/mail/v3/">gomail</a>.<a href="https://pkg.go.dev/github.com/ory/mail/v3/#NewDialer">NewDialer</a>(host, port, username, password)
+}</pre>
+			
+		
+		
+			
+			
+			<h2 id="DownloadUrls">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/files.go.html#L11">DownloadUrls</a>
+				<a class="permalink" href="#DownloadUrls">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func DownloadUrls(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, urls []<a href="https://pkg.go.dev/builtin/#string">string</a>, dest <a href="https://pkg.go.dev/builtin/#string">string</a>, workers <a href="https://pkg.go.dev/builtin/#int">int</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			<p>DownloadUrls function implemented using grab library
+
+			
+			
+
+		
+			
+			
+			<h2 id="SendMail">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/mail.go.html#L45">SendMail</a>
+				<a class="permalink" href="#SendMail">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func SendMail(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, conn <a href="#EmailConn">EmailConn</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+			<p>SendMail sends mail message specified by conn within context ctx
+
+			
+			
+
+		
+		
+			
+			
+			<h2 id="Dialer">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/mail.go.html#L35">Dialer</a>
+				<a class="permalink" href="#Dialer">&#xb6;</a>
+				
+				
+			</h2>
+			<p>Dialer implements DialAndSend function for mailer
+
+			<pre>type Dialer interface {
+    DialAndSend(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, m ...*<a href="https://pkg.go.dev/github.com/ory/mail/v3/">gomail</a>.<a href="https://pkg.go.dev/github.com/ory/mail/v3/#Message">Message</a>) <a href="https://pkg.go.dev/builtin/#error">error</a>
+}</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="EmailAttachmentData">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/mail.go.html#L12">EmailAttachmentData</a>
+				<a class="permalink" href="#EmailAttachmentData">&#xb6;</a>
+				
+				
+			</h2>
+			<p>Attachment file type
+Has pair: name and content (base64-encoded) of attachment file
+
+			<pre>type EmailAttachmentData struct {
+<span id="EmailAttachmentData.Name"></span>    Name       <a href="https://pkg.go.dev/builtin/#string">string</a> `json:&#34;name&#34;`
+<span id="EmailAttachmentData.Base64Data"></span>    Base64Data []<a href="https://pkg.go.dev/builtin/#byte">byte</a> `json:&#34;base64data&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="EmailConn">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/mail.go.html#L18">EmailConn</a>
+				<a class="permalink" href="#EmailConn">&#xb6;</a>
+				
+				
+			</h2>
+			<p>EmailConn structure represents a connection to a mail server and mail fields
+
+			<pre>type EmailConn struct {
+<span id="EmailConn.Username"></span>    Username       <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;username&#34;`
+<span id="EmailConn.Password"></span>    Password       <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;password&#34;`
+<span id="EmailConn.ServerHost"></span>    ServerHost     <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;serverhost&#34;`
+<span id="EmailConn.ServerPort"></span>    ServerPort     <a href="https://pkg.go.dev/builtin/#int">int</a>                   `json:&#34;serverport&#34;`
+<span id="EmailConn.SenderAddr"></span>    SenderAddr     <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;senderaddr&#34;`
+<span id="EmailConn.CcAddr"></span>    CcAddr         []<a href="https://pkg.go.dev/builtin/#string">string</a>              `json:&#34;ccaddr&#34;`
+<span id="EmailConn.BccAddr"></span>    BccAddr        []<a href="https://pkg.go.dev/builtin/#string">string</a>              `json:&#34;bccaddr&#34;`
+<span id="EmailConn.ToAddr"></span>    ToAddr         []<a href="https://pkg.go.dev/builtin/#string">string</a>              `json:&#34;toaddr&#34;`
+<span id="EmailConn.Subject"></span>    Subject        <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;subject&#34;`
+<span id="EmailConn.MsgBody"></span>    MsgBody        <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;msgbody&#34;`
+<span id="EmailConn.Attachments"></span>    Attachments    []<a href="https://pkg.go.dev/builtin/#string">string</a>              `json:&#34;attachment&#34;`
+<span id="EmailConn.AttachmentData"></span>    AttachmentData []<a href="#EmailAttachmentData">EmailAttachmentData</a> `json:&#34;attachmentdata&#34;`
+<span id="EmailConn.ContentType"></span>    ContentType    <a href="https://pkg.go.dev/builtin/#string">string</a>                `json:&#34;contenttype&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.25.1.<br>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

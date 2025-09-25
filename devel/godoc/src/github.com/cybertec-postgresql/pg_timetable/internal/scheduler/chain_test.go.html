@@ -1,0 +1,214 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain_test.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler">scheduler</a>/<span class="text-muted">chain_test.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/scheduler">github.com/cybertec-postgresql/pg_timetable/internal/scheduler</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package scheduler
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;errors&#34;
+<span id="L6" class="ln">     6  </span>	&#34;sync&#34;
+<span id="L7" class="ln">     7  </span>	&#34;testing&#34;
+<span id="L8" class="ln">     8  </span>	&#34;time&#34;
+<span id="L9" class="ln">     9  </span>
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
+<span id="L12" class="ln">    12  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/jackc/pgx/v5&#34;
+<span id="L14" class="ln">    14  </span>	&#34;github.com/jackc/pgx/v5/pgconn&#34;
+<span id="L15" class="ln">    15  </span>	&#34;github.com/jackc/pgx/v5/pgtype&#34;
+<span id="L16" class="ln">    16  </span>	&#34;github.com/pashagolub/pgxmock/v4&#34;
+<span id="L17" class="ln">    17  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L18" class="ln">    18  </span>)
+<span id="L19" class="ln">    19  </span>
+<span id="L20" class="ln">    20  </span>func TestSchedulerExclusiveLocking(*testing.T) {
+<span id="L21" class="ln">    21  </span>	sch := &amp;Scheduler{exclusiveMutex: sync.RWMutex{}}
+<span id="L22" class="ln">    22  </span>	sch.Lock(true)
+<span id="L23" class="ln">    23  </span>	sch.Unlock(true)
+<span id="L24" class="ln">    24  </span>	sch.Lock(false)
+<span id="L25" class="ln">    25  </span>	sch.Unlock(false)
+<span id="L26" class="ln">    26  </span>}
+<span id="L27" class="ln">    27  </span>
+<span id="L28" class="ln">    28  </span>func TestAsyncChains(t *testing.T) {
+<span id="L29" class="ln">    29  </span>	mock, err := pgxmock.NewPool()
+<span id="L30" class="ln">    30  </span>	assert.NoError(t, err)
+<span id="L31" class="ln">    31  </span>	pge := pgengine.NewDB(mock, &#34;scheduler_unit_test&#34;)
+<span id="L32" class="ln">    32  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L33" class="ln">    33  </span>	n1 := &amp;pgconn.Notification{Payload: `{&#34;ConfigID&#34;: 1, &#34;Command&#34;: &#34;START&#34;}`}
+<span id="L34" class="ln">    34  </span>	n2 := &amp;pgconn.Notification{Payload: `{&#34;ConfigID&#34;: 2, &#34;Command&#34;: &#34;START&#34;}`}
+<span id="L35" class="ln">    35  </span>	ns := &amp;pgconn.Notification{Payload: `{&#34;ConfigID&#34;: 24, &#34;Command&#34;: &#34;STOP&#34;}`}
+<span id="L36" class="ln">    36  </span>
+<span id="L37" class="ln">    37  </span>	<span class="comment">//add correct chain</span>
+<span id="L38" class="ln">    38  </span>	pge.NotificationHandler(&amp;pgconn.PgConn{}, n1)
+<span id="L39" class="ln">    39  </span>	pge.NotificationHandler(&amp;pgconn.PgConn{}, ns)
+<span id="L40" class="ln">    40  </span>	mock.ExpectQuery(&#34;SELECT.+chain_id&#34;).
+<span id="L41" class="ln">    41  </span>		WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;, &#34;task_id&#34;, &#34;chain_name&#34;,
+<span id="L42" class="ln">    42  </span>			&#34;self_destruct&#34;, &#34;exclusive_execution&#34;, &#34;max_instances&#34;}).
+<span id="L43" class="ln">    43  </span>			AddRow(24, 24, &#34;foo&#34;, false, false, 16))
+<span id="L44" class="ln">    44  </span>	if pge.Verbose() {
+<span id="L45" class="ln">    45  </span>		mock.ExpectExec(&#34;INSERT.+log&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
+<span id="L46" class="ln">    46  </span>	}
+<span id="L47" class="ln">    47  </span>	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+<span id="L48" class="ln">    48  </span>	defer cancel()
+<span id="L49" class="ln">    49  </span>	sch.retrieveAsyncChainsAndRun(ctx)
+<span id="L50" class="ln">    50  </span>	<span class="comment">//add incorrect chain</span>
+<span id="L51" class="ln">    51  </span>	pge.NotificationHandler(&amp;pgconn.PgConn{}, n2)
+<span id="L52" class="ln">    52  </span>	mock.ExpectQuery(&#34;SELECT.+chain_id&#34;).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L53" class="ln">    53  </span>	mock.ExpectExec(&#34;INSERT.+log&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
+<span id="L54" class="ln">    54  </span>	ctx, cancel = context.WithTimeout(context.Background(), time.Second*2)
+<span id="L55" class="ln">    55  </span>	defer cancel()
+<span id="L56" class="ln">    56  </span>	sch.retrieveAsyncChainsAndRun(ctx)
+<span id="L57" class="ln">    57  </span>}
+<span id="L58" class="ln">    58  </span>
+<span id="L59" class="ln">    59  </span>func TestChainWorker(t *testing.T) {
+<span id="L60" class="ln">    60  </span>	mock, err := pgxmock.NewPool()
+<span id="L61" class="ln">    61  </span>	assert.NoError(t, err)
+<span id="L62" class="ln">    62  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L63" class="ln">    63  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L64" class="ln">    64  </span>	chains := make(chan Chain, 16)
+<span id="L65" class="ln">    65  </span>
+<span id="L66" class="ln">    66  </span>	t.Run(&#34;Check chainWorker if context cancelled&#34;, func(*testing.T) {
+<span id="L67" class="ln">    67  </span>		ctx, cancel := context.WithCancel(context.Background())
+<span id="L68" class="ln">    68  </span>		cancel()
+<span id="L69" class="ln">    69  </span>		chains &lt;- Chain{}
+<span id="L70" class="ln">    70  </span>		sch.chainWorker(ctx, chains)
+<span id="L71" class="ln">    71  </span>	})
+<span id="L72" class="ln">    72  </span>
+<span id="L73" class="ln">    73  </span>	t.Run(&#34;Check chainWorker if everything fine&#34;, func(*testing.T) {
+<span id="L74" class="ln">    74  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+<span id="L75" class="ln">    75  </span>		defer cancel()
+<span id="L76" class="ln">    76  </span>		mock.ExpectQuery(&#34;SELECT count&#34;).WillReturnError(pgx.ErrNoRows)
+<span id="L77" class="ln">    77  </span>		mock.ExpectBegin().WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L78" class="ln">    78  </span>		mock.ExpectExec(&#34;INSERT INTO timetable\\.log&#34;).WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L79" class="ln">    79  </span>		mock.ExpectExec(&#34;INSERT INTO timetable\\.log&#34;).WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L80" class="ln">    80  </span>		mock.ExpectExec(&#34;DELETE&#34;).WillReturnResult(pgxmock.NewResult(&#34;DELETE&#34;, 1))
+<span id="L81" class="ln">    81  </span>		chains &lt;- Chain{SelfDestruct: true}
+<span id="L82" class="ln">    82  </span>		sch.chainWorker(ctx, chains)
+<span id="L83" class="ln">    83  </span>	})
+<span id="L84" class="ln">    84  </span>
+<span id="L85" class="ln">    85  </span>	t.Run(&#34;Check chainWorker if cannot proceed with chain execution&#34;, func(*testing.T) {
+<span id="L86" class="ln">    86  </span>		ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime+2)
+<span id="L87" class="ln">    87  </span>		defer cancel()
+<span id="L88" class="ln">    88  </span>		mock.ExpectQuery(&#34;SELECT count&#34;).WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L89" class="ln">    89  </span>		mock.ExpectExec(&#34;INSERT INTO timetable\\.log&#34;).WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L90" class="ln">    90  </span>		mock.ExpectQuery(&#34;SELECT count&#34;).WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L91" class="ln">    91  </span>		mock.ExpectExec(&#34;INSERT INTO timetable\\.log&#34;).WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L92" class="ln">    92  </span>		chains &lt;- Chain{}
+<span id="L93" class="ln">    93  </span>		sch.chainWorker(ctx, chains)
+<span id="L94" class="ln">    94  </span>	})
+<span id="L95" class="ln">    95  </span>}
+<span id="L96" class="ln">    96  </span>
+<span id="L97" class="ln">    97  </span>func TestExecuteChain(t *testing.T) {
+<span id="L98" class="ln">    98  </span>	mock, err := pgxmock.NewPool()
+<span id="L99" class="ln">    99  </span>	assert.NoError(t, err)
+<span id="L100" class="ln">   100  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L101" class="ln">   101  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L102" class="ln">   102  </span>
+<span id="L103" class="ln">   103  </span>	ctx, cancel := context.WithCancel(context.Background())
+<span id="L104" class="ln">   104  </span>	defer cancel()
+<span id="L105" class="ln">   105  </span>	sch.executeChain(ctx, Chain{Timeout: 1})
+<span id="L106" class="ln">   106  </span>}
+<span id="L107" class="ln">   107  </span>
+<span id="L108" class="ln">   108  </span>func TestExecuteChainElement(t *testing.T) {
+<span id="L109" class="ln">   109  </span>	mock, err := pgxmock.NewPool()
+<span id="L110" class="ln">   110  </span>	assert.NoError(t, err)
+<span id="L111" class="ln">   111  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L112" class="ln">   112  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L113" class="ln">   113  </span>
+<span id="L114" class="ln">   114  </span>	ctx, cancel := context.WithCancel(context.Background())
+<span id="L115" class="ln">   115  </span>	defer cancel()
+<span id="L116" class="ln">   116  </span>	mock.ExpectQuery(&#34;SELECT&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;value&#34;}).AddRow(&#34;foo&#34;))
+<span id="L117" class="ln">   117  </span>	sch.executeTask(ctx, mock, &amp;pgengine.ChainTask{Timeout: 1})
+<span id="L118" class="ln">   118  </span>}
+<span id="L119" class="ln">   119  </span>
+<span id="L120" class="ln">   120  </span>func TestExecuteOnErrorHandler(t *testing.T) {
+<span id="L121" class="ln">   121  </span>	c := Chain{ChainID: 42, OnErrorSQL: pgtype.Text{String: &#34;FOO&#34;, Valid: true}}
+<span id="L122" class="ln">   122  </span>	mock, err := pgxmock.NewPool()
+<span id="L123" class="ln">   123  </span>	assert.NoError(t, err)
+<span id="L124" class="ln">   124  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L125" class="ln">   125  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L126" class="ln">   126  </span>
+<span id="L127" class="ln">   127  </span>	t.Run(&#34;check error handler if everything is fine&#34;, func(t *testing.T) {
+<span id="L128" class="ln">   128  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnResult(pgxmock.NewResult(&#34;FOO&#34;, 1))
+<span id="L129" class="ln">   129  </span>		sch.executeOnErrorHandler(context.Background(), c)
+<span id="L130" class="ln">   130  </span>		assert.NoError(t, mock.ExpectationsWereMet())
+<span id="L131" class="ln">   131  </span>	})
+<span id="L132" class="ln">   132  </span>
+<span id="L133" class="ln">   133  </span>	t.Run(&#34;check error handler if context cancelled&#34;, func(*testing.T) {
+<span id="L134" class="ln">   134  </span>		ctx, cancel := context.WithCancel(context.Background())
+<span id="L135" class="ln">   135  </span>		cancel()
+<span id="L136" class="ln">   136  </span>		sch.executeOnErrorHandler(ctx, c)
+<span id="L137" class="ln">   137  </span>	})
+<span id="L138" class="ln">   138  </span>
+<span id="L139" class="ln">   139  </span>	t.Run(&#34;check error handler if error&#34;, func(*testing.T) {
+<span id="L140" class="ln">   140  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnError(errors.New(&#34;Syntax error near FOO&#34;))
+<span id="L141" class="ln">   141  </span>		sch.executeOnErrorHandler(context.Background(), c)
+<span id="L142" class="ln">   142  </span>	})
+<span id="L143" class="ln">   143  </span>
+<span id="L144" class="ln">   144  </span>	assert.NoError(t, mock.ExpectationsWereMet())
+<span id="L145" class="ln">   145  </span>}
+<span id="L146" class="ln">   146  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

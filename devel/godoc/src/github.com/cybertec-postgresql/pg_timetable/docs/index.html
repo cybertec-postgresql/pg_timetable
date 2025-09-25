@@ -1,0 +1,154 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page">
+<div class="container">
+
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<h1>Introduction</h1>
+<p><strong>pg_timetable</strong> is an advanced job scheduler for PostgreSQL, offering many advantages over traditional schedulers such as <strong>cron</strong> and others.
+It is completely database driven and provides a couple of advanced concepts.</p>
+<h2>Main features</h2>
+<ul>
+<li>Tasks can be arranged in chains</li>
+<li>A chain can consist of built-int commands, SQL and executables</li>
+<li>Parameters can be passed to chains</li>
+<li>Missed tasks (possibly due to downtime) can be retried automatically</li>
+<li>Support for configurable repetitions</li>
+<li>Built-in tasks such as sending emails, etc.</li>
+<li>Fully database driven configuration</li>
+<li>Full support for database driven logging</li>
+<li>Cron-style scheduling at the PostgreSQL server time zone</li>
+<li>Optional concurrency protection</li>
+<li>Task and chain can have execution timeout settings</li>
+</ul>
+<h2>Quick Start</h2>
+<ol>
+<li>
+<p>Download pg_timetable executable</p>
+</li>
+<li>
+<p>Make sure your PostgreSQL server is up and running and has a role with <code>CREATE</code> privilege
+for a target database, e.g.</p>
+<pre><code class="language-sql">my_database=&gt; CREATE ROLE scheduler PASSWORD &#39;somestrong&#39;;
+my_database=&gt; GRANT CREATE ON DATABASE my_database TO scheduler;
+</code></pre>
+</li>
+<li>
+<p>Create a new job, e.g. run <code>VACUUM</code> each night at 00:30 Postgres server time zone</p>
+<pre><code class="language-sql">my_database=&gt; SELECT timetable.add_job(&#39;frequent-vacuum&#39;, &#39;30 * * * *&#39;, &#39;VACUUM&#39;);
+add_job
+---------
+      3
+(1 row)
+</code></pre>
+</li>
+<li>
+<p>Run the <strong>pg_timetable</strong></p>
+<pre><code class="language-bash"># pg_timetable postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
+</code></pre>
+</li>
+<li>
+<p>PROFIT!</p>
+</li>
+</ol>
+<h2>Command line options</h2>
+<pre><code class="language-bash"># ./pg_timetable
+
+Application Options:
+  -c, --clientname=                                Unique name for application instance [$PGTT_CLIENTNAME]
+      --config=                                    YAML configuration file
+      --no-program-tasks                           Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
+  -v, --version                                    Output detailed version information [$PGTT_VERSION]
+      --connstr                                    PostgreSQL connection string [$PGTT_CONNSTR]
+
+Logging:
+      --log-level=[debug|info|error]               Verbosity level for stdout and log file (default: info)
+      --log-database-level=[debug|info|error|none] Verbosity level for database storing (default: info)
+      --log-file=                                  File name to store logs
+      --log-file-format=[json|text]                Format of file logs (default: json)
+      --log-file-rotate                            Rotate log files
+      --log-file-size=                             Maximum size in MB of the log file before it gets rotated (default: 100)
+      --log-file-age=                              Number of days to retain old log files, 0 means forever (default: 0)
+      --log-file-number=                           Maximum number of old log files to retain, 0 to retain all (default: 0)
+
+Start:
+  -f, --file=                                      SQL script file to execute during startup
+      --init                                       Initialize database schema to the latest version and exit. Can be used
+                                                   with --upgrade
+      --upgrade                                    Upgrade database to the latest version
+      --debug                                      Run in debug mode. Only asynchronous chains will be executed
+
+Resource:
+      --cron-workers=                              Number of parallel workers for scheduled chains (default: 16)
+      --interval-workers=                          Number of parallel workers for interval chains (default: 16)
+      --chain-timeout=                             Abort any chain that takes more than the specified number of
+                                                   milliseconds
+      --task-timeout=                              Abort any task within a chain that takes more than the specified number
+                                                   of milliseconds
+
+REST:
+      --rest-port=                                 REST API port (default: 0) [$PGTT_RESTPORT]
+</code></pre>
+<h2>Contributing</h2>
+<p>If you want to contribute to <strong>pg_timetable</strong> and help make it better, feel free to open an
+<a href="https://github.com/cybertec-postgresql/pg_timetable/issues">issue</a> or even consider submitting a
+<a href="https://github.com/cybertec-postgresql/pg_timetable/pulls">pull request</a>. You also can give a
+<a href="https://github.com/cybertec-postgresql/pg_timetable/stargazers">star</a> to <strong>pg_timetable</strong> project,
+and to tell the world about it.</p>
+<h2>Support</h2>
+<p>For professional support, please contact <a href="https://www.cybertec-postgresql.com/">Cybertec</a>.</p>
+<h2>Authors</h2>
+<p><strong>Implementation:</strong> <a href="https://github.com/pashagolub">Pavlo Golub</a></p>
+<p><strong>Initial idea and draft design:</strong> <a href="https://github.com/postgresql007">Hans-Jürgen Schönig</a></p>
+
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

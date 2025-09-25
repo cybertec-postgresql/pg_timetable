@@ -1,0 +1,222 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">pgengine</a>/<span class="text-muted">access.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">github.com/cybertec-postgresql/pg_timetable/internal/pgengine</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package pgengine
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;fmt&#34;
+<span id="L6" class="ln">     6  </span>	&#34;strings&#34;
+<span id="L7" class="ln">     7  </span>
+<span id="L8" class="ln">     8  </span>	&#34;github.com/jackc/pgx/v5&#34;
+<span id="L9" class="ln">     9  </span>)
+<span id="L10" class="ln">    10  </span>
+<span id="L11" class="ln">    11  </span><span class="comment">// InvalidOid specifies value for non-existent objects</span>
+<span id="L12" class="ln">    12  </span>const InvalidOid = 0
+<span id="L13" class="ln">    13  </span>
+<span id="L14" class="ln">    14  </span><span class="comment">// DeleteChain delete chain configuration for self destructive chains</span>
+<span id="L15" class="ln">    15  </span>func (pge *PgEngine) DeleteChain(ctx context.Context, chainID int) bool {
+<span id="L16" class="ln">    16  </span>	pge.l.WithField(&#34;chain&#34;, chainID).Info(&#34;Deleting self destructive chain configuration&#34;)
+<span id="L17" class="ln">    17  </span>	res, err := pge.ConfigDb.Exec(ctx, &#34;DELETE FROM timetable.chain WHERE chain_id = $1&#34;, chainID)
+<span id="L18" class="ln">    18  </span>	if err != nil {
+<span id="L19" class="ln">    19  </span>		pge.l.WithError(err).Error(&#34;Failed to delete self destructive chain&#34;)
+<span id="L20" class="ln">    20  </span>		return false
+<span id="L21" class="ln">    21  </span>	}
+<span id="L22" class="ln">    22  </span>	return res.RowsAffected() == 1
+<span id="L23" class="ln">    23  </span>}
+<span id="L24" class="ln">    24  </span>
+<span id="L25" class="ln">    25  </span><span class="comment">// IsAlive returns true if the connection to the database is alive</span>
+<span id="L26" class="ln">    26  </span>func (pge *PgEngine) IsAlive() bool {
+<span id="L27" class="ln">    27  </span>	return pge.ConfigDb != nil &amp;&amp; pge.ConfigDb.Ping(context.Background()) == nil
+<span id="L28" class="ln">    28  </span>}
+<span id="L29" class="ln">    29  </span>
+<span id="L30" class="ln">    30  </span><span class="comment">// LogTaskExecution will log current chain element execution status including retcode</span>
+<span id="L31" class="ln">    31  </span>func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string) {
+<span id="L32" class="ln">    32  </span>	switch pge.Logging.LogDBLevel {
+<span id="L33" class="ln">    33  </span>	case &#34;none&#34;:
+<span id="L34" class="ln">    34  </span>		return
+<span id="L35" class="ln">    35  </span>	case &#34;error&#34;:
+<span id="L36" class="ln">    36  </span>		if task.IgnoreError || retCode == 0 {
+<span id="L37" class="ln">    37  </span>			return
+<span id="L38" class="ln">    38  </span>		}
+<span id="L39" class="ln">    39  </span>	}
+<span id="L40" class="ln">    40  </span>	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
+<span id="L41" class="ln">    41  </span>chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error) 
+<span id="L42" class="ln">    42  </span>VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, &#39;&#39;), $9, $10, $11)`,
+<span id="L43" class="ln">    43  </span>		task.ChainID, task.TaskID, task.Script, task.Kind,
+<span id="L44" class="ln">    44  </span>		fmt.Sprintf(&#34;%f seconds&#34;, float64(task.Duration)/1000000),
+<span id="L45" class="ln">    45  </span>		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Vxid,
+<span id="L46" class="ln">    46  </span>		task.IgnoreError)
+<span id="L47" class="ln">    47  </span>	if err != nil {
+<span id="L48" class="ln">    48  </span>		pge.l.WithError(err).Error(&#34;Failed to log chain element execution status&#34;)
+<span id="L49" class="ln">    49  </span>	}
+<span id="L50" class="ln">    50  </span>}
+<span id="L51" class="ln">    51  </span>
+<span id="L52" class="ln">    52  </span><span class="comment">// InsertChainRunStatus inits the execution run log, which will be use to effectively control scheduler concurrency</span>
+<span id="L53" class="ln">    53  </span>func (pge *PgEngine) InsertChainRunStatus(ctx context.Context, chainID int, maxInstances int) bool {
+<span id="L54" class="ln">    54  </span>	const sqlInsertRunStatus = `INSERT INTO timetable.active_chain (chain_id, client_name) 
+<span id="L55" class="ln">    55  </span>SELECT $1, $2 WHERE
+<span id="L56" class="ln">    56  </span>	(
+<span id="L57" class="ln">    57  </span>		SELECT COALESCE(count(*) &lt; $3, TRUE) 
+<span id="L58" class="ln">    58  </span>		FROM timetable.active_chain ac WHERE ac.chain_id = $1
+<span id="L59" class="ln">    59  </span>	)`
+<span id="L60" class="ln">    60  </span>	res, err := pge.ConfigDb.Exec(ctx, sqlInsertRunStatus, chainID, pge.ClientName, maxInstances)
+<span id="L61" class="ln">    61  </span>	if err != nil {
+<span id="L62" class="ln">    62  </span>		pge.l.WithError(err).Error(&#34;Cannot save information about the chain run status&#34;)
+<span id="L63" class="ln">    63  </span>		return false
+<span id="L64" class="ln">    64  </span>	}
+<span id="L65" class="ln">    65  </span>	return res.RowsAffected() == 1
+<span id="L66" class="ln">    66  </span>}
+<span id="L67" class="ln">    67  </span>
+<span id="L68" class="ln">    68  </span>func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int) {
+<span id="L69" class="ln">    69  </span>	const sqlRemoveRunStatus = `DELETE FROM timetable.active_chain WHERE chain_id = $1 and client_name = $2`
+<span id="L70" class="ln">    70  </span>	_, err := pge.ConfigDb.Exec(ctx, sqlRemoveRunStatus, chainID, pge.ClientName)
+<span id="L71" class="ln">    71  </span>	if err != nil {
+<span id="L72" class="ln">    72  </span>		pge.l.WithError(err).Error(&#34;Cannot save information about the chain run status&#34;)
+<span id="L73" class="ln">    73  </span>	}
+<span id="L74" class="ln">    74  </span>}
+<span id="L75" class="ln">    75  </span>
+<span id="L76" class="ln">    76  </span><span class="comment">// Select live chains with proper client_name value</span>
+<span id="L77" class="ln">    77  </span>const sqlSelectLiveChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
+<span id="L78" class="ln">    78  </span>COALESCE(max_instances, 16) as max_instances, COALESCE(timeout, 0) as timeout, on_error
+<span id="L79" class="ln">    79  </span>FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
+<span id="L80" class="ln">    80  </span>
+<span id="L81" class="ln">    81  </span><span class="comment">// SelectRebootChains returns a list of chains should be executed after reboot</span>
+<span id="L82" class="ln">    82  </span>func (pge *PgEngine) SelectRebootChains(ctx context.Context, dest *[]Chain) error {
+<span id="L83" class="ln">    83  </span>	const sqlSelectRebootChains = sqlSelectLiveChains + ` AND run_at = &#39;@reboot&#39;`
+<span id="L84" class="ln">    84  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectRebootChains, pge.ClientName)
+<span id="L85" class="ln">    85  </span>	if err != nil {
+<span id="L86" class="ln">    86  </span>		return err
+<span id="L87" class="ln">    87  </span>	}
+<span id="L88" class="ln">    88  </span>	*dest, err = pgx.CollectRows(rows, pgx.RowToStructByPos[Chain])
+<span id="L89" class="ln">    89  </span>	return err
+<span id="L90" class="ln">    90  </span>}
+<span id="L91" class="ln">    91  </span>
+<span id="L92" class="ln">    92  </span><span class="comment">// SelectChains returns a list of chains should be executed at the current moment</span>
+<span id="L93" class="ln">    93  </span>func (pge *PgEngine) SelectChains(ctx context.Context, dest *[]Chain) error {
+<span id="L94" class="ln">    94  </span>	const sqlSelectChains = sqlSelectLiveChains + ` AND NOT COALESCE(starts_with(run_at, &#39;@&#39;), FALSE) AND timetable.is_cron_in_time(run_at, now())`
+<span id="L95" class="ln">    95  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChains, pge.ClientName)
+<span id="L96" class="ln">    96  </span>	if err != nil {
+<span id="L97" class="ln">    97  </span>		return err
+<span id="L98" class="ln">    98  </span>	}
+<span id="L99" class="ln">    99  </span>	*dest, err = pgx.CollectRows(rows, pgx.RowToStructByPos[Chain])
+<span id="L100" class="ln">   100  </span>	return err
+<span id="L101" class="ln">   101  </span>}
+<span id="L102" class="ln">   102  </span>
+<span id="L103" class="ln">   103  </span><span class="comment">// SelectIntervalChains returns list of interval chains to be executed</span>
+<span id="L104" class="ln">   104  </span>func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest *[]IntervalChain) error {
+<span id="L105" class="ln">   105  </span>	const sqlSelectIntervalChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
+<span id="L106" class="ln">   106  </span>COALESCE(max_instances, 16), COALESCE(timeout, 0), on_error,
+<span id="L107" class="ln">   107  </span>EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
+<span id="L108" class="ln">   108  </span>starts_with(run_at, &#39;@after&#39;) as repeat_after
+<span id="L109" class="ln">   109  </span>FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN (&#39;@every&#39;, &#39;@after&#39;)`
+<span id="L110" class="ln">   110  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectIntervalChains, pge.ClientName)
+<span id="L111" class="ln">   111  </span>	if err != nil {
+<span id="L112" class="ln">   112  </span>		return err
+<span id="L113" class="ln">   113  </span>	}
+<span id="L114" class="ln">   114  </span>	*dest, err = pgx.CollectRows(rows, pgx.RowToStructByPos[IntervalChain])
+<span id="L115" class="ln">   115  </span>	return err
+<span id="L116" class="ln">   116  </span>}
+<span id="L117" class="ln">   117  </span>
+<span id="L118" class="ln">   118  </span><span class="comment">// SelectChain returns the chain with the specified ID</span>
+<span id="L119" class="ln">   119  </span>func (pge *PgEngine) SelectChain(ctx context.Context, dest *Chain, chainID int) error {
+<span id="L120" class="ln">   120  </span>	<span class="comment">// we accept not only live chains here because we want to run them in debug mode</span>
+<span id="L121" class="ln">   121  </span>	const sqlSelectSingleChain = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
+<span id="L122" class="ln">   122  </span>COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances, on_error
+<span id="L123" class="ln">   123  </span>FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_id = $2`
+<span id="L124" class="ln">   124  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectSingleChain, pge.ClientName, chainID)
+<span id="L125" class="ln">   125  </span>	if err != nil {
+<span id="L126" class="ln">   126  </span>		return err
+<span id="L127" class="ln">   127  </span>	}
+<span id="L128" class="ln">   128  </span>	*dest, err = pgx.CollectOneRow(rows, pgx.RowToStructByName[Chain])
+<span id="L129" class="ln">   129  </span>	return err
+<span id="L130" class="ln">   130  </span>}
+<span id="L131" class="ln">   131  </span>
+<span id="L132" class="ln">   132  </span><span class="comment">// GetChainElements returns all elements for a given chain</span>
+<span id="L133" class="ln">   133  </span>func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
+<span id="L134" class="ln">   134  </span>	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
+<span id="L135" class="ln">   135  </span>FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
+<span id="L136" class="ln">   136  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
+<span id="L137" class="ln">   137  </span>	if err != nil {
+<span id="L138" class="ln">   138  </span>		return err
+<span id="L139" class="ln">   139  </span>	}
+<span id="L140" class="ln">   140  </span>	*chainTasks, err = pgx.CollectRows(rows, pgx.RowToStructByName[ChainTask])
+<span id="L141" class="ln">   141  </span>	return err
+<span id="L142" class="ln">   142  </span>}
+<span id="L143" class="ln">   143  </span>
+<span id="L144" class="ln">   144  </span><span class="comment">// GetChainParamValues returns parameter values to pass for task being executed</span>
+<span id="L145" class="ln">   145  </span>func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error {
+<span id="L146" class="ln">   146  </span>	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
+<span id="L147" class="ln">   147  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
+<span id="L148" class="ln">   148  </span>	if err != nil {
+<span id="L149" class="ln">   149  </span>		return err
+<span id="L150" class="ln">   150  </span>	}
+<span id="L151" class="ln">   151  </span>	*paramValues, err = pgx.CollectRows(rows, pgx.RowTo[string])
+<span id="L152" class="ln">   152  </span>	return err
+<span id="L153" class="ln">   153  </span>}
+<span id="L154" class="ln">   154  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

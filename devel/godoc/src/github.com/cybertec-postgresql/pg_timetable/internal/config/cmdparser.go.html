@@ -1,0 +1,166 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config">config</a>/<span class="text-muted">cmdparser.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config">github.com/cybertec-postgresql/pg_timetable/internal/config</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package config
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;io&#34;
+<span id="L5" class="ln">     5  </span>	&#34;os&#34;
+<span id="L6" class="ln">     6  </span>
+<span id="L7" class="ln">     7  </span>	flags &#34;github.com/jessevdk/go-flags&#34;
+<span id="L8" class="ln">     8  </span>)
+<span id="L9" class="ln">     9  </span>
+<span id="L10" class="ln">    10  </span><span class="comment">// LoggingOpts specifies the logging configuration</span>
+<span id="L11" class="ln">    11  </span>type LoggingOpts struct {
+<span id="L12" class="ln">    12  </span>	LogLevel      string `long:&#34;log-level&#34; mapstructure:&#34;log-level&#34; description:&#34;Verbosity level for stdout and log file&#34; choice:&#34;debug&#34; choice:&#34;info&#34; choice:&#34;error&#34; default:&#34;info&#34;`
+<span id="L13" class="ln">    13  </span>	LogDBLevel    string `long:&#34;log-database-level&#34; mapstructure:&#34;log-database-level&#34; description:&#34;Verbosity level for database storing&#34; choice:&#34;debug&#34; choice:&#34;info&#34; choice:&#34;error&#34; choice:&#34;none&#34; default:&#34;info&#34;`
+<span id="L14" class="ln">    14  </span>	LogFile       string `long:&#34;log-file&#34; mapstructure:&#34;log-file&#34; description:&#34;File name to store logs&#34;`
+<span id="L15" class="ln">    15  </span>	LogFileFormat string `long:&#34;log-file-format&#34; mapstructure:&#34;log-file-format&#34; description:&#34;Format of file logs&#34; choice:&#34;json&#34; choice:&#34;text&#34; default:&#34;json&#34;`
+<span id="L16" class="ln">    16  </span>	LogFileRotate bool   `long:&#34;log-file-rotate&#34; mapstructure:&#34;log-file-rotate&#34; description:&#34;Rotate log files&#34;`
+<span id="L17" class="ln">    17  </span>	LogFileSize   int    `long:&#34;log-file-size&#34; mapstructure:&#34;log-file-size&#34; description:&#34;Maximum size in MB of the log file before it gets rotated&#34; default:&#34;100&#34;`
+<span id="L18" class="ln">    18  </span>	LogFileAge    int    `long:&#34;log-file-age&#34; mapstructure:&#34;log-file-age&#34; description:&#34;Number of days to retain old log files, 0 means forever&#34; default:&#34;0&#34;`
+<span id="L19" class="ln">    19  </span>	LogFileNumber int    `long:&#34;log-file-number&#34; mapstructure:&#34;log-file-number&#34; description:&#34;Maximum number of old log files to retain, 0 to retain all&#34; default:&#34;0&#34;`
+<span id="L20" class="ln">    20  </span>}
+<span id="L21" class="ln">    21  </span>
+<span id="L22" class="ln">    22  </span><span class="comment">// StartOpts specifies the application startup options</span>
+<span id="L23" class="ln">    23  </span>type StartOpts struct {
+<span id="L24" class="ln">    24  </span>	File    string `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script file to execute during startup&#34;`
+<span id="L25" class="ln">    25  </span>	Init    bool   `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
+<span id="L26" class="ln">    26  </span>	Upgrade bool   `long:&#34;upgrade&#34; description:&#34;Upgrade database to the latest version&#34;`
+<span id="L27" class="ln">    27  </span>	Debug   bool   `long:&#34;debug&#34; description:&#34;Run in debug mode. Only asynchronous chains will be executed&#34;`
+<span id="L28" class="ln">    28  </span>}
+<span id="L29" class="ln">    29  </span>
+<span id="L30" class="ln">    30  </span><span class="comment">// ResourceOpts specifies the maximum resources available to application</span>
+<span id="L31" class="ln">    31  </span>type ResourceOpts struct {
+<span id="L32" class="ln">    32  </span>	CronWorkers     int `long:&#34;cron-workers&#34; mapstructure:&#34;cron-workers&#34; description:&#34;Number of parallel workers for scheduled chains&#34; default:&#34;16&#34;`
+<span id="L33" class="ln">    33  </span>	IntervalWorkers int `long:&#34;interval-workers&#34; mapstructure:&#34;interval-workers&#34; description:&#34;Number of parallel workers for interval chains&#34; default:&#34;16&#34;`
+<span id="L34" class="ln">    34  </span>	ChainTimeout    int `long:&#34;chain-timeout&#34; mapstructure:&#34;chain-timeout&#34; description:&#34;Abort any chain that takes more than the specified number of milliseconds&#34;`
+<span id="L35" class="ln">    35  </span>	TaskTimeout     int `long:&#34;task-timeout&#34; mapstructure:&#34;task-timeout&#34; description:&#34;Abort any task within a chain that takes more than the specified number of milliseconds&#34;`
+<span id="L36" class="ln">    36  </span>}
+<span id="L37" class="ln">    37  </span>
+<span id="L38" class="ln">    38  </span><span class="comment">// RestAPIOpts fot internal web server impleenting REST API</span>
+<span id="L39" class="ln">    39  </span>type RestAPIOpts struct {
+<span id="L40" class="ln">    40  </span>	Port int `long:&#34;rest-port&#34; mapstructure:&#34;rest-port&#34; description:&#34;REST API port&#34; env:&#34;PGTT_RESTPORT&#34; default:&#34;0&#34;`
+<span id="L41" class="ln">    41  </span>}
+<span id="L42" class="ln">    42  </span>
+<span id="L43" class="ln">    43  </span><span class="comment">// CmdOptions holds command line options passed</span>
+<span id="L44" class="ln">    44  </span>type CmdOptions struct {
+<span id="L45" class="ln">    45  </span>	ClientName     string       `short:&#34;c&#34; long:&#34;clientname&#34; description:&#34;Unique name for application instance&#34; env:&#34;PGTT_CLIENTNAME&#34;`
+<span id="L46" class="ln">    46  </span>	Config         string       `long:&#34;config&#34; description:&#34;YAML configuration file&#34;`
+<span id="L47" class="ln">    47  </span>	ConnStr        string       `long:&#34;connstr&#34; description:&#34;Connection string&#34; env:&#34;PGTT_CONNSTR&#34;`
+<span id="L48" class="ln">    48  </span>	Logging        LoggingOpts  `group:&#34;Logging&#34; mapstructure:&#34;Logging&#34;`
+<span id="L49" class="ln">    49  </span>	Start          StartOpts    `group:&#34;Start&#34; mapstructure:&#34;Start&#34;`
+<span id="L50" class="ln">    50  </span>	Resource       ResourceOpts `group:&#34;Resource&#34; mapstructure:&#34;Resource&#34;`
+<span id="L51" class="ln">    51  </span>	RESTApi        RestAPIOpts  `group:&#34;REST&#34; mapstructure:&#34;REST&#34;`
+<span id="L52" class="ln">    52  </span>	NoProgramTasks bool         `long:&#34;no-program-tasks&#34; mapstructure:&#34;no-program-tasks&#34; description:&#34;Disable executing of PROGRAM tasks&#34; env:&#34;PGTT_NOPROGRAMTASKS&#34;`
+<span id="L53" class="ln">    53  </span>	NoHelpMessage  bool         `long:&#34;no-help&#34; mapstructure:&#34;no-help&#34; hidden:&#34;system use&#34;`
+<span id="L54" class="ln">    54  </span>	Version        bool         `short:&#34;v&#34; long:&#34;version&#34; mapstructure:&#34;version&#34; description:&#34;Output detailed version information&#34; env:&#34;PGTT_VERSION&#34;`
+<span id="L55" class="ln">    55  </span>}
+<span id="L56" class="ln">    56  </span>
+<span id="L57" class="ln">    57  </span><span class="comment">// Verbose returns true if the debug log is enabled</span>
+<span id="L58" class="ln">    58  </span>func (c CmdOptions) Verbose() bool {
+<span id="L59" class="ln">    59  </span>	return c.Logging.LogLevel == &#34;debug&#34;
+<span id="L60" class="ln">    60  </span>}
+<span id="L61" class="ln">    61  </span>
+<span id="L62" class="ln">    62  </span><span class="comment">// VersionOnly returns true if the `--version` is the only argument</span>
+<span id="L63" class="ln">    63  </span>func (c CmdOptions) VersionOnly() bool {
+<span id="L64" class="ln">    64  </span>	return len(os.Args) == 2 &amp;&amp; c.Version
+<span id="L65" class="ln">    65  </span>}
+<span id="L66" class="ln">    66  </span>
+<span id="L67" class="ln">    67  </span><span class="comment">// NewCmdOptions returns a new instance of CmdOptions with default values</span>
+<span id="L68" class="ln">    68  </span>func NewCmdOptions(args ...string) *CmdOptions {
+<span id="L69" class="ln">    69  </span>	cmdOpts := new(CmdOptions)
+<span id="L70" class="ln">    70  </span>	_, _ = flags.NewParser(cmdOpts, flags.PrintErrors).ParseArgs(args)
+<span id="L71" class="ln">    71  </span>	return cmdOpts
+<span id="L72" class="ln">    72  </span>}
+<span id="L73" class="ln">    73  </span>
+<span id="L74" class="ln">    74  </span>var nonOptionArgs []string
+<span id="L75" class="ln">    75  </span>
+<span id="L76" class="ln">    76  </span><span class="comment">// Parse will parse command line arguments and initialize pgengine</span>
+<span id="L77" class="ln">    77  </span>func Parse(writer io.Writer) (*flags.Parser, error) {
+<span id="L78" class="ln">    78  </span>	cmdOpts := new(CmdOptions)
+<span id="L79" class="ln">    79  </span>	parser := flags.NewParser(cmdOpts, flags.PrintErrors)
+<span id="L80" class="ln">    80  </span>	var err error
+<span id="L81" class="ln">    81  </span>	if nonOptionArgs, err = parser.Parse(); err != nil {
+<span id="L82" class="ln">    82  </span>		if !flags.WroteHelp(err) &amp;&amp; !cmdOpts.NoHelpMessage {
+<span id="L83" class="ln">    83  </span>			parser.WriteHelp(writer)
+<span id="L84" class="ln">    84  </span>			return nil, err
+<span id="L85" class="ln">    85  </span>		}
+<span id="L86" class="ln">    86  </span>	}
+<span id="L87" class="ln">    87  </span>	if cmdOpts.Start.File != &#34;&#34; {
+<span id="L88" class="ln">    88  </span>		if _, err := os.Stat(cmdOpts.Start.File); os.IsNotExist(err) {
+<span id="L89" class="ln">    89  </span>			return nil, err
+<span id="L90" class="ln">    90  </span>		}
+<span id="L91" class="ln">    91  </span>	}
+<span id="L92" class="ln">    92  </span>	<span class="comment">//non-option arguments</span>
+<span id="L93" class="ln">    93  </span>	if len(nonOptionArgs) &gt; 0 &amp;&amp; cmdOpts.ConnStr == &#34;&#34; {
+<span id="L94" class="ln">    94  </span>		cmdOpts.ConnStr = nonOptionArgs[0]
+<span id="L95" class="ln">    95  </span>	}
+<span id="L96" class="ln">    96  </span>	return parser, nil
+<span id="L97" class="ln">    97  </span>}
+<span id="L98" class="ln">    98  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

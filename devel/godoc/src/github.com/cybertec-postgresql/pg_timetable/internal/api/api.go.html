@@ -1,0 +1,129 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/api/api.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/api">api</a>/<span class="text-muted">api.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/api">github.com/cybertec-postgresql/pg_timetable/internal/api</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package api
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;fmt&#34;
+<span id="L6" class="ln">     6  </span>	&#34;net/http&#34;
+<span id="L7" class="ln">     7  </span>	&#34;time&#34;
+<span id="L8" class="ln">     8  </span>
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
+<span id="L11" class="ln">    11  </span>)
+<span id="L12" class="ln">    12  </span>
+<span id="L13" class="ln">    13  </span><span class="comment">// RestHandler is a common interface describing the current status of a connection</span>
+<span id="L14" class="ln">    14  </span>type RestHandler interface {
+<span id="L15" class="ln">    15  </span>	IsReady() bool
+<span id="L16" class="ln">    16  </span>	StartChain(context.Context, int) error
+<span id="L17" class="ln">    17  </span>	StopChain(context.Context, int) error
+<span id="L18" class="ln">    18  </span>}
+<span id="L19" class="ln">    19  </span>
+<span id="L20" class="ln">    20  </span>type RestAPIServer struct {
+<span id="L21" class="ln">    21  </span>	APIHandler RestHandler
+<span id="L22" class="ln">    22  </span>	l          log.LoggerIface
+<span id="L23" class="ln">    23  </span>	http.Server
+<span id="L24" class="ln">    24  </span>}
+<span id="L25" class="ln">    25  </span>
+<span id="L26" class="ln">    26  </span>func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
+<span id="L27" class="ln">    27  </span>	s := &amp;RestAPIServer{
+<span id="L28" class="ln">    28  </span>		nil,
+<span id="L29" class="ln">    29  </span>		logger,
+<span id="L30" class="ln">    30  </span>		http.Server{
+<span id="L31" class="ln">    31  </span>			Addr:           fmt.Sprintf(&#34;:%d&#34;, opts.Port),
+<span id="L32" class="ln">    32  </span>			ReadTimeout:    10 * time.Second,
+<span id="L33" class="ln">    33  </span>			WriteTimeout:   10 * time.Second,
+<span id="L34" class="ln">    34  </span>			MaxHeaderBytes: 1 &lt;&lt; 20,
+<span id="L35" class="ln">    35  </span>		},
+<span id="L36" class="ln">    36  </span>	}
+<span id="L37" class="ln">    37  </span>	http.HandleFunc(&#34;/liveness&#34;, s.livenessHandler)
+<span id="L38" class="ln">    38  </span>	http.HandleFunc(&#34;/readiness&#34;, s.readinessHandler)
+<span id="L39" class="ln">    39  </span>	http.HandleFunc(&#34;/startchain&#34;, s.chainHandler)
+<span id="L40" class="ln">    40  </span>	http.HandleFunc(&#34;/stopchain&#34;, s.chainHandler)
+<span id="L41" class="ln">    41  </span>	if opts.Port != 0 {
+<span id="L42" class="ln">    42  </span>		logger.WithField(&#34;port&#34;, opts.Port).Info(&#34;Starting REST API server...&#34;)
+<span id="L43" class="ln">    43  </span>		go func() { logger.Error(s.ListenAndServe()) }()
+<span id="L44" class="ln">    44  </span>	}
+<span id="L45" class="ln">    45  </span>	return s
+<span id="L46" class="ln">    46  </span>}
+<span id="L47" class="ln">    47  </span>
+<span id="L48" class="ln">    48  </span>func (Server *RestAPIServer) livenessHandler(w http.ResponseWriter, _ *http.Request) {
+<span id="L49" class="ln">    49  </span>	Server.l.Debug(&#34;Received /liveness REST API request&#34;)
+<span id="L50" class="ln">    50  </span>	w.WriteHeader(http.StatusOK) <span class="comment">// i&#39;m serving hence I&#39;m alive</span>
+<span id="L51" class="ln">    51  </span>}
+<span id="L52" class="ln">    52  </span>
+<span id="L53" class="ln">    53  </span>func (Server *RestAPIServer) readinessHandler(w http.ResponseWriter, _ *http.Request) {
+<span id="L54" class="ln">    54  </span>	Server.l.Debug(&#34;Received /readiness REST API request&#34;)
+<span id="L55" class="ln">    55  </span>	if Server.APIHandler == nil || !Server.APIHandler.IsReady() {
+<span id="L56" class="ln">    56  </span>		w.WriteHeader(http.StatusServiceUnavailable)
+<span id="L57" class="ln">    57  </span>		return
+<span id="L58" class="ln">    58  </span>	}
+<span id="L59" class="ln">    59  </span>	w.WriteHeader(http.StatusOK)
+<span id="L60" class="ln">    60  </span>}
+<span id="L61" class="ln">    61  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

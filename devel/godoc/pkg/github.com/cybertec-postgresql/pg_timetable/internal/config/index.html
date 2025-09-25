@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>config - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer></script>
+
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package config
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/cybertec-postgresql/pg_timetable/internal/config"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#Parse">func Parse(writer io.Writer) (*flags.Parser, error)</a></dd>
+			
+				
+				<dd><a href="#eachGroup">func eachGroup(g *flags.Group, f func(*flags.Group))</a></dd>
+			
+				
+				<dd><a href="#eachOption">func eachOption(g *flags.Group, f func(*flags.Group, *flags.Option))</a></dd>
+			
+			
+				
+				<dd><a href="#CmdOptions">type CmdOptions</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewCmdOptions">func NewCmdOptions(args ...string) *CmdOptions</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewConfig">func NewConfig(writer io.Writer) (*CmdOptions, error)</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#CmdOptions.Verbose">func (c CmdOptions) Verbose() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#CmdOptions.VersionOnly">func (c CmdOptions) VersionOnly() bool</a></dd>
+				
+			
+				
+				<dd><a href="#LoggingOpts">type LoggingOpts</a></dd>
+				
+				
+			
+				
+				<dd><a href="#ResourceOpts">type ResourceOpts</a></dd>
+				
+				
+			
+				
+				<dd><a href="#RestAPIOpts">type RestAPIOpts</a></dd>
+				
+				
+			
+				
+				<dd><a href="#StartOpts">type StartOpts</a></dd>
+				
+				
+			
+				
+				<dd><a href="#cmdArg">type cmdArg</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#cmdArg.HasChanged">func (a cmdArg) HasChanged() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#cmdArg.Name">func (a cmdArg) Name() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#cmdArg.ValueString">func (a cmdArg) ValueString() string</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#cmdArg.ValueType">func (a cmdArg) ValueType() string</a></dd>
+				
+			
+				
+				<dd><a href="#cmdArgSet">type cmdArgSet</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#cmdArgSet.VisitAll">func (cmdSet cmdArgSet) VisitAll(fn func(viper.FlagValue))</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#cmdArgSet.setDefaults">func (cmdSet cmdArgSet) setDefaults(v *viper.Viper)</a></dd>
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html">cmdparser.go</a>
+			
+				<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html">config.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				
+				<pre>var <span id="nonOptionArgs">nonOptionArgs</span> []<a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+		
+		
+			
+			
+			<h2 id="Parse">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L77">Parse</a>
+				<a class="permalink" href="#Parse">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func Parse(writer <a href="https://pkg.go.dev/io/">io</a>.<a href="https://pkg.go.dev/io/#Writer">Writer</a>) (*<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Parser">Parser</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			<p>Parse will parse command line arguments and initialize pgengine
+
+			
+			
+
+		
+			
+			
+			<h2 id="eachGroup">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L38">eachGroup</a>
+				<a class="permalink" href="#eachGroup">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func eachGroup(g *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Group">Group</a>, f func(*<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Group">Group</a>))</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="eachOption">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L45">eachOption</a>
+				<a class="permalink" href="#eachOption">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func eachOption(g *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Group">Group</a>, f func(*<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Group">Group</a>, *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Option">Option</a>))</pre>
+			
+			
+			
+
+		
+		
+			
+			
+			<h2 id="CmdOptions">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L44">CmdOptions</a>
+				<a class="permalink" href="#CmdOptions">&#xb6;</a>
+				
+				
+			</h2>
+			<p>CmdOptions holds command line options passed
+
+			<pre>type CmdOptions struct {
+<span id="CmdOptions.ClientName"></span>    ClientName     <a href="https://pkg.go.dev/builtin/#string">string</a>       `short:&#34;c&#34; long:&#34;clientname&#34; description:&#34;Unique name for application instance&#34; env:&#34;PGTT_CLIENTNAME&#34;`
+<span id="CmdOptions.Config"></span>    Config         <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;config&#34; description:&#34;YAML configuration file&#34;`
+<span id="CmdOptions.ConnStr"></span>    ConnStr        <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;connstr&#34; description:&#34;Connection string&#34; env:&#34;PGTT_CONNSTR&#34;`
+<span id="CmdOptions.Logging"></span>    Logging        <a href="#LoggingOpts">LoggingOpts</a>  `group:&#34;Logging&#34; mapstructure:&#34;Logging&#34;`
+<span id="CmdOptions.Start"></span>    Start          <a href="#StartOpts">StartOpts</a>    `group:&#34;Start&#34; mapstructure:&#34;Start&#34;`
+<span id="CmdOptions.Resource"></span>    Resource       <a href="#ResourceOpts">ResourceOpts</a> `group:&#34;Resource&#34; mapstructure:&#34;Resource&#34;`
+<span id="CmdOptions.RESTApi"></span>    RESTApi        <a href="#RestAPIOpts">RestAPIOpts</a>  `group:&#34;REST&#34; mapstructure:&#34;REST&#34;`
+<span id="CmdOptions.NoProgramTasks"></span>    NoProgramTasks <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `long:&#34;no-program-tasks&#34; mapstructure:&#34;no-program-tasks&#34; description:&#34;Disable executing of PROGRAM tasks&#34; env:&#34;PGTT_NOPROGRAMTASKS&#34;`
+<span id="CmdOptions.NoHelpMessage"></span>    NoHelpMessage  <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `long:&#34;no-help&#34; mapstructure:&#34;no-help&#34; hidden:&#34;system use&#34;`
+<span id="CmdOptions.Version"></span>    Version        <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `short:&#34;v&#34; long:&#34;version&#34; mapstructure:&#34;version&#34; description:&#34;Output detailed version information&#34; env:&#34;PGTT_VERSION&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewCmdOptions">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L68">NewCmdOptions</a>
+					<a class="permalink" href="#NewCmdOptions">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewCmdOptions(args ...<a href="https://pkg.go.dev/builtin/#string">string</a>) *<a href="#CmdOptions">CmdOptions</a></pre>
+				<p>NewCmdOptions returns a new instance of CmdOptions with default values
+
+				
+				
+			
+				
+				<h3 id="NewConfig">func <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L79">NewConfig</a>
+					<a class="permalink" href="#NewConfig">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewConfig(writer <a href="https://pkg.go.dev/io/">io</a>.<a href="https://pkg.go.dev/io/#Writer">Writer</a>) (*<a href="#CmdOptions">CmdOptions</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>NewConfig returns a new instance of CmdOptions
+
+				
+				
+			
+
+			
+				
+				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L58">Verbose</a>
+					<a class="permalink" href="#CmdOptions.Verbose">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c <a href="#CmdOptions">CmdOptions</a>) Verbose() <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				<p>Verbose returns true if the debug log is enabled
+
+				
+				
+				
+			
+				
+				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L63">VersionOnly</a>
+					<a class="permalink" href="#CmdOptions.VersionOnly">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c <a href="#CmdOptions">CmdOptions</a>) VersionOnly() <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				<p>VersionOnly returns true if the `--version` is the only argument
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="LoggingOpts">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L11">LoggingOpts</a>
+				<a class="permalink" href="#LoggingOpts">&#xb6;</a>
+				
+				
+			</h2>
+			<p>LoggingOpts specifies the logging configuration
+
+			<pre>type LoggingOpts struct {
+<span id="LoggingOpts.LogLevel"></span>    LogLevel      <a href="https://pkg.go.dev/builtin/#string">string</a> `long:&#34;log-level&#34; mapstructure:&#34;log-level&#34; description:&#34;Verbosity level for stdout and log file&#34; choice:&#34;debug&#34; choice:&#34;info&#34; choice:&#34;error&#34; default:&#34;info&#34;`
+<span id="LoggingOpts.LogDBLevel"></span>    LogDBLevel    <a href="https://pkg.go.dev/builtin/#string">string</a> `long:&#34;log-database-level&#34; mapstructure:&#34;log-database-level&#34; description:&#34;Verbosity level for database storing&#34; choice:&#34;debug&#34; choice:&#34;info&#34; choice:&#34;error&#34; choice:&#34;none&#34; default:&#34;info&#34;`
+<span id="LoggingOpts.LogFile"></span>    LogFile       <a href="https://pkg.go.dev/builtin/#string">string</a> `long:&#34;log-file&#34; mapstructure:&#34;log-file&#34; description:&#34;File name to store logs&#34;`
+<span id="LoggingOpts.LogFileFormat"></span>    LogFileFormat <a href="https://pkg.go.dev/builtin/#string">string</a> `long:&#34;log-file-format&#34; mapstructure:&#34;log-file-format&#34; description:&#34;Format of file logs&#34; choice:&#34;json&#34; choice:&#34;text&#34; default:&#34;json&#34;`
+<span id="LoggingOpts.LogFileRotate"></span>    LogFileRotate <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;log-file-rotate&#34; mapstructure:&#34;log-file-rotate&#34; description:&#34;Rotate log files&#34;`
+<span id="LoggingOpts.LogFileSize"></span>    LogFileSize   <a href="https://pkg.go.dev/builtin/#int">int</a>    `long:&#34;log-file-size&#34; mapstructure:&#34;log-file-size&#34; description:&#34;Maximum size in MB of the log file before it gets rotated&#34; default:&#34;100&#34;`
+<span id="LoggingOpts.LogFileAge"></span>    LogFileAge    <a href="https://pkg.go.dev/builtin/#int">int</a>    `long:&#34;log-file-age&#34; mapstructure:&#34;log-file-age&#34; description:&#34;Number of days to retain old log files, 0 means forever&#34; default:&#34;0&#34;`
+<span id="LoggingOpts.LogFileNumber"></span>    LogFileNumber <a href="https://pkg.go.dev/builtin/#int">int</a>    `long:&#34;log-file-number&#34; mapstructure:&#34;log-file-number&#34; description:&#34;Maximum number of old log files to retain, 0 to retain all&#34; default:&#34;0&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="ResourceOpts">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L31">ResourceOpts</a>
+				<a class="permalink" href="#ResourceOpts">&#xb6;</a>
+				
+				
+			</h2>
+			<p>ResourceOpts specifies the maximum resources available to application
+
+			<pre>type ResourceOpts struct {
+<span id="ResourceOpts.CronWorkers"></span>    CronWorkers     <a href="https://pkg.go.dev/builtin/#int">int</a> `long:&#34;cron-workers&#34; mapstructure:&#34;cron-workers&#34; description:&#34;Number of parallel workers for scheduled chains&#34; default:&#34;16&#34;`
+<span id="ResourceOpts.IntervalWorkers"></span>    IntervalWorkers <a href="https://pkg.go.dev/builtin/#int">int</a> `long:&#34;interval-workers&#34; mapstructure:&#34;interval-workers&#34; description:&#34;Number of parallel workers for interval chains&#34; default:&#34;16&#34;`
+<span id="ResourceOpts.ChainTimeout"></span>    ChainTimeout    <a href="https://pkg.go.dev/builtin/#int">int</a> `long:&#34;chain-timeout&#34; mapstructure:&#34;chain-timeout&#34; description:&#34;Abort any chain that takes more than the specified number of milliseconds&#34;`
+<span id="ResourceOpts.TaskTimeout"></span>    TaskTimeout     <a href="https://pkg.go.dev/builtin/#int">int</a> `long:&#34;task-timeout&#34; mapstructure:&#34;task-timeout&#34; description:&#34;Abort any task within a chain that takes more than the specified number of milliseconds&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="RestAPIOpts">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L39">RestAPIOpts</a>
+				<a class="permalink" href="#RestAPIOpts">&#xb6;</a>
+				
+				
+			</h2>
+			<p>RestAPIOpts fot internal web server impleenting REST API
+
+			<pre>type RestAPIOpts struct {
+<span id="RestAPIOpts.Port"></span>    Port <a href="https://pkg.go.dev/builtin/#int">int</a> `long:&#34;rest-port&#34; mapstructure:&#34;rest-port&#34; description:&#34;REST API port&#34; env:&#34;PGTT_RESTPORT&#34; default:&#34;0&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="StartOpts">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L23">StartOpts</a>
+				<a class="permalink" href="#StartOpts">&#xb6;</a>
+				
+				
+			</h2>
+			<p>StartOpts specifies the application startup options
+
+			<pre>type StartOpts struct {
+<span id="StartOpts.File"></span>    File    <a href="https://pkg.go.dev/builtin/#string">string</a> `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script file to execute during startup&#34;`
+<span id="StartOpts.Init"></span>    Init    <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
+<span id="StartOpts.Upgrade"></span>    Upgrade <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;upgrade&#34; description:&#34;Upgrade database to the latest version&#34;`
+<span id="StartOpts.Debug"></span>    Debug   <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;debug&#34; description:&#34;Run in debug mode. Only asynchronous chains will be executed&#34;`
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="cmdArg">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L13">cmdArg</a>
+				<a class="permalink" href="#cmdArg">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type cmdArg struct {
+<span id="cmdArg.fullName"></span>    fullName <a href="https://pkg.go.dev/builtin/#string">string</a>
+    *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Option">Option</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="cmdArg.HasChanged">func (cmdArg) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L18">HasChanged</a>
+					<a class="permalink" href="#cmdArg.HasChanged">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (a cmdArg) HasChanged() <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="cmdArg.Name">func (cmdArg) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L22">Name</a>
+					<a class="permalink" href="#cmdArg.Name">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (a cmdArg) Name() <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="cmdArg.ValueString">func (cmdArg) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L26">ValueString</a>
+					<a class="permalink" href="#cmdArg.ValueString">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (a cmdArg) ValueString() <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+				
+				
+				
+				
+			
+				
+				<h3 id="cmdArg.ValueType">func (cmdArg) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L30">ValueType</a>
+					<a class="permalink" href="#cmdArg.ValueType">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (a cmdArg) ValueType() <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+				
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="cmdArgSet">type <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L34">cmdArgSet</a>
+				<a class="permalink" href="#cmdArgSet">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type cmdArgSet struct {
+    *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Parser">Parser</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+				
+				<h3 id="cmdArgSet.VisitAll">func (cmdArgSet) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L55">VisitAll</a>
+					<a class="permalink" href="#cmdArgSet.VisitAll">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (cmdSet cmdArgSet) VisitAll(fn func(<a href="https://pkg.go.dev/github.com/spf13/viper/">viper</a>.<a href="https://pkg.go.dev/github.com/spf13/viper/#FlagValue">FlagValue</a>))</pre>
+				<p>VisitAll will execute fn() for all options found in command line.
+Since we have only two level of nesting it&apos;s enough to use simplified group-prefixed name.
+
+				
+				
+				
+			
+				
+				<h3 id="cmdArgSet.setDefaults">func (cmdArgSet) <a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L66">setDefaults</a>
+					<a class="permalink" href="#cmdArgSet.setDefaults">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (cmdSet cmdArgSet) setDefaults(v *<a href="https://pkg.go.dev/github.com/spf13/viper/">viper</a>.<a href="https://pkg.go.dev/github.com/spf13/viper/#Viper">Viper</a>)</pre>
+				
+				
+				
+				
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.25.1.<br>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

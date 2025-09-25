@@ -1,0 +1,154 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/tasks/mail.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/tasks">tasks</a>/<span class="text-muted">mail.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/tasks">github.com/cybertec-postgresql/pg_timetable/internal/tasks</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package tasks
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;bytes&#34;
+<span id="L5" class="ln">     5  </span>	&#34;context&#34;
+<span id="L6" class="ln">     6  </span>
+<span id="L7" class="ln">     7  </span>	gomail &#34;github.com/ory/mail/v3&#34;
+<span id="L8" class="ln">     8  </span>)
+<span id="L9" class="ln">     9  </span>
+<span id="L10" class="ln">    10  </span><span class="comment">// Attachment file type</span>
+<span id="L11" class="ln">    11  </span><span class="comment">// Has pair: name and content (base64-encoded) of attachment file</span>
+<span id="L12" class="ln">    12  </span>type EmailAttachmentData struct {
+<span id="L13" class="ln">    13  </span>	Name       string `json:&#34;name&#34;`
+<span id="L14" class="ln">    14  </span>	Base64Data []byte `json:&#34;base64data&#34;`
+<span id="L15" class="ln">    15  </span>}
+<span id="L16" class="ln">    16  </span>
+<span id="L17" class="ln">    17  </span><span class="comment">// EmailConn structure represents a connection to a mail server and mail fields</span>
+<span id="L18" class="ln">    18  </span>type EmailConn struct {
+<span id="L19" class="ln">    19  </span>	Username       string                `json:&#34;username&#34;`
+<span id="L20" class="ln">    20  </span>	Password       string                `json:&#34;password&#34;`
+<span id="L21" class="ln">    21  </span>	ServerHost     string                `json:&#34;serverhost&#34;`
+<span id="L22" class="ln">    22  </span>	ServerPort     int                   `json:&#34;serverport&#34;`
+<span id="L23" class="ln">    23  </span>	SenderAddr     string                `json:&#34;senderaddr&#34;`
+<span id="L24" class="ln">    24  </span>	CcAddr         []string              `json:&#34;ccaddr&#34;`
+<span id="L25" class="ln">    25  </span>	BccAddr        []string              `json:&#34;bccaddr&#34;`
+<span id="L26" class="ln">    26  </span>	ToAddr         []string              `json:&#34;toaddr&#34;`
+<span id="L27" class="ln">    27  </span>	Subject        string                `json:&#34;subject&#34;`
+<span id="L28" class="ln">    28  </span>	MsgBody        string                `json:&#34;msgbody&#34;`
+<span id="L29" class="ln">    29  </span>	Attachments    []string              `json:&#34;attachment&#34;`
+<span id="L30" class="ln">    30  </span>	AttachmentData []EmailAttachmentData `json:&#34;attachmentdata&#34;`
+<span id="L31" class="ln">    31  </span>	ContentType    string                `json:&#34;contenttype&#34;`
+<span id="L32" class="ln">    32  </span>}
+<span id="L33" class="ln">    33  </span>
+<span id="L34" class="ln">    34  </span><span class="comment">// Dialer implements DialAndSend function for mailer</span>
+<span id="L35" class="ln">    35  </span>type Dialer interface {
+<span id="L36" class="ln">    36  </span>	DialAndSend(ctx context.Context, m ...*gomail.Message) error
+<span id="L37" class="ln">    37  </span>}
+<span id="L38" class="ln">    38  </span>
+<span id="L39" class="ln">    39  </span><span class="comment">// NewDialer returns a new gomail dialer instance</span>
+<span id="L40" class="ln">    40  </span>var NewDialer = func(host string, port int, username, password string) Dialer {
+<span id="L41" class="ln">    41  </span>	return gomail.NewDialer(host, port, username, password)
+<span id="L42" class="ln">    42  </span>}
+<span id="L43" class="ln">    43  </span>
+<span id="L44" class="ln">    44  </span><span class="comment">// SendMail sends mail message specified by conn within context ctx</span>
+<span id="L45" class="ln">    45  </span>func SendMail(ctx context.Context, conn EmailConn) error {
+<span id="L46" class="ln">    46  </span>	mail := gomail.NewMessage()
+<span id="L47" class="ln">    47  </span>	mail.SetHeader(&#34;From&#34;, conn.SenderAddr)
+<span id="L48" class="ln">    48  </span>
+<span id="L49" class="ln">    49  </span>	<span class="comment">//Multiple Recipients addresses</span>
+<span id="L50" class="ln">    50  </span>	torecipients := make([]string, len(conn.ToAddr))
+<span id="L51" class="ln">    51  </span>	for i, toAddr := range conn.ToAddr {
+<span id="L52" class="ln">    52  </span>		torecipients[i] = mail.FormatAddress(toAddr, &#34; &#34;)
+<span id="L53" class="ln">    53  </span>	}
+<span id="L54" class="ln">    54  </span>	mail.SetHeader(&#34;To&#34;, torecipients...)
+<span id="L55" class="ln">    55  </span>
+<span id="L56" class="ln">    56  </span>	<span class="comment">// Multiple CC Addresses</span>
+<span id="L57" class="ln">    57  </span>	ccrecipients := make([]string, len(conn.CcAddr))
+<span id="L58" class="ln">    58  </span>	for i, ccaddr := range conn.CcAddr {
+<span id="L59" class="ln">    59  </span>		ccrecipients[i] = mail.FormatAddress(ccaddr, &#34; &#34;)
+<span id="L60" class="ln">    60  </span>	}
+<span id="L61" class="ln">    61  </span>	mail.SetHeader(&#34;Cc&#34;, ccrecipients...)
+<span id="L62" class="ln">    62  </span>
+<span id="L63" class="ln">    63  </span>	<span class="comment">// Multiple bCC Addresses</span>
+<span id="L64" class="ln">    64  </span>	bccrecipients := make([]string, len(conn.BccAddr))
+<span id="L65" class="ln">    65  </span>	for i, bccaddr := range conn.BccAddr {
+<span id="L66" class="ln">    66  </span>		bccrecipients[i] = mail.FormatAddress(bccaddr, &#34; &#34;)
+<span id="L67" class="ln">    67  </span>	}
+<span id="L68" class="ln">    68  </span>	mail.SetHeader(&#34;Bcc&#34;, bccrecipients...)
+<span id="L69" class="ln">    69  </span>
+<span id="L70" class="ln">    70  </span>	mail.SetHeader(&#34;Subject&#34;, conn.Subject)
+<span id="L71" class="ln">    71  </span>	mail.SetBody(conn.ContentType, conn.MsgBody)
+<span id="L72" class="ln">    72  </span>
+<span id="L73" class="ln">    73  </span>	<span class="comment">//attach multiple documents</span>
+<span id="L74" class="ln">    74  </span>	for _, attachment := range conn.Attachments {
+<span id="L75" class="ln">    75  </span>		mail.Attach(attachment)
+<span id="L76" class="ln">    76  </span>	}
+<span id="L77" class="ln">    77  </span>
+<span id="L78" class="ln">    78  </span>	<span class="comment">// Attach file with contents</span>
+<span id="L79" class="ln">    79  </span>	for _, attachmentData := range conn.AttachmentData {
+<span id="L80" class="ln">    80  </span>		mail.AttachReader(attachmentData.Name, bytes.NewReader([]byte(attachmentData.Base64Data)))
+<span id="L81" class="ln">    81  </span>	}
+<span id="L82" class="ln">    82  </span>	<span class="comment">// Send Mail</span>
+<span id="L83" class="ln">    83  </span>	dialer := NewDialer(conn.ServerHost, conn.ServerPort, conn.Username, conn.Password)
+<span id="L84" class="ln">    84  </span>	return dialer.DialAndSend(ctx, mail)
+<span id="L85" class="ln">    85  </span>}
+<span id="L86" class="ln">    86  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

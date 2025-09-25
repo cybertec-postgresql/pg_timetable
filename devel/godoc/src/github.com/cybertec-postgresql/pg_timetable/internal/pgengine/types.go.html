@@ -1,0 +1,130 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/devel/godoc/src">src</a>/<a href="/devel/godoc/src/github.com">github.com</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">pgengine</a>/<span class="text-muted">types.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">github.com/cybertec-postgresql/pg_timetable/internal/pgengine</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package pgengine
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;strings&#34;
+<span id="L6" class="ln">     6  </span>	&#34;time&#34;
+<span id="L7" class="ln">     7  </span>
+<span id="L8" class="ln">     8  </span>	pgconn &#34;github.com/jackc/pgx/v5/pgconn&#34;
+<span id="L9" class="ln">     9  </span>	&#34;github.com/jackc/pgx/v5/pgtype&#34;
+<span id="L10" class="ln">    10  </span>)
+<span id="L11" class="ln">    11  </span>
+<span id="L12" class="ln">    12  </span>type executor interface {
+<span id="L13" class="ln">    13  </span>	Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error)
+<span id="L14" class="ln">    14  </span>}
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span><span class="comment">// Chain structure used to represent tasks chains</span>
+<span id="L17" class="ln">    17  </span>type Chain struct {
+<span id="L18" class="ln">    18  </span>	ChainID            int         `db:&#34;chain_id&#34;`
+<span id="L19" class="ln">    19  </span>	ChainName          string      `db:&#34;chain_name&#34;`
+<span id="L20" class="ln">    20  </span>	SelfDestruct       bool        `db:&#34;self_destruct&#34;`
+<span id="L21" class="ln">    21  </span>	ExclusiveExecution bool        `db:&#34;exclusive_execution&#34;`
+<span id="L22" class="ln">    22  </span>	MaxInstances       int         `db:&#34;max_instances&#34;`
+<span id="L23" class="ln">    23  </span>	Timeout            int         `db:&#34;timeout&#34;`
+<span id="L24" class="ln">    24  </span>	OnErrorSQL         pgtype.Text `db:&#34;on_error&#34;`
+<span id="L25" class="ln">    25  </span>}
+<span id="L26" class="ln">    26  </span>
+<span id="L27" class="ln">    27  </span><span class="comment">// IntervalChain structure used to represent repeated chains.</span>
+<span id="L28" class="ln">    28  </span>type IntervalChain struct {
+<span id="L29" class="ln">    29  </span>	Chain
+<span id="L30" class="ln">    30  </span>	Interval    int  `db:&#34;interval_seconds&#34;`
+<span id="L31" class="ln">    31  </span>	RepeatAfter bool `db:&#34;repeat_after&#34;`
+<span id="L32" class="ln">    32  </span>}
+<span id="L33" class="ln">    33  </span>
+<span id="L34" class="ln">    34  </span>func (ichain IntervalChain) IsListed(ichains []IntervalChain) bool {
+<span id="L35" class="ln">    35  </span>	for _, ic := range ichains {
+<span id="L36" class="ln">    36  </span>		if ichain.ChainID == ic.ChainID {
+<span id="L37" class="ln">    37  </span>			return true
+<span id="L38" class="ln">    38  </span>		}
+<span id="L39" class="ln">    39  </span>	}
+<span id="L40" class="ln">    40  </span>	return false
+<span id="L41" class="ln">    41  </span>}
+<span id="L42" class="ln">    42  </span>
+<span id="L43" class="ln">    43  </span><span class="comment">// ChainTask structure describes each chain task</span>
+<span id="L44" class="ln">    44  </span>type ChainTask struct {
+<span id="L45" class="ln">    45  </span>	ChainID       int         `db:&#34;-&#34;`
+<span id="L46" class="ln">    46  </span>	TaskID        int         `db:&#34;task_id&#34;`
+<span id="L47" class="ln">    47  </span>	Script        string      `db:&#34;command&#34;`
+<span id="L48" class="ln">    48  </span>	Kind          string      `db:&#34;kind&#34;`
+<span id="L49" class="ln">    49  </span>	RunAs         pgtype.Text `db:&#34;run_as&#34;`
+<span id="L50" class="ln">    50  </span>	IgnoreError   bool        `db:&#34;ignore_error&#34;`
+<span id="L51" class="ln">    51  </span>	Autonomous    bool        `db:&#34;autonomous&#34;`
+<span id="L52" class="ln">    52  </span>	ConnectString pgtype.Text `db:&#34;database_connection&#34;`
+<span id="L53" class="ln">    53  </span>	Timeout       int         `db:&#34;timeout&#34;` <span class="comment">// in milliseconds</span>
+<span id="L54" class="ln">    54  </span>	StartedAt     time.Time   `db:&#34;-&#34;`
+<span id="L55" class="ln">    55  </span>	Duration      int64       `db:&#34;-&#34;` <span class="comment">// in microseconds</span>
+<span id="L56" class="ln">    56  </span>	Vxid          int64       `db:&#34;-&#34;`
+<span id="L57" class="ln">    57  </span>}
+<span id="L58" class="ln">    58  </span>
+<span id="L59" class="ln">    59  </span>func (task *ChainTask) IsRemote() bool {
+<span id="L60" class="ln">    60  </span>	return task.ConnectString.Valid &amp;&amp; strings.TrimSpace(task.ConnectString.String) != &#34;&#34;
+<span id="L61" class="ln">    61  </span>}
+<span id="L62" class="ln">    62  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>
