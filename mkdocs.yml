@@ -64,11 +64,13 @@ nav:
   - Tutorials:
     - Installation: installation.md
     - Basic Jobs: basic_jobs.md
+    - Migration: migration.md
     - Samples: samples.md
   - Reference:
     - API: api.md
   - Developer:
-    - Migration: migration.md
+    - License: license.md
+    - Documentation: ../devel/godoc/index.html
 
 extra:
   version:

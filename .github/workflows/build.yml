@@ -148,3 +148,47 @@ jobs:
       with:
         version: latest
         args: release --snapshot --skip=publish --clean
+
+  build-docs:
+    if: true # false to skip job during debug
+    needs: [test-postgresql-ubuntu]
+    name: Build Docs
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v5
+
+    - name: Configure Git
+      run: |
+        git config user.name "${GITHUB_ACTOR}"
+        git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+    - name: Set up Golang
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.24'      
+    
+    - name: Set up gopages
+      run: go install github.com/johnstarich/go/gopages@v0.1.28
+    
+    - name: Build Developer Docs
+      run: gopages -out "docs/godoc" -base "/devel/godoc" -internal
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: 3.12
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: pip install mike mkdocs-material
+
+    - name: Check if we should push to gh-pages
+      # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: |
+        git fetch origin gh-pages --depth=1
+        echo "push_opt=--push" >> $GITHUB_ENV 
+
+    - name: Build mkdocs
+      run: mike deploy ${{ env.push_opt }} devel
