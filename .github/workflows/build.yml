@@ -1,9 +1,16 @@
-name: Go Build & Test
+name: Build and Test
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+
 on:
+  push:
+    branches:
+      - master
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - 'mkdocs.yml'
+    paths-ignore: ['docs/**', 'mkdocs.yml']
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +20,7 @@ concurrency:
 jobs:
 
   test-postgresql-windows:
-    if: false # false to skip job during debug
+    if: true # false to skip job during debug
     name: Test on Windows
     runs-on: windows-latest
     steps:
@@ -48,7 +55,7 @@ jobs:
 
 
   test-postgresql-macos:
-    if: false # false to skip job during debug
+    if: true # false to skip job during debug
     name: Test on MacOS
     runs-on: macos-latest
     steps:
@@ -96,7 +103,7 @@ jobs:
       run: go test -v -p 1 -parallel 1 -failfast ./...
 
   test-postgresql-ubuntu:
-    if: false # false to skip job during debug
+    if: true # false to skip job during debug
     name: Test and Build on Ubuntu
     runs-on: ubuntu-latest
     steps:
@@ -149,7 +156,7 @@ jobs:
 
   build-docs:
     if: true # false to skip job during debug
-    # needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
+    needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
     name: Build Docs
     runs-on: ubuntu-latest
     steps:
