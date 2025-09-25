@@ -198,3 +198,33 @@ jobs:
 
     - name: Build mkdocs
       run: mike deploy ${{ env.push_opt }} devel
+
+  test-docker-images:
+    if: true # false to skip job during debug
+    needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
+    name: Test Docker Image Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v5
+
+    - name: Prepare build metadata
+      id: meta
+      run: |
+        echo "GIT_HASH=${{ github.sha }}" >> $GITHUB_OUTPUT
+        echo "GIT_TIME=$(git show -s --format=%cI HEAD)" >> $GITHUB_OUTPUT
+        echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+    
+    - name: Test build Docker image (fast, amd64 only)
+      uses: ./.github/actions/build-docker
+      with:
+        dockerfile: docker/Dockerfile
+        image-name: cybertecpostgresql/pg_timetable
+        platforms: linux/amd64
+        push: 'false'
+        cache-scope: test-build
+        build-args: |
+          COMMIT=${{ steps.meta.outputs.GIT_HASH }}
+          DATE=${{ steps.meta.outputs.GIT_TIME }}
+          VERSION=${{ steps.meta.outputs.VERSION }}  
