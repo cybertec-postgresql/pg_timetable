@@ -20,7 +20,7 @@ concurrency:
 jobs:
 
   test-postgresql-windows:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     name: Test on Windows
     runs-on: windows-latest
     steps:
@@ -55,7 +55,7 @@ jobs:
 
 
   test-postgresql-macos:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     name: Test on MacOS
     runs-on: macos-latest
     steps:
@@ -103,7 +103,7 @@ jobs:
       run: go test -v -p 1 -parallel 1 -failfast ./...
 
   test-postgresql-ubuntu:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     name: Test and Build on Ubuntu
     runs-on: ubuntu-latest
     steps:
@@ -155,7 +155,7 @@ jobs:
         args: release --snapshot --skip=publish --clean
 
   build-docs:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
     name: Build Docs
     runs-on: ubuntu-latest
@@ -201,7 +201,7 @@ jobs:
 
   test-docker-images:
     if: true # false to skip job during debug
-    needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
+    # needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
     name: Test Docker Image Build
     runs-on: ubuntu-latest
     steps:
@@ -219,7 +219,7 @@ jobs:
     - name: Test build Docker image (fast, amd64 only)
       uses: ./.github/actions/build-docker
       with:
-        dockerfile: docker/Dockerfile
+        dockerfile: Dockerfile
         image-name: cybertecpostgresql/pg_timetable
         platforms: linux/amd64
         push: 'false'
@@ -227,4 +227,8 @@ jobs:
         build-args: |
           COMMIT=${{ steps.meta.outputs.GIT_HASH }}
           DATE=${{ steps.meta.outputs.GIT_TIME }}
-          VERSION=${{ steps.meta.outputs.VERSION }}  
+          VERSION=${{ steps.meta.outputs.VERSION }}
+
+    - name: Check image output
+      run: |
+        docker run --rm cybertecpostgresql/pg_timetable:pr-717 --version

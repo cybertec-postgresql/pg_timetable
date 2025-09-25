@@ -107,6 +107,7 @@ runs:
         cache-to: type=gha,mode=max,scope=${{ inputs.cache-scope }}
         provenance: false
         sbom: false
+        load: true
 
     - name: Output image details
       shell: bash
