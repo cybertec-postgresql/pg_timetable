@@ -1,0 +1,364 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. Components &mdash; pg_timetable  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="5. Getting started" href="basic_jobs.html" />
+    <link rel="prev" title="3. Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pg_timetable
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">2. Project background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. Components</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#command">4.1. Command</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#task">4.2. Task</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#table-timetable-task">4.2.1. Table timetable.task</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#table-timetable-parameter">4.2.2. Table timetable.parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameter-value-format">4.2.3. Parameter value format</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#chain">4.3. Chain</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#table-timetable-chain">4.3.1. Table timetable.chain</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="basic_jobs.html">5. Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">6. Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">7. Migration from others schedulers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">8. REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database_schema.html">9. Database Schema</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pg_timetable</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">4. </span>Components</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/components.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="components">
+<h1><span class="section-number">4. </span>Components<a class="headerlink" href="#components" title="Link to this heading"></a></h1>
+<p>The scheduling in <strong>pg_timetable</strong> encompasses three different abstraction levels to facilitate the reuse with other parameters or additional schedules.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Command<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The base level, <strong>command</strong>, defines <em>what</em> to do.</p>
+</dd>
+<dt class="field-even">Task<span class="colon">:</span></dt>
+<dd class="field-even"><p>The second level, <strong>task</strong>, represents a chain element (step) to run one of the commands. With <strong>tasks</strong> we define order of commands, arguments passed (if any), and how errors are handled.</p>
+</dd>
+<dt class="field-odd">Chain<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The third level represents a connected tasks forming a chain of tasks. <strong>Chain</strong> defines <em>if</em>, <em>when</em>, and <em>how often</em> a job should be executed.</p>
+</dd>
+</dl>
+<section id="command">
+<h2><span class="section-number">4.1. </span>Command<a class="headerlink" href="#command" title="Link to this heading"></a></h2>
+<p>Currently, there are three different kinds of commands:</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">SQL</span></code></dt><dd><p>SQL snippet. Starting a cleanup, refreshing a materialized view or processing data.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">PROGRAM</span></code></dt><dd><p>External Command. Anything that can be called as an external binary, including shells, e.g. <code class="docutils literal notranslate"><span class="pre">bash</span></code>, <code class="docutils literal notranslate"><span class="pre">pwsh</span></code>, etc. The external command will be called using golang’s <a class="reference external" href="https://pkg.go.dev/os/exec#CommandContext">exec.CommandContext</a>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN</span></code></dt><dd><p>Internal Command. A prebuilt functionality included in <strong>pg_timetable</strong>. These include:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><em>NoOp</em>,</p></li>
+<li><p><em>Sleep</em>,</p></li>
+<li><p><em>Log</em>,</p></li>
+<li><p><em>SendMail</em>,</p></li>
+<li><p><em>Download</em>,</p></li>
+<li><p><em>CopyFromFile</em>,</p></li>
+<li><p><em>CopyToFile</em>,</p></li>
+<li><p><em>Shutdown</em>.</p></li>
+</ul>
+</div></blockquote>
+</dd>
+</dl>
+</section>
+<section id="task">
+<h2><span class="section-number">4.2. </span>Task<a class="headerlink" href="#task" title="Link to this heading"></a></h2>
+<p>The next building block is a <strong>task</strong>, which simply represents a step in a list of chain commands. An example of tasks combined in a chain would be:</p>
+<ol class="arabic simple">
+<li><p>Download files from a server</p></li>
+<li><p>Import files</p></li>
+<li><p>Run aggregations</p></li>
+<li><p>Build report</p></li>
+<li><p>Remove the files from disk</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All tasks of the chain in <strong>pg_timetable</strong> are executed within one transaction. However, please, pay attention there is no opportunity to rollback <code class="docutils literal notranslate"><span class="pre">PROGRAM</span></code> and <code class="docutils literal notranslate"><span class="pre">BUILTIN</span></code> tasks.</p>
+</div>
+<section id="table-timetable-task">
+<h3><span class="section-number">4.2.1. </span>Table timetable.task<a class="headerlink" href="#table-timetable-task" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">chain_id</span> <span class="pre">bigint</span></code></dt><dd><p>Link to the chain, if <code class="docutils literal notranslate"><span class="pre">NULL</span></code> task considered to be disabled</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">task_order</span> <span class="pre">DOUBLE</span> <span class="pre">PRECISION</span></code></dt><dd><p>Indicates the order of task within a chain.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">kind</span> <span class="pre">timetable.command_kind</span></code></dt><dd><p>The type of the command. Can be <em>SQL</em> (default), <em>PROGRAM</em> or <em>BUILTIN</em>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">command</span> <span class="pre">text</span></code></dt><dd><p>Contains either a SQL command, a path to application or name of the <em>BUILTIN</em> command which will be executed.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">run_as</span> <span class="pre">text</span></code></dt><dd><p>The role as which the task should be executed as.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">database_connection</span> <span class="pre">text</span></code></dt><dd><p>The connection string for the external database that should be used.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ignore_error</span> <span class="pre">boolean</span></code></dt><dd><p>Specify if the next task should proceed after encountering an error (default: <code class="docutils literal notranslate"><span class="pre">false</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">autonomous</span> <span class="pre">boolean</span></code></dt><dd><p>Specify if the task should be executed out of the chain transaction. Useful for <code class="docutils literal notranslate"><span class="pre">VACUUM</span></code>, <code class="docutils literal notranslate"><span class="pre">CREATE</span> <span class="pre">DATABASE</span></code>, <code class="docutils literal notranslate"><span class="pre">CALL</span></code> etc.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">integer</span></code></dt><dd><p>Abort any task within a chain that takes more than the specified number of milliseconds.</p>
+</dd>
+</dl>
+</div></blockquote>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If the <strong>task</strong> has been configured with <code class="docutils literal notranslate"><span class="pre">ignore_error</span></code> set to <code class="docutils literal notranslate"><span class="pre">true</span></code> (the default value is <code class="docutils literal notranslate"><span class="pre">false</span></code>), the worker process will report a success on execution <em>even if the task within the chain fails</em>.</p>
+</div>
+<p>As mentioned above, <strong>commands</strong> are simple skeletons (e.g. <em>send email</em>, <em>vacuum</em>, etc.).
+In most cases, they have to be brought to live by passing input parameters to the execution.</p>
+</section>
+<section id="table-timetable-parameter">
+<h3><span class="section-number">4.2.2. </span>Table timetable.parameter<a class="headerlink" href="#table-timetable-parameter" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">task_id</span> <span class="pre">bigint</span></code></dt><dd><p>The ID of the task.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">order_id</span> <span class="pre">integer</span></code></dt><dd><p>The order of the parameter. Several parameters are processed one by one according to the order.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">value</span> <span class="pre">jsonb</span></code></dt><dd><p>A JSON value containing the parameters.</p>
+</dd>
+</dl>
+</div></blockquote>
+</section>
+<section id="parameter-value-format">
+<h3><span class="section-number">4.2.3. </span>Parameter value format<a class="headerlink" href="#parameter-value-format" title="Link to this heading"></a></h3>
+<p>Depending on the <strong>command</strong> kind argument can be represented by different <em>JSON</em> values.</p>
+<dl>
+<dt>Kind</dt><dd><dl class="simple">
+<dt>Schema</dt><dd><p>Example</p>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">SQL</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">array</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;[ &quot;one&quot;, 2, 3.14, false ]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">PROGRAM</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">array</span> <span class="pre">of</span> <span class="pre">strings</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;[&quot;-x&quot;, &quot;Latin-ASCII&quot;, &quot;-o&quot;, &quot;orte_ansi.txt&quot;, &quot;orte.txt&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">Sleep</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">integer</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;5&#39;</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">Log</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">any</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;&quot;WARNING&quot;&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<span class="s1">&#39;{&quot;Status&quot;: &quot;WARNING&quot;}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">SendMail</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">object</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;username&quot;:     &quot;user@example.com&quot;,</span>
+<span class="s1">    &quot;password&quot;:     &quot;password&quot;,</span>
+<span class="s1">    &quot;serverhost&quot;:   &quot;smtp.example.com&quot;,</span>
+<span class="s1">    &quot;serverport&quot;:   587,</span>
+<span class="s1">    &quot;senderaddr&quot;:   &quot;user@example.com&quot;,</span>
+<span class="s1">    &quot;ccaddr&quot;:       [&quot;recipient_cc@example.com&quot;],</span>
+<span class="s1">    &quot;bccaddr&quot;:      [&quot;recipient_bcc@example.com&quot;],</span>
+<span class="s1">    &quot;toaddr&quot;:       [&quot;recipient@example.com&quot;],</span>
+<span class="s1">    &quot;subject&quot;:      &quot;pg_timetable - No Reply&quot;,</span>
+<span class="s1">    &quot;attachment&quot;:   [&quot;/temp/attachments/Report.pdf&quot;,&quot;config.yaml&quot;],</span>
+<span class="s1">    &quot;attachmentdata&quot;: [{&quot;name&quot;: &quot;File.txt&quot;, &quot;base64data&quot;: &quot;RmlsZSBDb250ZW50&quot;}],</span>
+<span class="s1">    &quot;msgbody&quot;:      &quot;&lt;h2&gt;Hello User,&lt;/h2&gt; &lt;p&gt;check some attachments!&lt;/p&gt;&quot;,</span>
+<span class="s1">    &quot;contenttype&quot;:   &quot;text/html; charset=UTF-8&quot;</span>
+<span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">Download</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">object</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;workersnum&quot;: 2,</span>
+<span class="s1">    &quot;fileurls&quot;: [&quot;http://example.com/foo.gz&quot;, &quot;https://example.com/bar.csv&quot;],</span>
+<span class="s1">    &quot;destpath&quot;: &quot;.&quot;</span>
+<span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">CopyFromFile</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">object</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;,</span>
+<span class="s1">    &quot;filename&quot;: &quot;download/orte_ansi.txt&quot;</span>
+<span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">CopyToFile</span></code></dt><dd><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">object</span></code></dt><dd><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;,</span>
+<span class="s1">    &quot;filename&quot;: &quot;download/location.txt&quot;</span>
+<span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">Shutdown</span></code></dt><dd><p><em>value ignored</em></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">BUILTIN:</span> <span class="pre">NoOp</span></code></dt><dd><p><em>value ignored</em></p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="chain">
+<h2><span class="section-number">4.3. </span>Chain<a class="headerlink" href="#chain" title="Link to this heading"></a></h2>
+<p>Once tasks have been arranged, they have to be scheduled as a <strong>chain</strong>. For this, <strong>pg_timetable</strong> builds upon the enhanced <strong>cron</strong>-string, all the while adding multiple configuration options.</p>
+<section id="table-timetable-chain">
+<h3><span class="section-number">4.3.1. </span>Table timetable.chain<a class="headerlink" href="#table-timetable-chain" title="Link to this heading"></a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">chain_name</span> <span class="pre">text</span></code></dt><dd><p>The unique name of the chain.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">run_at</span> <span class="pre">timetable.cron</span></code></dt><dd><p>Standard <em>cron</em>-style value at Postgres server time zone or <code class="docutils literal notranslate"><span class="pre">&#64;after</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;every</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;reboot</span></code> clause.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">max_instances</span> <span class="pre">integer</span></code></dt><dd><p>The amount of instances that this chain may have running at the same time.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">integer</span></code></dt><dd><p>Abort any chain that takes more than the specified number of milliseconds.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">live</span> <span class="pre">boolean</span></code></dt><dd><p>Control if the chain may be executed once it reaches its schedule.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">self_destruct</span> <span class="pre">boolean</span></code></dt><dd><p>Self destruct the chain after successful execution. Failed chains will be executed according to the schedule one more time.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">exclusive_execution</span> <span class="pre">boolean</span></code></dt><dd><p>Specifies whether the chain should be executed exclusively while all other chains are paused.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">client_name</span> <span class="pre">text</span></code></dt><dd><p>Specifies which client should execute the chain. Set this to <cite>NULL</cite> to allow any client.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">timeout</span> <span class="pre">integer</span></code></dt><dd><p>Abort a chain that takes more than the specified number of milliseconds.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">on_error</span></code></dt><dd><p>Holds SQL to execute if an error occurs. If task produced an error is marked with <code class="docutils literal notranslate"><span class="pre">ignore_error</span></code> then nothing is done.</p>
+</dd>
+</dl>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All chains in <strong>pg_timetable</strong> are scheduled at the PostgreSQL server time zone.
+You can change the <a class="reference external" href="https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-TIMEZONES">timezone</a>
+for the <strong>current session</strong> when adding new chains, e.g.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SET</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="s1">&#39;UTC&#39;</span><span class="p">;</span>
+
+<span class="c1">-- Run VACUUM at 00:05 every day in August UTC</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="3. Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="basic_jobs.html" class="btn btn-neutral float-right" title="5. Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

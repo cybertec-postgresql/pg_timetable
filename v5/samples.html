@@ -1,0 +1,439 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>6. Samples &mdash; pg_timetable  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="7. Migration from others schedulers" href="migration.html" />
+    <link rel="prev" title="5. Getting started" href="basic_jobs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pg_timetable
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">2. Project background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">4. Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_jobs.html">5. Getting started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">6. Samples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic">6.1. Basic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#send-email">6.2. Send email</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#download-transform-and-import">6.3. Download, Transform and Import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-tasks-in-autonomous-transaction">6.4. Run tasks in autonomous transaction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shutdown-the-scheduler-and-terminate-the-session">6.5. Shutdown the scheduler and terminate the session</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#access-previous-task-result-code-and-output-from-the-next-task">6.6. Access previous task result code and output from the next task</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">7. Migration from others schedulers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">8. REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database_schema.html">9. Database Schema</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pg_timetable</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">6. </span>Samples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/samples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="samples">
+<h1><span class="section-number">6. </span>Samples<a class="headerlink" href="#samples" title="Link to this heading"></a></h1>
+<section id="basic">
+<h2><span class="section-number">6.1. </span>Basic<a class="headerlink" href="#basic" title="Link to this heading"></a></h2>
+<p>This sample demonstrates how to create a basic one-step chain with parameters. It uses CTE to directly update the
+<strong>timetable</strong> schema tables.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span>
+<span class="linenos"> 2</span><span class="w">    </span><span class="n">job_name</span><span class="w">            </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;notify every minute&#39;</span><span class="p">,</span>
+<span class="linenos"> 3</span><span class="w">    </span><span class="n">job_schedule</span><span class="w">        </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;* * * * *&#39;</span><span class="p">,</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="n">job_command</span><span class="w">         </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;SELECT pg_notify($1, $2)&#39;</span><span class="p">,</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">job_parameters</span><span class="w">      </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;[ &quot;TT_CHANNEL&quot;, &quot;Ahoj from SQL base task&quot; ]&#39;</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="n">jsonb</span><span class="p">,</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="n">job_kind</span><span class="w">            </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">::</span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="p">,</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="n">job_client_name</span><span class="w">     </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="n">job_max_instances</span><span class="w">   </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="n">job_live</span><span class="w">            </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<span class="linenos">10</span><span class="w">    </span><span class="n">job_self_destruct</span><span class="w">   </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos">11</span><span class="w">    </span><span class="n">job_ignore_errors</span><span class="w">   </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">TRUE</span>
+<span class="linenos">12</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">chain_id</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="send-email">
+<h2><span class="section-number">6.2. </span>Send email<a class="headerlink" href="#send-email" title="Link to this heading"></a></h2>
+<p>This sample demonstrates how to create an advanced email job. It will check if there are emails to send,
+will send them and log the status of the command execution. You don’t need to setup anything, every parameter
+can be specified during the chain creation.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos"> 2</span><span class="w">    </span><span class="c1">-- An example for using the SendMail task.</span>
+<span class="linenos"> 3</span><span class="k">DECLARE</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="n">v_mail_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">v_log_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="n">v_chain_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<span class="linenos"> 7</span><span class="k">BEGIN</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="c1">-- Get the chain id</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;Send Mail&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
+<span class="linenos">10</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">;</span>
+<span class="linenos">11</span>
+<span class="linenos">12</span><span class="w">    </span><span class="c1">-- Add SendMail task</span>
+<span class="linenos">13</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos">14</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;BUILTIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SendMail&#39;</span>
+<span class="linenos">15</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_mail_task_id</span><span class="p">;</span>
+<span class="linenos">16</span>
+<span class="linenos">17</span><span class="w">    </span><span class="c1">-- Create the parameters for the SensMail task</span>
+<span class="linenos">18</span><span class="w">        </span><span class="c1">-- &quot;username&quot;:	      The username used for authenticating on the mail server</span>
+<span class="linenos">19</span><span class="w">        </span><span class="c1">-- &quot;password&quot;:        The password used for authenticating on the mail server</span>
+<span class="linenos">20</span><span class="w">        </span><span class="c1">-- &quot;serverhost&quot;:      The IP address or hostname of the mail server</span>
+<span class="linenos">21</span><span class="w">        </span><span class="c1">-- &quot;serverport&quot;:      The port of the mail server</span>
+<span class="linenos">22</span><span class="w">        </span><span class="c1">-- &quot;senderaddr&quot;:      The email that will appear as the sender</span>
+<span class="linenos">23</span><span class="w">        </span><span class="c1">-- &quot;ccaddr&quot;:	      String array of the recipients(Cc) email addresses</span>
+<span class="linenos">24</span><span class="w">        </span><span class="c1">-- &quot;bccaddr&quot;:	      String array of the recipients(Bcc) email addresses</span>
+<span class="linenos">25</span><span class="w">        </span><span class="c1">-- &quot;toaddr&quot;:          String array of the recipients(To) email addresses</span>
+<span class="linenos">26</span><span class="w">        </span><span class="c1">-- &quot;subject&quot;:	      Subject of the email</span>
+<span class="linenos">27</span><span class="w">        </span><span class="c1">-- &quot;attachment&quot;:      String array of the attachments (local file)</span>
+<span class="linenos">28</span><span class="w">        </span><span class="c1">-- &quot;attachmentdata&quot;:  Pairs of name and base64-encoded content</span>
+<span class="linenos">29</span><span class="w">        </span><span class="c1">-- &quot;msgbody&quot;:	      The body of the email</span>
+<span class="linenos">30</span>
+<span class="linenos">31</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos">32</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_mail_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;{</span>
+<span class="linenos">33</span><span class="s1">                &quot;username&quot;:     &quot;user@example.com&quot;,</span>
+<span class="linenos">34</span><span class="s1">                &quot;password&quot;:     &quot;password&quot;,</span>
+<span class="linenos">35</span><span class="s1">                &quot;serverhost&quot;:   &quot;smtp.example.com&quot;,</span>
+<span class="linenos">36</span><span class="s1">                &quot;serverport&quot;:   587,</span>
+<span class="linenos">37</span><span class="s1">                &quot;senderaddr&quot;:   &quot;user@example.com&quot;,</span>
+<span class="linenos">38</span><span class="s1">                &quot;ccaddr&quot;:       [&quot;recipient_cc@example.com&quot;],</span>
+<span class="linenos">39</span><span class="s1">                &quot;bccaddr&quot;:      [&quot;recipient_bcc@example.com&quot;],</span>
+<span class="linenos">40</span><span class="s1">                &quot;toaddr&quot;:       [&quot;recipient@example.com&quot;],</span>
+<span class="linenos">41</span><span class="s1">                &quot;subject&quot;:      &quot;pg_timetable - No Reply&quot;,</span>
+<span class="linenos">42</span><span class="s1">                &quot;attachment&quot;:   [&quot;D:\\Go stuff\\Books\\Concurrency in Go.pdf&quot;,&quot;report.yaml&quot;],</span>
+<span class="linenos">43</span><span class="s1">                &quot;attachmentdata&quot;: [{&quot;name&quot;: &quot;File.txt&quot;, &quot;base64data&quot;: &quot;RmlsZSBDb250ZW50&quot;}],</span>
+<span class="linenos">44</span><span class="s1">                &quot;msgbody&quot;:      &quot;&lt;b&gt;Hello User,&lt;/b&gt; &lt;p&gt;I got some Go books for you enjoy&lt;/p&gt; &lt;i&gt;pg_timetable&lt;/i&gt;!&quot;,</span>
+<span class="linenos">45</span><span class="s1">                &quot;contenttype&quot;:  &quot;text/html; charset=UTF-8&quot;</span>
+<span class="linenos">46</span><span class="s1">                }&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<span class="linenos">47</span><span class="w">    </span>
+<span class="linenos">48</span><span class="w">    </span><span class="c1">-- Add Log task and make it the last task using `task_order` column (=30)</span>
+<span class="linenos">49</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos">50</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;BUILTIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Log&#39;</span>
+<span class="linenos">51</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_log_task_id</span><span class="p">;</span>
+<span class="linenos">52</span>
+<span class="linenos">53</span><span class="w">    </span><span class="c1">-- Add housekeeping task, that will delete sent mail and update parameter for the previous logging task</span>
+<span class="linenos">54</span><span class="w">    </span><span class="c1">-- Since we&#39;re using special add_task() function we don&#39;t need to specify the `chain_id`.</span>
+<span class="linenos">55</span><span class="w">    </span><span class="c1">-- Function will take the same `chain_id` from the parent task, SendMail in this particular case</span>
+<span class="linenos">56</span><span class="w">    </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_task</span><span class="p">(</span>
+<span class="linenos">57</span><span class="w">        </span><span class="n">kind</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos">58</span><span class="w">        </span><span class="n">parent_id</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v_mail_task_id</span><span class="p">,</span>
+<span class="linenos">59</span><span class="w">        </span><span class="n">command</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">format</span><span class="p">(</span>
+<span class="linenos">60</span><span class="err">$</span><span class="n">query$WITH</span><span class="w"> </span><span class="n">sent_mail</span><span class="p">(</span><span class="n">toaddr</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">%</span><span class="n">s</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">value</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;username&#39;</span><span class="p">)</span>
+<span class="linenos">61</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos">62</span><span class="k">SELECT</span><span class="w"> </span><span class="o">%</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">to_jsonb</span><span class="p">(</span><span class="s1">&#39;Sent emails to: &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">string_agg</span><span class="p">(</span><span class="n">sent_mail</span><span class="p">.</span><span class="n">toaddr</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;;&#39;</span><span class="p">))</span>
+<span class="linenos">63</span><span class="k">FROM</span><span class="w"> </span><span class="n">sent_mail</span>
+<span class="linenos">64</span><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EXCLUDED</span><span class="p">.</span><span class="n">value$query$</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos">65</span><span class="w">                </span><span class="n">v_mail_task_id</span><span class="p">,</span><span class="w"> </span><span class="n">v_log_task_id</span>
+<span class="linenos">66</span><span class="w">            </span><span class="p">),</span>
+<span class="linenos">67</span><span class="w">        </span><span class="n">order_delta</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">10</span>
+<span class="linenos">68</span><span class="w">    </span><span class="p">);</span>
+<span class="linenos">69</span>
+<span class="linenos">70</span><span class="c1">-- In the end we should have something like this. Note, that even Log task was created earlier it will be executed later</span>
+<span class="linenos">71</span><span class="c1">-- due to `task_order` column.</span>
+<span class="linenos">72</span>
+<span class="linenos">73</span><span class="c1">-- timetable=&gt; SELECT task_id, chain_id, kind, left(command, 50) FROM timetable.task ORDER BY task_order;  </span>
+<span class="linenos">74</span><span class="c1">--  task_id | chain_id | task_order |  kind   |                             left</span>
+<span class="linenos">75</span><span class="c1">-- ---------+----------+------------+---------+---------------------------------------------------------------</span>
+<span class="linenos">76</span><span class="c1">--       45 |       24 |         10 | BUILTIN | SendMail</span>
+<span class="linenos">77</span><span class="c1">--       47 |       24 |         20 | SQL     | WITH sent_mail(toaddr) AS (DELETE FROM timetable.p</span>
+<span class="linenos">78</span><span class="c1">--       46 |       24 |         30 | BUILTIN | Log</span>
+<span class="linenos">79</span><span class="c1">-- (3 rows)</span>
+<span class="linenos">80</span>
+<span class="linenos">81</span><span class="k">END</span><span class="p">;</span>
+<span class="linenos">82</span><span class="err">$$</span>
+<span class="linenos">83</span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">PLPGSQL</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="download-transform-and-import">
+<h2><span class="section-number">6.3. </span>Download, Transform and Import<a class="headerlink" href="#download-transform-and-import" title="Link to this heading"></a></h2>
+<p>This sample demonstrates how to create enhanced three-step chain with parameters. It uses DO statement to directly update the
+<strong>timetable</strong> schema tables.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">-- Prepare the destination table &#39;location&#39;</span>
+<span class="linenos"> 2</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">city</span><span class="p">(</span>
+<span class="linenos"> 3</span><span class="w">    </span><span class="n">city</span><span class="w"> </span><span class="nb">text</span><span class="p">,</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="n">lat</span><span class="w"> </span><span class="nb">numeric</span><span class="p">,</span>
+<span class="linenos"> 5</span><span class="w">    </span><span class="n">lng</span><span class="w"> </span><span class="nb">numeric</span><span class="p">,</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="n">country</span><span class="w"> </span><span class="nb">text</span><span class="p">,</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="n">iso2</span><span class="w"> </span><span class="nb">text</span><span class="p">,</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="n">admin_name</span><span class="w"> </span><span class="nb">text</span><span class="p">,</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="n">capital</span><span class="w"> </span><span class="nb">text</span><span class="p">,</span>
+<span class="linenos">10</span><span class="w">    </span><span class="n">population</span><span class="w"> </span><span class="nb">bigint</span><span class="p">,</span>
+<span class="linenos">11</span><span class="w">    </span><span class="n">population_proper</span><span class="w"> </span><span class="nb">bigint</span><span class="p">);</span>
+<span class="linenos">12</span><span class="w">   </span>
+<span class="linenos">13</span><span class="k">GRANT</span><span class="w"> </span><span class="k">ALL</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">public</span><span class="p">.</span><span class="n">city</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">scheduler</span><span class="p">;</span>
+<span class="linenos">14</span>
+<span class="linenos">15</span><span class="c1">-- An enhanced example consisting of three tasks:</span>
+<span class="linenos">16</span><span class="c1">-- 1. Download text file from internet using BUILT-IN command</span>
+<span class="linenos">17</span><span class="c1">-- 2. Remove accents (diacritic signs) from letters using PROGRAM command (can be done with `unaccent` PostgreSQL extension) </span>
+<span class="linenos">18</span><span class="c1">-- 3. Import text file as CSV file using BUILT-IN command (can be down with `psql -c /copy`)</span>
+<span class="linenos">19</span><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos">20</span><span class="k">DECLARE</span>
+<span class="linenos">21</span><span class="w">    </span><span class="n">v_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<span class="linenos">22</span><span class="w">    </span><span class="n">v_chain_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<span class="linenos">23</span><span class="k">BEGIN</span>
+<span class="linenos">24</span><span class="w">    </span><span class="c1">-- Create the chain with default values executed every minute (NULL == &#39;* * * * *&#39; :: timetable.cron)</span>
+<span class="linenos">25</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span>
+<span class="linenos">26</span><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;Download locations and aggregate&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
+<span class="linenos">27</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">;</span>
+<span class="linenos">28</span>
+<span class="linenos">29</span><span class="w">    </span><span class="c1">-- Step 1. Download file from the server</span>
+<span class="linenos">30</span><span class="w">    </span><span class="c1">-- Create the chain</span>
+<span class="linenos">31</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">ignore_error</span><span class="p">)</span>
+<span class="linenos">32</span><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;BUILTIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Download&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
+<span class="linenos">33</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">34</span>
+<span class="linenos">35</span><span class="w">    </span><span class="c1">-- Create the parameters for the step 1:</span>
+<span class="linenos">36</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos">37</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos">38</span><span class="w">           </span><span class="s1">&#39;{</span>
+<span class="linenos">39</span><span class="s1">                &quot;workersnum&quot;: 1,</span>
+<span class="linenos">40</span><span class="s1">                &quot;fileurls&quot;: [&quot;https://simplemaps.com/static/data/country-cities/mt/mt.csv&quot;], </span>
+<span class="linenos">41</span><span class="s1">                &quot;destpath&quot;: &quot;.&quot;</span>
+<span class="linenos">42</span><span class="s1">            }&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<span class="linenos">43</span><span class="w">    </span>
+<span class="linenos">44</span><span class="w">    </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Step 1 completed. Chain added with ID: %; DownloadFile task added with ID: %&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">45</span>
+<span class="linenos">46</span><span class="w">    </span><span class="c1">-- Step 2. Transform Unicode characters into ASCII</span>
+<span class="linenos">47</span><span class="w">    </span><span class="c1">-- Create the program task to call &#39;uconv&#39; and name it &#39;unaccent&#39;</span>
+<span class="linenos">48</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">ignore_error</span><span class="p">,</span><span class="w"> </span><span class="n">task_name</span><span class="p">)</span>
+<span class="linenos">49</span><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;uconv&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;unaccent&#39;</span><span class="p">)</span>
+<span class="linenos">50</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">51</span>
+<span class="linenos">52</span><span class="w">    </span><span class="c1">-- Create the parameters for the &#39;unaccent&#39; task. Input and output files in this case</span>
+<span class="linenos">53</span><span class="w">    </span><span class="c1">-- Under Windows we should call PowerShell instead of &quot;uconv&quot; with command:</span>
+<span class="linenos">54</span><span class="w">    </span><span class="c1">-- Set-content &quot;orte_ansi.txt&quot; ((Get-content &quot;orte.txt&quot;).Normalize(&quot;FormD&quot;) -replace &#39;\p{M}&#39;, &#39;&#39;)</span>
+<span class="linenos">55</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos">56</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;[&quot;-x&quot;, &quot;Latin-ASCII&quot;, &quot;-o&quot;, &quot;mt_ansi.csv&quot;, &quot;mt.csv&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<span class="linenos">57</span>
+<span class="linenos">58</span><span class="w">    </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Step 2 completed. Unacent task added with ID: %&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">59</span>
+<span class="linenos">60</span><span class="w">    </span><span class="c1">-- Step 3. Import ASCII file to PostgreSQL table using &quot;CopyFromFile&quot; built-in command</span>
+<span class="linenos">61</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span>
+<span class="linenos">62</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;BUILTIN&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;CopyFromFile&#39;</span><span class="p">)</span>
+<span class="linenos">63</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">64</span>
+<span class="linenos">65</span><span class="w">    </span><span class="c1">-- Add the parameters for the download task. Execute client side COPY to &#39;location&#39; from &#39;orte_ansi.txt&#39;</span>
+<span class="linenos">66</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos">67</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;{&quot;sql&quot;: &quot;COPY city FROM STDIN (FORMAT csv, HEADER true)&quot;, &quot;filename&quot;: &quot;mt_ansi.csv&quot; }&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<span class="linenos">68</span>
+<span class="linenos">69</span><span class="w">    </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Step 3 completed. Import task added with ID: %&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">70</span>
+<span class="linenos">71</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">ignore_error</span><span class="p">,</span><span class="w"> </span><span class="n">task_name</span><span class="p">)</span>
+<span class="linenos">72</span><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;bash&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;remove .csv&#39;</span><span class="p">)</span>
+<span class="linenos">73</span><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">74</span>
+<span class="linenos">75</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos">76</span><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;[&quot;-c&quot;, &quot;rm *.csv&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<span class="linenos">77</span><span class="w">   </span>
+<span class="linenos">78</span><span class="w">   </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Step 4 completed. Cleanup task added with ID: %&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">;</span>
+<span class="linenos">79</span><span class="k">END</span><span class="p">;</span>
+<span class="linenos">80</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">PLPGSQL</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="run-tasks-in-autonomous-transaction">
+<h2><span class="section-number">6.4. </span>Run tasks in autonomous transaction<a class="headerlink" href="#run-tasks-in-autonomous-transaction" title="Link to this heading"></a></h2>
+<p>This sample demonstrates how to run special tasks out of chain transaction context. This is useful for special routines and/or
+non-transactional operations, e.g. <em>CREATE DATABASE</em>, <em>REINDEX</em>, <em>VACUUM</em>, <em>CREATE TABLESPACE</em>, etc.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">-- An advanced example showing how to use atutonomous tasks.</span>
+<span class="linenos"> 2</span><span class="c1">-- This one-task chain will execute test_proc() procedure.</span>
+<span class="linenos"> 3</span><span class="c1">-- Since procedure will make two commits (after f1() and f2())</span>
+<span class="linenos"> 4</span><span class="c1">-- we cannot use it as a regular task, because all regular tasks </span>
+<span class="linenos"> 5</span><span class="c1">-- must be executed in the context of a single chain transaction.</span>
+<span class="linenos"> 6</span><span class="c1">-- Same rule applies for some other SQL commands, </span>
+<span class="linenos"> 7</span><span class="c1">-- e.g. CREATE DATABASE, REINDEX, VACUUM, CREATE TABLESPACE, etc.</span>
+<span class="linenos"> 8</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="p">(</span><span class="n">msg</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="n">void</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos"> 9</span><span class="k">BEGIN</span><span class="w"> </span>
+<span class="linenos">10</span><span class="w">    </span><span class="n">RAISE</span><span class="w"> </span><span class="n">notice</span><span class="w"> </span><span class="s1">&#39;%&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">;</span><span class="w"> </span>
+<span class="linenos">11</span><span class="k">END</span><span class="p">;</span>
+<span class="linenos">12</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">PLPGSQL</span><span class="p">;</span>
+<span class="linenos">13</span>
+<span class="linenos">14</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">PROCEDURE</span><span class="w"> </span><span class="n">test_proc</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos">15</span><span class="k">BEGIN</span>
+<span class="linenos">16</span><span class="w">    </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;hey 1&#39;</span><span class="p">);</span>
+<span class="linenos">17</span><span class="w">    </span><span class="k">COMMIT</span><span class="p">;</span>
+<span class="linenos">18</span><span class="w">    </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;hey 2&#39;</span><span class="p">);</span>
+<span class="linenos">19</span><span class="w">    </span><span class="k">COMMIT</span><span class="p">;</span>
+<span class="linenos">20</span><span class="k">END</span><span class="p">;</span>
+<span class="linenos">21</span><span class="err">$$</span>
+<span class="linenos">22</span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">PLPGSQL</span><span class="p">;</span>
+<span class="linenos">23</span>
+<span class="linenos">24</span><span class="k">WITH</span>
+<span class="linenos">25</span><span class="w">    </span><span class="n">cte_chain</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">26</span><span class="w">        </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">run_at</span><span class="p">,</span><span class="w"> </span><span class="n">max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">,</span><span class="w"> </span><span class="n">self_destruct</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos">27</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">28</span><span class="w">            </span><span class="s1">&#39;call proc() every 10 sec&#39;</span><span class="p">,</span><span class="w"> </span><span class="c1">-- chain_name, </span>
+<span class="linenos">29</span><span class="w">            </span><span class="s1">&#39;@every 10 seconds&#39;</span><span class="p">,</span><span class="w">        </span><span class="c1">-- run_at,</span>
+<span class="linenos">30</span><span class="w">            </span><span class="mi">1</span><span class="p">,</span><span class="w">     </span><span class="c1">-- max_instances, </span>
+<span class="linenos">31</span><span class="w">            </span><span class="k">TRUE</span><span class="p">,</span><span class="w">  </span><span class="c1">-- live, </span>
+<span class="linenos">32</span><span class="w">            </span><span class="k">FALSE</span><span class="w"> </span><span class="c1">-- self_destruct</span>
+<span class="linenos">33</span><span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span>
+<span class="linenos">34</span><span class="w">    </span><span class="p">),</span>
+<span class="linenos">35</span><span class="w">    </span><span class="n">cte_task</span><span class="p">(</span><span class="n">v_task_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">36</span><span class="w">        </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">ignore_error</span><span class="p">,</span><span class="w"> </span><span class="n">autonomous</span><span class="p">)</span>
+<span class="linenos">37</span><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;CALL test_proc()&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span>
+<span class="linenos">38</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span>
+<span class="linenos">39</span><span class="w">        </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span>
+<span class="linenos">40</span><span class="w">    </span><span class="p">)</span>
+<span class="linenos">41</span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">v_task_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_task</span><span class="p">,</span><span class="w"> </span><span class="n">cte_chain</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="shutdown-the-scheduler-and-terminate-the-session">
+<h2><span class="section-number">6.5. </span>Shutdown the scheduler and terminate the session<a class="headerlink" href="#shutdown-the-scheduler-and-terminate-the-session" title="Link to this heading"></a></h2>
+<p>This sample demonstrates how to shutdown the scheduler using special built-in task. This can be used to control
+maintenance windows, to restart the scheduler for update purposes, or to stop session before the database should be
+dropped.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="c1">-- This one-task chain (aka job) will terminate pg_timetable session.</span>
+<span class="linenos"> 2</span><span class="c1">-- This is useful for maintaining purposes or before database being destroyed.</span>
+<span class="linenos"> 3</span><span class="c1">-- One should take care of restarting pg_timetable if needed.</span>
+<span class="linenos"> 4</span>
+<span class="linenos"> 5</span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="n">job_name</span><span class="w">     </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;Shutdown pg_timetable session on schedule&#39;</span><span class="p">,</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="n">job_schedule</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;* * 1 * *&#39;</span><span class="p">,</span>
+<span class="linenos"> 8</span><span class="w">    </span><span class="n">job_command</span><span class="w">  </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;Shutdown&#39;</span><span class="p">,</span>
+<span class="linenos"> 9</span><span class="w">    </span><span class="n">job_kind</span><span class="w">     </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;BUILTIN&#39;</span>
+<span class="linenos">10</span><span class="p">);</span>
+</pre></div>
+</div>
+</section>
+<section id="access-previous-task-result-code-and-output-from-the-next-task">
+<h2><span class="section-number">6.6. </span>Access previous task result code and output from the next task<a class="headerlink" href="#access-previous-task-result-code-and-output-from-the-next-task" title="Link to this heading"></a></h2>
+<p>This sample demonstrates how to check the result code and output of a previous task. If the last task failed,
+that is possible only if <em>ignore_error boolean = true</em> is set for that task. Otherwise, a scheduler will
+stop the chain. This sample shows how to calculate failed, successful, and the total number of tasks executed.
+Based on these values, we can calculate the success ratio.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">WITH</span><span class="w"> </span>
+<span class="linenos"> 2</span><span class="w">    </span><span class="n">cte_chain</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="c1">-- let&#39;s create a new chain and add tasks to it later</span>
+<span class="linenos"> 3</span><span class="w">        </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">run_at</span><span class="p">,</span><span class="w"> </span><span class="n">max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos"> 4</span><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;many tasks&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;* * * * *&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">)</span>
+<span class="linenos"> 5</span><span class="w">        </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span>
+<span class="linenos"> 6</span><span class="w">    </span><span class="p">),</span>
+<span class="linenos"> 7</span><span class="w">    </span><span class="n">cte_tasks</span><span class="p">(</span><span class="n">v_task_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="c1">-- now we&#39;ll add 500 tasks to the chain, some of them will fail</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">ignore_error</span><span class="p">)</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SELECT 1.0 / round(random())::int4;&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">true</span>
+<span class="linenos">10</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span><span class="p">,</span><span class="w"> </span><span class="n">generate_series</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">500</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">g</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="linenos">11</span><span class="w">        </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span>
+<span class="linenos">12</span><span class="w">    </span><span class="p">),</span>
+<span class="linenos">13</span><span class="w">    </span><span class="n">report_task</span><span class="p">(</span><span class="n">v_task_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="c1">-- and the last reporting task will calculate the statistic</span>
+<span class="linenos">14</span><span class="w">        </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span>
+<span class="linenos">15</span><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">501</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="n">CMD$DO</span>
+<span class="linenos">16</span><span class="err">$$</span>
+<span class="linenos">17</span><span class="k">DECLARE</span>
+<span class="linenos">18</span><span class="w">    </span><span class="n">s</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">;</span>
+<span class="linenos">19</span><span class="k">BEGIN</span>
+<span class="linenos">20</span><span class="w">    </span><span class="k">WITH</span><span class="w"> </span><span class="n">report</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">21</span><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span>
+<span class="linenos">22</span><span class="w">        </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">returncode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">success</span><span class="p">,</span>
+<span class="linenos">23</span><span class="w">        </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">returncode</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">fail</span><span class="p">,</span>
+<span class="linenos">24</span><span class="w">        </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">total</span>
+<span class="linenos">25</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">execution_log</span><span class="w"> </span>
+<span class="linenos">26</span><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current_setting</span><span class="p">(</span><span class="s1">&#39;pg_timetable.current_chain_id&#39;</span><span class="p">)::</span><span class="nb">bigint</span>
+<span class="linenos">27</span><span class="w">          </span><span class="k">AND</span><span class="w"> </span><span class="n">txid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">txid_current</span><span class="p">()</span>
+<span class="linenos">28</span><span class="w">    </span><span class="p">)</span>
+<span class="linenos">29</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="s1">&#39;Tasks executed:&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>
+<span class="linenos">30</span><span class="w">         </span><span class="s1">&#39;; succeeded: &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>
+<span class="linenos">31</span><span class="w">         </span><span class="s1">&#39;; failed: &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">fail</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>
+<span class="linenos">32</span><span class="w">         </span><span class="s1">&#39;; ratio: &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="o">*</span><span class="n">success</span><span class="o">/</span><span class="n">GREATEST</span><span class="p">(</span><span class="n">total</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="linenos">33</span><span class="w">    </span><span class="k">INTO</span><span class="w"> </span><span class="n">s</span>
+<span class="linenos">34</span><span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">report</span><span class="p">;</span>
+<span class="linenos">35</span><span class="w">    </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;%&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
+<span class="linenos">36</span><span class="k">END</span><span class="p">;</span>
+<span class="linenos">37</span><span class="err">$$</span>
+<span class="linenos">38</span><span class="err">$</span><span class="n">CMD$</span>
+<span class="linenos">39</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span>
+<span class="linenos">40</span><span class="w">        </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span>
+<span class="linenos">41</span><span class="w">    </span><span class="p">)</span>
+<span class="linenos">42</span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="basic_jobs.html" class="btn btn-neutral float-left" title="5. Getting started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="migration.html" class="btn btn-neutral float-right" title="7. Migration from others schedulers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

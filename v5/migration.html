@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7. Migration from others schedulers &mdash; pg_timetable  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="8. REST API" href="api.html" />
+    <link rel="prev" title="6. Samples" href="samples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pg_timetable
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">2. Project background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">4. Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_jobs.html">5. Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">6. Samples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">7. Migration from others schedulers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#migrate-jobs-from-pg-cron-to-pg-timetable">7.1. Migrate jobs from pg_cron to pg_timetable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#migrate-jobs-from-pgagent-to-pg-timetable">7.2. Migrate jobs from pgAgent to pg_timetable</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">8. REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database_schema.html">9. Database Schema</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pg_timetable</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">7. </span>Migration from others schedulers</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/migration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="migration-from-others-schedulers">
+<h1><span class="section-number">7. </span>Migration from others schedulers<a class="headerlink" href="#migration-from-others-schedulers" title="Link to this heading"></a></h1>
+<section id="migrate-jobs-from-pg-cron-to-pg-timetable">
+<h2><span class="section-number">7.1. </span>Migrate jobs from pg_cron to pg_timetable<a class="headerlink" href="#migrate-jobs-from-pg-cron-to-pg-timetable" title="Link to this heading"></a></h2>
+<p>If you want to quickly export jobs scheduled from <em>pg_cron</em> to <em>pg_timetable</em>, you can use this SQL snippet:</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span>
+<span class="linenos">2</span><span class="w">    </span><span class="n">job_name</span><span class="w">            </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;job: &#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">command</span><span class="p">),</span>
+<span class="linenos">3</span><span class="w">    </span><span class="n">job_schedule</span><span class="w">        </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">schedule</span><span class="p">,</span>
+<span class="linenos">4</span><span class="w">    </span><span class="n">job_command</span><span class="w">         </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">command</span><span class="p">,</span>
+<span class="linenos">5</span><span class="w">    </span><span class="n">job_kind</span><span class="w">            </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span>
+<span class="linenos">6</span><span class="w">    </span><span class="n">job_live</span><span class="w">            </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">active</span>
+<span class="linenos">7</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cron</span><span class="p">.</span><span class="n">job</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>The <em>timetable.add_job()</em>, however, has some limitations. First of all, the function will mark the task created
+as <strong>autonomous</strong>, specifying scheduler should execute the task out of the chain transaction. It’s not an error,
+but many autonomous chains may cause some extra connections to be used.</p>
+<p>Secondly, database connection parameters are lost for source <em>pg_cron</em> jobs, making all jobs local. To export
+every information available precisely as possible, use this SQL snippet under the role they were scheduled in
+<em>pg_cron</em>:</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">SET</span><span class="w"> </span><span class="k">ROLE</span><span class="w"> </span><span class="s1">&#39;scheduler&#39;</span><span class="p">;</span><span class="w"> </span><span class="c1">-- set the role used by pg_cron</span>
+<span class="linenos"> 2</span>
+<span class="linenos"> 3</span><span class="k">WITH</span><span class="w"> </span><span class="n">cron_chain</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 4</span><span class="w">    </span><span class="k">SELECT</span>
+<span class="linenos"> 5</span><span class="w">        </span><span class="n">nextval</span><span class="p">(</span><span class="s1">&#39;timetable.chain_chain_id_seq&#39;</span><span class="p">::</span><span class="n">regclass</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">cron_id</span><span class="p">,</span>
+<span class="linenos"> 6</span><span class="w">        </span><span class="n">jobname</span><span class="p">,</span>
+<span class="linenos"> 7</span><span class="w">        </span><span class="n">schedule</span><span class="p">,</span>
+<span class="linenos"> 8</span><span class="w">        </span><span class="n">active</span><span class="p">,</span>
+<span class="linenos"> 9</span><span class="w">        </span><span class="n">command</span><span class="p">,</span>
+<span class="linenos">10</span><span class="w">        </span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span>
+<span class="linenos">11</span><span class="w">            </span><span class="k">database</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">current_database</span><span class="p">()</span>
+<span class="linenos">12</span><span class="w">            </span><span class="k">OR</span><span class="w"> </span><span class="n">nodename</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s1">&#39;localhost&#39;</span>
+<span class="linenos">13</span><span class="w">            </span><span class="k">OR</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">CURRENT_USER</span>
+<span class="linenos">14</span><span class="w">            </span><span class="k">OR</span><span class="w"> </span><span class="n">nodeport</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">inet_server_port</span><span class="p">()</span><span class="w"> </span>
+<span class="linenos">15</span><span class="w">        </span><span class="k">THEN</span>
+<span class="linenos">16</span><span class="w">            </span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;host=%s port=%s dbname=%s user=%s&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">nodename</span><span class="p">,</span><span class="w"> </span><span class="n">nodeport</span><span class="p">,</span><span class="w"> </span><span class="k">database</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">)</span>
+<span class="linenos">17</span><span class="w">        </span><span class="k">END</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">connstr</span>
+<span class="linenos">18</span><span class="w">    </span><span class="k">FROM</span>
+<span class="linenos">19</span><span class="w">        </span><span class="n">cron</span><span class="p">.</span><span class="n">job</span>
+<span class="linenos">20</span><span class="p">),</span>
+<span class="linenos">21</span><span class="n">cte_chain</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">22</span><span class="w">	</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">run_at</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span>
+<span class="linenos">23</span><span class="w">	    </span><span class="k">SELECT</span><span class="w"> </span>
+<span class="linenos">24</span><span class="w">	    	</span><span class="n">cron_id</span><span class="p">,</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">jobname</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;cronjob&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">cron_id</span><span class="p">),</span><span class="w"> </span><span class="n">schedule</span><span class="p">,</span><span class="w"> </span><span class="n">active</span>
+<span class="linenos">25</span><span class="w">	    </span><span class="k">FROM</span>
+<span class="linenos">26</span><span class="w">	    	</span><span class="n">cron_chain</span>
+<span class="linenos">27</span><span class="p">),</span>
+<span class="linenos">28</span><span class="n">cte_tasks</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">29</span><span class="w">	</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">database_connection</span><span class="p">)</span>
+<span class="linenos">30</span><span class="w">	    </span><span class="k">SELECT</span>
+<span class="linenos">31</span><span class="w">	    	</span><span class="n">cron_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">connstr</span>
+<span class="linenos">32</span><span class="w">	    </span><span class="k">FROM</span>
+<span class="linenos">33</span><span class="w">	    	</span><span class="n">cron_chain</span>
+<span class="linenos">34</span><span class="w">	    </span><span class="n">RETURNING</span>
+<span class="linenos">35</span><span class="w">	        </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_id</span>
+<span class="linenos">36</span><span class="p">)</span>
+<span class="linenos">37</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_tasks</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="migrate-jobs-from-pgagent-to-pg-timetable">
+<h2><span class="section-number">7.2. </span>Migrate jobs from pgAgent to pg_timetable<a class="headerlink" href="#migrate-jobs-from-pgagent-to-pg-timetable" title="Link to this heading"></a></h2>
+<p>To migrate jobs from <strong>pgAgent</strong>, please use this script. <strong>pgAgent</strong> doesn’t have concept of <em>PROGRAM</em> task, thus to
+emulate <em>BATCH</em> steps, <strong>pg_timetable</strong> will execute them inside the shell. You may change the shell by editing <em>cte_shell</em>
+CTE clause.</p>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">bool_array_to_cron</span><span class="p">(</span><span class="n">bool</span><span class="p">[],</span><span class="w"> </span><span class="n">start_with</span><span class="w"> </span><span class="n">int4</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span>
+<span class="linenos"> 2</span><span class="err">$$</span>
+<span class="linenos"> 3</span><span class="k">WITH</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 4</span><span class="w">	</span><span class="k">SELECT</span><span class="w"> </span><span class="k">unnest</span><span class="p">(</span><span class="err">$</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">generate_series</span><span class="p">(</span><span class="err">$</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">array_length</span><span class="p">(</span><span class="err">$</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="o">+</span><span class="err">$</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">i</span><span class="w"> </span>
+<span class="linenos"> 5</span><span class="p">)</span>
+<span class="linenos"> 6</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">string_agg</span><span class="p">(</span><span class="n">i</span><span class="p">::</span><span class="nb">text</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="p">),</span><span class="w"> </span><span class="s1">&#39;*&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">e</span>
+<span class="linenos"> 7</span><span class="err">$$</span>
+<span class="linenos"> 8</span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">sql</span><span class="p">;</span>
+<span class="linenos"> 9</span>
+<span class="linenos">10</span>
+<span class="linenos">11</span><span class="k">WITH</span>
+<span class="linenos">12</span><span class="n">cte_shell</span><span class="p">(</span><span class="n">shell</span><span class="p">,</span><span class="w"> </span><span class="n">cmd_param</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">13</span><span class="w">	</span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;sh&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;-c&#39;</span><span class="p">)</span><span class="w"> </span><span class="c1">-- set the shell you want to use for batch steps, e.g. &quot;pwsh -c&quot;, &quot;cmd /C&quot;</span>
+<span class="linenos">14</span><span class="p">),</span>
+<span class="linenos">15</span><span class="n">pga_schedule</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">16</span><span class="w">	</span><span class="k">SELECT</span>
+<span class="linenos">17</span><span class="w">		</span><span class="n">s</span><span class="p">.</span><span class="n">jscjobid</span><span class="p">,</span>
+<span class="linenos">18</span><span class="w">		</span><span class="n">s</span><span class="p">.</span><span class="n">jscname</span><span class="p">,</span>
+<span class="linenos">19</span><span class="w">		</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;%s %s %s %s %s&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos">20</span><span class="w">			</span><span class="n">bool_array_to_cron</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">jscminutes</span><span class="p">),</span><span class="w"> </span>
+<span class="linenos">21</span><span class="w">			</span><span class="n">bool_array_to_cron</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">jschours</span><span class="p">),</span><span class="w"> </span>
+<span class="linenos">22</span><span class="w">			</span><span class="n">bool_array_to_cron</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">jscmonthdays</span><span class="p">),</span><span class="w"> </span>
+<span class="linenos">23</span><span class="w">			</span><span class="n">bool_array_to_cron</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">jscmonths</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">),</span><span class="w"> </span>
+<span class="linenos">24</span><span class="w">			</span><span class="n">bool_array_to_cron</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">jscweekdays</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">))</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">schedule</span>
+<span class="linenos">25</span><span class="w">	</span><span class="k">FROM</span><span class="w"> </span>
+<span class="linenos">26</span><span class="w">		</span><span class="n">pgagent</span><span class="p">.</span><span class="n">pga_schedule</span><span class="w"> </span><span class="n">s</span><span class="w">  </span>
+<span class="linenos">27</span><span class="w">	</span><span class="k">WHERE</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">jscenabled</span><span class="w"> </span>
+<span class="linenos">28</span><span class="w">			</span><span class="k">AND</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">jscend</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;infinity&#39;</span><span class="p">::</span><span class="n">timestamptz</span><span class="p">)</span>
+<span class="linenos">29</span><span class="w">			</span><span class="k">AND</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">jscstart</span>
+<span class="linenos">30</span><span class="p">),</span>
+<span class="linenos">31</span><span class="n">pga_chain</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">32</span><span class="w">    </span><span class="k">SELECT</span>
+<span class="linenos">33</span><span class="w">        </span><span class="n">nextval</span><span class="p">(</span><span class="s1">&#39;timetable.chain_chain_id_seq&#39;</span><span class="p">::</span><span class="n">regclass</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">chain_id</span><span class="p">,</span>
+<span class="linenos">34</span><span class="w">        </span><span class="n">jobid</span><span class="p">,</span>
+<span class="linenos">35</span><span class="w">        </span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;%s @ %s&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">jobname</span><span class="p">,</span><span class="w"> </span><span class="n">jscname</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">jobname</span><span class="p">,</span>
+<span class="linenos">36</span><span class="w">        </span><span class="n">jobhostagent</span><span class="p">,</span>
+<span class="linenos">37</span><span class="w">        </span><span class="n">jobenabled</span><span class="p">,</span>
+<span class="linenos">38</span><span class="w">        </span><span class="n">schedule</span>
+<span class="linenos">39</span><span class="w">    </span><span class="k">FROM</span>
+<span class="linenos">40</span><span class="w">        </span><span class="n">pgagent</span><span class="p">.</span><span class="n">pga_job</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">pga_schedule</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">jobid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jscjobid</span>
+<span class="linenos">41</span><span class="p">),</span>
+<span class="linenos">42</span><span class="n">cte_chain</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">43</span><span class="w">	</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">run_at</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span>
+<span class="linenos">44</span><span class="w">	    </span><span class="k">SELECT</span><span class="w"> </span>
+<span class="linenos">45</span><span class="w">	    	</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">jobname</span><span class="p">,</span><span class="w"> </span><span class="n">jobhostagent</span><span class="p">,</span><span class="w"> </span><span class="n">schedule</span><span class="p">,</span><span class="w"> </span><span class="n">jobenabled</span>
+<span class="linenos">46</span><span class="w">	    </span><span class="k">FROM</span>
+<span class="linenos">47</span><span class="w">	    	</span><span class="n">pga_chain</span>
+<span class="linenos">48</span><span class="p">),</span>
+<span class="linenos">49</span><span class="n">pga_step</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">50</span><span class="w">	</span><span class="k">SELECT</span><span class="w"> </span>
+<span class="linenos">51</span><span class="w">		</span><span class="k">c</span><span class="p">.</span><span class="n">chain_id</span><span class="p">,</span>
+<span class="linenos">52</span><span class="w">		</span><span class="n">nextval</span><span class="p">(</span><span class="s1">&#39;timetable.task_task_id_seq&#39;</span><span class="p">::</span><span class="n">regclass</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">task_id</span><span class="p">,</span>
+<span class="linenos">53</span><span class="w">		</span><span class="n">rank</span><span class="p">()</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="p">(</span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">jstname</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">jstorder</span><span class="p">,</span>
+<span class="linenos">54</span><span class="w">		</span><span class="n">jstid</span><span class="p">,</span>
+<span class="linenos">55</span><span class="w">		</span><span class="n">jstname</span><span class="p">,</span>
+<span class="linenos">56</span><span class="w">		</span><span class="n">jstenabled</span><span class="p">,</span>
+<span class="linenos">57</span><span class="w">		</span><span class="k">CASE</span><span class="w"> </span><span class="n">jstkind</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="s1">&#39;b&#39;</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="w"> </span><span class="k">END</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">jstkind</span><span class="p">,</span>
+<span class="linenos">58</span><span class="w">		</span><span class="n">jstcode</span><span class="p">,</span>
+<span class="linenos">59</span><span class="w">		</span><span class="k">COALESCE</span><span class="p">(</span>
+<span class="linenos">60</span><span class="w">			</span><span class="k">NULLIF</span><span class="p">(</span><span class="n">jstconnstr</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">),</span><span class="w"> </span>
+<span class="linenos">61</span><span class="w">			</span><span class="k">CASE</span><span class="w"> </span>
+<span class="linenos">62</span><span class="w">				</span><span class="k">WHEN</span><span class="w"> </span><span class="n">jstdbname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current_database</span><span class="p">()</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos">63</span><span class="w">				</span><span class="k">WHEN</span><span class="w"> </span><span class="n">jstdbname</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="s1">&#39;dbname=&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">jstdbname</span><span class="w"> </span>
+<span class="linenos">64</span><span class="w">			</span><span class="k">END</span>
+<span class="linenos">65</span><span class="w">		</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">jstconnstr</span><span class="p">,</span>
+<span class="linenos">66</span><span class="w">		</span><span class="n">jstonerror</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s1">&#39;f&#39;</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">jstignoreerror</span>
+<span class="linenos">67</span><span class="w">	</span><span class="k">FROM</span>
+<span class="linenos">68</span><span class="w">		</span><span class="n">pga_chain</span><span class="w"> </span><span class="k">c</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">pgagent</span><span class="p">.</span><span class="n">pga_jobstep</span><span class="w"> </span><span class="n">js</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">c</span><span class="p">.</span><span class="n">jobid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">js</span><span class="p">.</span><span class="n">jstjobid</span>
+<span class="linenos">69</span><span class="p">),</span>
+<span class="linenos">70</span><span class="n">cte_tasks</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">71</span><span class="w">	</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_name</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">database_connection</span><span class="p">)</span>
+<span class="linenos">72</span><span class="w">	    </span><span class="k">SELECT</span>
+<span class="linenos">73</span><span class="w">	    	</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">jstname</span><span class="p">,</span><span class="w"> </span><span class="n">jstorder</span><span class="p">,</span><span class="w"> </span><span class="n">jstkind</span><span class="p">::</span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos">74</span><span class="w">	    	</span><span class="k">CASE</span><span class="w"> </span><span class="n">jstkind</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="n">jstcode</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="n">sh</span><span class="p">.</span><span class="n">shell</span><span class="w"> </span><span class="k">END</span><span class="p">,</span>
+<span class="linenos">75</span><span class="w">	    	</span><span class="n">jstconnstr</span>
+<span class="linenos">76</span><span class="w">	    </span><span class="k">FROM</span>
+<span class="linenos">77</span><span class="w">	    	</span><span class="n">pga_step</span><span class="p">,</span><span class="w"> </span><span class="n">cte_shell</span><span class="w"> </span><span class="n">sh</span>
+<span class="linenos">78</span><span class="p">),</span>
+<span class="linenos">79</span><span class="n">cte_parameters</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">80</span><span class="w">	</span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos">81</span><span class="w">		</span><span class="k">SELECT</span><span class="w"> </span>
+<span class="linenos">82</span><span class="w">			</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">jsonb_build_array</span><span class="p">(</span><span class="n">sh</span><span class="p">.</span><span class="n">cmd_param</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">jstcode</span><span class="p">)</span>
+<span class="linenos">83</span><span class="w">	    </span><span class="k">FROM</span>
+<span class="linenos">84</span><span class="w">	    	</span><span class="n">pga_step</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">cte_shell</span><span class="w"> </span><span class="n">sh</span>
+<span class="linenos">85</span><span class="w">	    </span><span class="k">WHERE</span><span class="w"> </span>
+<span class="linenos">86</span><span class="w">	    	</span><span class="n">s</span><span class="p">.</span><span class="n">jstkind</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span>
+<span class="linenos">87</span><span class="p">)</span>
+<span class="linenos">88</span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">pga_chain</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="samples.html" class="btn btn-neutral float-left" title="6. Samples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="8. REST API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

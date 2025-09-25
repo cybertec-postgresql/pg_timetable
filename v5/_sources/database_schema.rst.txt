@@ -1,0 +1,34 @@
+Database Schema
+========================================
+
+**pg_timetable** is a database driven application. During the first start the necessary schema is created if absent.
+
+Main tables and objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../internal/pgengine/sql/ddl.sql
+    :linenos:
+    :language: SQL
+
+Jobs related functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../internal/pgengine/sql/job_functions.sql
+    :linenos:
+    :language: SQL
+
+Сron related functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../internal/pgengine/sql/cron_functions.sql
+    :linenos:
+    :language: SQL
+
+ER-Diagram
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: timetable_schema.png
+    :align: center
+    :alt: Database Schema
+
+    ER-Diagram

@@ -1,0 +1,460 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9. Database Schema &mdash; pg_timetable  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="8. REST API" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pg_timetable
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">2. Project background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">4. Components</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_jobs.html">5. Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">6. Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">7. Migration from others schedulers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">8. REST API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">9. Database Schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#main-tables-and-objects">9.1. Main tables and objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jobs-related-functions">9.2. Jobs related functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ron-related-functions">9.3. Сron related functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#er-diagram">9.4. ER-Diagram</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pg_timetable</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">9. </span>Database Schema</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/database_schema.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="database-schema">
+<h1><span class="section-number">9. </span>Database Schema<a class="headerlink" href="#database-schema" title="Link to this heading"></a></h1>
+<p><strong>pg_timetable</strong> is a database driven application. During the first start the necessary schema is created if absent.</p>
+<section id="main-tables-and-objects">
+<h2><span class="section-number">9.1. </span>Main tables and objects<a class="headerlink" href="#main-tables-and-objects" title="Link to this heading"></a></h2>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">  2</span><span class="w">    </span><span class="n">chain_id</span><span class="w">            </span><span class="n">BIGSERIAL</span><span class="w">   </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<span class="linenos">  3</span><span class="w">    </span><span class="n">chain_name</span><span class="w">          </span><span class="nb">TEXT</span><span class="w">        </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">UNIQUE</span><span class="p">,</span>
+<span class="linenos">  4</span><span class="w">    </span><span class="n">run_at</span><span class="w">              </span><span class="n">timetable</span><span class="p">.</span><span class="n">cron</span><span class="p">,</span>
+<span class="linenos">  5</span><span class="w">    </span><span class="n">max_instances</span><span class="w">       </span><span class="nb">INTEGER</span><span class="p">,</span>
+<span class="linenos">  6</span><span class="w">    </span><span class="n">timeout</span><span class="w">             </span><span class="nb">INTEGER</span><span class="w">     </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="linenos">  7</span><span class="w">    </span><span class="n">live</span><span class="w">                </span><span class="nb">BOOLEAN</span><span class="w">     </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos">  8</span><span class="w">    </span><span class="n">self_destruct</span><span class="w">       </span><span class="nb">BOOLEAN</span><span class="w">     </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos">  9</span><span class="w">    </span><span class="n">exclusive_execution</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w">     </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos"> 10</span><span class="w">    </span><span class="n">client_name</span><span class="w">         </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 11</span><span class="w">    </span><span class="n">on_error</span><span class="w">            </span><span class="nb">TEXT</span>
+<span class="linenos"> 12</span><span class="p">);</span>
+<span class="linenos"> 13</span>
+<span class="linenos"> 14</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 15</span><span class="w">    </span><span class="s1">&#39;Stores information about chains schedule&#39;</span><span class="p">;</span>
+<span class="linenos"> 16</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">run_at</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 17</span><span class="w">    </span><span class="s1">&#39;Extended CRON-style time notation the chain has to be run at&#39;</span><span class="p">;</span>
+<span class="linenos"> 18</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">max_instances</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 19</span><span class="w">    </span><span class="s1">&#39;Number of instances (clients) this chain can run in parallel&#39;</span><span class="p">;</span>
+<span class="linenos"> 20</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">timeout</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 21</span><span class="w">    </span><span class="s1">&#39;Abort any chain that takes more than the specified number of milliseconds&#39;</span><span class="p">;</span>
+<span class="linenos"> 22</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">live</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 23</span><span class="w">    </span><span class="s1">&#39;Indication that the chain is ready to run, set to FALSE to pause execution&#39;</span><span class="p">;</span>
+<span class="linenos"> 24</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">self_destruct</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 25</span><span class="w">    </span><span class="s1">&#39;Indication that this chain will delete itself after successful run&#39;</span><span class="p">;</span>
+<span class="linenos"> 26</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">exclusive_execution</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 27</span><span class="w">    </span><span class="s1">&#39;All parallel chains should be paused while executing this chain&#39;</span><span class="p">;</span>
+<span class="linenos"> 28</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">.</span><span class="n">client_name</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 29</span><span class="w">    </span><span class="s1">&#39;Only client with this name is allowed to run this chain, set to NULL to allow any client&#39;</span><span class="p">;</span><span class="w">    </span>
+<span class="linenos"> 30</span>
+<span class="linenos"> 31</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">ENUM</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;BUILTIN&#39;</span><span class="p">);</span>
+<span class="linenos"> 32</span>
+<span class="linenos"> 33</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 34</span><span class="w">    </span><span class="n">task_id</span><span class="w">             </span><span class="n">BIGSERIAL</span><span class="w">               </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span>
+<span class="linenos"> 35</span><span class="w">    </span><span class="n">chain_id</span><span class="w">            </span><span class="nb">BIGINT</span><span class="w">                  </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="p">(</span><span class="n">chain_id</span><span class="p">)</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">CASCADE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<span class="linenos"> 36</span><span class="w">    </span><span class="n">task_order</span><span class="w">          </span><span class="n">DOUBLE</span><span class="w"> </span><span class="k">PRECISION</span><span class="w">        </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 37</span><span class="w">    </span><span class="n">task_name</span><span class="w">           </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 38</span><span class="w">    </span><span class="n">kind</span><span class="w">                </span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="w">  </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">,</span>
+<span class="linenos"> 39</span><span class="w">    </span><span class="n">command</span><span class="w">             </span><span class="nb">TEXT</span><span class="w">                    </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 40</span><span class="w">    </span><span class="n">run_as</span><span class="w">              </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 41</span><span class="w">    </span><span class="n">database_connection</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 42</span><span class="w">    </span><span class="n">ignore_error</span><span class="w">        </span><span class="nb">BOOLEAN</span><span class="w">                 </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos"> 43</span><span class="w">    </span><span class="n">autonomous</span><span class="w">          </span><span class="nb">BOOLEAN</span><span class="w">                 </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos"> 44</span><span class="w">    </span><span class="n">timeout</span><span class="w">             </span><span class="nb">INTEGER</span><span class="w">                 </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span>
+<span class="linenos"> 45</span><span class="p">);</span><span class="w">          </span>
+<span class="linenos"> 46</span>
+<span class="linenos"> 47</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 48</span><span class="w">    </span><span class="s1">&#39;Holds information about chain elements aka tasks&#39;</span><span class="p">;</span>
+<span class="linenos"> 49</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">chain_id</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 50</span><span class="w">    </span><span class="s1">&#39;Link to the chain, if NULL task considered to be disabled&#39;</span><span class="p">;</span>
+<span class="linenos"> 51</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">task_order</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 52</span><span class="w">    </span><span class="s1">&#39;Indicates the order of task within a chain&#39;</span><span class="p">;</span><span class="w">    </span>
+<span class="linenos"> 53</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">run_as</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 54</span><span class="w">    </span><span class="s1">&#39;Role name to run task as. Uses SET ROLE for SQL commands&#39;</span><span class="p">;</span>
+<span class="linenos"> 55</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">ignore_error</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 56</span><span class="w">    </span><span class="s1">&#39;Indicates whether a next task in a chain can be executed regardless of the success of the current one&#39;</span><span class="p">;</span>
+<span class="linenos"> 57</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">kind</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 58</span><span class="w">    </span><span class="s1">&#39;Indicates whether &quot;command&quot; is SQL, built-in function or an external program&#39;</span><span class="p">;</span>
+<span class="linenos"> 59</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">command</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 60</span><span class="w">    </span><span class="s1">&#39;Contains either an SQL command, or command string to be executed&#39;</span><span class="p">;</span>
+<span class="linenos"> 61</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">timeout</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 62</span><span class="w">    </span><span class="s1">&#39;Abort any task within a chain that takes more than the specified number of milliseconds&#39;</span><span class="p">;</span>
+<span class="linenos"> 63</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">COLUMN</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">.</span><span class="n">autonomous</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 64</span><span class="w">    </span><span class="s1">&#39;Specify if the task should be executed out of the chain transaction. Useful for VACUUM, CREATE DATABASE, CALL etc.&#39;</span><span class="p">;</span>
+<span class="linenos"> 65</span>
+<span class="linenos"> 66</span><span class="c1">-- parameter passing for a chain task</span>
+<span class="linenos"> 67</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="p">(</span>
+<span class="linenos"> 68</span><span class="w">    </span><span class="n">task_id</span><span class="w">     </span><span class="nb">BIGINT</span><span class="w">  </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+<span class="linenos"> 69</span><span class="w">                        </span><span class="k">ON</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">CASCADE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">,</span>
+<span class="linenos"> 70</span><span class="w">    </span><span class="n">order_id</span><span class="w">    </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="n">order_id</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">),</span>
+<span class="linenos"> 71</span><span class="w">    </span><span class="n">value</span><span class="w">       </span><span class="n">JSONB</span><span class="p">,</span>
+<span class="linenos"> 72</span><span class="w">    </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">)</span>
+<span class="linenos"> 73</span><span class="p">);</span>
+<span class="linenos"> 74</span>
+<span class="linenos"> 75</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 76</span><span class="w">    </span><span class="s1">&#39;Stores parameters passed as arguments to a chain task&#39;</span><span class="p">;</span>
+<span class="linenos"> 77</span>
+<span class="linenos"> 78</span><span class="k">CREATE</span><span class="w"> </span><span class="n">UNLOGGED</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span><span class="p">(</span>
+<span class="linenos"> 79</span><span class="w">    </span><span class="n">client_pid</span><span class="w">  </span><span class="nb">BIGINT</span><span class="w">  </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 80</span><span class="w">    </span><span class="n">server_pid</span><span class="w">  </span><span class="nb">BIGINT</span><span class="w">  </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 81</span><span class="w">    </span><span class="n">client_name</span><span class="w"> </span><span class="nb">TEXT</span><span class="w">    </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 82</span><span class="w">    </span><span class="n">started_at</span><span class="w">  </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">now</span><span class="p">()</span>
+<span class="linenos"> 83</span><span class="p">);</span>
+<span class="linenos"> 84</span>
+<span class="linenos"> 85</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos"> 86</span><span class="w">    </span><span class="s1">&#39;Stores information about active sessions&#39;</span><span class="p">;</span>
+<span class="linenos"> 87</span>
+<span class="linenos"> 88</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TYPE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">log_type</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">ENUM</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;NOTICE&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;INFO&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ERROR&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PANIC&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;USER&#39;</span><span class="p">);</span>
+<span class="linenos"> 89</span>
+<span class="linenos"> 90</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">get_client_name</span><span class="p">(</span><span class="nb">integer</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span>
+<span class="linenos"> 91</span><span class="err">$$</span>
+<span class="linenos"> 92</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">client_name</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">server_pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span>
+<span class="linenos"> 93</span><span class="err">$$</span>
+<span class="linenos"> 94</span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">sql</span><span class="p">;</span>
+<span class="linenos"> 95</span>
+<span class="linenos"> 96</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">log</span>
+<span class="linenos"> 97</span><span class="p">(</span>
+<span class="linenos"> 98</span><span class="w">    </span><span class="n">ts</span><span class="w">              </span><span class="n">TIMESTAMPTZ</span><span class="w">         </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">now</span><span class="p">(),</span>
+<span class="linenos"> 99</span><span class="w">    </span><span class="n">pid</span><span class="w">             </span><span class="nb">INTEGER</span><span class="w">             </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos">100</span><span class="w">    </span><span class="n">log_level</span><span class="w">       </span><span class="n">timetable</span><span class="p">.</span><span class="n">log_type</span><span class="w">  </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos">101</span><span class="w">    </span><span class="n">client_name</span><span class="w">     </span><span class="nb">TEXT</span><span class="w">                </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">get_client_name</span><span class="p">(</span><span class="n">pg_backend_pid</span><span class="p">()),</span>
+<span class="linenos">102</span><span class="w">    </span><span class="n">message</span><span class="w">         </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos">103</span><span class="w">    </span><span class="n">message_data</span><span class="w">    </span><span class="n">jsonb</span>
+<span class="linenos">104</span><span class="p">);</span>
+<span class="linenos">105</span>
+<span class="linenos">106</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">log</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos">107</span><span class="w">    </span><span class="s1">&#39;Stores log entries of active sessions&#39;</span><span class="p">;</span>
+<span class="linenos">108</span>
+<span class="linenos">109</span><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">execution_log</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">110</span><span class="w">    </span><span class="n">chain_id</span><span class="w">        </span><span class="nb">BIGINT</span><span class="p">,</span>
+<span class="linenos">111</span><span class="w">    </span><span class="n">task_id</span><span class="w">         </span><span class="nb">BIGINT</span><span class="p">,</span>
+<span class="linenos">112</span><span class="w">    </span><span class="n">txid</span><span class="w">            </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos">113</span><span class="w">    </span><span class="n">last_run</span><span class="w">        </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">now</span><span class="p">(),</span>
+<span class="linenos">114</span><span class="w">    </span><span class="n">finished</span><span class="w">        </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span>
+<span class="linenos">115</span><span class="w">    </span><span class="n">pid</span><span class="w">             </span><span class="nb">BIGINT</span><span class="p">,</span>
+<span class="linenos">116</span><span class="w">    </span><span class="n">returncode</span><span class="w">      </span><span class="nb">INTEGER</span><span class="p">,</span>
+<span class="linenos">117</span><span class="w">    </span><span class="n">ignore_error</span><span class="w">    </span><span class="nb">BOOLEAN</span><span class="p">,</span>
+<span class="linenos">118</span><span class="w">    </span><span class="n">kind</span><span class="w">            </span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="p">,</span>
+<span class="linenos">119</span><span class="w">    </span><span class="n">command</span><span class="w">         </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos">120</span><span class="w">    </span><span class="k">output</span><span class="w">          </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos">121</span><span class="w">    </span><span class="n">client_name</span><span class="w">     </span><span class="nb">TEXT</span><span class="w">        </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos">122</span><span class="p">);</span>
+<span class="linenos">123</span>
+<span class="linenos">124</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">execution_log</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos">125</span><span class="w">    </span><span class="s1">&#39;Stores log entries of executed tasks and chains&#39;</span><span class="p">;</span>
+<span class="linenos">126</span>
+<span class="linenos">127</span><span class="k">CREATE</span><span class="w"> </span><span class="n">UNLOGGED</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_chain</span><span class="p">(</span>
+<span class="linenos">128</span><span class="w">    </span><span class="n">chain_id</span><span class="w">    </span><span class="nb">BIGINT</span><span class="w">  </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos">129</span><span class="w">    </span><span class="n">client_name</span><span class="w"> </span><span class="nb">TEXT</span><span class="w">    </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos">130</span><span class="w">    </span><span class="n">started_at</span><span class="w">  </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">now</span><span class="p">()</span>
+<span class="linenos">131</span><span class="p">);</span>
+<span class="linenos">132</span>
+<span class="linenos">133</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_chain</span><span class="w"> </span><span class="k">IS</span>
+<span class="linenos">134</span><span class="w">    </span><span class="s1">&#39;Stores information about active chains within session&#39;</span><span class="p">;</span>
+<span class="linenos">135</span>
+<span class="linenos">136</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">try_lock_client_name</span><span class="p">(</span><span class="n">worker_pid</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">,</span><span class="w"> </span><span class="n">worker_name</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">)</span>
+<span class="linenos">137</span><span class="k">RETURNS</span><span class="w"> </span><span class="n">bool</span><span class="w"> </span><span class="k">AS</span>
+<span class="linenos">138</span><span class="err">$</span><span class="n">CODE$</span>
+<span class="linenos">139</span><span class="k">BEGIN</span>
+<span class="linenos">140</span><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="n">pg_is_in_recovery</span><span class="p">()</span><span class="w"> </span><span class="k">THEN</span>
+<span class="linenos">141</span><span class="w">        </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Cannot obtain lock on a replica. Please, use the primary node&#39;</span><span class="p">;</span>
+<span class="linenos">142</span><span class="w">        </span><span class="k">RETURN</span><span class="w"> </span><span class="k">FALSE</span><span class="p">;</span>
+<span class="linenos">143</span><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="k">IF</span><span class="p">;</span>
+<span class="linenos">144</span><span class="w">    </span><span class="c1">-- remove disconnected sessions</span>
+<span class="linenos">145</span><span class="w">    </span><span class="k">DELETE</span>
+<span class="linenos">146</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span>
+<span class="linenos">147</span><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">server_pid</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">148</span><span class="w">            </span><span class="k">SELECT</span><span class="w"> </span><span class="n">pid</span>
+<span class="linenos">149</span><span class="w">            </span><span class="k">FROM</span><span class="w"> </span><span class="n">pg_catalog</span><span class="p">.</span><span class="n">pg_stat_activity</span>
+<span class="linenos">150</span><span class="w">            </span><span class="k">WHERE</span><span class="w"> </span><span class="n">application_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;pg_timetable&#39;</span>
+<span class="linenos">151</span><span class="w">        </span><span class="p">);</span>
+<span class="linenos">152</span><span class="w">    </span><span class="k">DELETE</span><span class="w"> </span>
+<span class="linenos">153</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_chain</span><span class="w"> </span>
+<span class="linenos">154</span><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">client_name</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">155</span><span class="w">            </span><span class="k">SELECT</span><span class="w"> </span><span class="n">client_name</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span>
+<span class="linenos">156</span><span class="w">        </span><span class="p">);</span>
+<span class="linenos">157</span><span class="w">    </span><span class="c1">-- check if there any active sessions with the client name but different client pid</span>
+<span class="linenos">158</span><span class="w">    </span><span class="n">PERFORM</span><span class="w"> </span><span class="mi">1</span>
+<span class="linenos">159</span><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span><span class="w"> </span><span class="n">s</span>
+<span class="linenos">160</span><span class="w">        </span><span class="k">WHERE</span>
+<span class="linenos">161</span><span class="w">            </span><span class="n">s</span><span class="p">.</span><span class="n">client_pid</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="n">worker_pid</span>
+<span class="linenos">162</span><span class="w">            </span><span class="k">AND</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">client_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">worker_name</span>
+<span class="linenos">163</span><span class="w">        </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="linenos">164</span><span class="w">    </span><span class="k">IF</span><span class="w"> </span><span class="k">FOUND</span><span class="w"> </span><span class="k">THEN</span>
+<span class="linenos">165</span><span class="w">        </span><span class="n">RAISE</span><span class="w"> </span><span class="n">NOTICE</span><span class="w"> </span><span class="s1">&#39;Another client is already connected to server with name: %&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">worker_name</span><span class="p">;</span>
+<span class="linenos">166</span><span class="w">        </span><span class="k">RETURN</span><span class="w"> </span><span class="k">FALSE</span><span class="p">;</span>
+<span class="linenos">167</span><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="k">IF</span><span class="p">;</span>
+<span class="linenos">168</span><span class="w">    </span><span class="c1">-- insert current session information</span>
+<span class="linenos">169</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">active_session</span><span class="p">(</span><span class="n">client_pid</span><span class="p">,</span><span class="w"> </span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">server_pid</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">worker_pid</span><span class="p">,</span><span class="w"> </span><span class="n">worker_name</span><span class="p">,</span><span class="w"> </span><span class="n">pg_backend_pid</span><span class="p">());</span>
+<span class="linenos">170</span><span class="w">    </span><span class="k">RETURN</span><span class="w"> </span><span class="k">TRUE</span><span class="p">;</span>
+<span class="linenos">171</span><span class="k">END</span><span class="p">;</span>
+<span class="linenos">172</span><span class="err">$</span><span class="n">CODE$</span>
+<span class="linenos">173</span><span class="k">STRICT</span>
+<span class="linenos">174</span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">plpgsql</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="jobs-related-functions">
+<h2><span class="section-number">9.2. </span>Jobs related functions<a class="headerlink" href="#jobs-related-functions" title="Link to this heading"></a></h2>
+<div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="linenos">  1</span><span class="c1">-- add_task() will add a task to the same chain as the task with `parent_id`</span>
+<span class="linenos">  2</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_task</span><span class="p">(</span>
+<span class="linenos">  3</span><span class="w">    </span><span class="k">IN</span><span class="w"> </span><span class="n">kind</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="p">,</span>
+<span class="linenos">  4</span><span class="w">    </span><span class="k">IN</span><span class="w"> </span><span class="n">command</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos">  5</span><span class="w">    </span><span class="k">IN</span><span class="w"> </span><span class="n">parent_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">,</span>
+<span class="linenos">  6</span><span class="w">    </span><span class="k">IN</span><span class="w"> </span><span class="n">order_delta</span><span class="w"> </span><span class="n">DOUBLE</span><span class="w"> </span><span class="k">PRECISION</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">10</span>
+<span class="linenos">  7</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos">  8</span><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos">  9</span><span class="w">	</span><span class="k">SELECT</span><span class="w"> </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="err">$</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">3</span>
+<span class="linenos"> 10</span><span class="w">	</span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span>
+<span class="linenos"> 11</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos"> 12</span>
+<span class="linenos"> 13</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_task</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Add a task to the same chain as the task with parent_id&#39;</span><span class="p">;</span>
+<span class="linenos"> 14</span>
+<span class="linenos"> 15</span><span class="c1">-- add_job() will add one-task chain to the system</span>
+<span class="linenos"> 16</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span>
+<span class="linenos"> 17</span><span class="w">    </span><span class="n">job_name</span><span class="w">            </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 18</span><span class="w">    </span><span class="n">job_schedule</span><span class="w">        </span><span class="n">timetable</span><span class="p">.</span><span class="n">cron</span><span class="p">,</span>
+<span class="linenos"> 19</span><span class="w">    </span><span class="n">job_command</span><span class="w">         </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 20</span><span class="w">    </span><span class="n">job_parameters</span><span class="w">      </span><span class="n">JSONB</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 21</span><span class="w">    </span><span class="n">job_kind</span><span class="w">            </span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="s1">&#39;SQL&#39;</span><span class="p">::</span><span class="n">timetable</span><span class="p">.</span><span class="n">command_kind</span><span class="p">,</span>
+<span class="linenos"> 22</span><span class="w">    </span><span class="n">job_client_name</span><span class="w">     </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 23</span><span class="w">    </span><span class="n">job_max_instances</span><span class="w">   </span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span>
+<span class="linenos"> 24</span><span class="w">    </span><span class="n">job_live</span><span class="w">            </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<span class="linenos"> 25</span><span class="w">    </span><span class="n">job_self_destruct</span><span class="w">   </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos"> 26</span><span class="w">    </span><span class="n">job_ignore_errors</span><span class="w">   </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<span class="linenos"> 27</span><span class="w">    </span><span class="n">job_exclusive</span><span class="w">       </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">FALSE</span><span class="p">,</span>
+<span class="linenos"> 28</span><span class="w">    </span><span class="n">job_on_error</span><span class="w">        </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos"> 29</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos"> 30</span><span class="w">    </span><span class="k">WITH</span><span class="w"> </span>
+<span class="linenos"> 31</span><span class="w">        </span><span class="n">cte_chain</span><span class="w"> </span><span class="p">(</span><span class="n">v_chain_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 32</span><span class="w">            </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">run_at</span><span class="p">,</span><span class="w"> </span><span class="n">max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">,</span><span class="w"> </span><span class="n">self_destruct</span><span class="p">,</span><span class="w"> </span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">exclusive_execution</span><span class="p">,</span><span class="w"> </span><span class="n">on_error</span><span class="p">)</span><span class="w"> </span>
+<span class="linenos"> 33</span><span class="w">            </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">job_name</span><span class="p">,</span><span class="w"> </span><span class="n">job_schedule</span><span class="p">,</span><span class="n">job_max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">job_live</span><span class="p">,</span><span class="w"> </span><span class="n">job_self_destruct</span><span class="p">,</span><span class="w"> </span><span class="n">job_client_name</span><span class="p">,</span><span class="w"> </span><span class="n">job_exclusive</span><span class="p">,</span><span class="w"> </span><span class="n">job_on_error</span><span class="p">)</span>
+<span class="linenos"> 34</span><span class="w">            </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span>
+<span class="linenos"> 35</span><span class="w">        </span><span class="p">),</span>
+<span class="linenos"> 36</span><span class="w">        </span><span class="n">cte_task</span><span class="p">(</span><span class="n">v_task_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 37</span><span class="w">            </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">,</span><span class="w"> </span><span class="n">ignore_error</span><span class="p">,</span><span class="w"> </span><span class="n">autonomous</span><span class="p">)</span>
+<span class="linenos"> 38</span><span class="w">            </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="n">job_kind</span><span class="p">,</span><span class="w"> </span><span class="n">job_command</span><span class="p">,</span><span class="w"> </span><span class="n">job_ignore_errors</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span>
+<span class="linenos"> 39</span><span class="w">            </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span>
+<span class="linenos"> 40</span><span class="w">            </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span>
+<span class="linenos"> 41</span><span class="w">        </span><span class="p">),</span>
+<span class="linenos"> 42</span><span class="w">        </span><span class="n">cte_param</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 43</span><span class="w">            </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<span class="linenos"> 44</span><span class="w">            </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">job_parameters</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_task</span><span class="p">,</span><span class="w"> </span><span class="n">cte_chain</span>
+<span class="linenos"> 45</span><span class="w">        </span><span class="p">)</span>
+<span class="linenos"> 46</span><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span>
+<span class="linenos"> 47</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos"> 48</span>
+<span class="linenos"> 49</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Add one-task chain (aka job) to the system&#39;</span><span class="p">;</span>
+<span class="linenos"> 50</span>
+<span class="linenos"> 51</span><span class="c1">-- notify_chain_start() will send notification to the worker to start the chain</span>
+<span class="linenos"> 52</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_start</span><span class="p">(</span>
+<span class="linenos"> 53</span><span class="w">    </span><span class="n">chain_id</span><span class="w">    </span><span class="nb">BIGINT</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 54</span><span class="w">    </span><span class="n">worker_name</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span>
+<span class="linenos"> 55</span><span class="w">    </span><span class="n">start_delay</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos"> 56</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="n">void</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos"> 57</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">pg_notify</span><span class="p">(</span>
+<span class="linenos"> 58</span><span class="w">        </span><span class="n">worker_name</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 59</span><span class="w">        </span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;{&quot;ConfigID&quot;: %s, &quot;Command&quot;: &quot;START&quot;, &quot;Ts&quot;: %s, &quot;Delay&quot;: %s}&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 60</span><span class="w">            </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 61</span><span class="w">            </span><span class="k">EXTRACT</span><span class="p">(</span><span class="n">epoch</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">clock_timestamp</span><span class="p">())::</span><span class="nb">bigint</span><span class="p">,</span>
+<span class="linenos"> 62</span><span class="w">            </span><span class="k">COALESCE</span><span class="p">(</span><span class="k">EXTRACT</span><span class="p">(</span><span class="n">epoch</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">start_delay</span><span class="p">)::</span><span class="nb">bigint</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="linenos"> 63</span><span class="w">        </span><span class="p">)</span>
+<span class="linenos"> 64</span><span class="w">    </span><span class="p">)</span>
+<span class="linenos"> 65</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos"> 66</span>
+<span class="linenos"> 67</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_start</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Send notification to the worker to start the chain&#39;</span><span class="p">;</span>
+<span class="linenos"> 68</span>
+<span class="linenos"> 69</span><span class="c1">-- notify_chain_stop() will send notification to the worker to stop the chain</span>
+<span class="linenos"> 70</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_stop</span><span class="p">(</span>
+<span class="linenos"> 71</span><span class="w">    </span><span class="n">chain_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 72</span><span class="w">    </span><span class="n">worker_name</span><span class="w"> </span><span class="nb">TEXT</span>
+<span class="linenos"> 73</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="n">void</span><span class="w"> </span><span class="k">AS</span><span class="w">  </span><span class="err">$$</span><span class="w"> </span>
+<span class="linenos"> 74</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">pg_notify</span><span class="p">(</span>
+<span class="linenos"> 75</span><span class="w">        </span><span class="n">worker_name</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 76</span><span class="w">        </span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;{&quot;ConfigID&quot;: %s, &quot;Command&quot;: &quot;STOP&quot;, &quot;Ts&quot;: %s}&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 77</span><span class="w">            </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span>
+<span class="linenos"> 78</span><span class="w">            </span><span class="k">EXTRACT</span><span class="p">(</span><span class="n">epoch</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">clock_timestamp</span><span class="p">())::</span><span class="nb">bigint</span><span class="p">)</span>
+<span class="linenos"> 79</span><span class="w">        </span><span class="p">)</span>
+<span class="linenos"> 80</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos"> 81</span>
+<span class="linenos"> 82</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_stop</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Send notification to the worker to stop the chain&#39;</span><span class="p">;</span>
+<span class="linenos"> 83</span>
+<span class="linenos"> 84</span><span class="c1">-- move_task_up() will switch the order of the task execution with a previous task within the chain</span>
+<span class="linenos"> 85</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">move_task_up</span><span class="p">(</span><span class="k">IN</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">boolean</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos"> 86</span><span class="w">	</span><span class="k">WITH</span><span class="w"> </span><span class="n">current_task</span><span class="w"> </span><span class="p">(</span><span class="n">ct_chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">ct_id</span><span class="p">,</span><span class="w"> </span><span class="n">ct_order</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 87</span><span class="w">		</span><span class="k">SELECT</span><span class="w"> </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span>
+<span class="linenos"> 88</span><span class="w">	</span><span class="p">),</span>
+<span class="linenos"> 89</span><span class="w">	</span><span class="n">tasks</span><span class="p">(</span><span class="n">t_id</span><span class="p">,</span><span class="w"> </span><span class="n">t_new_order</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 90</span><span class="w">		</span><span class="k">SELECT</span><span class="w"> </span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">LAG</span><span class="p">(</span><span class="n">task_order</span><span class="p">)</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">LEAD</span><span class="p">(</span><span class="n">task_order</span><span class="p">)</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="n">w</span><span class="p">)</span>
+<span class="linenos"> 91</span><span class="w">		</span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">current_task</span><span class="w"> </span><span class="n">ct</span>
+<span class="linenos"> 92</span><span class="w">		</span><span class="k">WHERE</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ct_chain_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="p">(</span><span class="n">task_order</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">ct_order</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ct_id</span><span class="p">)</span>
+<span class="linenos"> 93</span><span class="w">		</span><span class="n">WINDOW</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="n">PARTITION</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">ABS</span><span class="p">(</span><span class="n">task_order</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ct_order</span><span class="p">))</span>
+<span class="linenos"> 94</span><span class="w">		</span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">2</span>
+<span class="linenos"> 95</span><span class="w">	</span><span class="p">),</span>
+<span class="linenos"> 96</span><span class="w">	</span><span class="n">upd</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos"> 97</span><span class="w">		</span><span class="k">UPDATE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">task_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t_new_order</span>
+<span class="linenos"> 98</span><span class="w">		</span><span class="k">FROM</span><span class="w"> </span><span class="n">tasks</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">tasks</span><span class="p">.</span><span class="n">t_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">task_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">tasks</span><span class="p">.</span><span class="n">t_new_order</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos"> 99</span><span class="w">		</span><span class="n">RETURNING</span><span class="w"> </span><span class="k">true</span>
+<span class="linenos">100</span><span class="w">	</span><span class="p">)</span>
+<span class="linenos">101</span><span class="w">	</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">upd</span>
+<span class="linenos">102</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos">103</span>
+<span class="linenos">104</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">move_task_up</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Switch the order of the task execution with a previous task within the chain&#39;</span><span class="p">;</span>
+<span class="linenos">105</span>
+<span class="linenos">106</span><span class="c1">-- move_task_down() will switch the order of the task execution with a following task within the chain</span>
+<span class="linenos">107</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">move_task_down</span><span class="p">(</span><span class="k">IN</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">boolean</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos">108</span><span class="w">	</span><span class="k">WITH</span><span class="w"> </span><span class="n">current_task</span><span class="w"> </span><span class="p">(</span><span class="n">ct_chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">ct_id</span><span class="p">,</span><span class="w"> </span><span class="n">ct_order</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">109</span><span class="w">		</span><span class="k">SELECT</span><span class="w"> </span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span>
+<span class="linenos">110</span><span class="w">	</span><span class="p">),</span>
+<span class="linenos">111</span><span class="w">	</span><span class="n">tasks</span><span class="p">(</span><span class="n">t_id</span><span class="p">,</span><span class="w"> </span><span class="n">t_new_order</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">112</span><span class="w">		</span><span class="k">SELECT</span><span class="w"> </span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">LAG</span><span class="p">(</span><span class="n">task_order</span><span class="p">)</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">LEAD</span><span class="p">(</span><span class="n">task_order</span><span class="p">)</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="n">w</span><span class="p">)</span>
+<span class="linenos">113</span><span class="w">		</span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">current_task</span><span class="w"> </span><span class="n">ct</span>
+<span class="linenos">114</span><span class="w">		</span><span class="k">WHERE</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ct_chain_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="p">(</span><span class="n">task_order</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">ct_order</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ct_id</span><span class="p">)</span>
+<span class="linenos">115</span><span class="w">		</span><span class="n">WINDOW</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="n">PARTITION</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">ABS</span><span class="p">(</span><span class="n">task_order</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ct_order</span><span class="p">))</span>
+<span class="linenos">116</span><span class="w">		</span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">2</span>
+<span class="linenos">117</span><span class="w">	</span><span class="p">),</span>
+<span class="linenos">118</span><span class="w">	</span><span class="n">upd</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="linenos">119</span><span class="w">		</span><span class="k">UPDATE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">task_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t_new_order</span>
+<span class="linenos">120</span><span class="w">		</span><span class="k">FROM</span><span class="w"> </span><span class="n">tasks</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">tasks</span><span class="p">.</span><span class="n">t_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">task_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">tasks</span><span class="p">.</span><span class="n">t_new_order</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="linenos">121</span><span class="w">		</span><span class="n">RETURNING</span><span class="w"> </span><span class="k">true</span>
+<span class="linenos">122</span><span class="w">	</span><span class="p">)</span>
+<span class="linenos">123</span><span class="w">	</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">upd</span>
+<span class="linenos">124</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos">125</span>
+<span class="linenos">126</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">move_task_down</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Switch the order of the task execution with a following task within the chain&#39;</span><span class="p">;</span>
+<span class="linenos">127</span>
+<span class="linenos">128</span><span class="c1">-- delete_job() will delete the chain and its tasks from the system</span>
+<span class="linenos">129</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">delete_job</span><span class="p">(</span><span class="k">IN</span><span class="w"> </span><span class="n">job_name</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">boolean</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos">130</span><span class="w">    </span><span class="k">WITH</span><span class="w"> </span><span class="n">del_chain</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="k">chain</span><span class="p">.</span><span class="n">chain_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span><span class="p">)</span>
+<span class="linenos">131</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="k">EXISTS</span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">del_chain</span><span class="p">)</span>
+<span class="linenos">132</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos">133</span>
+<span class="linenos">134</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">delete_job</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Delete the chain and its tasks from the system&#39;</span><span class="p">;</span>
+<span class="linenos">135</span>
+<span class="linenos">136</span><span class="c1">-- delete_task() will delete the task from a chain</span>
+<span class="linenos">137</span><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">delete_task</span><span class="p">(</span><span class="k">IN</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="nb">BIGINT</span><span class="p">)</span><span class="w"> </span><span class="k">RETURNS</span><span class="w"> </span><span class="nb">boolean</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span>
+<span class="linenos">138</span><span class="w">    </span><span class="k">WITH</span><span class="w"> </span><span class="n">del_task</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="p">)</span>
+<span class="linenos">139</span><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="k">EXISTS</span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">del_task</span><span class="p">)</span>
+<span class="linenos">140</span><span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span><span class="p">;</span>
+<span class="linenos">141</span>
+<span class="linenos">142</span><span class="k">COMMENT</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">delete_task</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="s1">&#39;Delete the task from a chain&#39;</span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="ron-related-functions">
+<h2><span class="section-number">9.3. </span>Сron related functions<a class="headerlink" href="#ron-related-functions" title="Link to this heading"></a></h2>
+</section>
+<section id="er-diagram">
+<h2><span class="section-number">9.4. </span>ER-Diagram<a class="headerlink" href="#er-diagram" title="Link to this heading"></a></h2>
+<figure class="align-center" id="id1">
+<img alt="Database Schema" src="_images/timetable_schema.png" />
+<figcaption>
+<p><span class="caption-text">ER-Diagram</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api.html" class="btn btn-neutral float-left" title="8. REST API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. Getting started &mdash; pg_timetable  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="6. Samples" href="samples.html" />
+    <link rel="prev" title="4. Components" href="components.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pg_timetable
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">1. Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="background.html">2. Project background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">3. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">4. Components</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">5. Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#add-simple-job">5.1. Add simple job</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">5.2. Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="samples.html">6. Samples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">7. Migration from others schedulers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">8. REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database_schema.html">9. Database Schema</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pg_timetable</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><span class="section-number">5. </span>Getting started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/basic_jobs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<h1><span class="section-number">5. </span>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<p>A variety of examples can be found in the <a class="reference internal" href="samples.html"><span class="doc">Samples</span></a>. If you want to migrate from a different scheduler,
+you can use scripts from <a class="reference internal" href="migration.html"><span class="doc">Migration from others schedulers</span></a> chapter.</p>
+<section id="add-simple-job">
+<h2><span class="section-number">5.1. </span>Add simple job<a class="headerlink" href="#add-simple-job" title="Link to this heading"></a></h2>
+<p>In a real world usually it’s enough to use simple jobs. Under this term we understand:</p>
+<ul class="simple">
+<li><p>job is a chain with only one <strong>task</strong> (step) in it;</p></li>
+<li><p>it doesn’t use complicated logic, but rather simple <strong>command</strong>;</p></li>
+<li><p>it doesn’t require complex transaction handling, since one task is implicitely executed as a single transaction.</p></li>
+</ul>
+<p>For such a group of chains we’ve introduced a special function <code class="docutils literal notranslate"><span class="pre">timetable.add_job()</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">timetable.add_job(job_name,</span> <span class="pre">job_schedule,</span> <span class="pre">job_command,</span> <span class="pre">...)</span> <span class="pre">RETURNS</span> <span class="pre">BIGINT</span></span></dt>
+<dd><p>Creates a simple one-task chain</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_name</strong> (<em>text</em>) – The unique name of the <strong>chain</strong> and <strong>command</strong>.</p></li>
+<li><p><strong>job_schedule</strong> (<em>timetable.cron</em>) – Time schedule in сron syntax at Postgres server time zone</p></li>
+<li><p><strong>job_command</strong> (<em>text</em>) – The SQL which will be executed.</p></li>
+<li><p><strong>job_parameters</strong> (<em>jsonb</em>) – Arguments for the chain <strong>command</strong>. Default: <code class="docutils literal notranslate"><span class="pre">NULL</span></code>.</p></li>
+<li><p><strong>job_kind</strong> (<em>timetable.command_kind</em>) – Kind of the command: <em>SQL</em>, <em>PROGRAM</em> or <em>BUILTIN</em>. Default: <code class="docutils literal notranslate"><span class="pre">SQL</span></code>.</p></li>
+<li><p><strong>job_client_name</strong> (<em>text</em>) – Specifies which client should execute the chain. Set this to <cite>NULL</cite> to allow any client. Default: <code class="docutils literal notranslate"><span class="pre">NULL</span></code>.</p></li>
+<li><p><strong>job_max_instances</strong> (<em>integer</em>) – The amount of instances that this chain may have running at the same time. Default: <code class="docutils literal notranslate"><span class="pre">NULL</span></code>.</p></li>
+<li><p><strong>job_live</strong> (<em>boolean</em>) – Control if the chain may be executed once it reaches its schedule. Default: <code class="docutils literal notranslate"><span class="pre">TRUE</span></code>.</p></li>
+<li><p><strong>job_self_destruct</strong> (<em>boolean</em>) – Self destruct the chain after execution. Default: <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>.</p></li>
+<li><p><strong>job_ignore_errors</strong> (<em>boolean</em>) – Ignore error during execution. Default: <code class="docutils literal notranslate"><span class="pre">TRUE</span></code>.</p></li>
+<li><p><strong>job_exclusive</strong> (<em>boolean</em>) – Execute the chain in the exclusive mode. Default: <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the ID of the created chain</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="examples">
+<h2><span class="section-number">5.2. </span>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">public.my_func()</span></code> at 00:05 every day in August Postgres server time zone:</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SELECT public.my_func()&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run <cite>VACUUM</cite> at minute 23 past every 2nd hour from 0 through 20 every day Postgres server time zone:</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;run-vacuum&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;23 0-20/2 * * *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Refresh materialized view every 2 hours:</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;refresh-matview&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;@every 2 hours&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;REFRESH MATERIALIZED VIEW public.mat_view&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Clear log table after <strong>pg_timetable</strong> restart:</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;clear-log&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;@reboot&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;TRUNCATE timetable.log&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Reindex at midnight Postgres server time zone on Sundays with <a class="reference external" href="https://www.postgresql.org/docs/current/app-reindexdb.html">reindexdb</a> utility:</p>
+<blockquote>
+<div><ul>
+<li><p>using default database under default user (no command line arguments)</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;reindex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;0 0 * * 7&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reindexdb&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">job_kind</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>specifying target database and tables, and be verbose</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;reindex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;0 0 * * 7&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reindexdb&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="s1">&#39;[&quot;--table=foo&quot;, &quot;--dbname=postgres&quot;, &quot;--verbose&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>passing password using environment variable through <code class="docutils literal notranslate"><span class="pre">bash</span></code> shell</p>
+<blockquote>
+<div><div class="highlight-SQL notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;reindex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;0 0 * * 7&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;bash&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="s1">&#39;[&quot;-c&quot;, &quot;PGPASSWORD=5m3R7K4754p4m reindexdb -U postgres -h 192.168.0.221 -v&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span>
+<span class="w">    </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">);</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="components.html" class="btn btn-neutral float-left" title="4. Components" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="samples.html" class="btn btn-neutral float-right" title="6. Samples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
