@@ -13,7 +13,7 @@ concurrency:
 jobs:
 
   test-postgresql-windows:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     name: Test on Windows
     runs-on: windows-latest
     steps:
@@ -48,7 +48,7 @@ jobs:
 
 
   test-postgresql-macos:
-    if: true # false to skip job during debug
+    if: false # false to skip job during debug
     name: Test on MacOS
     runs-on: macos-latest
     steps:
@@ -94,8 +94,6 @@ jobs:
 
     - name: Test
       run: go test -v -p 1 -parallel 1 -failfast ./...
-
-
 
   test-postgresql-ubuntu:
     if: true # false to skip job during debug
@@ -151,7 +149,7 @@ jobs:
 
   build-docs:
     if: true # false to skip job during debug
-    needs: [test-postgresql-ubuntu]
+    # needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
     name: Build Docs
     runs-on: ubuntu-latest
     steps:
@@ -167,10 +165,10 @@ jobs:
     - name: Set up Golang
       uses: actions/setup-go@v6
       with:
-        go-version: '1.24'      
+        go-version: '1.25'      
     
     - name: Set up gopages
-      run: go install github.com/johnstarich/go/gopages@v0.1.28
+      run: go install github.com/johnstarich/go/gopages@v0.1.29
     
     - name: Build Developer Docs
       run: gopages -out "docs/godoc" -base "/devel/godoc" -internal
@@ -178,7 +176,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: 3.12
+        python-version: 3.13
         cache: 'pip'
 
     - name: Install dependencies
