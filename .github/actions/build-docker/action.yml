@@ -1,0 +1,118 @@
+name: 'Build and Push Docker Images'
+description: 'Builds multi-arch Docker images with caching and SemVer tagging using official Docker actions'
+
+inputs:
+  dockerfile:
+    description: 'Path to Dockerfile (relative to repository root)'
+    required: true
+  image-name:
+    description: 'Docker image name (without registry prefix)'
+    required: true
+  registry:
+    description: 'Docker registry (docker.io or ghcr.io)'
+    required: false
+    default: 'docker.io'
+  username:
+    description: 'Docker registry username'
+    required: true
+  password:
+    description: 'Docker registry password/token'
+    required: true
+  platforms:
+    description: 'Target platforms for multi-arch build'
+    required: false
+    default: 'linux/amd64,linux/arm64'
+  push:
+    description: 'Whether to push the image (true/false)'
+    required: false
+    default: 'false'
+  build-args:
+    description: 'Build arguments as KEY=VALUE pairs (one per line)'
+    required: false
+    default: ''
+
+  cache-scope:
+    description: 'Cache scope for build cache'
+    required: false
+    default: 'default'
+
+outputs:
+  image-id:
+    description: 'Image ID of the built image'
+    value: ${{ steps.build.outputs.imageid }}
+  digest:
+    description: 'Image digest of the built image'
+    value: ${{ steps.build.outputs.digest }}
+  metadata:
+    description: 'Build result metadata'
+    value: ${{ steps.build.outputs.metadata }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: all
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: |
+          network=host
+
+    - name: Log in to Docker Registry
+      if: inputs.push == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry == 'docker.io' && '' || inputs.registry }}
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ inputs.image-name }}
+        tags: |
+          # For releases: apply SemVer tags and latest (excludes pre-releases automatically)
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=semver,pattern=latest
+          # For branches: branch name as tag  
+          type=ref,event=branch
+          # For PRs: pr-<number>
+          type=ref,event=pr
+          # SHA for unique identification
+          type=sha,prefix=sha-,format=short
+        labels: |
+          org.opencontainers.image.title=${{ inputs.image-name }}
+          org.opencontainers.image.description=PgWatch - PostgreSQL monitoring solution
+          org.opencontainers.image.vendor=Cybertec PostgreSQL International GmbH
+          org.opencontainers.image.licenses=BSD-3-Clause
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ inputs.dockerfile }}
+        platforms: ${{ inputs.platforms }}
+        push: ${{ inputs.push == 'true' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: ${{ inputs.build-args }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,mode=max,scope=${{ inputs.cache-scope }}
+        provenance: false
+        sbom: false
+
+    - name: Output image details
+      shell: bash
+      run: |
+        echo "🐳 Built image: ${{ inputs.image-name }}"
+        echo "📋 Tags:"
+        echo "${{ steps.meta.outputs.tags }}" | sed 's/^/  - /'
+        echo "🔍 Digest: ${{ steps.build.outputs.digest }}"
+        echo "🆔 Image ID: ${{ steps.build.outputs.imageid }}"
