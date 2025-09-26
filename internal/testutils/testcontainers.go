@@ -38,7 +38,10 @@ func SetupPostgresContainerWithOptions(t *testing.T, customizer func(*config.Cmd
 		postgres.WithDatabase("timetable"),
 		postgres.WithUsername("scheduler"),
 		postgres.WithPassword("somestrong"),
-		testcontainers.WithWaitStrategyAndDeadline(30*time.Second, wait.ForLog("database system is ready to accept connections")),
+		testcontainers.WithWaitStrategyAndDeadline(
+			60*time.Second,
+			wait.ForLog("database system is ready to accept connections").WithOccurrence(2),
+		),
 	)
 	if err != nil {
 		t.Fatalf("Failed to start PostgreSQL container: %v", err)

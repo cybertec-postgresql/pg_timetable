@@ -57,5 +57,5 @@ func TestHandleNotifications(t *testing.T) {
 	defer conn.Release()
 	_, err = conn.Exec(ctx, "UNLISTEN *") // do not interfere with the main handler
 	assert.NoError(t, err)
-	notifyAndCheck(ctx, pge.ConfigDb, pge, t, "pgengine_unit_test")
+	notifyAndCheck(ctx, pge.ConfigDb, pge, t, pge.ClientName)
 }
