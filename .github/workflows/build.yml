@@ -50,10 +50,11 @@ jobs:
       run: go test -failfast -v -timeout=300s -coverprofile=profile.cov ./...
 
     - name: Upload coverage profile
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v4
       with:
-        name: coverage-profile
+        name: coverage-profile-${{ github.run_id }}
         path: profile.cov
+        retention-days: 1
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6
@@ -69,9 +70,9 @@ jobs:
     steps:
 
     - name: Download coverage profile
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v4
       with:
-        name: coverage-profile
+        name: coverage-profile-${{ github.run_id }}
 
     - name: Send coverage to Coveralls
       uses: coverallsapp/github-action@v2
