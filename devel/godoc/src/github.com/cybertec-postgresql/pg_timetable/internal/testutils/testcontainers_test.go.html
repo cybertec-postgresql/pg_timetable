@@ -1,0 +1,203 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/testutils/testcontainers_test.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/pg_timetable/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/pg_timetable/devel/godoc/src">src</a>/<a href="/pg_timetable/devel/godoc/src/github.com">github.com</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/testutils">testutils</a>/<span class="text-muted">testcontainers_test.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/testutils">github.com/cybertec-postgresql/pg_timetable/internal/testutils</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package testutils
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;testing&#34;
+<span id="L6" class="ln">     6  </span>
+<span id="L7" class="ln">     7  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L8" class="ln">     8  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L9" class="ln">     9  </span>	&#34;github.com/stretchr/testify/require&#34;
+<span id="L10" class="ln">    10  </span>)
+<span id="L11" class="ln">    11  </span>
+<span id="L12" class="ln">    12  </span>func TestSetupPostgresContainer(t *testing.T) {
+<span id="L13" class="ln">    13  </span>	container, cleanup := SetupPostgresContainer(t)
+<span id="L14" class="ln">    14  </span>	defer cleanup()
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span>	<span class="comment">// Verify container is created and running</span>
+<span id="L17" class="ln">    17  </span>	require.NotNil(t, container, &#34;Container should not be nil&#34;)
+<span id="L18" class="ln">    18  </span>	require.NotNil(t, container.Container, &#34;PostgreSQL container should not be nil&#34;)
+<span id="L19" class="ln">    19  </span>	require.NotNil(t, container.Engine, &#34;PgEngine should not be nil&#34;)
+<span id="L20" class="ln">    20  </span>	require.NotEmpty(t, container.ConnStr, &#34;Connection string should not be empty&#34;)
+<span id="L21" class="ln">    21  </span>
+<span id="L22" class="ln">    22  </span>	<span class="comment">// Verify connection string format</span>
+<span id="L23" class="ln">    23  </span>	assert.Contains(t, container.ConnStr, &#34;postgres://&#34;)
+<span id="L24" class="ln">    24  </span>	assert.Contains(t, container.ConnStr, &#34;scheduler&#34;)
+<span id="L25" class="ln">    25  </span>	assert.Contains(t, container.ConnStr, &#34;timetable&#34;)
+<span id="L26" class="ln">    26  </span>	assert.Contains(t, container.ConnStr, &#34;sslmode=disable&#34;)
+<span id="L27" class="ln">    27  </span>
+<span id="L28" class="ln">    28  </span>	<span class="comment">// Verify database connection works</span>
+<span id="L29" class="ln">    29  </span>	ctx := context.Background()
+<span id="L30" class="ln">    30  </span>	conn, err := container.Engine.ConfigDb.Acquire(ctx)
+<span id="L31" class="ln">    31  </span>	require.NoError(t, err, &#34;Should be able to acquire database connection&#34;)
+<span id="L32" class="ln">    32  </span>	defer conn.Release()
+<span id="L33" class="ln">    33  </span>
+<span id="L34" class="ln">    34  </span>	<span class="comment">// Test basic query</span>
+<span id="L35" class="ln">    35  </span>	var result int
+<span id="L36" class="ln">    36  </span>	err = conn.QueryRow(ctx, &#34;SELECT 1&#34;).Scan(&amp;result)
+<span id="L37" class="ln">    37  </span>	require.NoError(t, err, &#34;Should be able to execute simple query&#34;)
+<span id="L38" class="ln">    38  </span>	assert.Equal(t, 1, result, &#34;Query should return 1&#34;)
+<span id="L39" class="ln">    39  </span>
+<span id="L40" class="ln">    40  </span>	<span class="comment">// Verify pg_timetable schema is initialized</span>
+<span id="L41" class="ln">    41  </span>	var schemaExists bool
+<span id="L42" class="ln">    42  </span>	err = conn.QueryRow(ctx,
+<span id="L43" class="ln">    43  </span>		&#34;SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = &#39;timetable&#39;)&#34;).Scan(&amp;schemaExists)
+<span id="L44" class="ln">    44  </span>	require.NoError(t, err, &#34;Should be able to check schema existence&#34;)
+<span id="L45" class="ln">    45  </span>	assert.True(t, schemaExists, &#34;timetable schema should exist&#34;)
+<span id="L46" class="ln">    46  </span>
+<span id="L47" class="ln">    47  </span>	<span class="comment">// Verify some core tables exist</span>
+<span id="L48" class="ln">    48  </span>	tables := []string{&#34;chain&#34;, &#34;task&#34;, &#34;log&#34;}
+<span id="L49" class="ln">    49  </span>	for _, table := range tables {
+<span id="L50" class="ln">    50  </span>		var tableExists bool
+<span id="L51" class="ln">    51  </span>		err = conn.QueryRow(ctx,
+<span id="L52" class="ln">    52  </span>			&#34;SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema = &#39;timetable&#39; AND table_name = $1)&#34;,
+<span id="L53" class="ln">    53  </span>			table).Scan(&amp;tableExists)
+<span id="L54" class="ln">    54  </span>		require.NoError(t, err, &#34;Should be able to check table existence for %s&#34;, table)
+<span id="L55" class="ln">    55  </span>		assert.True(t, tableExists, &#34;Table %s should exist in timetable schema&#34;, table)
+<span id="L56" class="ln">    56  </span>	}
+<span id="L57" class="ln">    57  </span>}
+<span id="L58" class="ln">    58  </span>
+<span id="L59" class="ln">    59  </span>func TestSetupPostgresContainerWithOptions(t *testing.T) {
+<span id="L60" class="ln">    60  </span>	customClientName := &#34;custom_test_client&#34;
+<span id="L61" class="ln">    61  </span>	customDebug := true
+<span id="L62" class="ln">    62  </span>
+<span id="L63" class="ln">    63  </span>	container, cleanup := SetupPostgresContainerWithOptions(t, func(opts *config.CmdOptions) {
+<span id="L64" class="ln">    64  </span>		opts.ClientName = customClientName
+<span id="L65" class="ln">    65  </span>		opts.Start.Debug = customDebug
+<span id="L66" class="ln">    66  </span>	})
+<span id="L67" class="ln">    67  </span>	defer cleanup()
+<span id="L68" class="ln">    68  </span>
+<span id="L69" class="ln">    69  </span>	<span class="comment">// Verify custom options were applied</span>
+<span id="L70" class="ln">    70  </span>	require.NotNil(t, container.Engine, &#34;PgEngine should not be nil&#34;)
+<span id="L71" class="ln">    71  </span>	assert.Equal(t, customClientName, container.Engine.ClientName, &#34;Custom client name should be set&#34;)
+<span id="L72" class="ln">    72  </span>
+<span id="L73" class="ln">    73  </span>	<span class="comment">// Verify database functionality with custom options</span>
+<span id="L74" class="ln">    74  </span>	ctx := context.Background()
+<span id="L75" class="ln">    75  </span>	conn, err := container.Engine.ConfigDb.Acquire(ctx)
+<span id="L76" class="ln">    76  </span>	require.NoError(t, err, &#34;Should be able to acquire database connection&#34;)
+<span id="L77" class="ln">    77  </span>	defer conn.Release()
+<span id="L78" class="ln">    78  </span>
+<span id="L79" class="ln">    79  </span>	<span class="comment">// Test that we can perform database operations</span>
+<span id="L80" class="ln">    80  </span>	var dbName string
+<span id="L81" class="ln">    81  </span>	err = conn.QueryRow(ctx, &#34;SELECT current_database()&#34;).Scan(&amp;dbName)
+<span id="L82" class="ln">    82  </span>	require.NoError(t, err, &#34;Should be able to get current database name&#34;)
+<span id="L83" class="ln">    83  </span>	assert.Equal(t, &#34;timetable&#34;, dbName, &#34;Database name should be &#39;timetable&#39;&#34;)
+<span id="L84" class="ln">    84  </span>}
+<span id="L85" class="ln">    85  </span>
+<span id="L86" class="ln">    86  </span>func TestSetupPostgresContainerWithNilCustomizer(t *testing.T) {
+<span id="L87" class="ln">    87  </span>	<span class="comment">// Test that nil customizer doesn&#39;t cause issues</span>
+<span id="L88" class="ln">    88  </span>	container, cleanup := SetupPostgresContainerWithOptions(t, nil)
+<span id="L89" class="ln">    89  </span>	defer cleanup()
+<span id="L90" class="ln">    90  </span>
+<span id="L91" class="ln">    91  </span>	require.NotNil(t, container, &#34;Container should not be nil even with nil customizer&#34;)
+<span id="L92" class="ln">    92  </span>	require.NotNil(t, container.Engine, &#34;PgEngine should not be nil&#34;)
+<span id="L93" class="ln">    93  </span>
+<span id="L94" class="ln">    94  </span>	<span class="comment">// Verify default client name is used</span>
+<span id="L95" class="ln">    95  </span>	assert.Equal(t, &#34;testcontainers_unit_test&#34;, container.Engine.ClientName, &#34;Default client name should be used&#34;)
+<span id="L96" class="ln">    96  </span>}
+<span id="L97" class="ln">    97  </span>
+<span id="L98" class="ln">    98  </span>func TestContainerIsolation(t *testing.T) {
+<span id="L99" class="ln">    99  </span>	<span class="comment">// Test that containers are isolated from each other</span>
+<span id="L100" class="ln">   100  </span>	container1, cleanup1 := SetupPostgresContainer(t)
+<span id="L101" class="ln">   101  </span>	defer cleanup1()
+<span id="L102" class="ln">   102  </span>
+<span id="L103" class="ln">   103  </span>	container2, cleanup2 := SetupPostgresContainer(t)
+<span id="L104" class="ln">   104  </span>	defer cleanup2()
+<span id="L105" class="ln">   105  </span>
+<span id="L106" class="ln">   106  </span>	<span class="comment">// Verify they have different connection strings (different ports)</span>
+<span id="L107" class="ln">   107  </span>	assert.NotEqual(t, container1.ConnStr, container2.ConnStr, &#34;Containers should have different connection strings&#34;)
+<span id="L108" class="ln">   108  </span>
+<span id="L109" class="ln">   109  </span>	ctx := context.Background()
+<span id="L110" class="ln">   110  </span>
+<span id="L111" class="ln">   111  </span>	<span class="comment">// Create a test table in container1</span>
+<span id="L112" class="ln">   112  </span>	conn1, err := container1.Engine.ConfigDb.Acquire(ctx)
+<span id="L113" class="ln">   113  </span>	require.NoError(t, err)
+<span id="L114" class="ln">   114  </span>	defer conn1.Release()
+<span id="L115" class="ln">   115  </span>
+<span id="L116" class="ln">   116  </span>	_, err = conn1.Exec(ctx, &#34;CREATE TABLE test_isolation (id int)&#34;)
+<span id="L117" class="ln">   117  </span>	require.NoError(t, err)
+<span id="L118" class="ln">   118  </span>
+<span id="L119" class="ln">   119  </span>	<span class="comment">// Verify table exists in container1</span>
+<span id="L120" class="ln">   120  </span>	var exists1 bool
+<span id="L121" class="ln">   121  </span>	err = conn1.QueryRow(ctx, &#34;SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = &#39;test_isolation&#39;)&#34;).Scan(&amp;exists1)
+<span id="L122" class="ln">   122  </span>	require.NoError(t, err)
+<span id="L123" class="ln">   123  </span>	assert.True(t, exists1, &#34;Table should exist in container1&#34;)
+<span id="L124" class="ln">   124  </span>
+<span id="L125" class="ln">   125  </span>	<span class="comment">// Verify table does NOT exist in container2</span>
+<span id="L126" class="ln">   126  </span>	conn2, err := container2.Engine.ConfigDb.Acquire(ctx)
+<span id="L127" class="ln">   127  </span>	require.NoError(t, err)
+<span id="L128" class="ln">   128  </span>	defer conn2.Release()
+<span id="L129" class="ln">   129  </span>
+<span id="L130" class="ln">   130  </span>	var exists2 bool
+<span id="L131" class="ln">   131  </span>	err = conn2.QueryRow(ctx, &#34;SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = &#39;test_isolation&#39;)&#34;).Scan(&amp;exists2)
+<span id="L132" class="ln">   132  </span>	require.NoError(t, err)
+<span id="L133" class="ln">   133  </span>	assert.False(t, exists2, &#34;Table should NOT exist in container2 (containers are isolated)&#34;)
+<span id="L134" class="ln">   134  </span>}
+<span id="L135" class="ln">   135  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>
