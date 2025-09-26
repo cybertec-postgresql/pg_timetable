@@ -8,11 +8,12 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
 // notify sends NOTIFY each second until context is available
-func notifyAndCheck(ctx context.Context, conn pgengine.PgxIface, t *testing.T, channel string) {
+func notifyAndCheck(ctx context.Context, conn pgengine.PgxIface, pge *pgengine.PgEngine, t *testing.T, channel string) {
 	vals := []string{
 		`{"ConfigID": 1, "Command": "STOP", "Ts": 1}`,              //{1, "STOP", 1, 0},
 		`{"ConfigID": 2, "Command": "START", "Ts": 1}`,             //{2, "START", 1, 0},
@@ -42,12 +43,13 @@ func notifyAndCheck(ctx context.Context, conn pgengine.PgxIface, t *testing.T, c
 }
 
 func TestHandleNotifications(t *testing.T) {
-	teardownTestCase := SetupTestCaseEx(t, func(c *config.CmdOptions) {
+	container, cleanup := testutils.SetupPostgresContainerWithOptions(t, func(c *config.CmdOptions) {
 		c.Start.Debug = true
 	})
-	defer teardownTestCase(t)
+	defer cleanup()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+	pge := container.Engine
 	go pge.HandleNotifications(ctx)
 	time.Sleep(5 * time.Second)
 	conn, err := pge.ConfigDb.Acquire(ctx) // HandleNotifications() uses blocking manner, so we want another connection
@@ -55,5 +57,5 @@ func TestHandleNotifications(t *testing.T) {
 	defer conn.Release()
 	_, err = conn.Exec(ctx, "UNLISTEN *") // do not interfere with the main handler
 	assert.NoError(t, err)
-	notifyAndCheck(ctx, pge.ConfigDb, t, "pgengine_unit_test")
+	notifyAndCheck(ctx, pge.ConfigDb, pge, t, "pgengine_unit_test")
 }

@@ -15,45 +15,15 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
-// this instance used for all engine tests
-var pge *pgengine.PgEngine
-
-var cmdOpts *config.CmdOptions = config.NewCmdOptions("--clientname=pgengine_unit_test", "--connstr=postgresql://scheduler:somestrong@localhost/timetable")
-
-// SetupTestCaseEx allows to configure the test case before execution
-func SetupTestCaseEx(t *testing.T, fc func(c *config.CmdOptions)) func(t *testing.T) {
-	fc(cmdOpts)
-	return SetupTestCase(t)
-}
-
-// SetupTestCase used to connect and to initialize test PostgreSQL database
-func SetupTestCase(t *testing.T) func(t *testing.T) {
-	t.Helper()
-	timeout := time.After(30 * time.Second)
-	done := make(chan bool)
-	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
-		done <- true
-	}()
-	select {
-	case <-timeout:
-		t.Fatal("Cannot connect and initialize test database in time")
-	case <-done:
-	}
-	return func(t *testing.T) {
-		_, _ = pge.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
-		pge.ConfigDb.Close()
-		t.Log("Test schema dropped")
-	}
-}
-
 func TestInitAndTestConfigDBConnection(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 
 	ctx := context.Background()
+	pge := container.Engine
 
 	require.NotNil(t, pge.ConfigDb, "ConfigDB should be initialized")
 
@@ -105,8 +75,10 @@ func TestInitAndTestConfigDBConnection(t *testing.T) {
 	t.Run("Check connection closing", func(t *testing.T) {
 		pge.Finalize()
 		assert.Nil(t, pge.ConfigDb, "Connection isn't closed properly")
-		// reinit connection to execute teardown actions
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
+		// reinit connection to execute teardown actions - create new container
+		newContainer, newCleanup := testutils.SetupPostgresContainer(t)
+		defer newCleanup()
+		pge = newContainer.Engine
 	})
 
 }
@@ -120,10 +92,11 @@ func TestFailedConnect(t *testing.T) {
 }
 
 func TestSchedulerFunctions(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 
 	ctx := context.Background()
+	pge := container.Engine
 
 	t.Run("Check DeleteChainConfig function", func(t *testing.T) {
 		assert.Equal(t, false, pge.DeleteChain(ctx, 0), "Should not delete in clean database")
@@ -180,10 +153,11 @@ func TestSchedulerFunctions(t *testing.T) {
 }
 
 func TestGetRemoteDBTransaction(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 	ctx := context.Background()
-	remoteDb, err := pge.GetRemoteDBConnection(context.Background(), cmdOpts.ConnStr)
+	pge := container.Engine
+	remoteDb, err := pge.GetRemoteDBConnection(context.Background(), container.ConnStr)
 	defer pge.FinalizeDBConnection(ctx, remoteDb)
 	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
@@ -196,12 +170,13 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 }
 
 func TestSamplesScripts(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 
 	files, err := os.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
 	l := log.Init(config.LoggingOpts{LogLevel: "error"})
+	pge := container.Engine
 	for _, f := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

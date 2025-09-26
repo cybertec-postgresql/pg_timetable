@@ -6,13 +6,15 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCopyFromFile(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 	ctx := context.Background()
+	pge := container.Engine
 	_, err := pge.CopyFromFile(ctx, "fake.csv", "COPY location FROM STDIN")
 	assert.Error(t, err, "Should fail for missing file")
 	_, err = pge.ConfigDb.Exec(ctx, "CREATE UNLOGGED TABLE csv_test(id integer, val text)")
@@ -29,9 +31,10 @@ func TestCopyFromFile(t *testing.T) {
 }
 
 func TestCopyToFile(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 	ctx := context.Background()
+	pge := container.Engine
 	_, err := pge.CopyToFile(ctx, "", "COPY location TO STDOUT")
 	assert.Error(t, err, "Should fail for empty file name")
 	cnt, err := pge.CopyToFile(ctx, "test.csv", "COPY (SELECT generate_series(1,5)) TO STDOUT (FORMAT csv)")
