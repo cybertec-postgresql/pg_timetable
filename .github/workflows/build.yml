@@ -17,110 +17,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true    
 
+# This workflow uses testcontainers-go for PostgreSQL testing
+# Docker provides consistent environment - only Ubuntu needed
+
 jobs:
 
-  test-postgresql-windows:
+  test:
     if: true # false to skip job during debug
-    name: Test on Windows
-    runs-on: windows-latest
-    steps:
-
-    - name: Start PostgreSQL on Windows
-      run: |
-        $pgService = Get-Service -Name postgresql*
-        Set-Service -InputObject $pgService -Status running -StartupType automatic
-        Start-Process -FilePath "$env:PGBIN\pg_isready" -Wait -PassThru
-
-    - name: Create scheduler user on Windows
-      run: |
-        & $env:PGBIN\psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du"
-
-    - name: Create timetable database
-      run: |
-        & $env:PGBIN\createdb --owner=scheduler timetable
-        $env:PGPASSWORD = 'somestrong'
-        & $env:PGBIN\psql --username=scheduler --host=localhost --list timetable
-
-    - name: Check out code
-      uses: actions/checkout@v5
-
-    - name: Set up Golang
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.25'
-
-    - name: Test
-      run: go test -v -p 1 -parallel 1 -failfast ./...
-
-
-
-  test-postgresql-macos:
-    if: true # false to skip job during debug
-    name: Test on MacOS
-    runs-on: macos-latest
-    steps:
-
-    - name: Start PostgreSQL on MacOS
-      run: |
-        brew update
-        brew install postgresql@16
-        brew link --force postgresql@16
-        brew services start postgresql@16  
-        echo "Check PostgreSQL service is running"
-        i=10
-        COMMAND='pg_isready'
-        while [ $i -gt 0 ]; do
-            echo "Check PostgreSQL service status"
-            eval $COMMAND && break
-            ((i--))
-            if [ $i == 0 ]; then
-                echo "PostgreSQL service not ready, all attempts exhausted"
-                exit 1
-            fi
-            echo "PostgreSQL service not ready, wait 10 more sec, attempts left: $i"
-            sleep 10
-        done
-
-    # Homebrew creates an account with the same name as the installing user, but no password
-    - name: Create scheduler user
-      run: |
-        psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du" postgres
-
-    - name: Create timetable database
-      run: |
-        createdb --owner=scheduler timetable
-        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
-
-    - name: Check out code
-      uses: actions/checkout@v5
-
-    - name: Set up Golang
-      uses: actions/setup-go@v6
-      with:
-        go-version: '1.25'
-
-    - name: Test
-      run: go test -v -p 1 -parallel 1 -failfast ./...
-
-  test-postgresql-ubuntu:
-    if: true # false to skip job during debug
-    name: Test and Build on Ubuntu
+    name: Test and Build with Testcontainers
     runs-on: ubuntu-latest
     steps:
-
-    - name: Start PostgreSQL on Ubuntu
-      run: |
-        sudo systemctl start postgresql.service
-        pg_isready
-
-    - name: Create scheduler user
-      run: |
-        sudo -u postgres psql --command="CREATE USER scheduler PASSWORD 'somestrong'" --command="\du"
-
-    - name: Create timetable database
-      run: |
-        sudo -u postgres createdb --owner=scheduler timetable
-        PGPASSWORD=somestrong psql --username=scheduler --host=localhost --list timetable
 
     - name: Check out code
       uses: actions/checkout@v5
@@ -140,13 +46,15 @@ jobs:
       with:
         version: latest
         
-    - name: Test
-      run: go test -failfast -v -timeout=300s -p 1 -coverprofile=profile.cov ./...
+    - name: Test with Testcontainers
+      run: go test -failfast -v -timeout=300s -coverprofile=profile.cov ./...
 
-    - name: Coveralls
-      uses: shogo82148/actions-goveralls@v1
+    - name: Upload coverage profile
+      uses: actions/upload-artifact@v4
       with:
-        path-to-profile: profile.cov      
+        name: coverage-profile-${{ github.run_id }}
+        path: profile.cov
+        retention-days: 1
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6
@@ -154,9 +62,26 @@ jobs:
         version: latest
         args: release --snapshot --skip=publish --clean
 
+  coverage:
+    if: true # false to skip job during debug
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+
+    - name: Download coverage profile
+      uses: actions/download-artifact@v4
+      with:
+        name: coverage-profile-${{ github.run_id }}
+
+    - name: Send coverage to Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        file: profile.cov
+
   build-docs:
     if: true # false to skip job during debug
-    needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
+    needs: [test]
     name: Build Docs
     runs-on: ubuntu-latest
     steps:
@@ -201,7 +126,7 @@ jobs:
 
   test-docker-images:
     if: true # false to skip job during debug
-    needs: [test-postgresql-ubuntu, test-postgresql-windows, test-postgresql-macos]
+    needs: [test]
     name: Test Docker Image Build
     runs-on: ubuntu-latest
     steps:

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	migrator "github.com/cybertec-postgresql/pgx-migrator"
 	"github.com/stretchr/testify/assert"
 )
@@ -14,10 +15,11 @@ import (
 var initialsql string
 
 func TestMigrations(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 
 	ctx := context.Background()
+	pge := container.Engine
 	_, err := pge.ConfigDb.Exec(ctx, "DROP SCHEMA IF EXISTS timetable CASCADE")
 	assert.NoError(t, err)
 	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
@@ -38,13 +40,14 @@ func TestExecuteMigrationScript(t *testing.T) {
 }
 
 func TestInitMigrator(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 	pgengine.Migrations = func() migrator.Option {
 		return migrator.Migrations()
 	}
 
 	ctx := context.Background()
+	pge := container.Engine
 	err := pge.MigrateDb(ctx)
 	assert.Error(t, err, "Empty migrations")
 	_, err = pge.CheckNeedMigrateDb(ctx)

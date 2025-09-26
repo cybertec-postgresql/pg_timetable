@@ -10,36 +10,14 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
-	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
-var pge *pgengine.PgEngine
-
-// SetupTestCase used to connect and to initialize test PostgreSQL database
-func SetupTestCase(t *testing.T) func(t *testing.T) {
-	cmdOpts := config.NewCmdOptions("-c", "pgengine_unit_test", "--connstr=postgresql://scheduler:somestrong@localhost/timetable")
-	t.Log("Setup test case")
-	timeout := time.After(6 * time.Second)
-	done := make(chan bool)
-	go func() {
-		pge, _ = pgengine.New(context.Background(), *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "error"}))
-		done <- true
-	}()
-	select {
-	case <-timeout:
-		t.Fatal("Cannot connect and initialize test database in time")
-	case <-done:
-	}
-	return func(t *testing.T) {
-		_, _ = pge.ConfigDb.Exec(context.Background(), "DROP SCHEMA IF EXISTS timetable CASCADE")
-		t.Log("Test schema dropped")
-	}
-}
-
 func TestRun(t *testing.T) {
-	teardownTestCase := SetupTestCase(t)
-	defer teardownTestCase(t)
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
 
+	pge := container.Engine
 	require.NotNil(t, pge.ConfigDb, "ConfigDB should be initialized")
 
 	err := pge.ExecuteCustomScripts(context.Background(), "../../samples/Exclusive.sql")
@@ -56,7 +34,7 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/ManyTasks.sql")
 	assert.NoError(t, err, "Creating many tasks failed")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 	assert.NoError(t, sch.StartChain(context.Background(), 1))
 	assert.ErrorContains(t, sch.StopChain(context.Background(), -1), "No running chain found")
 	go func() {
