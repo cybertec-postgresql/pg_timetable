@@ -72,7 +72,7 @@
 <span id="L15" class="ln">    15  </span>	mock, err := pgxmock.NewPool()
 <span id="L16" class="ln">    16  </span>	assert.NoError(t, err)
 <span id="L17" class="ln">    17  </span>	pge := pgengine.NewDB(mock, &#34;scheduler_unit_test&#34;)
-<span id="L18" class="ln">    18  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L18" class="ln">    18  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L19" class="ln">    19  </span>
 <span id="L20" class="ln">    20  </span>	ichain := IntervalChain{Interval: 42}
 <span id="L21" class="ln">    21  </span>	assert.True(t, ichain.IsListed([]IntervalChain{ichain}))

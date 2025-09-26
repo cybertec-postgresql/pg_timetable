@@ -1029,7 +1029,7 @@
 
 
 <h1 id="installation">Installation</h1>
-<p><strong>pg_timetable</strong> is compatible with the latest supported <a href="https://www.postgresql.org/support/versioning/">PostgreSQL versions</a>: 11, 12, 13, 14 (stable); 15 (dev).</p>
+<p><strong>pg_timetable</strong> is compatible with all supported <a href="https://www.postgresql.org/support/versioning/">PostgreSQL versions</a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Older PostgreSQL versions (9.5, 9.6, and 10)</p>
 <p>If you want to use <strong>pg_timetable</strong> with older versions (9.5, 9.6 and 10), please execute this SQL command before running pg_timetable:</p>
@@ -1051,7 +1051,7 @@
 <h2 id="official-release-packages">Official release packages</h2>
 <p>You may find binary package for your platform on the official <a href="https://github.com/cybertec-postgresql/pg_timetable/releases">Releases</a> page. Right now <strong>Windows</strong>, <strong>Linux</strong> and <strong>macOS</strong> packages are available.</p>
 <h2 id="docker">Docker</h2>
-<p>The official docker image can be found here: https://hub.docker.com/r/cybertecpostgresql/pg_timetable</p>
+<p>The official docker image can be found here: <a href="https://hub.docker.com/r/cybertecpostgresql/pg_timetable">https://hub.docker.com/r/cybertecpostgresql/pg_timetable</a></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The <code>latest</code> tag is up to date with the <code>master</code> branch thanks to <a href="https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/docker.yml">this github action</a>. In production you probably want to use the latest <a href="https://hub.docker.com/r/cybertecpostgresql/pg_timetable/tags">stable tag</a>.</p>
@@ -1073,26 +1073,26 @@
 <li>Download and install <a href="https://golang.org/doc/install">Go</a> on your system.</li>
 <li>
 <p>Clone <strong>pg_timetable</strong> repo:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cybertec-postgresql/pg_timetable.git
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>pg_timetable
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cybertec-postgresql/pg_timetable.git
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>pg_timetable
 </code></pre></div>
 </li>
 <li>
 <p>Run <strong>pg_timetable</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>$<span class="w"> </span>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>Alternatively, build a binary and run it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>$<span class="w"> </span>go<span class="w"> </span>build
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>$<span class="w"> </span>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>go<span class="w"> </span>build
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>(Optional) Run tests in all sub-folders of the project:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>$<span class="w"> </span>psql<span class="w"> </span>--command<span class="o">=</span><span class="s2">&quot;CREATE USER scheduler PASSWORD &#39;somestrong&#39;&quot;</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>$<span class="w"> </span>createdb<span class="w"> </span>--owner<span class="o">=</span>scheduler<span class="w"> </span>timetable
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>$<span class="w"> </span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-failfast<span class="w"> </span>-timeout<span class="o">=</span>300s<span class="w"> </span>-count<span class="o">=</span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>psql<span class="w"> </span>--command<span class="o">=</span><span class="s2">&quot;CREATE USER scheduler PASSWORD &#39;somestrong&#39;&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>createdb<span class="w"> </span>--owner<span class="o">=</span>scheduler<span class="w"> </span>timetable
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-failfast<span class="w"> </span>-timeout<span class="o">=</span>300s<span class="w"> </span>-count<span class="o">=</span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
 </code></pre></div>
 </li>
 </ol>

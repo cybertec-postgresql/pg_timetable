@@ -86,7 +86,7 @@
 <span id="L29" class="ln">    29  </span>	mock, err := pgxmock.NewPool()
 <span id="L30" class="ln">    30  </span>	assert.NoError(t, err)
 <span id="L31" class="ln">    31  </span>	pge := pgengine.NewDB(mock, &#34;scheduler_unit_test&#34;)
-<span id="L32" class="ln">    32  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L32" class="ln">    32  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L33" class="ln">    33  </span>	n1 := &amp;pgconn.Notification{Payload: `{&#34;ConfigID&#34;: 1, &#34;Command&#34;: &#34;START&#34;}`}
 <span id="L34" class="ln">    34  </span>	n2 := &amp;pgconn.Notification{Payload: `{&#34;ConfigID&#34;: 2, &#34;Command&#34;: &#34;START&#34;}`}
 <span id="L35" class="ln">    35  </span>	ns := &amp;pgconn.Notification{Payload: `{&#34;ConfigID&#34;: 24, &#34;Command&#34;: &#34;STOP&#34;}`}
@@ -117,7 +117,7 @@
 <span id="L60" class="ln">    60  </span>	mock, err := pgxmock.NewPool()
 <span id="L61" class="ln">    61  </span>	assert.NoError(t, err)
 <span id="L62" class="ln">    62  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
-<span id="L63" class="ln">    63  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L63" class="ln">    63  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;}))
 <span id="L64" class="ln">    64  </span>	chains := make(chan Chain, 16)
 <span id="L65" class="ln">    65  </span>
 <span id="L66" class="ln">    66  </span>	t.Run(&#34;Check chainWorker if context cancelled&#34;, func(*testing.T) {
@@ -155,7 +155,7 @@
 <span id="L98" class="ln">    98  </span>	mock, err := pgxmock.NewPool()
 <span id="L99" class="ln">    99  </span>	assert.NoError(t, err)
 <span id="L100" class="ln">   100  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
-<span id="L101" class="ln">   101  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L101" class="ln">   101  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L102" class="ln">   102  </span>
 <span id="L103" class="ln">   103  </span>	ctx, cancel := context.WithCancel(context.Background())
 <span id="L104" class="ln">   104  </span>	defer cancel()
@@ -166,7 +166,7 @@
 <span id="L109" class="ln">   109  </span>	mock, err := pgxmock.NewPool()
 <span id="L110" class="ln">   110  </span>	assert.NoError(t, err)
 <span id="L111" class="ln">   111  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
-<span id="L112" class="ln">   112  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L112" class="ln">   112  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L113" class="ln">   113  </span>
 <span id="L114" class="ln">   114  </span>	ctx, cancel := context.WithCancel(context.Background())
 <span id="L115" class="ln">   115  </span>	defer cancel()
@@ -179,7 +179,7 @@
 <span id="L122" class="ln">   122  </span>	mock, err := pgxmock.NewPool()
 <span id="L123" class="ln">   123  </span>	assert.NoError(t, err)
 <span id="L124" class="ln">   124  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
-<span id="L125" class="ln">   125  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L125" class="ln">   125  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L126" class="ln">   126  </span>
 <span id="L127" class="ln">   127  </span>	t.Run(&#34;check error handler if everything is fine&#34;, func(t *testing.T) {
 <span id="L128" class="ln">   128  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnResult(pgxmock.NewResult(&#34;FOO&#34;, 1))

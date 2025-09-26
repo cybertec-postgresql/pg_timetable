@@ -63,51 +63,54 @@
 <span id="L6" class="ln">     6  </span>	&#34;testing&#34;
 <span id="L7" class="ln">     7  </span>
 <span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
-<span id="L9" class="ln">     9  </span>	migrator &#34;github.com/cybertec-postgresql/pgx-migrator&#34;
-<span id="L10" class="ln">    10  </span>	&#34;github.com/stretchr/testify/assert&#34;
-<span id="L11" class="ln">    11  </span>)
-<span id="L12" class="ln">    12  </span>
-<span id="L13" class="ln">    13  </span><span class="comment">//go:embed sql/migrations/00000.sql</span>
-<span id="L14" class="ln">    14  </span>var initialsql string
-<span id="L15" class="ln">    15  </span>
-<span id="L16" class="ln">    16  </span>func TestMigrations(t *testing.T) {
-<span id="L17" class="ln">    17  </span>	teardownTestCase := SetupTestCase(t)
-<span id="L18" class="ln">    18  </span>	defer teardownTestCase(t)
-<span id="L19" class="ln">    19  </span>
-<span id="L20" class="ln">    20  </span>	ctx := context.Background()
-<span id="L21" class="ln">    21  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
-<span id="L22" class="ln">    22  </span>	assert.NoError(t, err)
-<span id="L23" class="ln">    23  </span>	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
+<span id="L10" class="ln">    10  </span>	migrator &#34;github.com/cybertec-postgresql/pgx-migrator&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L12" class="ln">    12  </span>)
+<span id="L13" class="ln">    13  </span>
+<span id="L14" class="ln">    14  </span><span class="comment">//go:embed sql/migrations/00000.sql</span>
+<span id="L15" class="ln">    15  </span>var initialsql string
+<span id="L16" class="ln">    16  </span>
+<span id="L17" class="ln">    17  </span>func TestMigrations(t *testing.T) {
+<span id="L18" class="ln">    18  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L19" class="ln">    19  </span>	defer cleanup()
+<span id="L20" class="ln">    20  </span>
+<span id="L21" class="ln">    21  </span>	ctx := context.Background()
+<span id="L22" class="ln">    22  </span>	pge := container.Engine
+<span id="L23" class="ln">    23  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
 <span id="L24" class="ln">    24  </span>	assert.NoError(t, err)
-<span id="L25" class="ln">    25  </span>	ok, err := pge.CheckNeedMigrateDb(ctx)
+<span id="L25" class="ln">    25  </span>	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
 <span id="L26" class="ln">    26  </span>	assert.NoError(t, err)
-<span id="L27" class="ln">    27  </span>	assert.True(t, ok, &#34;Should need migrations&#34;)
-<span id="L28" class="ln">    28  </span>	assert.NoError(t, pge.MigrateDb(ctx), &#34;Migrations should be applied&#34;)
-<span id="L29" class="ln">    29  </span>	_, err = pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
-<span id="L30" class="ln">    30  </span>	assert.NoError(t, err)
-<span id="L31" class="ln">    31  </span>
-<span id="L32" class="ln">    32  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
-<span id="L33" class="ln">    33  </span>	assert.NoError(t, err)
-<span id="L34" class="ln">    34  </span>}
-<span id="L35" class="ln">    35  </span>
-<span id="L36" class="ln">    36  </span>func TestExecuteMigrationScript(t *testing.T) {
-<span id="L37" class="ln">    37  </span>	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, &#34;foo&#34;), &#34;File does not exist&#34;)
-<span id="L38" class="ln">    38  </span>}
-<span id="L39" class="ln">    39  </span>
-<span id="L40" class="ln">    40  </span>func TestInitMigrator(t *testing.T) {
-<span id="L41" class="ln">    41  </span>	teardownTestCase := SetupTestCase(t)
-<span id="L42" class="ln">    42  </span>	defer teardownTestCase(t)
-<span id="L43" class="ln">    43  </span>	pgengine.Migrations = func() migrator.Option {
-<span id="L44" class="ln">    44  </span>		return migrator.Migrations()
-<span id="L45" class="ln">    45  </span>	}
-<span id="L46" class="ln">    46  </span>
-<span id="L47" class="ln">    47  </span>	ctx := context.Background()
-<span id="L48" class="ln">    48  </span>	err := pge.MigrateDb(ctx)
-<span id="L49" class="ln">    49  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
-<span id="L50" class="ln">    50  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
-<span id="L51" class="ln">    51  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
-<span id="L52" class="ln">    52  </span>}
-<span id="L53" class="ln">    53  </span>
+<span id="L27" class="ln">    27  </span>	ok, err := pge.CheckNeedMigrateDb(ctx)
+<span id="L28" class="ln">    28  </span>	assert.NoError(t, err)
+<span id="L29" class="ln">    29  </span>	assert.True(t, ok, &#34;Should need migrations&#34;)
+<span id="L30" class="ln">    30  </span>	assert.NoError(t, pge.MigrateDb(ctx), &#34;Migrations should be applied&#34;)
+<span id="L31" class="ln">    31  </span>	_, err = pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
+<span id="L32" class="ln">    32  </span>	assert.NoError(t, err)
+<span id="L33" class="ln">    33  </span>
+<span id="L34" class="ln">    34  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
+<span id="L35" class="ln">    35  </span>	assert.NoError(t, err)
+<span id="L36" class="ln">    36  </span>}
+<span id="L37" class="ln">    37  </span>
+<span id="L38" class="ln">    38  </span>func TestExecuteMigrationScript(t *testing.T) {
+<span id="L39" class="ln">    39  </span>	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, &#34;foo&#34;), &#34;File does not exist&#34;)
+<span id="L40" class="ln">    40  </span>}
+<span id="L41" class="ln">    41  </span>
+<span id="L42" class="ln">    42  </span>func TestInitMigrator(t *testing.T) {
+<span id="L43" class="ln">    43  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L44" class="ln">    44  </span>	defer cleanup()
+<span id="L45" class="ln">    45  </span>	pgengine.Migrations = func() migrator.Option {
+<span id="L46" class="ln">    46  </span>		return migrator.Migrations()
+<span id="L47" class="ln">    47  </span>	}
+<span id="L48" class="ln">    48  </span>
+<span id="L49" class="ln">    49  </span>	ctx := context.Background()
+<span id="L50" class="ln">    50  </span>	pge := container.Engine
+<span id="L51" class="ln">    51  </span>	err := pge.MigrateDb(ctx)
+<span id="L52" class="ln">    52  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
+<span id="L53" class="ln">    53  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
+<span id="L54" class="ln">    54  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
+<span id="L55" class="ln">    55  </span>}
+<span id="L56" class="ln">    56  </span>
 </pre><p></p>
 
 <div id="footer">

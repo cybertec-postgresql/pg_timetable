@@ -92,7 +92,7 @@
 <span id="L35" class="ln">    35  </span>	mock, err := pgxmock.NewPool() <span class="comment">//</span>
 <span id="L36" class="ln">    36  </span>	assert.NoError(t, err)
 <span id="L37" class="ln">    37  </span>	pge := pgengine.NewDB(mock, &#34;scheduler_unit_test&#34;)
-<span id="L38" class="ln">    38  </span>	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}))
+<span id="L38" class="ln">    38  </span>	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L39" class="ln">    39  </span>	ctx := context.Background()
 <span id="L40" class="ln">    40  </span>
 <span id="L41" class="ln">    41  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;&#34;, []string{&#34;&#34;})
