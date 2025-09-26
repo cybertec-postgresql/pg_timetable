@@ -15,7 +15,7 @@ func TestIntervalChain(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 
 	ichain := IntervalChain{Interval: 42}
 	assert.True(t, ichain.IsListed([]IntervalChain{ichain}))

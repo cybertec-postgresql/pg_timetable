@@ -15,7 +15,7 @@ func TestExecuteTask(t *testing.T) {
 	mock, err := pgxmock.NewPool() //
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 
 	et := func(task string, params []string) (err error) {
 		_, err = mocksch.executeBuiltinTask(context.TODO(), task, params)

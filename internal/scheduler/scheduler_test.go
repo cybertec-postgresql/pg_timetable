@@ -34,7 +34,7 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/ManyTasks.sql")
 	assert.NoError(t, err, "Creating many tasks failed")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 	assert.NoError(t, sch.StartChain(context.Background(), 1))
 	assert.ErrorContains(t, sch.StopChain(context.Background(), -1), "No running chain found")
 	go func() {

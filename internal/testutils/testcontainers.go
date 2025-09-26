@@ -56,7 +56,7 @@ func SetupPostgresContainerWithOptions(t *testing.T, customizer func(*config.Cmd
 	}
 
 	var pge *pgengine.PgEngine
-	timeout := time.After(time.Minute)
+	timeout := time.After(3 * time.Minute)
 	done := make(chan bool)
 	go func() {
 		pge, err = pgengine.New(ctx, *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))

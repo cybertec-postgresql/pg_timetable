@@ -87,7 +87,7 @@ func TestFailedConnect(t *testing.T) {
 	c := config.NewCmdOptions("--connstr='host=fake'", "-c", "pgengine_test")
 	ctx, cancel := context.WithTimeout(context.Background(), pgengine.WaitTime*2)
 	defer cancel()
-	_, err := pgengine.New(ctx, *c, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	_, err := pgengine.New(ctx, *c, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 	assert.ErrorIs(t, err, ctx.Err())
 }
 
@@ -175,7 +175,7 @@ func TestSamplesScripts(t *testing.T) {
 
 	files, err := os.ReadDir("../../samples")
 	assert.NoError(t, err, "Cannot read samples directory")
-	l := log.Init(config.LoggingOpts{LogLevel: "error"})
+	l := log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"})
 	pge := container.Engine
 	for _, f := range files {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -30,7 +30,7 @@ func (r *apihandler) StopChain(context.Context, int) error {
 	return nil
 }
 
-var restsrv = Init(config.RestAPIOpts{Port: 8080}, log.Init(config.LoggingOpts{LogLevel: "error"}))
+var restsrv = Init(config.RestAPIOpts{Port: 8080}, log.Init(config.LoggingOpts{LogLevel: "panic"}))
 
 const turl = "http://localhost:8080/"
 

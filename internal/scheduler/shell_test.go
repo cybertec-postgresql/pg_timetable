@@ -35,7 +35,7 @@ func TestShellCommand(t *testing.T) {
 	mock, err := pgxmock.NewPool() //
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "error"}))
+	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 	ctx := context.Background()
 
 	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})
