@@ -12,7 +12,7 @@ import (
 
 // YamlChain represents a chain with tasks for YAML processing
 type YamlChain struct {
-	Chain
+	Chain      `yaml:",inline"`
 	ClientName string     `db:"client_name" yaml:"client_name,omitempty"`
 	Schedule   string     `db:"run_at" yaml:"schedule,omitempty"`
 	Live       bool       `db:"live" yaml:"live,omitempty"`
@@ -21,9 +21,9 @@ type YamlChain struct {
 
 // YamlTask extends the basic task structure with Parameters field
 type YamlTask struct {
-	ChainTask
-	TaskName   string        `db:"task_name" yaml:"name,omitempty"`
-	Parameters []interface{} `yaml:"parameters,omitempty"`
+	ChainTask  `yaml:",inline"`
+	TaskName   string `db:"task_name" yaml:"name,omitempty"`
+	Parameters []any  `yaml:"parameters,omitempty"`
 }
 
 // YamlConfig represents the root YAML configuration

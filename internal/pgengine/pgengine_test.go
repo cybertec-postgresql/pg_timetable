@@ -177,6 +177,9 @@ func TestSamplesScripts(t *testing.T) {
 	l := log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"})
 	pge := container.Engine
 	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),

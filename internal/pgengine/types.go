@@ -9,7 +9,7 @@ import (
 )
 
 type executor interface {
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error)
+	Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error)
 }
 
 // Chain structure used to represent tasks chains
