@@ -176,7 +176,7 @@
 <span id="L119" class="ln">   119  </span><span class="comment">// ExecuteSQLCommand executes chain command with parameters inside transaction</span>
 <span id="L120" class="ln">   120  </span>func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, command string, paramValues []string) (out string, err error) {
 <span id="L121" class="ln">   121  </span>	var ct pgconn.CommandTag
-<span id="L122" class="ln">   122  </span>	var params []interface{}
+<span id="L122" class="ln">   122  </span>	var params []any
 <span id="L123" class="ln">   123  </span>	if strings.TrimSpace(command) == &#34;&#34; {
 <span id="L124" class="ln">   124  </span>		return &#34;&#34;, errors.New(&#34;SQL command cannot be empty&#34;)
 <span id="L125" class="ln">   125  </span>	}

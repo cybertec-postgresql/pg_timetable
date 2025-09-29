@@ -92,7 +92,7 @@
 <span id="L35" class="ln">    35  </span>	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: &#34;trace&#34;}))
 <span id="L36" class="ln">    36  </span>	var level tracelog.LogLevel
 <span id="L37" class="ln">    37  </span>	for level = tracelog.LogLevelNone; level &lt;= tracelog.LogLevelTrace; level++ {
-<span id="L38" class="ln">    38  </span>		pgxl.Log(context.Background(), level, &#34;foo&#34;, map[string]interface{}{&#34;func&#34;: &#34;TestPgxLog&#34;})
+<span id="L38" class="ln">    38  </span>		pgxl.Log(context.Background(), level, &#34;foo&#34;, map[string]any{&#34;func&#34;: &#34;TestPgxLog&#34;})
 <span id="L39" class="ln">    39  </span>	}
 <span id="L40" class="ln">    40  </span>}
 <span id="L41" class="ln">    41  </span>

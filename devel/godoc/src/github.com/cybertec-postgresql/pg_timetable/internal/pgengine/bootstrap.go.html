@@ -89,9 +89,9 @@
 <span id="L32" class="ln">    32  </span><span class="comment">// PgxIface is common interface for every pgx class</span>
 <span id="L33" class="ln">    33  </span>type PgxIface interface {
 <span id="L34" class="ln">    34  </span>	Begin(ctx context.Context) (pgx.Tx, error)
-<span id="L35" class="ln">    35  </span>	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-<span id="L36" class="ln">    36  </span>	QueryRow(context.Context, string, ...interface{}) pgx.Row
-<span id="L37" class="ln">    37  </span>	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
+<span id="L35" class="ln">    35  </span>	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+<span id="L36" class="ln">    36  </span>	QueryRow(context.Context, string, ...any) pgx.Row
+<span id="L37" class="ln">    37  </span>	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
 <span id="L38" class="ln">    38  </span>	Ping(ctx context.Context) error
 <span id="L39" class="ln">    39  </span>	CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error)
 <span id="L40" class="ln">    40  </span>}
@@ -251,7 +251,7 @@
 <span id="L194" class="ln">   194  </span>
 <span id="L195" class="ln">   195  </span><span class="comment">// QueryRowIface specifies interface to use QueryRow method</span>
 <span id="L196" class="ln">   196  </span>type QueryRowIface interface {
-<span id="L197" class="ln">   197  </span>	QueryRow(context.Context, string, ...interface{}) pgx.Row
+<span id="L197" class="ln">   197  </span>	QueryRow(context.Context, string, ...any) pgx.Row
 <span id="L198" class="ln">   198  </span>}
 <span id="L199" class="ln">   199  </span>
 <span id="L200" class="ln">   200  </span><span class="comment">// TryLockClientName obtains lock on the server to prevent another client with the same name</span>

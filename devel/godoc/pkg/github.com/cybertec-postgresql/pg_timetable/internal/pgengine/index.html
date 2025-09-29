@@ -118,7 +118,7 @@
 				<dd><a href="#adaptEntryLevel">func adaptEntryLevel(level logrus.Level) string</a></dd>
 			
 				
-				<dd><a href="#nullString">func nullString(s string) interface{}</a></dd>
+				<dd><a href="#nullString">func nullString(s string) any</a></dd>
 			
 				
 				<dd><a href="#quoteIdent">func quoteIdent(s string) string</a></dd>
@@ -622,12 +622,12 @@ a connection is the main loop period of 1 minute.
 		
 			
 			
-			<h2 id="nullString">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L170">nullString</a>
+			<h2 id="nullString">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L140">nullString</a>
 				<a class="permalink" href="#nullString">&#xb6;</a>
 				
 				
 			</h2>
-			<pre>func nullString(s <a href="https://pkg.go.dev/builtin/#string">string</a>) interface{}</pre>
+			<pre>func nullString(s <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#any">any</a></pre>
 			<p>nullString returns nil for empty strings, otherwise returns the string
 
 			
@@ -1541,7 +1541,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.createChainFromYaml">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L104">createChainFromYaml</a>
+				<h3 id="PgEngine.createChainFromYaml">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L74">createChainFromYaml</a>
 					<a class="permalink" href="#PgEngine.createChainFromYaml">&#xb6;</a>
 					
 					
@@ -1616,9 +1616,9 @@ where all IDs are the same across all running containers, e.g. 1
 
 			<pre>type PgxIface interface {
     Begin(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
-    Exec(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...interface{}) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/">pgconn</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/#CommandTag">CommandTag</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
-    QueryRow(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...interface{}) <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Row">Row</a>
-    Query(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, query <a href="https://pkg.go.dev/builtin/#string">string</a>, args ...interface{}) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Rows">Rows</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+    Exec(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...<a href="https://pkg.go.dev/builtin/#any">any</a>) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/">pgconn</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/pgconn/#CommandTag">CommandTag</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
+    QueryRow(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...<a href="https://pkg.go.dev/builtin/#any">any</a>) <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Row">Row</a>
+    Query(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, query <a href="https://pkg.go.dev/builtin/#string">string</a>, args ...<a href="https://pkg.go.dev/builtin/#any">any</a>) (<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Rows">Rows</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
     Ping(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a>
     CopyFrom(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tableName <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Identifier">Identifier</a>, columnNames []<a href="https://pkg.go.dev/builtin/#string">string</a>, rowSrc <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#CopyFromSource">CopyFromSource</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)
 }</pre>
@@ -1672,7 +1672,7 @@ where all IDs are the same across all running containers, e.g. 1
 			<p>QueryRowIface specifies interface to use QueryRow method
 
 			<pre>type QueryRowIface interface {
-    QueryRow(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...interface{}) <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Row">Row</a>
+    QueryRow(<a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, <a href="https://pkg.go.dev/builtin/#string">string</a>, ...<a href="https://pkg.go.dev/builtin/#any">any</a>) <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Row">Row</a>
 }</pre>
 
 			
@@ -1717,7 +1717,7 @@ where all IDs are the same across all running containers, e.g. 1
 
 			
 				
-				<h3 id="YamlChain.SetDefaults">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L235">SetDefaults</a>
+				<h3 id="YamlChain.SetDefaults">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L211">SetDefaults</a>
 					<a class="permalink" href="#YamlChain.SetDefaults">&#xb6;</a>
 					
 					
@@ -1730,7 +1730,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="YamlChain.ValidateChain">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L178">ValidateChain</a>
+				<h3 id="YamlChain.ValidateChain">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L148">ValidateChain</a>
 					<a class="permalink" href="#YamlChain.ValidateChain">&#xb6;</a>
 					
 					
@@ -1767,7 +1767,7 @@ where all IDs are the same across all running containers, e.g. 1
 
 			
 				
-				<h3 id="ParseYamlFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L251">ParseYamlFile</a>
+				<h3 id="ParseYamlFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L227">ParseYamlFile</a>
 					<a class="permalink" href="#ParseYamlFile">&#xb6;</a>
 					
 					
@@ -1809,7 +1809,7 @@ where all IDs are the same across all running containers, e.g. 1
 
 			
 				
-				<h3 id="YamlTask.ToSQLParameters">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L288">ToSQLParameters</a>
+				<h3 id="YamlTask.ToSQLParameters">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L264">ToSQLParameters</a>
 					<a class="permalink" href="#YamlTask.ToSQLParameters">&#xb6;</a>
 					
 					
@@ -1822,7 +1822,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="YamlTask.ValidateTask">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L213">ValidateTask</a>
+				<h3 id="YamlTask.ValidateTask">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L189">ValidateTask</a>
 					<a class="permalink" href="#YamlTask.ValidateTask">&#xb6;</a>
 					
 					

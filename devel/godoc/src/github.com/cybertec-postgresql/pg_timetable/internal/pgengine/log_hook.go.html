@@ -197,12 +197,12 @@
 <span id="L140" class="ln">   140  </span>		pgx.Identifier{&#34;timetable&#34;, &#34;log&#34;},
 <span id="L141" class="ln">   141  </span>		[]string{&#34;ts&#34;, &#34;client_name&#34;, &#34;pid&#34;, &#34;log_level&#34;, &#34;message&#34;, &#34;message_data&#34;},
 <span id="L142" class="ln">   142  </span>		pgx.CopyFromSlice(len(cache),
-<span id="L143" class="ln">   143  </span>			func(i int) ([]interface{}, error) {
+<span id="L143" class="ln">   143  </span>			func(i int) ([]any, error) {
 <span id="L144" class="ln">   144  </span>				jsonData, err := json.Marshal(cache[i].Data)
 <span id="L145" class="ln">   145  </span>				if err != nil {
 <span id="L146" class="ln">   146  </span>					return nil, err
 <span id="L147" class="ln">   147  </span>				}
-<span id="L148" class="ln">   148  </span>				return []interface{}{cache[i].Time,
+<span id="L148" class="ln">   148  </span>				return []any{cache[i].Time,
 <span id="L149" class="ln">   149  </span>					hook.client,
 <span id="L150" class="ln">   150  </span>					hook.pid,
 <span id="L151" class="ln">   151  </span>					adaptEntryLevel(cache[i].Level),

@@ -135,10 +135,10 @@
 <span id="L78" class="ln">    78  </span>}
 <span id="L79" class="ln">    79  </span>
 <span id="L80" class="ln">    80  </span>type mockpgrow struct {
-<span id="L81" class="ln">    81  </span>	results []interface{}
+<span id="L81" class="ln">    81  </span>	results []any
 <span id="L82" class="ln">    82  </span>}
 <span id="L83" class="ln">    83  </span>
-<span id="L84" class="ln">    84  </span>func (r *mockpgrow) Scan(dest ...interface{}) error {
+<span id="L84" class="ln">    84  </span>func (r *mockpgrow) Scan(dest ...any) error {
 <span id="L85" class="ln">    85  </span>	if len(r.results) &gt; 0 {
 <span id="L86" class="ln">    86  </span>		if err, ok := r.results[0].(error); ok {
 <span id="L87" class="ln">    87  </span>			r.results = r.results[1:]
@@ -160,7 +160,7 @@
 <span id="L103" class="ln">   103  </span>	r pgx.Row
 <span id="L104" class="ln">   104  </span>}
 <span id="L105" class="ln">   105  </span>
-<span id="L106" class="ln">   106  </span>func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
+<span id="L106" class="ln">   106  </span>func (m mockpgconn) QueryRow(context.Context, string, ...any) pgx.Row {
 <span id="L107" class="ln">   107  </span>	return m.r
 <span id="L108" class="ln">   108  </span>}
 <span id="L109" class="ln">   109  </span>
@@ -174,7 +174,7 @@
 <span id="L117" class="ln">   117  </span>	})
 <span id="L118" class="ln">   118  </span>
 <span id="L119" class="ln">   119  </span>	t.Run(&#34;no schema yet&#34;, func(t *testing.T) {
-<span id="L120" class="ln">   120  </span>		r := &amp;mockpgrow{results: []interface{}{
+<span id="L120" class="ln">   120  </span>		r := &amp;mockpgrow{results: []any{
 <span id="L121" class="ln">   121  </span>			0, <span class="comment">//procoid</span>
 <span id="L122" class="ln">   122  </span>		}}
 <span id="L123" class="ln">   123  </span>		m := mockpgconn{r}
@@ -182,7 +182,7 @@
 <span id="L125" class="ln">   125  </span>	})
 <span id="L126" class="ln">   126  </span>
 <span id="L127" class="ln">   127  </span>	t.Run(&#34;locking error&#34;, func(t *testing.T) {
-<span id="L128" class="ln">   128  </span>		r := &amp;mockpgrow{results: []interface{}{
+<span id="L128" class="ln">   128  </span>		r := &amp;mockpgrow{results: []any{
 <span id="L129" class="ln">   129  </span>			1,                           <span class="comment">//procoid</span>
 <span id="L130" class="ln">   130  </span>			errors.New(&#34;locking error&#34;), <span class="comment">//error</span>
 <span id="L131" class="ln">   131  </span>		}}
@@ -191,7 +191,7 @@
 <span id="L134" class="ln">   134  </span>	})
 <span id="L135" class="ln">   135  </span>
 <span id="L136" class="ln">   136  </span>	t.Run(&#34;locking successful&#34;, func(t *testing.T) {
-<span id="L137" class="ln">   137  </span>		r := &amp;mockpgrow{results: []interface{}{
+<span id="L137" class="ln">   137  </span>		r := &amp;mockpgrow{results: []any{
 <span id="L138" class="ln">   138  </span>			1,    <span class="comment">//procoid</span>
 <span id="L139" class="ln">   139  </span>			true, <span class="comment">//locked</span>
 <span id="L140" class="ln">   140  </span>		}}
