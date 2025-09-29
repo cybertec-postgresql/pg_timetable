@@ -58,42 +58,12 @@ func (pge *PgEngine) LoadYamlChains(ctx context.Context, filePath string, replac
 			return fmt.Errorf("chain '%s' already exists (use --replace flag to overwrite)", yamlChain.ChainName)
 		}
 
-		// Use existing add_job function for single-task chains
-		if len(yamlChain.Tasks) == 1 {
-			task := yamlChain.Tasks[0]
-			params, _ := task.ToSQLParameters()
-			var paramsValue interface{}
-			if params == "" {
-				paramsValue = nil
-			} else {
-				paramsValue = params
-			}
-
-			_, err := pge.ConfigDb.Exec(ctx, `
-				SELECT timetable.add_job($1, $2, $3, $4::jsonb, $5::timetable.command_kind, $6, $7, $8, $9, $10, $11, $12)`,
-				yamlChain.ChainName,
-				yamlChain.Schedule,
-				task.Command,
-				paramsValue,
-				task.Kind,
-				nullString(yamlChain.ClientName),
-				yamlChain.MaxInstances,
-				yamlChain.Live,
-				yamlChain.SelfDestruct,
-				task.IgnoreError,
-				yamlChain.ExclusiveExecution,
-				nullString(yamlChain.OnError))
-			if err != nil {
-				return fmt.Errorf("failed to create chain %s: %w", yamlChain.ChainName, err)
-			}
-		} else {
-			// Multi-task chain - use direct SQL
-			chainID, err := pge.createChainFromYaml(ctx, &yamlChain)
-			if err != nil {
-				return fmt.Errorf("failed to create multi-task chain %s: %w", yamlChain.ChainName, err)
-			}
-			pge.l.WithField("chain", yamlChain.ChainName).WithField("chain_id", chainID).Info("Created multi-task chain")
+		// Multi-task chain - use direct SQL
+		chainID, err := pge.createChainFromYaml(ctx, &yamlChain)
+		if err != nil {
+			return fmt.Errorf("failed to create multi-task chain %s: %w", yamlChain.ChainName, err)
 		}
+		pge.l.WithField("chain", yamlChain.ChainName).WithField("chain_id", chainID).Info("Created multi-task chain")
 	}
 
 	pge.l.WithField("chains", len(yamlConfig.Chains)).WithField("file", filePath).Info("Successfully imported YAML chains")
@@ -167,7 +137,7 @@ func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlCha
 }
 
 // nullString returns nil for empty strings, otherwise returns the string
-func nullString(s string) interface{} {
+func nullString(s string) any {
 	if s == "" {
 		return nil
 	}
@@ -185,10 +155,16 @@ func (c *YamlChain) ValidateChain() error {
 	}
 
 	// Validate cron format
-	switch c.Schedule {
-	case "", "@reboot", "@after", "@every":
-		// Valid special schedules
-	default:
+	specialSchedules := []string{"@reboot", "@after", "@every"}
+	isSpecial := false
+	for _, s := range specialSchedules {
+		if strings.HasPrefix(c.Schedule, s) {
+			isSpecial = true
+			break
+		}
+	}
+
+	if !isSpecial {
 		fields := strings.Fields(c.Schedule)
 		if len(fields) != 5 {
 			return fmt.Errorf("invalid cron format: %s (expected 5 fields)", c.Schedule)

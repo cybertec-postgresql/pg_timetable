@@ -78,10 +78,10 @@ func TestFinalizeConnection(t *testing.T) {
 }
 
 type mockpgrow struct {
-	results []interface{}
+	results []any
 }
 
-func (r *mockpgrow) Scan(dest ...interface{}) error {
+func (r *mockpgrow) Scan(dest ...any) error {
 	if len(r.results) > 0 {
 		if err, ok := r.results[0].(error); ok {
 			r.results = r.results[1:]
@@ -103,7 +103,7 @@ type mockpgconn struct {
 	r pgx.Row
 }
 
-func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
+func (m mockpgconn) QueryRow(context.Context, string, ...any) pgx.Row {
 	return m.r
 }
 
@@ -117,7 +117,7 @@ func TestTryLockClientName(t *testing.T) {
 	})
 
 	t.Run("no schema yet", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
+		r := &mockpgrow{results: []any{
 			0, //procoid
 		}}
 		m := mockpgconn{r}
@@ -125,7 +125,7 @@ func TestTryLockClientName(t *testing.T) {
 	})
 
 	t.Run("locking error", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
+		r := &mockpgrow{results: []any{
 			1,                           //procoid
 			errors.New("locking error"), //error
 		}}
@@ -134,7 +134,7 @@ func TestTryLockClientName(t *testing.T) {
 	})
 
 	t.Run("locking successful", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
+		r := &mockpgrow{results: []any{
 			1,    //procoid
 			true, //locked
 		}}

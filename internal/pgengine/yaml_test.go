@@ -5,10 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
 // Helper function to create temporary YAML file
@@ -165,7 +166,7 @@ func TestYamlParameterHandling(t *testing.T) {
 	sqlTask := chain.Tasks[0]
 	require.Equal(t, "SQL", sqlTask.Kind)
 	require.Equal(t, 2, len(sqlTask.Parameters))
-	sqlParam1, ok := sqlTask.Parameters[0].([]interface{})
+	sqlParam1, ok := sqlTask.Parameters[0].([]any)
 	require.True(t, ok, "SQL parameter should be an array")
 	assert.Equal(t, 3, len(sqlParam1))
 
@@ -191,4 +192,965 @@ func TestYamlParameterHandling(t *testing.T) {
 	logParam1, ok := logTask.Parameters[0].(string)
 	require.True(t, ok, "Log parameter can be a string")
 	assert.Equal(t, "warning message", logParam1)
+}
+
+func TestParseYamlFile(t *testing.T) {
+	t.Run("Valid YAML file", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "test-chain"
+    schedule: "0 * * * *"
+    live: true
+    max_instances: 2
+    timeout: 300
+    self_destruct: true
+    exclusive: true
+    client_name: "test-client"
+    on_error: "RETRY"
+    tasks:
+      - name: "test-task"
+        kind: "SQL"
+        command: "SELECT 1"
+        parameters: ["param1", 42, true]
+        ignore_error: false
+        autonomous: false
+        timeout: 60
+        run_as: "postgres"
+        connect_string: "test-db"`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		config, err := pgengine.ParseYamlFile(tmpfile)
+		require.NoError(t, err)
+		require.Len(t, config.Chains, 1)
+
+		chain := config.Chains[0]
+		assert.Equal(t, "test-chain", chain.ChainName)
+		assert.Equal(t, "0 * * * *", chain.Schedule)
+		assert.True(t, chain.Live)
+		assert.Equal(t, 2, chain.MaxInstances)
+		assert.Equal(t, 300, chain.Timeout)
+		assert.True(t, chain.SelfDestruct)
+		assert.True(t, chain.ExclusiveExecution)
+		assert.Equal(t, "test-client", chain.ClientName)
+		assert.Equal(t, "RETRY", chain.OnError)
+
+		require.Len(t, chain.Tasks, 1)
+		task := chain.Tasks[0]
+		assert.Equal(t, "test-task", task.TaskName)
+		assert.Equal(t, "SQL", task.Kind)
+		assert.Equal(t, "SELECT 1", task.Command)
+		assert.False(t, task.IgnoreError)
+		assert.False(t, task.Autonomous)
+		assert.Equal(t, 60, task.Timeout)
+		assert.Equal(t, "postgres", task.RunAs)
+		assert.Equal(t, "test-db", task.ConnectString)
+	})
+
+	t.Run("File not found", func(t *testing.T) {
+		_, err := pgengine.ParseYamlFile("/non/existent/file.yaml")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file not found")
+	})
+
+	t.Run("Invalid file extension", func(t *testing.T) {
+		tmpfile, err := os.CreateTemp("", "test-*.txt")
+		require.NoError(t, err)
+		tmpfileName := tmpfile.Name()
+		defer os.Remove(tmpfileName)
+		tmpfile.Close()
+
+		_, err = pgengine.ParseYamlFile(tmpfileName)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "file must have .yaml or .yml extension")
+	})
+
+	t.Run("Invalid YAML syntax", func(t *testing.T) {
+		invalidYaml := `chains:
+  - name: "test"
+    schedule: "* * * * *"
+    tasks:
+      - name: "task1"
+        kind: "SQL
+        command: SELECT 1`
+
+		tmpfile := createTempYamlFile(t, invalidYaml)
+		defer removeTempFile(t, tmpfile)
+
+		_, err := pgengine.ParseYamlFile(tmpfile)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse YAML")
+	})
+
+	t.Run("Validation errors", func(t *testing.T) {
+		invalidChain := `chains:
+  - name: ""
+    schedule: "* * * * *"
+    tasks:
+      - command: "SELECT 1"`
+
+		tmpfile := createTempYamlFile(t, invalidChain)
+		defer removeTempFile(t, tmpfile)
+
+		_, err := pgengine.ParseYamlFile(tmpfile)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "chain name is required")
+	})
+}
+
+func TestYamlChainValidation(t *testing.T) {
+	t.Run("Valid chain", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Schedule: "0 * * * *",
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "SELECT 1",
+						Kind:    "SQL",
+					},
+				},
+			},
+		}
+
+		err := chain.ValidateChain()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Missing chain name", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Schedule: "0 * * * *",
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "SELECT 1",
+						Kind:    "SQL",
+					},
+				},
+			},
+		}
+
+		err := chain.ValidateChain()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "chain name is required")
+	})
+
+	t.Run("Missing schedule", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "SELECT 1",
+						Kind:    "SQL",
+					},
+				},
+			},
+		}
+
+		err := chain.ValidateChain()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "chain schedule is required")
+	})
+
+	t.Run("Invalid cron format", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Schedule: "invalid cron",
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "SELECT 1",
+						Kind:    "SQL",
+					},
+				},
+			},
+		}
+
+		err := chain.ValidateChain()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid cron format")
+	})
+
+	t.Run("Special schedules", func(t *testing.T) {
+		specialSchedules := []string{"@reboot", "@after", "@every"}
+		for _, schedule := range specialSchedules {
+			chain := &pgengine.YamlChain{
+				Chain: pgengine.Chain{
+					ChainName: "test-chain",
+				},
+				Schedule: schedule,
+				Tasks: []pgengine.YamlTask{
+					{
+						ChainTask: pgengine.ChainTask{
+							Command: "SELECT 1",
+							Kind:    "SQL",
+						},
+					},
+				},
+			}
+
+			err := chain.ValidateChain()
+			assert.NoError(t, err, "Schedule %s should be valid", schedule)
+		}
+	})
+
+	t.Run("No tasks", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Schedule: "0 * * * *",
+			Tasks:    []pgengine.YamlTask{},
+		}
+
+		err := chain.ValidateChain()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "chain must have at least one task")
+	})
+
+	t.Run("Task validation error", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Schedule: "0 * * * *",
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "", // Invalid empty command
+						Kind:    "SQL",
+					},
+				},
+			},
+		}
+
+		err := chain.ValidateChain()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "task 1:")
+		assert.Contains(t, err.Error(), "task command is required")
+	})
+}
+
+func TestYamlTaskValidation(t *testing.T) {
+	t.Run("Valid task", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			ChainTask: pgengine.ChainTask{
+				Command: "SELECT 1",
+				Kind:    "SQL",
+				Timeout: 60,
+			},
+		}
+
+		err := task.ValidateTask()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Missing command", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			ChainTask: pgengine.ChainTask{
+				Kind: "SQL",
+			},
+		}
+
+		err := task.ValidateTask()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "task command is required")
+	})
+
+	t.Run("Valid kinds", func(t *testing.T) {
+		validKinds := []string{"", "SQL", "PROGRAM", "BUILTIN", "sql", "program", "builtin"}
+		for _, kind := range validKinds {
+			task := &pgengine.YamlTask{
+				ChainTask: pgengine.ChainTask{
+					Command: "SELECT 1",
+					Kind:    kind,
+				},
+			}
+
+			err := task.ValidateTask()
+			assert.NoError(t, err, "Kind %s should be valid", kind)
+		}
+	})
+
+	t.Run("Invalid kind", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			ChainTask: pgengine.ChainTask{
+				Command: "SELECT 1",
+				Kind:    "INVALID",
+			},
+		}
+
+		err := task.ValidateTask()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid task kind: INVALID")
+	})
+
+	t.Run("Negative timeout", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			ChainTask: pgengine.ChainTask{
+				Command: "SELECT 1",
+				Kind:    "SQL",
+				Timeout: -1,
+			},
+		}
+
+		err := task.ValidateTask()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "task timeout must be non-negative")
+	})
+}
+
+func TestYamlChainSetDefaults(t *testing.T) {
+	t.Run("Set default schedule", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "SELECT 1",
+					},
+				},
+			},
+		}
+
+		chain.SetDefaults()
+		assert.Equal(t, "* * * * *", chain.Schedule)
+		assert.Equal(t, "SQL", chain.Tasks[0].Kind)
+	})
+
+	t.Run("Keep existing values", func(t *testing.T) {
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Schedule: "0 0 * * *",
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "echo hello",
+						Kind:    "PROGRAM",
+					},
+				},
+			},
+		}
+
+		chain.SetDefaults()
+		assert.Equal(t, "0 0 * * *", chain.Schedule)
+		assert.Equal(t, "PROGRAM", chain.Tasks[0].Kind)
+	})
+}
+
+func TestToSQLParameters(t *testing.T) {
+	t.Run("No parameters", func(t *testing.T) {
+		task := &pgengine.YamlTask{}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, "", result)
+	})
+
+	t.Run("String parameters", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{"hello", "world"},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `["hello", "world"]`, result)
+	})
+
+	t.Run("String with quotes", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{`hello "quoted" world`},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `["hello \"quoted\" world"]`, result)
+	})
+
+	t.Run("Integer parameters", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{42, int32(100), int64(200)},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `[42, 100, 200]`, result)
+	})
+
+	t.Run("Float parameters", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{3.14, float32(2.71)},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `[3.14, 2.71]`, result)
+	})
+
+	t.Run("Boolean parameters", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{true, false},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `[true, false]`, result)
+	})
+
+	t.Run("Mixed parameter types", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{"text", 42, 3.14, true, nil},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `["text", 42, 3.14, true, "<nil>"]`, result)
+	})
+}
+
+func TestNullString(t *testing.T) {
+	// Note: nullString is not exported, so we test it indirectly through chain creation
+	t.Run("Indirect test via chain creation", func(t *testing.T) {
+		container, cleanup := testutils.SetupPostgresContainer(t)
+		defer cleanup()
+
+		ctx := context.Background()
+		pge := container.Engine
+
+		yamlContent := `chains:
+  - name: "test-null-strings"
+    schedule: "0 0 * * *"
+    client_name: ""  # Should become NULL in database
+    on_error: ""     # Should become NULL in database
+    tasks:
+      - name: "test-task"
+        command: "SELECT 1"
+        kind: "SQL"
+        run_as: ""              # Should become NULL
+        database_connection: "" # Should become NULL`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify NULL values in database
+		var clientName, onError any
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT client_name, on_error FROM timetable.chain WHERE chain_name = $1",
+			"test-null-strings").Scan(&clientName, &onError)
+		require.NoError(t, err)
+		assert.Nil(t, clientName)
+		assert.Nil(t, onError)
+	})
+}
+
+func TestLoadYamlChainsMultiTask(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	pge := container.Engine
+
+	t.Run("Multi-task chain creation", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "multi-task-chain"
+    schedule: "0 0 * * *"
+    live: true
+    max_instances: 2
+    timeout: 300
+    self_destruct: false
+    exclusive: true
+    client_name: "test-client"
+    on_error: "CONTINUE"
+    tasks:
+      - name: "first-task"
+        kind: "SQL"
+        command: "SELECT 1"
+        ignore_error: false
+        autonomous: false
+        timeout: 60
+        run_as: "postgres"
+        database_connection: "main"
+        parameters: ["param1", 42]
+      - name: "second-task"
+        kind: "PROGRAM"
+        command: "echo"
+        ignore_error: true
+        autonomous: true
+        timeout: 30
+        parameters: ["hello", "world"]`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify chain was created
+		var chainID int64
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT chain_id FROM timetable.chain WHERE chain_name = $1",
+			"multi-task-chain").Scan(&chainID)
+		require.NoError(t, err)
+		assert.Greater(t, chainID, int64(0))
+
+		// Verify tasks were created
+		var taskCount int
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT COUNT(*) FROM timetable.task WHERE chain_id = $1",
+			chainID).Scan(&taskCount)
+		require.NoError(t, err)
+		assert.Equal(t, 2, taskCount)
+
+		// Verify task parameters were created
+		var paramCount int
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT COUNT(*) FROM timetable.parameter p JOIN timetable.task t ON p.task_id = t.task_id WHERE t.chain_id = $1",
+			chainID).Scan(&paramCount)
+		require.NoError(t, err)
+		assert.Equal(t, 2, paramCount) // 2 tasks with parameters
+	})
+
+	t.Run("Chain already exists without replace", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "existing-chain"
+    schedule: "0 0 * * *"
+    tasks:
+      - command: "SELECT 1"
+        kind: "SQL"`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		// First load should succeed
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Second load without replace should fail
+		err = pge.LoadYamlChains(ctx, tmpfile, false)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "already exists")
+	})
+
+	t.Run("Database error during chain creation", func(t *testing.T) {
+		// Test with invalid schedule that fails YAML validation
+		yamlContent := `chains:
+  - name: "invalid-schedule-chain"
+    schedule: "invalid cron expression that passes validation but fails in DB"
+    tasks:
+      - command: "SELECT 1"
+        kind: "SQL"`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		// This should fail at YAML validation level due to invalid cron format
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse YAML file")
+	})
+}
+
+func TestLoadYamlChainsErrorCases(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	pge := container.Engine
+
+	t.Run("Invalid YAML file", func(t *testing.T) {
+		err := pge.LoadYamlChains(ctx, "/non/existent/file.yaml", false)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse YAML file")
+	})
+
+	t.Run("Invalid YAML content", func(t *testing.T) {
+		invalidYaml := `chains:
+  - name: ""  # Invalid: empty name
+    schedule: "0 0 * * *"
+    tasks:
+      - command: "SELECT 1"`
+
+		tmpfile := createTempYamlFile(t, invalidYaml)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to parse YAML file")
+	})
+}
+
+func TestCreateChainFromYamlEdgeCases(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	pge := container.Engine
+
+	t.Run("Task with no parameters", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "no-params-chain"
+    schedule: "0 0 * * *"
+    tasks:
+      - name: "no-param-task"
+        kind: "SQL"
+        command: "SELECT CURRENT_TIMESTAMP"
+      - name: "empty-param-task"
+        kind: "SQL"
+        command: "SELECT 1"
+        parameters: []`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify no parameters were inserted
+		var paramCount int
+		err = pge.ConfigDb.QueryRow(ctx,
+			`SELECT COUNT(*) FROM timetable.parameter p 
+			 JOIN timetable.task t ON p.task_id = t.task_id 
+			 JOIN timetable.chain c ON t.chain_id = c.chain_id 
+			 WHERE c.chain_name = $1`,
+			"no-params-chain").Scan(&paramCount)
+		require.NoError(t, err)
+		assert.Equal(t, 0, paramCount)
+	})
+
+	t.Run("Complex parameter types", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "complex-params-chain"
+    schedule: "0 0 * * *"
+    tasks:
+      - name: "complex-task"
+        kind: "SQL"
+        command: "SELECT $1::jsonb"
+        parameters:
+          - {"key": "value", "number": 42, "nested": {"inner": true}}`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify parameter was stored
+		var paramValue string
+		err = pge.ConfigDb.QueryRow(ctx,
+			`SELECT p.value FROM timetable.parameter p 
+			 JOIN timetable.task t ON p.task_id = t.task_id 
+			 JOIN timetable.chain c ON t.chain_id = c.chain_id 
+			 WHERE c.chain_name = $1`,
+			"complex-params-chain").Scan(&paramValue)
+		require.NoError(t, err)
+		assert.Contains(t, paramValue, "key")
+		assert.Contains(t, paramValue, "value")
+	})
+}
+
+func TestToSQLParametersErrorHandling(t *testing.T) {
+	t.Run("Error in parameter conversion", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{
+				make(chan int), // unsupported type that can't be converted
+			},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)           // Function doesn't actually return errors, just converts to string
+		assert.Contains(t, result, "0x") // channel representation
+	})
+
+	t.Run("Empty array parameters", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{[]any{}},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Equal(t, `["[]"]`, result)
+	})
+
+	t.Run("Complex nested structures", func(t *testing.T) {
+		task := &pgengine.YamlTask{
+			Parameters: []any{
+				map[string]any{
+					"nested": map[string]any{
+						"deep": []any{1, 2, 3},
+					},
+				},
+			},
+		}
+		result, err := task.ToSQLParameters()
+		assert.NoError(t, err)
+		assert.Contains(t, result, "nested")
+	})
+}
+
+func TestCreateChainFromYamlErrorHandling(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	pge := container.Engine
+
+	t.Run("Multi-task chain with invalid parameter conversion", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "param-error-chain"
+    schedule: "0 0 * * *"
+    tasks:
+      - name: "first-task"
+        kind: "SQL"
+        command: "SELECT 1"
+        parameters: [{"invalid": {"deeply": {"nested": "value"}}}]
+      - name: "second-task"
+        kind: "SQL"
+        command: "SELECT 2"`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		// Should succeed even with complex parameters
+		require.NoError(t, err)
+
+		// Verify chain and tasks were created
+		var chainID int64
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT chain_id FROM timetable.chain WHERE chain_name = $1",
+			"param-error-chain").Scan(&chainID)
+		require.NoError(t, err)
+
+		var taskCount int
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT COUNT(*) FROM timetable.task WHERE chain_id = $1",
+			chainID).Scan(&taskCount)
+		require.NoError(t, err)
+		assert.Equal(t, 2, taskCount)
+	})
+
+	t.Run("Multi-task chain with various field types", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "comprehensive-multi-task"
+    schedule: "@every 1h"
+    live: false
+    max_instances: 3
+    timeout: 600
+    self_destruct: true
+    exclusive: false
+    client_name: "test-client-multi"
+    on_error: "IGNORE"
+    tasks:
+      - name: "sql-task"
+        kind: "SQL"
+        command: "SELECT $1, $2"
+        parameters: ["string", 123]
+        ignore_error: true
+        autonomous: false
+        timeout: 120
+        run_as: "test_user"
+        connect_string: "dbname=test"
+      - name: "program-task"  
+        kind: "PROGRAM"
+        command: "echo"
+        parameters: ["hello", "world"]
+        ignore_error: false
+        autonomous: true
+        timeout: 60
+      - name: "builtin-task"
+        kind: "BUILTIN" 
+        command: "Sleep"
+        parameters: [5]
+        ignore_error: false
+        autonomous: false
+        timeout: 10`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify all chain properties
+		var chainID int64
+		var schedule, clientName, onError string
+		var live, selfDestruct, exclusive bool
+		var maxInstances, timeout int
+		err = pge.ConfigDb.QueryRow(ctx,
+			`SELECT chain_id, run_at, client_name, on_error, live, 
+			 self_destruct, exclusive_execution, max_instances, timeout 
+			 FROM timetable.chain WHERE chain_name = $1`,
+			"comprehensive-multi-task").Scan(
+			&chainID, &schedule, &clientName, &onError, &live,
+			&selfDestruct, &exclusive, &maxInstances, &timeout)
+		require.NoError(t, err)
+
+		assert.Equal(t, "@every 1h", schedule)
+		assert.Equal(t, "test-client-multi", clientName)
+		assert.Equal(t, "IGNORE", onError)
+		assert.False(t, live)
+		assert.True(t, selfDestruct)
+		assert.False(t, exclusive)
+		assert.Equal(t, 3, maxInstances)
+		assert.Equal(t, 600, timeout)
+
+		// Verify all tasks were created with correct properties
+		rows, err := pge.ConfigDb.Query(ctx,
+			`SELECT task_name, kind, command, ignore_error, autonomous, 
+			 timeout, run_as, database_connection
+			 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order`,
+			chainID)
+		require.NoError(t, err)
+		defer rows.Close()
+
+		expectedTasks := []struct {
+			name      string
+			kind      string
+			command   string
+			ignoreErr bool
+			auto      bool
+			timeout   int
+			runAs     *string
+			dbConn    *string
+		}{
+			{"sql-task", "SQL", "SELECT $1, $2", true, false, 120, stringPtr("test_user"), stringPtr("dbname=test")},
+			{"program-task", "PROGRAM", "echo", false, true, 60, nil, nil},
+			{"builtin-task", "BUILTIN", "Sleep", false, false, 10, nil, nil},
+		}
+
+		taskIdx := 0
+		for rows.Next() {
+			var name, kind, command string
+			var ignoreErr, auto bool
+			var timeout int
+			var runAs, dbConn *string
+
+			err := rows.Scan(&name, &kind, &command, &ignoreErr, &auto, &timeout, &runAs, &dbConn)
+			require.NoError(t, err)
+
+			expected := expectedTasks[taskIdx]
+			assert.Equal(t, expected.name, name)
+			assert.Equal(t, expected.kind, kind)
+			assert.Equal(t, expected.command, command)
+			assert.Equal(t, expected.ignoreErr, ignoreErr)
+			assert.Equal(t, expected.auto, auto)
+			assert.Equal(t, expected.timeout, timeout)
+			assert.Equal(t, expected.runAs, runAs)
+			assert.Equal(t, expected.dbConn, dbConn)
+
+			taskIdx++
+		}
+		assert.Equal(t, 3, taskIdx)
+
+		// Verify parameters were stored correctly
+		var paramCount int
+		err = pge.ConfigDb.QueryRow(ctx,
+			`SELECT COUNT(*) FROM timetable.parameter p 
+			 JOIN timetable.task t ON p.task_id = t.task_id 
+			 WHERE t.chain_id = $1`,
+			chainID).Scan(&paramCount)
+		require.NoError(t, err)
+		assert.Equal(t, 3, paramCount) // 3 tasks with parameters
+	})
+}
+
+// Helper function to create string pointer
+func stringPtr(s string) *string {
+	return &s
+}
+
+func TestNullStringFunction(t *testing.T) {
+	// Testing nullString indirectly through database operations
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	pge := container.Engine
+
+	t.Run("All null fields", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "all-nulls-chain"
+    schedule: "0 0 * * *"
+    # client_name: ""     # Should be NULL
+    # on_error: ""        # Should be NULL  
+    tasks:
+      - name: "null-task"
+        command: "SELECT 1"
+        kind: "SQL"
+        # run_as: ""              # Should be NULL
+        # connect_string: ""      # Should be NULL`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify NULL values in chain table
+		var clientName, onError any
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT client_name, on_error FROM timetable.chain WHERE chain_name = $1",
+			"all-nulls-chain").Scan(&clientName, &onError)
+		require.NoError(t, err)
+		assert.Nil(t, clientName)
+		assert.Nil(t, onError)
+
+		// Verify NULL values in task table
+		var runAs, dbConn any
+		err = pge.ConfigDb.QueryRow(ctx,
+			`SELECT run_as, database_connection FROM timetable.task t 
+			 JOIN timetable.chain c ON t.chain_id = c.chain_id 
+			 WHERE c.chain_name = $1`,
+			"all-nulls-chain").Scan(&runAs, &dbConn)
+		require.NoError(t, err)
+		assert.Nil(t, runAs)
+		assert.Nil(t, dbConn)
+	})
+
+	t.Run("Mixed null and non-null fields", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "mixed-nulls-chain"
+    schedule: "0 0 * * *"
+    client_name: "real-client"
+    # on_error not specified - should be NULL
+    tasks:
+      - name: "mixed-task"
+        command: "SELECT 1"
+        kind: "SQL"
+        run_as: "real-user"
+        # connect_string not specified - should be NULL`
+
+		tmpfile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tmpfile)
+
+		err := pge.LoadYamlChains(ctx, tmpfile, false)
+		require.NoError(t, err)
+
+		// Verify mixed values in chain table
+		var clientName, onError any
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT client_name, on_error FROM timetable.chain WHERE chain_name = $1",
+			"mixed-nulls-chain").Scan(&clientName, &onError)
+		require.NoError(t, err)
+		require.NotNil(t, clientName)
+		assert.Equal(t, "real-client", clientName)
+		assert.Nil(t, onError)
+
+		// Verify mixed values in task table
+		var runAs, dbConn any
+		err = pge.ConfigDb.QueryRow(ctx,
+			`SELECT run_as, database_connection FROM timetable.task t 
+			 JOIN timetable.chain c ON t.chain_id = c.chain_id 
+			 WHERE c.chain_name = $1`,
+			"mixed-nulls-chain").Scan(&runAs, &dbConn)
+		require.NoError(t, err)
+		require.NotNil(t, runAs)
+		assert.Equal(t, "real-user", runAs)
+		assert.Nil(t, dbConn)
+	})
 }

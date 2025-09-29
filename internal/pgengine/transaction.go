@@ -119,7 +119,7 @@ func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask,
 // ExecuteSQLCommand executes chain command with parameters inside transaction
 func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, command string, paramValues []string) (out string, err error) {
 	var ct pgconn.CommandTag
-	var params []interface{}
+	var params []any
 	if strings.TrimSpace(command) == "" {
 		return "", errors.New("SQL command cannot be empty")
 	}

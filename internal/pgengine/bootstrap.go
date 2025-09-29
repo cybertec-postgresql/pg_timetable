@@ -32,9 +32,9 @@ var backoff = retry.WithCappedDuration(maxWaitTime, retry.NewExponential(WaitTim
 // PgxIface is common interface for every pgx class
 type PgxIface interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
-	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
-	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
 	Ping(ctx context.Context) error
 	CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error)
 }
@@ -194,7 +194,7 @@ func (pge *PgEngine) AddLogHook(ctx context.Context) {
 
 // QueryRowIface specifies interface to use QueryRow method
 type QueryRowIface interface {
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
