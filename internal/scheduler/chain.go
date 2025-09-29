@@ -176,12 +176,12 @@ func getTimeoutContext(ctx context.Context, globalTimeout int, customTimeout int
 }
 
 func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
-	if ctx.Err() != nil || !chain.OnErrorSQL.Valid {
+	if ctx.Err() != nil || chain.OnError == "" {
 		return
 	}
 	l := sch.l.WithField("chain", chain.ChainID)
 	l.Info("Starting error handling")
-	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnErrorSQL.String); err != nil {
+	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnError); err != nil {
 		l.Info("Error handler failed")
 		return
 	}
@@ -277,9 +277,9 @@ func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine
 			l.Info("Program task execution skipped")
 			return -2
 		}
-		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Script, paramValues)
+		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Command, paramValues)
 	case "BUILTIN":
-		out, err = sch.executeBuiltinTask(ctx, task.Script, paramValues)
+		out, err = sch.executeBuiltinTask(ctx, task.Command, paramValues)
 	}
 	task.Duration = time.Since(task.StartedAt).Microseconds()
 

@@ -1,0 +1,65 @@
+# Backup job example with program tasks
+
+chains:
+  - name: "Database Backup Job"
+    schedule: "0 3 * * 0"  # Sunday at 3 AM
+    live: true
+    max_instances: 1
+    timeout: 7200000  # 2 hour timeout
+    client_name: "backup-worker"
+    
+    tasks:
+      - name: "Create backup directory"
+        kind: "PROGRAM"
+        command: "mkdir"
+        parameters: 
+          - "-p"
+          - "/backups/$(date +%Y-%m-%d)"
+        ignore_error: true
+        
+      - name: "Database dump"
+        kind: "PROGRAM"
+        command: "pg_dump"
+        parameters:
+          - "-h"
+          - "localhost"
+          - "-U"
+          - "postgres"
+          - "-d"
+          - "mydb"
+          - "-f"
+          - "/backups/$(date +%Y-%m-%d)/mydb_backup.sql"
+          - "--verbose"
+        timeout: 5400000  # 90 minutes for dump
+        
+      - name: "Compress backup"
+        kind: "PROGRAM"
+        command: "gzip"
+        parameters:
+          - "/backups/$(date +%Y-%m-%d)/mydb_backup.sql"
+        timeout: 600000  # 10 minutes for compression
+        
+      - name: "Cleanup old backups"
+        kind: "PROGRAM"
+        command: "find"
+        parameters:
+          - "/backups"
+          - "-type"
+          - "f"
+          - "-name"
+          - "*.sql.gz"
+          - "-mtime"
+          - "+7"  # older than 7 days
+          - "-delete"
+        ignore_error: true
+        
+      - name: "Log backup completion"
+        kind: "SQL"
+        command: |
+          INSERT INTO backup_log (backup_date, backup_type, status, file_path)
+          VALUES (
+            CURRENT_DATE, 
+            'full_database', 
+            'completed',
+            '/backups/' || TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') || '/mydb_backup.sql.gz'
+          )

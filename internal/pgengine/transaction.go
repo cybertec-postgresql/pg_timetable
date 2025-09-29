@@ -11,7 +11,6 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // StartTransaction returns transaction object, virtual transaction id and error
@@ -77,11 +76,11 @@ func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *Chai
 		pge.MustSavepoint(ctx, tx, task.TaskID)
 	}
 	pge.SetCurrentTaskContext(ctx, tx, task.ChainID, task.TaskID)
-	out, err = pge.ExecuteSQLCommand(ctx, tx, task.Script, paramValues)
+	out, err = pge.ExecuteSQLCommand(ctx, tx, task.Command, paramValues)
 	if err != nil && task.IgnoreError {
 		pge.MustRollbackToSavepoint(ctx, tx, task.TaskID)
 	}
-	if task.RunAs.Valid {
+	if task.RunAs > "" {
 		pge.ResetRole(ctx, tx)
 	}
 	return
@@ -98,14 +97,14 @@ func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxCo
 		return "", err
 	}
 	pge.SetCurrentTaskContext(ctx, conn, task.ChainID, task.TaskID)
-	return pge.ExecuteSQLCommand(ctx, conn, task.Script, paramValues)
+	return pge.ExecuteSQLCommand(ctx, conn, task.Command, paramValues)
 }
 
 // ExecRemoteSQLTask executes task against remote connection
 func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
 	log.GetLogger(ctx).Info("Switching to remote task mode")
 	return pge.ExecStandaloneTask(ctx,
-		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, task.ConnectString.String) },
+		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, task.ConnectString) },
 		task, paramValues)
 }
 
@@ -171,12 +170,12 @@ func (pge *PgEngine) FinalizeDBConnection(ctx context.Context, remoteDb PgxConnI
 }
 
 // SetRole - set the current user identifier of the current session
-func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID pgtype.Text) error {
-	if !runUID.Valid || strings.TrimSpace(runUID.String) == "" {
+func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID string) error {
+	if strings.TrimSpace(runUID) == "" {
 		return nil
 	}
-	log.GetLogger(ctx).Info("Setting role to ", runUID.String)
-	_, err := executor.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID.String))
+	log.GetLogger(ctx).Info("Setting role to ", runUID)
+	_, err := executor.Exec(ctx, fmt.Sprintf("SET ROLE %v", runUID))
 	return err
 }
 

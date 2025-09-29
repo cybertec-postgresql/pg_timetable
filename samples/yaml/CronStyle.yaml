@@ -1,0 +1,23 @@
+# Cron-style scheduling example
+# Equivalent to samples/CronStyle.sql
+
+chains:
+  - name: "cron_Job run after 40th minutes after 2 hour on 27th of every month"
+    schedule: "40 */2 27 * *"  # 40th minute, every 2 hours, on 27th of month
+    live: true
+    
+    tasks:
+      - name: "Create dummy log table"
+        kind: "SQL"
+        command: |
+          CREATE TABLE IF NOT EXISTS timetable.dummy_log (
+            log_ID BIGSERIAL,
+            event_name TEXT,
+            timestmp TIMESTAMPTZ DEFAULT TRANSACTION_TIMESTAMP(),
+            PRIMARY KEY (log_ID)
+          )
+        ignore_error: true
+        
+      - name: "Insert cron test event"
+        kind: "SQL"
+        command: "INSERT INTO timetable.dummy_log (event_name) VALUES ('Cron test')"

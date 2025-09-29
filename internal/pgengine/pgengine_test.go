@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	pgtype "github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -162,7 +161,7 @@ func TestGetRemoteDBTransaction(t *testing.T) {
 	require.NoError(t, err, "remoteDB should be initialized")
 	require.NotNil(t, remoteDb, "remoteDB should be initialized")
 
-	assert.NoError(t, pge.SetRole(ctx, remoteDb, pgtype.Text{String: "scheduler", Valid: true}),
+	assert.NoError(t, pge.SetRole(ctx, remoteDb, "scheduler"),
 		"Set Role failed")
 	assert.NotPanics(t, func() { pge.ResetRole(ctx, remoteDb) }, "Reset Role failed")
 	pge.FinalizeDBConnection(ctx, remoteDb)

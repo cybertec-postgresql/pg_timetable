@@ -1,0 +1,40 @@
+# Multi-task chain example
+# Equivalent to samples/Chain.sql but simplified
+
+chains:
+  - name: "chain operation"
+    schedule: "* * * * *"  # Every minute
+    live: true
+    max_instances: 1
+    self_destruct: false
+    exclusive: false
+    
+    tasks:
+      - name: "Initialize chain log table"
+        kind: "SQL"
+        command: |
+          CREATE TABLE IF NOT EXISTS timetable.chain_log (
+            chain_log BIGSERIAL,
+            EVENT TEXT,
+            time TIMESTAMPTZ,
+            PRIMARY KEY (chain_log)
+          )
+        ignore_error: true
+        
+      - name: "Log chain start"
+        kind: "SQL" 
+        command: "INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)"
+        parameters: ["Chain started"]
+        ignore_error: true
+        
+      - name: "Log chain processing"
+        kind: "SQL"
+        command: "INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)"
+        parameters: ["Chain processing"]
+        ignore_error: true
+        
+      - name: "Log chain completion"
+        kind: "SQL"
+        command: "INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)"
+        parameters: ["Chain completed"] 
+        ignore_error: true

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -108,7 +109,7 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 	}
 	pge.AddLogHook(ctx) //schema exists, we can log now
 	if cmdOpts.Start.File != "" {
-		if err := pge.ExecuteCustomScripts(ctx, cmdOpts.Start.File); err != nil {
+		if err := pge.ExecuteFileScript(ctx, cmdOpts); err != nil {
 			return nil, err
 		}
 	}
@@ -215,6 +216,53 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 		return errors.New("cannot obtain lock for a session")
 	}
 	return nil
+}
+
+// ExecuteFileScript handles both SQL and YAML files based on file extension
+func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions) error {
+	filePath := cmdOpts.Start.File
+
+	// Determine file type by extension
+	fileExt := strings.ToLower(filepath.Ext(filePath))
+
+	switch fileExt {
+	case ".yaml", ".yml":
+		// Handle YAML chain definition files
+		if cmdOpts.Start.Validate {
+			// Only validate, don't import
+			_, err := ParseYamlFile(filePath)
+			if err != nil {
+				pge.l.WithError(err).Error("YAML validation failed")
+				return err
+			}
+			pge.l.WithField("file", filePath).Info("YAML file validation successful")
+			return nil
+		}
+
+		// Import YAML chains
+		return pge.LoadYamlChains(ctx, filePath, cmdOpts.Start.Replace)
+
+	case ".sql":
+		// Handle SQL script files (existing behavior)
+		return pge.ExecuteCustomScripts(ctx, filePath)
+
+	default:
+		// Try to detect content type for files without extension
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			pge.l.WithError(err).Error("cannot read file")
+			return err
+		}
+
+		// Check if it looks like YAML (starts with "chains:" or contains YAML markers)
+		contentStr := strings.TrimSpace(string(content))
+		if strings.HasPrefix(contentStr, "chains:") {
+			pge.l.WithField("file", filePath).Info("Detected YAML content, processing as YAML")
+			return pge.LoadYamlChains(ctx, filePath, false)
+		}
+		pge.l.WithField("file", filePath).Info("Processing as SQL script")
+		return pge.ExecuteCustomScripts(ctx, filePath)
+	}
 }
 
 // ExecuteCustomScripts executes SQL scripts in files
