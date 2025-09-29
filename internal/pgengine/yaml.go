@@ -74,8 +74,7 @@ func (pge *PgEngine) LoadYamlChains(ctx context.Context, filePath string, replac
 func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error) {
 	// Insert chain
 	var chainID int64
-	err := pge.ConfigDb.QueryRow(ctx, `
-		INSERT INTO timetable.chain (
+	err := pge.ConfigDb.QueryRow(ctx, `INSERT INTO timetable.chain (
 			chain_name, run_at, max_instances, timeout, live, 
 			self_destruct, exclusive_execution, client_name, on_error
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
