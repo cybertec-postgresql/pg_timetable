@@ -218,7 +218,7 @@
 		
 			
 			
-			<h2 id="Parse">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L77">Parse</a>
+			<h2 id="Parse">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L79">Parse</a>
 				<a class="permalink" href="#Parse">&#xb6;</a>
 				
 				
@@ -259,7 +259,7 @@
 		
 			
 			
-			<h2 id="CmdOptions">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L44">CmdOptions</a>
+			<h2 id="CmdOptions">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L46">CmdOptions</a>
 				<a class="permalink" href="#CmdOptions">&#xb6;</a>
 				
 				
@@ -290,7 +290,7 @@
 
 			
 				
-				<h3 id="NewCmdOptions">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L68">NewCmdOptions</a>
+				<h3 id="NewCmdOptions">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L70">NewCmdOptions</a>
 					<a class="permalink" href="#NewCmdOptions">&#xb6;</a>
 					
 					
@@ -316,7 +316,7 @@
 
 			
 				
-				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L58">Verbose</a>
+				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L60">Verbose</a>
 					<a class="permalink" href="#CmdOptions.Verbose">&#xb6;</a>
 					
 					
@@ -329,7 +329,7 @@
 				
 			
 				
-				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L63">VersionOnly</a>
+				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L65">VersionOnly</a>
 					<a class="permalink" href="#CmdOptions.VersionOnly">&#xb6;</a>
 					
 					
@@ -377,7 +377,7 @@
 		
 			
 			
-			<h2 id="ResourceOpts">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L31">ResourceOpts</a>
+			<h2 id="ResourceOpts">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L33">ResourceOpts</a>
 				<a class="permalink" href="#ResourceOpts">&#xb6;</a>
 				
 				
@@ -406,7 +406,7 @@
 		
 			
 			
-			<h2 id="RestAPIOpts">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L39">RestAPIOpts</a>
+			<h2 id="RestAPIOpts">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L41">RestAPIOpts</a>
 				<a class="permalink" href="#RestAPIOpts">&#xb6;</a>
 				
 				
@@ -440,10 +440,12 @@
 			<p>StartOpts specifies the application startup options
 
 			<pre>type StartOpts struct {
-<span id="StartOpts.File"></span>    File    <a href="https://pkg.go.dev/builtin/#string">string</a> `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script file to execute during startup&#34;`
-<span id="StartOpts.Init"></span>    Init    <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
-<span id="StartOpts.Upgrade"></span>    Upgrade <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;upgrade&#34; description:&#34;Upgrade database to the latest version&#34;`
-<span id="StartOpts.Debug"></span>    Debug   <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;debug&#34; description:&#34;Run in debug mode. Only asynchronous chains will be executed&#34;`
+<span id="StartOpts.File"></span>    File     <a href="https://pkg.go.dev/builtin/#string">string</a> `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script or YAML chain definition file to execute during startup&#34;`
+<span id="StartOpts.Replace"></span>    Replace  <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;replace&#34; description:&#34;Replace existing chains when loading YAML files&#34;`
+<span id="StartOpts.Validate"></span>    Validate <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;validate&#34; description:&#34;Only validate YAML file without importing chains&#34;`
+<span id="StartOpts.Init"></span>    Init     <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
+<span id="StartOpts.Upgrade"></span>    Upgrade  <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;upgrade&#34; description:&#34;Upgrade database to the latest version&#34;`
+<span id="StartOpts.Debug"></span>    Debug    <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;debug&#34; description:&#34;Run in debug mode. Only asynchronous chains will be executed&#34;`
 }
 </pre>
 

@@ -953,6 +953,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../yaml-usage-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YAML Chains
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1018,6 +1041,29 @@
   
   <span class="md-ellipsis">
     API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../yaml-format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    YAML Schema
     
   </span>
   
@@ -1512,28 +1558,28 @@ In most cases, they have to be brought to live by passing input parameters to th
 <p>Depending on the <strong>command</strong> kind argument can be represented by different <em>JSON</em> values.</p>
 <h4 id="sql_1"><code>SQL</code></h4>
 <p>Schema: <code>array</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="s1">&#39;[ &quot;one&quot;, 2, 3.14, false ]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="program_1"><code>PROGRAM</code></h4>
 <p>Schema: <code>array of strings</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="s1">&#39;[&quot;-x&quot;, &quot;Latin-ASCII&quot;, &quot;-o&quot;, &quot;orte_ansi.txt&quot;, &quot;orte.txt&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-sleep"><code>BUILTIN: Sleep</code></h4>
 <p>Schema: <code>integer</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="s1">&#39;5&#39;</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-log"><code>BUILTIN: Log</code></h4>
 <p>Schema: <code>any</code></p>
-<p>Examples:
+<p>Examples:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="s1">&#39;&quot;WARNING&quot;&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s1">&#39;{&quot;Status&quot;: &quot;WARNING&quot;}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-sendmail"><code>BUILTIN: SendMail</code></h4>
 <p>Schema: <code>object</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="s1">&#39;{</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s1">    &quot;username&quot;:     &quot;user@example.com&quot;,</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s1">    &quot;password&quot;:     &quot;password&quot;,</span>
@@ -1549,36 +1595,36 @@ In most cases, they have to be brought to live by passing input parameters to th
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">    &quot;msgbody&quot;:      &quot;&lt;h2&gt;Hello User,&lt;/h2&gt; &lt;p&gt;check some attachments!&lt;/p&gt;&quot;,</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">    &quot;contenttype&quot;:   &quot;text/html; charset=UTF-8&quot;</span>
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-download"><code>BUILTIN: Download</code></h4>
 <p>Schema: <code>object</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="s1">&#39;{</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="s1">    &quot;workersnum&quot;: 2, </span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">    &quot;fileurls&quot;: [&quot;http://example.com/foo.gz&quot;, &quot;https://example.com/bar.csv&quot;], </span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s1">    &quot;destpath&quot;: &quot;.&quot;</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-copyfromfile"><code>BUILTIN: CopyFromFile</code></h4>
 <p>Schema: <code>object</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="s1">&#39;{</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;, </span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/orte_ansi.txt&quot; </span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-copytofile"><code>BUILTIN: CopyToFile</code></h4>
 <p>Schema: <code>object</code></p>
-<p>Example:
+<p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="s1">&#39;{</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;, </span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/location.txt&quot; </span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-</code></pre></div></p>
+</code></pre></div>
 <h4 id="builtin-shutdown"><code>BUILTIN: Shutdown</code></h4>
-<p><em>value ignored</em></p>
+<p>value ignored</p>
 <h4 id="builtin-noop"><code>BUILTIN: NoOp</code></h4>
-<p><em>value ignored</em></p>
+<p>value ignored</p>
 <h2 id="chain">Chain</h2>
 <p>Once tasks have been arranged, they have to be scheduled as a <strong>chain</strong>. For this, <strong>pg_timetable</strong> builds upon the enhanced <strong>cron</strong>-string, all the while adding multiple configuration options.</p>
 <h3 id="table-timetablechain">Table timetable.chain</h3>

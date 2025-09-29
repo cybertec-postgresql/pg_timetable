@@ -97,7 +97,7 @@
 <span id="L40" class="ln">    40  </span>	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
 <span id="L41" class="ln">    41  </span>chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error) 
 <span id="L42" class="ln">    42  </span>VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, &#39;&#39;), $9, $10, $11)`,
-<span id="L43" class="ln">    43  </span>		task.ChainID, task.TaskID, task.Script, task.Kind,
+<span id="L43" class="ln">    43  </span>		task.ChainID, task.TaskID, task.Command, task.Kind,
 <span id="L44" class="ln">    44  </span>		fmt.Sprintf(&#34;%f seconds&#34;, float64(task.Duration)/1000000),
 <span id="L45" class="ln">    45  </span>		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Vxid,
 <span id="L46" class="ln">    46  </span>		task.IgnoreError)
@@ -132,7 +132,7 @@
 <span id="L75" class="ln">    75  </span>
 <span id="L76" class="ln">    76  </span><span class="comment">// Select live chains with proper client_name value</span>
 <span id="L77" class="ln">    77  </span>const sqlSelectLiveChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
-<span id="L78" class="ln">    78  </span>COALESCE(max_instances, 16) as max_instances, COALESCE(timeout, 0) as timeout, on_error
+<span id="L78" class="ln">    78  </span>COALESCE(max_instances, 16) as max_instances, COALESCE(timeout, 0) as timeout, COALESCE(on_error, &#39;&#39;) as on_error
 <span id="L79" class="ln">    79  </span>FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
 <span id="L80" class="ln">    80  </span>
 <span id="L81" class="ln">    81  </span><span class="comment">// SelectRebootChains returns a list of chains should be executed after reboot</span>
@@ -160,7 +160,7 @@
 <span id="L103" class="ln">   103  </span><span class="comment">// SelectIntervalChains returns list of interval chains to be executed</span>
 <span id="L104" class="ln">   104  </span>func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest *[]IntervalChain) error {
 <span id="L105" class="ln">   105  </span>	const sqlSelectIntervalChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
-<span id="L106" class="ln">   106  </span>COALESCE(max_instances, 16), COALESCE(timeout, 0), on_error,
+<span id="L106" class="ln">   106  </span>COALESCE(max_instances, 16), COALESCE(timeout, 0), COALESCE(on_error, &#39;&#39;) as on_error,
 <span id="L107" class="ln">   107  </span>EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
 <span id="L108" class="ln">   108  </span>starts_with(run_at, &#39;@after&#39;) as repeat_after
 <span id="L109" class="ln">   109  </span>FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN (&#39;@every&#39;, &#39;@after&#39;)`
@@ -176,7 +176,7 @@
 <span id="L119" class="ln">   119  </span>func (pge *PgEngine) SelectChain(ctx context.Context, dest *Chain, chainID int) error {
 <span id="L120" class="ln">   120  </span>	<span class="comment">// we accept not only live chains here because we want to run them in debug mode</span>
 <span id="L121" class="ln">   121  </span>	const sqlSelectSingleChain = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
-<span id="L122" class="ln">   122  </span>COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances, on_error
+<span id="L122" class="ln">   122  </span>COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances, COALESCE(on_error, &#39;&#39;) as on_error
 <span id="L123" class="ln">   123  </span>FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_id = $2`
 <span id="L124" class="ln">   124  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectSingleChain, pge.ClientName, chainID)
 <span id="L125" class="ln">   125  </span>	if err != nil {

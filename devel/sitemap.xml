@@ -40,4 +40,12 @@
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/samples/</loc>
          <lastmod>2025-09-29</lastmod>
     </url>
+    <url>
+         <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/yaml-format/</loc>
+         <lastmod>2025-09-29</lastmod>
+    </url>
+    <url>
+         <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/yaml-usage-guide/</loc>
+         <lastmod>2025-09-29</lastmod>
+    </url>
 </urlset>

@@ -233,12 +233,12 @@
 <span id="L176" class="ln">   176  </span>}
 <span id="L177" class="ln">   177  </span>
 <span id="L178" class="ln">   178  </span>func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
-<span id="L179" class="ln">   179  </span>	if ctx.Err() != nil || !chain.OnErrorSQL.Valid {
+<span id="L179" class="ln">   179  </span>	if ctx.Err() != nil || chain.OnError == &#34;&#34; {
 <span id="L180" class="ln">   180  </span>		return
 <span id="L181" class="ln">   181  </span>	}
 <span id="L182" class="ln">   182  </span>	l := sch.l.WithField(&#34;chain&#34;, chain.ChainID)
 <span id="L183" class="ln">   183  </span>	l.Info(&#34;Starting error handling&#34;)
-<span id="L184" class="ln">   184  </span>	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnErrorSQL.String); err != nil {
+<span id="L184" class="ln">   184  </span>	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnError); err != nil {
 <span id="L185" class="ln">   185  </span>		l.Info(&#34;Error handler failed&#34;)
 <span id="L186" class="ln">   186  </span>		return
 <span id="L187" class="ln">   187  </span>	}
@@ -334,9 +334,9 @@
 <span id="L277" class="ln">   277  </span>			l.Info(&#34;Program task execution skipped&#34;)
 <span id="L278" class="ln">   278  </span>			return -2
 <span id="L279" class="ln">   279  </span>		}
-<span id="L280" class="ln">   280  </span>		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Script, paramValues)
+<span id="L280" class="ln">   280  </span>		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Command, paramValues)
 <span id="L281" class="ln">   281  </span>	case &#34;BUILTIN&#34;:
-<span id="L282" class="ln">   282  </span>		out, err = sch.executeBuiltinTask(ctx, task.Script, paramValues)
+<span id="L282" class="ln">   282  </span>		out, err = sch.executeBuiltinTask(ctx, task.Command, paramValues)
 <span id="L283" class="ln">   283  </span>	}
 <span id="L284" class="ln">   284  </span>	task.Duration = time.Since(task.StartedAt).Microseconds()
 <span id="L285" class="ln">   285  </span>

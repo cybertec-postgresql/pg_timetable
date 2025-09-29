@@ -1,0 +1,263 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml_test.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/pg_timetable/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.1";</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/pg_timetable/devel/godoc/src">src</a>/<a href="/pg_timetable/devel/godoc/src/github.com">github.com</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">pgengine</a>/<span class="text-muted">yaml_test.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine">github.com/cybertec-postgresql/pg_timetable/internal/pgengine</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package pgengine_test
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;os&#34;
+<span id="L6" class="ln">     6  </span>	&#34;testing&#34;
+<span id="L7" class="ln">     7  </span>
+<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/stretchr/testify/require&#34;
+<span id="L12" class="ln">    12  </span>)
+<span id="L13" class="ln">    13  </span>
+<span id="L14" class="ln">    14  </span><span class="comment">// Helper function to create temporary YAML file</span>
+<span id="L15" class="ln">    15  </span>func createTempYamlFile(t *testing.T, content string) string {
+<span id="L16" class="ln">    16  </span>	tmpfile, err := os.CreateTemp(&#34;&#34;, &#34;test-*.yaml&#34;)
+<span id="L17" class="ln">    17  </span>	require.NoError(t, err)
+<span id="L18" class="ln">    18  </span>
+<span id="L19" class="ln">    19  </span>	_, err = tmpfile.Write([]byte(content))
+<span id="L20" class="ln">    20  </span>	require.NoError(t, err)
+<span id="L21" class="ln">    21  </span>
+<span id="L22" class="ln">    22  </span>	err = tmpfile.Close()
+<span id="L23" class="ln">    23  </span>	require.NoError(t, err)
+<span id="L24" class="ln">    24  </span>
+<span id="L25" class="ln">    25  </span>	return tmpfile.Name()
+<span id="L26" class="ln">    26  </span>}
+<span id="L27" class="ln">    27  </span>
+<span id="L28" class="ln">    28  </span><span class="comment">// Helper function to remove temporary file</span>
+<span id="L29" class="ln">    29  </span>func removeTempFile(t *testing.T, filePath string) {
+<span id="L30" class="ln">    30  </span>	err := os.Remove(filePath)
+<span id="L31" class="ln">    31  </span>	require.NoError(t, err)
+<span id="L32" class="ln">    32  </span>}
+<span id="L33" class="ln">    33  </span>
+<span id="L34" class="ln">    34  </span>func TestLoadYamlChainsIntegration(t *testing.T) {
+<span id="L35" class="ln">    35  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L36" class="ln">    36  </span>	defer cleanup()
+<span id="L37" class="ln">    37  </span>
+<span id="L38" class="ln">    38  </span>	ctx := context.Background()
+<span id="L39" class="ln">    39  </span>	pge := container.Engine
+<span id="L40" class="ln">    40  </span>
+<span id="L41" class="ln">    41  </span>	t.Run(&#34;Single task chain&#34;, func(t *testing.T) {
+<span id="L42" class="ln">    42  </span>		<span class="comment">// Create a simple YAML chain config</span>
+<span id="L43" class="ln">    43  </span>		yamlContent := `chains:
+<span id="L44" class="ln">    44  </span>  - name: test-single-task
+<span id="L45" class="ln">    45  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L46" class="ln">    46  </span>    tasks:
+<span id="L47" class="ln">    47  </span>      - command: SELECT 1
+<span id="L48" class="ln">    48  </span>        kind: SQL`
+<span id="L49" class="ln">    49  </span>
+<span id="L50" class="ln">    50  </span>		<span class="comment">// Create temporary YAML file</span>
+<span id="L51" class="ln">    51  </span>		tempFile := createTempYamlFile(t, yamlContent)
+<span id="L52" class="ln">    52  </span>		defer removeTempFile(t, tempFile)
+<span id="L53" class="ln">    53  </span>
+<span id="L54" class="ln">    54  </span>		<span class="comment">// Load the chain</span>
+<span id="L55" class="ln">    55  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
+<span id="L56" class="ln">    56  </span>		require.NoError(t, err)
+<span id="L57" class="ln">    57  </span>
+<span id="L58" class="ln">    58  </span>		<span class="comment">// Verify the chain was created</span>
+<span id="L59" class="ln">    59  </span>		var count int
+<span id="L60" class="ln">    60  </span>		err = pge.ConfigDb.QueryRow(ctx,
+<span id="L61" class="ln">    61  </span>			&#34;SELECT COUNT(*) FROM timetable.chain WHERE chain_name = $1&#34;,
+<span id="L62" class="ln">    62  </span>			&#34;test-single-task&#34;).Scan(&amp;count)
+<span id="L63" class="ln">    63  </span>		require.NoError(t, err)
+<span id="L64" class="ln">    64  </span>		assert.Equal(t, 1, count)
+<span id="L65" class="ln">    65  </span>	})
+<span id="L66" class="ln">    66  </span>
+<span id="L67" class="ln">    67  </span>	t.Run(&#34;Replace existing chain&#34;, func(t *testing.T) {
+<span id="L68" class="ln">    68  </span>		chainName := &#34;test-replace-chain&#34;
+<span id="L69" class="ln">    69  </span>
+<span id="L70" class="ln">    70  </span>		<span class="comment">// First, create a chain</span>
+<span id="L71" class="ln">    71  </span>		yamlContent1 := `chains:
+<span id="L72" class="ln">    72  </span>  - name: test-replace-chain
+<span id="L73" class="ln">    73  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L74" class="ln">    74  </span>    tasks:
+<span id="L75" class="ln">    75  </span>      - command: SELECT 1
+<span id="L76" class="ln">    76  </span>        kind: SQL`
+<span id="L77" class="ln">    77  </span>
+<span id="L78" class="ln">    78  </span>		tempFile1 := createTempYamlFile(t, yamlContent1)
+<span id="L79" class="ln">    79  </span>		defer removeTempFile(t, tempFile1)
+<span id="L80" class="ln">    80  </span>
+<span id="L81" class="ln">    81  </span>		err := pge.LoadYamlChains(ctx, tempFile1, false)
+<span id="L82" class="ln">    82  </span>		require.NoError(t, err)
+<span id="L83" class="ln">    83  </span>
+<span id="L84" class="ln">    84  </span>		<span class="comment">// Now replace it with a different chain</span>
+<span id="L85" class="ln">    85  </span>		yamlContent2 := `chains:
+<span id="L86" class="ln">    86  </span>  - name: test-replace-chain
+<span id="L87" class="ln">    87  </span>    schedule: &#34;0 1 * * *&#34;
+<span id="L88" class="ln">    88  </span>    tasks:
+<span id="L89" class="ln">    89  </span>      - command: SELECT 2  
+<span id="L90" class="ln">    90  </span>        kind: SQL`
+<span id="L91" class="ln">    91  </span>
+<span id="L92" class="ln">    92  </span>		tempFile2 := createTempYamlFile(t, yamlContent2)
+<span id="L93" class="ln">    93  </span>		defer removeTempFile(t, tempFile2)
+<span id="L94" class="ln">    94  </span>
+<span id="L95" class="ln">    95  </span>		<span class="comment">// Should succeed with replace=true</span>
+<span id="L96" class="ln">    96  </span>		err = pge.LoadYamlChains(ctx, tempFile2, true)
+<span id="L97" class="ln">    97  </span>		require.NoError(t, err)
+<span id="L98" class="ln">    98  </span>
+<span id="L99" class="ln">    99  </span>		<span class="comment">// Verify the schedule was updated</span>
+<span id="L100" class="ln">   100  </span>		var schedule string
+<span id="L101" class="ln">   101  </span>		err = pge.ConfigDb.QueryRow(ctx,
+<span id="L102" class="ln">   102  </span>			&#34;SELECT run_at FROM timetable.chain WHERE chain_name = $1&#34;,
+<span id="L103" class="ln">   103  </span>			chainName).Scan(&amp;schedule)
+<span id="L104" class="ln">   104  </span>		require.NoError(t, err)
+<span id="L105" class="ln">   105  </span>		assert.Equal(t, &#34;0 1 * * *&#34;, schedule)
+<span id="L106" class="ln">   106  </span>	})
+<span id="L107" class="ln">   107  </span>}
+<span id="L108" class="ln">   108  </span>
+<span id="L109" class="ln">   109  </span>func TestYamlParameterHandling(t *testing.T) {
+<span id="L110" class="ln">   110  </span>	<span class="comment">// Test parsing and validation of different parameter formats</span>
+<span id="L111" class="ln">   111  </span>	yamlContent := `chains:
+<span id="L112" class="ln">   112  </span>  - name: &#34;test-parameters&#34;
+<span id="L113" class="ln">   113  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L114" class="ln">   114  </span>    tasks:
+<span id="L115" class="ln">   115  </span>      - name: &#34;sql-test&#34;
+<span id="L116" class="ln">   116  </span>        kind: &#34;SQL&#34;
+<span id="L117" class="ln">   117  </span>        command: &#34;SELECT $1, $2, $3&#34;
+<span id="L118" class="ln">   118  </span>        parameters:
+<span id="L119" class="ln">   119  </span>          - [&#34;value1&#34;, 42, true]
+<span id="L120" class="ln">   120  </span>          - [&#34;value2&#34;, 99, false]
+<span id="L121" class="ln">   121  </span>      
+<span id="L122" class="ln">   122  </span>      - name: &#34;program-test&#34;
+<span id="L123" class="ln">   123  </span>        kind: &#34;PROGRAM&#34;
+<span id="L124" class="ln">   124  </span>        command: &#34;echo&#34;
+<span id="L125" class="ln">   125  </span>        parameters:
+<span id="L126" class="ln">   126  </span>          - [&#34;-n&#34;, &#34;hello world&#34;]
+<span id="L127" class="ln">   127  </span>          - [&#34;goodbye&#34;]
+<span id="L128" class="ln">   128  </span>      
+<span id="L129" class="ln">   129  </span>      - name: &#34;sleep-test&#34;
+<span id="L130" class="ln">   130  </span>        kind: &#34;BUILTIN&#34;
+<span id="L131" class="ln">   131  </span>        command: &#34;Sleep&#34;
+<span id="L132" class="ln">   132  </span>        parameters:
+<span id="L133" class="ln">   133  </span>          - 5
+<span id="L134" class="ln">   134  </span>          - 10
+<span id="L135" class="ln">   135  </span>      
+<span id="L136" class="ln">   136  </span>      - name: &#34;log-test&#34;
+<span id="L137" class="ln">   137  </span>        kind: &#34;BUILTIN&#34;
+<span id="L138" class="ln">   138  </span>        command: &#34;Log&#34;
+<span id="L139" class="ln">   139  </span>        parameters:
+<span id="L140" class="ln">   140  </span>          - &#34;warning message&#34;
+<span id="L141" class="ln">   141  </span>          - {&#34;level&#34;: &#34;WARNING&#34;, &#34;message&#34;: &#34;test&#34;}
+<span id="L142" class="ln">   142  </span>`
+<span id="L143" class="ln">   143  </span>
+<span id="L144" class="ln">   144  </span>	<span class="comment">// Create temporary file with content</span>
+<span id="L145" class="ln">   145  </span>	tmpfile, err := os.CreateTemp(&#34;&#34;, &#34;test-*.yaml&#34;)
+<span id="L146" class="ln">   146  </span>	require.NoError(t, err)
+<span id="L147" class="ln">   147  </span>	defer os.Remove(tmpfile.Name())
+<span id="L148" class="ln">   148  </span>
+<span id="L149" class="ln">   149  </span>	_, err = tmpfile.Write([]byte(yamlContent))
+<span id="L150" class="ln">   150  </span>	require.NoError(t, err)
+<span id="L151" class="ln">   151  </span>	err = tmpfile.Close()
+<span id="L152" class="ln">   152  </span>	require.NoError(t, err)
+<span id="L153" class="ln">   153  </span>
+<span id="L154" class="ln">   154  </span>	<span class="comment">// Parse the YAML</span>
+<span id="L155" class="ln">   155  </span>	yamlConfig, err := pgengine.ParseYamlFile(tmpfile.Name())
+<span id="L156" class="ln">   156  </span>	require.NoError(t, err)
+<span id="L157" class="ln">   157  </span>
+<span id="L158" class="ln">   158  </span>	<span class="comment">// Check parsed content</span>
+<span id="L159" class="ln">   159  </span>	require.Equal(t, 1, len(yamlConfig.Chains))
+<span id="L160" class="ln">   160  </span>	chain := yamlConfig.Chains[0]
+<span id="L161" class="ln">   161  </span>	require.Equal(t, &#34;test-parameters&#34;, chain.ChainName)
+<span id="L162" class="ln">   162  </span>	require.Equal(t, 4, len(chain.Tasks))
+<span id="L163" class="ln">   163  </span>
+<span id="L164" class="ln">   164  </span>	<span class="comment">// Check SQL task parameters</span>
+<span id="L165" class="ln">   165  </span>	sqlTask := chain.Tasks[0]
+<span id="L166" class="ln">   166  </span>	require.Equal(t, &#34;SQL&#34;, sqlTask.Kind)
+<span id="L167" class="ln">   167  </span>	require.Equal(t, 2, len(sqlTask.Parameters))
+<span id="L168" class="ln">   168  </span>	sqlParam1, ok := sqlTask.Parameters[0].([]interface{})
+<span id="L169" class="ln">   169  </span>	require.True(t, ok, &#34;SQL parameter should be an array&#34;)
+<span id="L170" class="ln">   170  </span>	assert.Equal(t, 3, len(sqlParam1))
+<span id="L171" class="ln">   171  </span>
+<span id="L172" class="ln">   172  </span>	<span class="comment">// Check PROGRAM task parameters</span>
+<span id="L173" class="ln">   173  </span>	programTask := chain.Tasks[1]
+<span id="L174" class="ln">   174  </span>	require.Equal(t, &#34;PROGRAM&#34;, programTask.Kind)
+<span id="L175" class="ln">   175  </span>	require.Equal(t, 2, len(programTask.Parameters))
+<span id="L176" class="ln">   176  </span>
+<span id="L177" class="ln">   177  </span>	<span class="comment">// Check BUILTIN Sleep task parameters</span>
+<span id="L178" class="ln">   178  </span>	sleepTask := chain.Tasks[2]
+<span id="L179" class="ln">   179  </span>	require.Equal(t, &#34;BUILTIN&#34;, sleepTask.Kind)
+<span id="L180" class="ln">   180  </span>	require.Equal(t, &#34;Sleep&#34;, sleepTask.Command)
+<span id="L181" class="ln">   181  </span>	require.Equal(t, 2, len(sleepTask.Parameters))
+<span id="L182" class="ln">   182  </span>	sleepParam1, ok := sleepTask.Parameters[0].(int)
+<span id="L183" class="ln">   183  </span>	require.True(t, ok, &#34;Sleep parameter should be an integer&#34;)
+<span id="L184" class="ln">   184  </span>	assert.Equal(t, 5, sleepParam1)
+<span id="L185" class="ln">   185  </span>
+<span id="L186" class="ln">   186  </span>	<span class="comment">// Check BUILTIN Log task parameters</span>
+<span id="L187" class="ln">   187  </span>	logTask := chain.Tasks[3]
+<span id="L188" class="ln">   188  </span>	require.Equal(t, &#34;BUILTIN&#34;, logTask.Kind)
+<span id="L189" class="ln">   189  </span>	require.Equal(t, &#34;Log&#34;, logTask.Command)
+<span id="L190" class="ln">   190  </span>	require.Equal(t, 2, len(logTask.Parameters))
+<span id="L191" class="ln">   191  </span>	logParam1, ok := logTask.Parameters[0].(string)
+<span id="L192" class="ln">   192  </span>	require.True(t, ok, &#34;Log parameter can be a string&#34;)
+<span id="L193" class="ln">   193  </span>	assert.Equal(t, &#34;warning message&#34;, logParam1)
+<span id="L194" class="ln">   194  </span>}
+<span id="L195" class="ln">   195  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.1.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>
