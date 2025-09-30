@@ -87,7 +87,8 @@ Each task can have multiple parameter entries, with each entry causing a separat
   command: "Log"
   parameters:
     - "WARNING: Simple message"
-    - {"level": "WARNING", "details": "Object message"}
+    - level: "WARNING"
+      details: "Object message"
 
 # BUILTIN: SendMail task (complex object)
 - name: "mail-task"

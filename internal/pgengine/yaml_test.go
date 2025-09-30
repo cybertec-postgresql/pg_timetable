@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -251,18 +252,6 @@ func TestParseYamlFile(t *testing.T) {
 		_, err := pgengine.ParseYamlFile("/non/existent/file.yaml")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "file not found")
-	})
-
-	t.Run("Invalid file extension", func(t *testing.T) {
-		tmpfile, err := os.CreateTemp("", "test-*.txt")
-		require.NoError(t, err)
-		tmpfileName := tmpfile.Name()
-		defer os.Remove(tmpfileName)
-		tmpfile.Close()
-
-		_, err = pgengine.ParseYamlFile(tmpfileName)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "file must have .yaml or .yml extension")
 	})
 
 	t.Run("Invalid YAML syntax", func(t *testing.T) {
@@ -549,66 +538,141 @@ func TestYamlChainSetDefaults(t *testing.T) {
 	})
 }
 
-func TestToSQLParameters(t *testing.T) {
-	t.Run("No parameters", func(t *testing.T) {
-		task := &pgengine.YamlTask{}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, "", result)
+func TestParameterStorageIntegration(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	pge := container.Engine
+
+	t.Run("Parameters stored as separate rows with correct order_id", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "test-parameters"
+    schedule: "0 0 * * *"
+    tasks:
+      - name: "mixed-params"
+        kind: "SQL"
+        command: "SELECT $1, $2, $3, $4, $5"
+        parameters:
+          - "hello world"
+          - 42
+          - 3.14
+          - true
+          - ["array", "value"]`
+
+		tempFile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tempFile)
+
+		err := pge.LoadYamlChains(ctx, tempFile, false)
+		require.NoError(t, err)
+
+		// Get the task ID
+		var taskID int64
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT task_id FROM timetable.task t JOIN timetable.chain c ON t.chain_id = c.chain_id WHERE c.chain_name = $1",
+			"test-parameters").Scan(&taskID)
+		require.NoError(t, err)
+
+		// Verify parameters are stored as separate rows
+		type paramRow struct {
+			OrderID int    `db:"order_id"`
+			Value   string `db:"value"`
+		}
+
+		rows, err := pge.ConfigDb.Query(ctx,
+			"SELECT order_id, value::text FROM timetable.parameter WHERE task_id = $1 ORDER BY order_id",
+			taskID)
+		require.NoError(t, err)
+
+		params, err := pgx.CollectRows(rows, pgx.RowToStructByName[paramRow])
+		require.NoError(t, err)
+
+		// Should have 5 parameters
+		assert.Equal(t, 5, len(params))
+
+		// Check each parameter
+		assert.Equal(t, 1, params[0].OrderID)
+		assert.Equal(t, `"hello world"`, params[0].Value)
+
+		assert.Equal(t, 2, params[1].OrderID)
+		assert.Equal(t, `42`, params[1].Value)
+
+		assert.Equal(t, 3, params[2].OrderID)
+		assert.Equal(t, `3.14`, params[2].Value)
+
+		assert.Equal(t, 4, params[3].OrderID)
+		assert.Equal(t, `true`, params[3].Value)
+
+		assert.Equal(t, 5, params[4].OrderID)
+		assert.Contains(t, params[4].Value, `["array", "value"]`)
 	})
 
-	t.Run("String parameters", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{"hello", "world"},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `["hello", "world"]`, result)
+	t.Run("Object parameters stored as JSONB objects", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "test-object-params"
+    schedule: "0 0 * * *"
+    tasks:
+      - name: "object-param"
+        kind: "BUILTIN"
+        command: "Log"
+        parameters:
+          - {"level": "WARNING", "message": "test", "count": 123}`
+
+		tempFile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tempFile)
+
+		err := pge.LoadYamlChains(ctx, tempFile, false)
+		require.NoError(t, err)
+
+		// Get the task ID
+		var taskID int64
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT task_id FROM timetable.task t JOIN timetable.chain c ON t.chain_id = c.chain_id WHERE c.chain_name = $1",
+			"test-object-params").Scan(&taskID)
+		require.NoError(t, err)
+
+		// Verify object parameter
+		var value string
+		err = pge.ConfigDb.QueryRow(ctx,
+			"SELECT value::text FROM timetable.parameter WHERE task_id = $1 AND order_id = 1",
+			taskID).Scan(&value)
+		require.NoError(t, err)
+
+		// Should be a valid JSON object
+		assert.Contains(t, value, `"level"`)
+		assert.Contains(t, value, `"WARNING"`)
+		assert.Contains(t, value, `"message"`)
+		assert.Contains(t, value, `"test"`)
+		assert.Contains(t, value, `"count"`)
+		assert.Contains(t, value, `123`)
 	})
 
-	t.Run("String with quotes", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{`hello "quoted" world`},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `["hello \"quoted\" world"]`, result)
-	})
+	t.Run("No parameters creates no parameter rows", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: "test-no-params"
+    schedule: "0 0 * * *"
+    tasks:
+      - name: "no-param"
+        kind: "SQL"
+        command: "SELECT 1"`
 
-	t.Run("Integer parameters", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{42, int32(100), int64(200)},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `[42, 100, 200]`, result)
-	})
+		tempFile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tempFile)
 
-	t.Run("Float parameters", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{3.14, float32(2.71)},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `[3.14, 2.71]`, result)
-	})
+		err := pge.LoadYamlChains(ctx, tempFile, false)
+		require.NoError(t, err)
 
-	t.Run("Boolean parameters", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{true, false},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `[true, false]`, result)
-	})
-
-	t.Run("Mixed parameter types", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{"text", 42, 3.14, true, nil},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `["text", 42, 3.14, true, "<nil>"]`, result)
+		// Get the task ID
+		var count int
+		err = pge.ConfigDb.QueryRow(ctx, `
+SELECT COUNT(*)
+FROM timetable.task t
+	JOIN timetable.chain c ON t.chain_id = c.chain_id 
+	JOIN timetable.parameter p ON t.task_id = p.task_id
+	WHERE c.chain_name = $1`,
+			"test-no-params").Scan(&count)
+		require.NoError(t, err)
+		assert.Equal(t, 0, count)
 	})
 }
 
@@ -714,7 +778,7 @@ func TestLoadYamlChainsMultiTask(t *testing.T) {
 			"SELECT COUNT(*) FROM timetable.parameter p JOIN timetable.task t ON p.task_id = t.task_id WHERE t.chain_id = $1",
 			chainID).Scan(&paramCount)
 		require.NoError(t, err)
-		assert.Equal(t, 2, paramCount) // 2 tasks with parameters
+		assert.Equal(t, 4, paramCount) // First task has 2 params, second task has 2 params = 4 total
 	})
 
 	t.Run("Chain already exists without replace", func(t *testing.T) {
@@ -852,43 +916,6 @@ func TestCreateChainFromYamlEdgeCases(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, paramValue, "key")
 		assert.Contains(t, paramValue, "value")
-	})
-}
-
-func TestToSQLParametersErrorHandling(t *testing.T) {
-	t.Run("Error in parameter conversion", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{
-				make(chan int), // unsupported type that can't be converted
-			},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)           // Function doesn't actually return errors, just converts to string
-		assert.Contains(t, result, "0x") // channel representation
-	})
-
-	t.Run("Empty array parameters", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{[]any{}},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Equal(t, `["[]"]`, result)
-	})
-
-	t.Run("Complex nested structures", func(t *testing.T) {
-		task := &pgengine.YamlTask{
-			Parameters: []any{
-				map[string]any{
-					"nested": map[string]any{
-						"deep": []any{1, 2, 3},
-					},
-				},
-			},
-		}
-		result, err := task.ToSQLParameters()
-		assert.NoError(t, err)
-		assert.Contains(t, result, "nested")
 	})
 }
 
@@ -1055,7 +1082,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 			 WHERE t.chain_id = $1`,
 			chainID).Scan(&paramCount)
 		require.NoError(t, err)
-		assert.Equal(t, 3, paramCount) // 3 tasks with parameters
+		assert.Equal(t, 5, paramCount) // sql-task: 2 params, program-task: 2 params, builtin-task: 1 param = 5 total
 	})
 }
 

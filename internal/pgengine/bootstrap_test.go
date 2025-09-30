@@ -154,6 +154,14 @@ func TestExecuteFileScript(t *testing.T) {
 	// Create temporary directory for test files
 	tmpDir := t.TempDir()
 
+	anyArgs := func(i int) []any {
+		args := make([]any, i)
+		for j := range i {
+			args[j] = pgxmock.AnyArg()
+		}
+		return args
+	}
+
 	t.Run("SQL file execution", func(t *testing.T) {
 		// Create temporary SQL file
 		sqlFile := filepath.Join(tmpDir, "test.sql")
@@ -240,6 +248,16 @@ func TestExecuteFileScript(t *testing.T) {
 		cmdOpts.Start.Validate = false
 		cmdOpts.Start.Replace = false
 
+		mockPool.ExpectQuery("SELECT EXISTS").
+			WithArgs("test_chain").
+			WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(false))
+		mockPool.ExpectQuery("INSERT INTO timetable\\.chain").
+			WithArgs(anyArgs(9)...).
+			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
+		mockPool.ExpectQuery("INSERT INTO timetable\\.task").
+			WithArgs(anyArgs(10)...).
+			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
+
 		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
 		assert.NoError(t, err)
 	})
@@ -263,7 +281,7 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("File without extension - YAML content", func(t *testing.T) {
+	t.Run("File without extension", func(t *testing.T) {
 		// Create file without extension with YAML content
 		noExtFile := filepath.Join(tmpDir, "test_no_ext")
 		yamlContent := `chains:
@@ -278,90 +296,15 @@ func TestExecuteFileScript(t *testing.T) {
 		cmdOpts.Start.File = noExtFile
 
 		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 
-	t.Run("File without extension - SQL content", func(t *testing.T) {
-		// Create file without extension with SQL content
-		noExtFile := filepath.Join(tmpDir, "test_no_ext_sql")
-		sqlContent := "SELECT 1;"
-		err := os.WriteFile(noExtFile, []byte(sqlContent), 0644)
-		assert.NoError(t, err)
-
-		// Mock the SQL execution
-		mockPool.ExpectExec("SELECT 1;").WillReturnResult(pgxmock.NewResult("SELECT", 1))
-
-		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = noExtFile
-
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.NoError(t, err)
-	})
-
-	t.Run("File not found error - SQL file", func(t *testing.T) {
+	t.Run("File not found error", func(t *testing.T) {
 		cmdOpts := config.CmdOptions{}
 		cmdOpts.Start.File = "/nonexistent/file.sql"
 
 		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts)
 		assert.Error(t, err)
-	})
-
-	t.Run("File not found error - unknown extension", func(t *testing.T) {
-		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = "/nonexistent/file.txt"
-
-		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.Error(t, err)
-	})
-
-	t.Run("Unknown file extension defaults to content detection", func(t *testing.T) {
-		// Create file with unknown extension containing SQL
-		unknownFile := filepath.Join(tmpDir, "test.unknown")
-		sqlContent := "SELECT 2;"
-		err := os.WriteFile(unknownFile, []byte(sqlContent), 0644)
-		assert.NoError(t, err)
-
-		// Mock the SQL execution
-		mockPool.ExpectExec("SELECT 2;").WillReturnResult(pgxmock.NewResult("SELECT", 1))
-
-		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = unknownFile
-
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Empty file", func(t *testing.T) {
-		// Create empty file
-		emptyFile := filepath.Join(tmpDir, "empty.txt")
-		err := os.WriteFile(emptyFile, []byte(""), 0644)
-		assert.NoError(t, err)
-
-		// Mock empty SQL execution
-		mockPool.ExpectExec("").WillReturnResult(pgxmock.NewResult("SELECT", 0))
-
-		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = emptyFile
-
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.NoError(t, err)
-	})
-
-	t.Run("YAML file with whitespace prefix", func(t *testing.T) {
-		// Create file with leading whitespace before chains:
-		whitespaceFile := filepath.Join(tmpDir, "whitespace")
-		yamlContent := `   
-		
-chains:
-  - name: test_chain`
-		err := os.WriteFile(whitespaceFile, []byte(yamlContent), 0644)
-		assert.NoError(t, err)
-
-		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = whitespaceFile
-
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.NoError(t, err)
 	})
 
 	t.Run("YAML import with replace flag", func(t *testing.T) {
@@ -379,14 +322,6 @@ chains:
 		cmdOpts.Start.File = yamlFile
 		cmdOpts.Start.Validate = false
 		cmdOpts.Start.Replace = true
-
-		anyArgs := func(i int) []any {
-			args := make([]any, i)
-			for j := range i {
-				args[j] = pgxmock.AnyArg()
-			}
-			return args
-		}
 
 		mockPool.ExpectExec("SELECT timetable\\.delete_job").
 			WithArgs("test_chain_replace").
@@ -424,22 +359,4 @@ INSERT INTO test VALUES (1);`
 		assert.NoError(t, err)
 	})
 
-	t.Run("Content detection with mixed content", func(t *testing.T) {
-		// Create file with content that doesn't start with "chains:"
-		mixedFile := filepath.Join(tmpDir, "mixed_content")
-		mixedContent := `# This is a comment
-# chains: this is just a comment, not actual YAML
-SELECT 1;`
-		err := os.WriteFile(mixedFile, []byte(mixedContent), 0644)
-		assert.NoError(t, err)
-
-		// Mock the SQL execution since it doesn't start with "chains:" - use regex pattern
-		mockPool.ExpectExec(`# This is a comment.*# chains:.*SELECT 1;`).WillReturnResult(pgxmock.NewResult("SELECT", 1))
-
-		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = mixedFile
-
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
-		assert.NoError(t, err)
-	})
 }

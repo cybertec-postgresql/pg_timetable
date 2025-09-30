@@ -247,21 +247,7 @@ func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOp
 		return pge.ExecuteCustomScripts(ctx, filePath)
 
 	default:
-		// Try to detect content type for files without extension
-		content, err := os.ReadFile(filePath)
-		if err != nil {
-			pge.l.WithError(err).Error("cannot read file")
-			return err
-		}
-
-		// Check if it looks like YAML (starts with "chains:" or contains YAML markers)
-		contentStr := strings.TrimSpace(string(content))
-		if strings.HasPrefix(contentStr, "chains:") {
-			pge.l.WithField("file", filePath).Info("Detected YAML content, processing as YAML")
-			return pge.LoadYamlChains(ctx, filePath, false)
-		}
-		pge.l.WithField("file", filePath).Info("Processing as SQL script")
-		return pge.ExecuteCustomScripts(ctx, filePath)
+		return errors.New("unsupported file extension: " + fileExt)
 	}
 }
 

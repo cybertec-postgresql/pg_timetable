@@ -2,9 +2,9 @@ package pgengine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -119,15 +119,21 @@ func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlCha
 
 		// Insert parameters if any
 		if len(task.Parameters) > 0 {
-			params, err := task.ToSQLParameters()
-			if err != nil {
-				return 0, fmt.Errorf("failed to convert parameters: %w", err)
-			}
-			_, err = pge.ConfigDb.Exec(ctx,
-				"INSERT INTO timetable.parameter (task_id, order_id, value) VALUES ($1, 1, $2::jsonb)",
-				taskID, params)
-			if err != nil {
-				return 0, fmt.Errorf("failed to insert parameters: %w", err)
+			for paramIndex, param := range task.Parameters {
+				orderID := paramIndex + 1
+				
+				// Convert parameter to JSON for JSONB storage
+				jsonValue, err := json.Marshal(param)
+				if err != nil {
+					return 0, fmt.Errorf("failed to marshal parameter %d to JSON: %w", orderID, err)
+				}
+				
+				_, err = pge.ConfigDb.Exec(ctx,
+					"INSERT INTO timetable.parameter (task_id, order_id, value) VALUES ($1, $2, $3::jsonb)",
+					taskID, orderID, string(jsonValue))
+				if err != nil {
+					return 0, fmt.Errorf("failed to insert parameter %d: %w", orderID, err)
+				}
 			}
 		}
 	}
@@ -229,12 +235,6 @@ func ParseYamlFile(filePath string) (*YamlConfig, error) {
 		return nil, fmt.Errorf("file not found: %s", filePath)
 	}
 
-	// Check file extension
-	ext := strings.ToLower(filepath.Ext(filePath))
-	if ext != ".yaml" && ext != ".yml" {
-		return nil, fmt.Errorf("file must have .yaml or .yml extension: %s", filePath)
-	}
-
 	// Read file
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -259,28 +259,4 @@ func ParseYamlFile(filePath string) (*YamlConfig, error) {
 	return &config, nil
 }
 
-// ToSQLParameters converts YAML parameters to SQL-compatible format
-func (t *YamlTask) ToSQLParameters() (string, error) {
-	if len(t.Parameters) == 0 {
-		return "", nil
-	}
 
-	// Convert to JSON array format for PostgreSQL
-	params := make([]string, len(t.Parameters))
-	for i, param := range t.Parameters {
-		switch v := param.(type) {
-		case string:
-			params[i] = fmt.Sprintf(`"%s"`, strings.ReplaceAll(v, `"`, `\"`))
-		case int, int32, int64:
-			params[i] = fmt.Sprintf("%v", v)
-		case float32, float64:
-			params[i] = fmt.Sprintf("%v", v)
-		case bool:
-			params[i] = fmt.Sprintf("%t", v)
-		default:
-			params[i] = fmt.Sprintf(`"%v"`, v)
-		}
-	}
-
-	return fmt.Sprintf("[%s]", strings.Join(params, ", ")), nil
-}

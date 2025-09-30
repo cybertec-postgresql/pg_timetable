@@ -60,7 +60,7 @@ chains:
 | `name` | `task_name` | TEXT | `null` | Task description |
 | `kind` | `kind` | ENUM | `'SQL'` | Command type (SQL/PROGRAM/BUILTIN) |
 | `command` | `command` | TEXT | **required** | Command to execute |
-| `parameters` | via `timetable.parameter` | Array of JSONB | `null` | Array of parameter values, each causing separate task execution |
+| `parameters` | via `timetable.parameter` | Array of any | `null` | Array of parameter values stored as individual JSONB rows with order_id |
 | `run_as` | `run_as` | TEXT | `null` | Role for SET ROLE |
 | `connect_string` | `database_connection` | TEXT | `null` | Connection string |
 | `ignore_error` | `ignore_error` | BOOLEAN | `false` | Continue on error |
@@ -131,5 +131,5 @@ chains:
 2. **Unique Names**: Chain names must be unique across the database
 3. **Valid Cron**: Schedule must be valid cron format (5 fields)
 4. **Valid Kind**: Task kind must be one of: SQL, PROGRAM, BUILTIN
-5. **Parameter Types**: Parameters must be strings or numbers (converted to JSONB array)
+5. **Parameter Types**: Parameters can be any JSON-compatible type (strings, numbers, booleans, arrays, objects) and are stored as individual JSONB values
 6. **Timeout Values**: Must be non-negative integers (milliseconds)
