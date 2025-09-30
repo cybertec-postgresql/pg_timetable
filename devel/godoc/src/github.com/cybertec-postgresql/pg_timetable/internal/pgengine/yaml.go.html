@@ -116,7 +116,7 @@
 <span id="L59" class="ln">    59  </span>		}
 <span id="L60" class="ln">    60  </span>
 <span id="L61" class="ln">    61  </span>		<span class="comment">// Multi-task chain - use direct SQL</span>
-<span id="L62" class="ln">    62  </span>		chainID, err := pge.createChainFromYaml(ctx, &amp;yamlChain)
+<span id="L62" class="ln">    62  </span>		chainID, err := pge.CreateChainFromYaml(ctx, &amp;yamlChain)
 <span id="L63" class="ln">    63  </span>		if err != nil {
 <span id="L64" class="ln">    64  </span>			return fmt.Errorf(&#34;failed to create multi-task chain %s: %w&#34;, yamlChain.ChainName, err)
 <span id="L65" class="ln">    65  </span>		}
@@ -127,8 +127,8 @@
 <span id="L70" class="ln">    70  </span>	return nil
 <span id="L71" class="ln">    71  </span>}
 <span id="L72" class="ln">    72  </span>
-<span id="L73" class="ln">    73  </span><span class="comment">// createChainFromYaml creates a multi-task chain using direct SQL inserts</span>
-<span id="L74" class="ln">    74  </span>func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error) {
+<span id="L73" class="ln">    73  </span><span class="comment">// CreateChainFromYaml creates a multi-task chain using direct SQL inserts</span>
+<span id="L74" class="ln">    74  </span>func (pge *PgEngine) CreateChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error) {
 <span id="L75" class="ln">    75  </span>	<span class="comment">// Insert chain</span>
 <span id="L76" class="ln">    76  </span>	var chainID int64
 <span id="L77" class="ln">    77  </span>	err := pge.ConfigDb.QueryRow(ctx, `INSERT INTO timetable.chain (
@@ -178,13 +178,13 @@
 <span id="L121" class="ln">   121  </span>		if len(task.Parameters) &gt; 0 {
 <span id="L122" class="ln">   122  </span>			for paramIndex, param := range task.Parameters {
 <span id="L123" class="ln">   123  </span>				orderID := paramIndex + 1
-<span id="L124" class="ln">   124  </span>				
+<span id="L124" class="ln">   124  </span>
 <span id="L125" class="ln">   125  </span>				<span class="comment">// Convert parameter to JSON for JSONB storage</span>
 <span id="L126" class="ln">   126  </span>				jsonValue, err := json.Marshal(param)
 <span id="L127" class="ln">   127  </span>				if err != nil {
 <span id="L128" class="ln">   128  </span>					return 0, fmt.Errorf(&#34;failed to marshal parameter %d to JSON: %w&#34;, orderID, err)
 <span id="L129" class="ln">   129  </span>				}
-<span id="L130" class="ln">   130  </span>				
+<span id="L130" class="ln">   130  </span>
 <span id="L131" class="ln">   131  </span>				_, err = pge.ConfigDb.Exec(ctx,
 <span id="L132" class="ln">   132  </span>					&#34;INSERT INTO timetable.parameter (task_id, order_id, value) VALUES ($1, $2, $3::jsonb)&#34;,
 <span id="L133" class="ln">   133  </span>					taskID, orderID, string(jsonValue))
@@ -316,8 +316,6 @@
 <span id="L259" class="ln">   259  </span>	return &amp;config, nil
 <span id="L260" class="ln">   260  </span>}
 <span id="L261" class="ln">   261  </span>
-<span id="L262" class="ln">   262  </span>
-<span id="L263" class="ln">   263  </span>
 </pre><p></p>
 
 <div id="footer">

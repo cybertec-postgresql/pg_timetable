@@ -202,6 +202,9 @@
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.CopyToProgram">func (pge *PgEngine) CopyToProgram(ctx context.Context, sql string, cmd string, args ...string) (int64, error)</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CreateChainFromYaml">func (pge *PgEngine) CreateChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.DeleteChain">func (pge *PgEngine) DeleteChain(ctx context.Context, chainID int) bool</a></dd>
 				
 					
@@ -314,9 +317,6 @@
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.WaitForChainSignal">func (pge *PgEngine) WaitForChainSignal(ctx context.Context) ChainSignal</a></dd>
-				
-					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.createChainFromYaml">func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.getPgxConnConfig">func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config</a></dd>
@@ -1043,6 +1043,19 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
+				<h3 id="PgEngine.CreateChainFromYaml">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L74">CreateChainFromYaml</a>
+					<a class="permalink" href="#PgEngine.CreateChainFromYaml">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CreateChainFromYaml(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, yamlChain *<a href="#YamlChain">YamlChain</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>CreateChainFromYaml creates a multi-task chain using direct SQL inserts
+
+				
+				
+				
+			
+				
 				<h3 id="PgEngine.DeleteChain">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L15">DeleteChain</a>
 					<a class="permalink" href="#PgEngine.DeleteChain">&#xb6;</a>
 					
@@ -1532,19 +1545,6 @@ where all IDs are the same across all running containers, e.g. 1
 				</h3>
 				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) WaitForChainSignal(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="#ChainSignal">ChainSignal</a></pre>
 				<p>WaitForChainSignal returns configuration id from the notifications
-
-				
-				
-				
-			
-				
-				<h3 id="PgEngine.createChainFromYaml">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L74">createChainFromYaml</a>
-					<a class="permalink" href="#PgEngine.createChainFromYaml">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) createChainFromYaml(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, yamlChain *<a href="#YamlChain">YamlChain</a>) (<a href="https://pkg.go.dev/builtin/#int64">int64</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
-				<p>createChainFromYaml creates a multi-task chain using direct SQL inserts
 
 				
 				

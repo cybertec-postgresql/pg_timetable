@@ -74,150 +74,150 @@
 <span id="L17" class="ln">    17  </span>	&#34;github.com/stretchr/testify/assert&#34;
 <span id="L18" class="ln">    18  </span>)
 <span id="L19" class="ln">    19  </span>
-<span id="L20" class="ln">    20  </span>func TestExecuteSchemaScripts(t *testing.T) {
-<span id="L21" class="ln">    21  </span>	initmockdb(t)
-<span id="L22" class="ln">    22  </span>	defer mockPool.Close()
-<span id="L23" class="ln">    23  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L24" class="ln">    24  </span>
-<span id="L25" class="ln">    25  </span>	t.Run(&#34;Check schema scripts if error returned for SELECT EXISTS&#34;, func(t *testing.T) {
-<span id="L26" class="ln">    26  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-<span id="L27" class="ln">    27  </span>		defer cancel()
-<span id="L28" class="ln">    28  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnError(errors.New(&#34;expected&#34;))
-<span id="L29" class="ln">    29  </span>		assert.Error(t, mockpge.ExecuteSchemaScripts(ctx))
-<span id="L30" class="ln">    30  </span>	})
-<span id="L31" class="ln">    31  </span>
-<span id="L32" class="ln">    32  </span>	t.Run(&#34;Check schema scripts if error returned&#34;, func(t *testing.T) {
-<span id="L33" class="ln">    33  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-<span id="L34" class="ln">    34  </span>		defer cancel()
-<span id="L35" class="ln">    35  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L36" class="ln">    36  </span>		mockPool.ExpectExec(&#34;CREATE SCHEMA timetable&#34;).WillReturnError(errors.New(&#34;expected&#34;))
-<span id="L37" class="ln">    37  </span>		mockPool.ExpectExec(&#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;).WillReturnError(errors.New(&#34;expected&#34;))
-<span id="L38" class="ln">    38  </span>		assert.Error(t, mockpge.ExecuteSchemaScripts(ctx))
-<span id="L39" class="ln">    39  </span>	})
-<span id="L40" class="ln">    40  </span>
-<span id="L41" class="ln">    41  </span>	t.Run(&#34;Check schema scripts if everything fine&#34;, func(t *testing.T) {
-<span id="L42" class="ln">    42  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-<span id="L43" class="ln">    43  </span>		defer cancel()
-<span id="L44" class="ln">    44  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L45" class="ln">    45  </span>		for i := 0; i &lt; 5; i++ {
-<span id="L46" class="ln">    46  </span>			mockPool.ExpectExec(&#34;.*&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
-<span id="L47" class="ln">    47  </span>		}
-<span id="L48" class="ln">    48  </span>		assert.NoError(t, mockpge.ExecuteSchemaScripts(ctx))
-<span id="L49" class="ln">    49  </span>	})
-<span id="L50" class="ln">    50  </span>}
-<span id="L51" class="ln">    51  </span>
-<span id="L52" class="ln">    52  </span>func TestExecuteCustomScripts(t *testing.T) {
-<span id="L53" class="ln">    53  </span>	initmockdb(t)
-<span id="L54" class="ln">    54  </span>	defer mockPool.Close()
-<span id="L55" class="ln">    55  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L56" class="ln">    56  </span>	t.Run(&#34;Check ExecuteCustomScripts for non-existent file&#34;, func(t *testing.T) {
-<span id="L57" class="ln">    57  </span>		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), &#34;foo.bar&#34;))
-<span id="L58" class="ln">    58  </span>	})
+<span id="L20" class="ln">    20  </span>func anyArgs(i int) []any {
+<span id="L21" class="ln">    21  </span>	args := make([]any, i)
+<span id="L22" class="ln">    22  </span>	for j := range i {
+<span id="L23" class="ln">    23  </span>		args[j] = pgxmock.AnyArg()
+<span id="L24" class="ln">    24  </span>	}
+<span id="L25" class="ln">    25  </span>	return args
+<span id="L26" class="ln">    26  </span>}
+<span id="L27" class="ln">    27  </span>
+<span id="L28" class="ln">    28  </span>func TestExecuteSchemaScripts(t *testing.T) {
+<span id="L29" class="ln">    29  </span>	initmockdb(t)
+<span id="L30" class="ln">    30  </span>	defer mockPool.Close()
+<span id="L31" class="ln">    31  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L32" class="ln">    32  </span>
+<span id="L33" class="ln">    33  </span>	t.Run(&#34;Check schema scripts if error returned for SELECT EXISTS&#34;, func(t *testing.T) {
+<span id="L34" class="ln">    34  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+<span id="L35" class="ln">    35  </span>		defer cancel()
+<span id="L36" class="ln">    36  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L37" class="ln">    37  </span>		assert.Error(t, mockpge.ExecuteSchemaScripts(ctx))
+<span id="L38" class="ln">    38  </span>	})
+<span id="L39" class="ln">    39  </span>
+<span id="L40" class="ln">    40  </span>	t.Run(&#34;Check schema scripts if error returned&#34;, func(t *testing.T) {
+<span id="L41" class="ln">    41  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+<span id="L42" class="ln">    42  </span>		defer cancel()
+<span id="L43" class="ln">    43  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L44" class="ln">    44  </span>		mockPool.ExpectExec(&#34;CREATE SCHEMA timetable&#34;).WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L45" class="ln">    45  </span>		mockPool.ExpectExec(&#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;).WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L46" class="ln">    46  </span>		assert.Error(t, mockpge.ExecuteSchemaScripts(ctx))
+<span id="L47" class="ln">    47  </span>	})
+<span id="L48" class="ln">    48  </span>
+<span id="L49" class="ln">    49  </span>	t.Run(&#34;Check schema scripts if everything fine&#34;, func(t *testing.T) {
+<span id="L50" class="ln">    50  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+<span id="L51" class="ln">    51  </span>		defer cancel()
+<span id="L52" class="ln">    52  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L53" class="ln">    53  </span>		for i := 0; i &lt; 5; i++ {
+<span id="L54" class="ln">    54  </span>			mockPool.ExpectExec(&#34;.*&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
+<span id="L55" class="ln">    55  </span>		}
+<span id="L56" class="ln">    56  </span>		assert.NoError(t, mockpge.ExecuteSchemaScripts(ctx))
+<span id="L57" class="ln">    57  </span>	})
+<span id="L58" class="ln">    58  </span>}
 <span id="L59" class="ln">    59  </span>
-<span id="L60" class="ln">    60  </span>	t.Run(&#34;Check ExecuteCustomScripts if error returned&#34;, func(t *testing.T) {
-<span id="L61" class="ln">    61  </span>		mockPool.ExpectExec(&#34;SELECT timetable.add_job&#34;).WillReturnError(errors.New(&#34;expected&#34;))
-<span id="L62" class="ln">    62  </span>		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), &#34;../../samples/Basic.sql&#34;))
-<span id="L63" class="ln">    63  </span>	})
-<span id="L64" class="ln">    64  </span>
-<span id="L65" class="ln">    65  </span>	t.Run(&#34;Check ExecuteCustomScripts if everything fine&#34;, func(t *testing.T) {
-<span id="L66" class="ln">    66  </span>		mockPool.ExpectExec(&#34;SELECT timetable.add_job&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
-<span id="L67" class="ln">    67  </span>		mockPool.ExpectExec(&#34;INSERT INTO timetable\\.log&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
-<span id="L68" class="ln">    68  </span>		assert.NoError(t, mockpge.ExecuteCustomScripts(context.Background(), &#34;../../samples/Basic.sql&#34;))
-<span id="L69" class="ln">    69  </span>	})
-<span id="L70" class="ln">    70  </span>}
-<span id="L71" class="ln">    71  </span>
-<span id="L72" class="ln">    72  </span>func TestFinalizeConnection(t *testing.T) {
-<span id="L73" class="ln">    73  </span>	initmockdb(t)
-<span id="L74" class="ln">    74  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L75" class="ln">    75  </span>	mockPool.ExpectExec(`DELETE FROM timetable\.active_session`).
-<span id="L76" class="ln">    76  </span>		WithArgs(mockpge.ClientName).
-<span id="L77" class="ln">    77  </span>		WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 0))
-<span id="L78" class="ln">    78  </span>	mockPool.ExpectClose()
-<span id="L79" class="ln">    79  </span>	mockpge.Finalize()
-<span id="L80" class="ln">    80  </span>	assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L81" class="ln">    81  </span>}
-<span id="L82" class="ln">    82  </span>
-<span id="L83" class="ln">    83  </span>type mockpgrow struct {
-<span id="L84" class="ln">    84  </span>	results []any
-<span id="L85" class="ln">    85  </span>}
-<span id="L86" class="ln">    86  </span>
-<span id="L87" class="ln">    87  </span>func (r *mockpgrow) Scan(dest ...any) error {
-<span id="L88" class="ln">    88  </span>	if len(r.results) &gt; 0 {
-<span id="L89" class="ln">    89  </span>		if err, ok := r.results[0].(error); ok {
-<span id="L90" class="ln">    90  </span>			r.results = r.results[1:]
-<span id="L91" class="ln">    91  </span>			return err
-<span id="L92" class="ln">    92  </span>		}
-<span id="L93" class="ln">    93  </span>		destv := reflect.ValueOf(dest[0])
-<span id="L94" class="ln">    94  </span>		typ := destv.Type()
-<span id="L95" class="ln">    95  </span>		if typ.Kind() != reflect.Ptr {
-<span id="L96" class="ln">    96  </span>			return fmt.Errorf(&#34;dest must be pointer; got %T&#34;, destv)
-<span id="L97" class="ln">    97  </span>		}
-<span id="L98" class="ln">    98  </span>		destv.Elem().Set(reflect.ValueOf(r.results[0]))
-<span id="L99" class="ln">    99  </span>		r.results = r.results[1:]
-<span id="L100" class="ln">   100  </span>		return nil
-<span id="L101" class="ln">   101  </span>	}
-<span id="L102" class="ln">   102  </span>	return errors.New(&#34;mockpgrow error&#34;)
-<span id="L103" class="ln">   103  </span>}
-<span id="L104" class="ln">   104  </span>
-<span id="L105" class="ln">   105  </span>type mockpgconn struct {
-<span id="L106" class="ln">   106  </span>	r pgx.Row
-<span id="L107" class="ln">   107  </span>}
-<span id="L108" class="ln">   108  </span>
-<span id="L109" class="ln">   109  </span>func (m mockpgconn) QueryRow(context.Context, string, ...any) pgx.Row {
-<span id="L110" class="ln">   110  </span>	return m.r
+<span id="L60" class="ln">    60  </span>func TestExecuteCustomScripts(t *testing.T) {
+<span id="L61" class="ln">    61  </span>	initmockdb(t)
+<span id="L62" class="ln">    62  </span>	defer mockPool.Close()
+<span id="L63" class="ln">    63  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L64" class="ln">    64  </span>	t.Run(&#34;Check ExecuteCustomScripts for non-existent file&#34;, func(t *testing.T) {
+<span id="L65" class="ln">    65  </span>		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), &#34;foo.bar&#34;))
+<span id="L66" class="ln">    66  </span>	})
+<span id="L67" class="ln">    67  </span>
+<span id="L68" class="ln">    68  </span>	t.Run(&#34;Check ExecuteCustomScripts if error returned&#34;, func(t *testing.T) {
+<span id="L69" class="ln">    69  </span>		mockPool.ExpectExec(&#34;SELECT timetable.add_job&#34;).WillReturnError(errors.New(&#34;expected&#34;))
+<span id="L70" class="ln">    70  </span>		assert.Error(t, mockpge.ExecuteCustomScripts(context.Background(), &#34;../../samples/Basic.sql&#34;))
+<span id="L71" class="ln">    71  </span>	})
+<span id="L72" class="ln">    72  </span>
+<span id="L73" class="ln">    73  </span>	t.Run(&#34;Check ExecuteCustomScripts if everything fine&#34;, func(t *testing.T) {
+<span id="L74" class="ln">    74  </span>		mockPool.ExpectExec(&#34;SELECT timetable.add_job&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
+<span id="L75" class="ln">    75  </span>		mockPool.ExpectExec(&#34;INSERT INTO timetable\\.log&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
+<span id="L76" class="ln">    76  </span>		assert.NoError(t, mockpge.ExecuteCustomScripts(context.Background(), &#34;../../samples/Basic.sql&#34;))
+<span id="L77" class="ln">    77  </span>	})
+<span id="L78" class="ln">    78  </span>}
+<span id="L79" class="ln">    79  </span>
+<span id="L80" class="ln">    80  </span>func TestFinalizeConnection(t *testing.T) {
+<span id="L81" class="ln">    81  </span>	initmockdb(t)
+<span id="L82" class="ln">    82  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L83" class="ln">    83  </span>	mockPool.ExpectExec(`DELETE FROM timetable\.active_session`).
+<span id="L84" class="ln">    84  </span>		WithArgs(mockpge.ClientName).
+<span id="L85" class="ln">    85  </span>		WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 0))
+<span id="L86" class="ln">    86  </span>	mockPool.ExpectClose()
+<span id="L87" class="ln">    87  </span>	mockpge.Finalize()
+<span id="L88" class="ln">    88  </span>	assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L89" class="ln">    89  </span>}
+<span id="L90" class="ln">    90  </span>
+<span id="L91" class="ln">    91  </span>type mockpgrow struct {
+<span id="L92" class="ln">    92  </span>	results []any
+<span id="L93" class="ln">    93  </span>}
+<span id="L94" class="ln">    94  </span>
+<span id="L95" class="ln">    95  </span>func (r *mockpgrow) Scan(dest ...any) error {
+<span id="L96" class="ln">    96  </span>	if len(r.results) &gt; 0 {
+<span id="L97" class="ln">    97  </span>		if err, ok := r.results[0].(error); ok {
+<span id="L98" class="ln">    98  </span>			r.results = r.results[1:]
+<span id="L99" class="ln">    99  </span>			return err
+<span id="L100" class="ln">   100  </span>		}
+<span id="L101" class="ln">   101  </span>		destv := reflect.ValueOf(dest[0])
+<span id="L102" class="ln">   102  </span>		typ := destv.Type()
+<span id="L103" class="ln">   103  </span>		if typ.Kind() != reflect.Ptr {
+<span id="L104" class="ln">   104  </span>			return fmt.Errorf(&#34;dest must be pointer; got %T&#34;, destv)
+<span id="L105" class="ln">   105  </span>		}
+<span id="L106" class="ln">   106  </span>		destv.Elem().Set(reflect.ValueOf(r.results[0]))
+<span id="L107" class="ln">   107  </span>		r.results = r.results[1:]
+<span id="L108" class="ln">   108  </span>		return nil
+<span id="L109" class="ln">   109  </span>	}
+<span id="L110" class="ln">   110  </span>	return errors.New(&#34;mockpgrow error&#34;)
 <span id="L111" class="ln">   111  </span>}
 <span id="L112" class="ln">   112  </span>
-<span id="L113" class="ln">   113  </span>func TestTryLockClientName(t *testing.T) {
-<span id="L114" class="ln">   114  </span>	pge := pgengine.NewDB(nil, &#34;pgengine_unit_test&#34;)
-<span id="L115" class="ln">   115  </span>	defer func() { pge = nil }()
-<span id="L116" class="ln">   116  </span>	t.Run(&#34;query error&#34;, func(t *testing.T) {
-<span id="L117" class="ln">   117  </span>		r := &amp;mockpgrow{}
-<span id="L118" class="ln">   118  </span>		m := mockpgconn{r}
-<span id="L119" class="ln">   119  </span>		assert.Error(t, pge.TryLockClientName(context.Background(), m))
-<span id="L120" class="ln">   120  </span>	})
-<span id="L121" class="ln">   121  </span>
-<span id="L122" class="ln">   122  </span>	t.Run(&#34;no schema yet&#34;, func(t *testing.T) {
-<span id="L123" class="ln">   123  </span>		r := &amp;mockpgrow{results: []any{
-<span id="L124" class="ln">   124  </span>			0, <span class="comment">//procoid</span>
-<span id="L125" class="ln">   125  </span>		}}
+<span id="L113" class="ln">   113  </span>type mockpgconn struct {
+<span id="L114" class="ln">   114  </span>	r pgx.Row
+<span id="L115" class="ln">   115  </span>}
+<span id="L116" class="ln">   116  </span>
+<span id="L117" class="ln">   117  </span>func (m mockpgconn) QueryRow(context.Context, string, ...any) pgx.Row {
+<span id="L118" class="ln">   118  </span>	return m.r
+<span id="L119" class="ln">   119  </span>}
+<span id="L120" class="ln">   120  </span>
+<span id="L121" class="ln">   121  </span>func TestTryLockClientName(t *testing.T) {
+<span id="L122" class="ln">   122  </span>	pge := pgengine.NewDB(nil, &#34;pgengine_unit_test&#34;)
+<span id="L123" class="ln">   123  </span>	defer func() { pge = nil }()
+<span id="L124" class="ln">   124  </span>	t.Run(&#34;query error&#34;, func(t *testing.T) {
+<span id="L125" class="ln">   125  </span>		r := &amp;mockpgrow{}
 <span id="L126" class="ln">   126  </span>		m := mockpgconn{r}
-<span id="L127" class="ln">   127  </span>		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
+<span id="L127" class="ln">   127  </span>		assert.Error(t, pge.TryLockClientName(context.Background(), m))
 <span id="L128" class="ln">   128  </span>	})
 <span id="L129" class="ln">   129  </span>
-<span id="L130" class="ln">   130  </span>	t.Run(&#34;locking error&#34;, func(t *testing.T) {
+<span id="L130" class="ln">   130  </span>	t.Run(&#34;no schema yet&#34;, func(t *testing.T) {
 <span id="L131" class="ln">   131  </span>		r := &amp;mockpgrow{results: []any{
-<span id="L132" class="ln">   132  </span>			1,                           <span class="comment">//procoid</span>
-<span id="L133" class="ln">   133  </span>			errors.New(&#34;locking error&#34;), <span class="comment">//error</span>
-<span id="L134" class="ln">   134  </span>		}}
-<span id="L135" class="ln">   135  </span>		m := mockpgconn{r}
-<span id="L136" class="ln">   136  </span>		assert.Error(t, pge.TryLockClientName(context.Background(), m))
-<span id="L137" class="ln">   137  </span>	})
-<span id="L138" class="ln">   138  </span>
-<span id="L139" class="ln">   139  </span>	t.Run(&#34;locking successful&#34;, func(t *testing.T) {
-<span id="L140" class="ln">   140  </span>		r := &amp;mockpgrow{results: []any{
-<span id="L141" class="ln">   141  </span>			1,    <span class="comment">//procoid</span>
-<span id="L142" class="ln">   142  </span>			true, <span class="comment">//locked</span>
-<span id="L143" class="ln">   143  </span>		}}
-<span id="L144" class="ln">   144  </span>		m := mockpgconn{r}
-<span id="L145" class="ln">   145  </span>		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
-<span id="L146" class="ln">   146  </span>	})
-<span id="L147" class="ln">   147  </span>}
-<span id="L148" class="ln">   148  </span>
-<span id="L149" class="ln">   149  </span>func TestExecuteFileScript(t *testing.T) {
-<span id="L150" class="ln">   150  </span>	initmockdb(t)
-<span id="L151" class="ln">   151  </span>	defer mockPool.Close()
-<span id="L152" class="ln">   152  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L153" class="ln">   153  </span>
-<span id="L154" class="ln">   154  </span>	<span class="comment">// Create temporary directory for test files</span>
-<span id="L155" class="ln">   155  </span>	tmpDir := t.TempDir()
+<span id="L132" class="ln">   132  </span>			0, <span class="comment">//procoid</span>
+<span id="L133" class="ln">   133  </span>		}}
+<span id="L134" class="ln">   134  </span>		m := mockpgconn{r}
+<span id="L135" class="ln">   135  </span>		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
+<span id="L136" class="ln">   136  </span>	})
+<span id="L137" class="ln">   137  </span>
+<span id="L138" class="ln">   138  </span>	t.Run(&#34;locking error&#34;, func(t *testing.T) {
+<span id="L139" class="ln">   139  </span>		r := &amp;mockpgrow{results: []any{
+<span id="L140" class="ln">   140  </span>			1,                           <span class="comment">//procoid</span>
+<span id="L141" class="ln">   141  </span>			errors.New(&#34;locking error&#34;), <span class="comment">//error</span>
+<span id="L142" class="ln">   142  </span>		}}
+<span id="L143" class="ln">   143  </span>		m := mockpgconn{r}
+<span id="L144" class="ln">   144  </span>		assert.Error(t, pge.TryLockClientName(context.Background(), m))
+<span id="L145" class="ln">   145  </span>	})
+<span id="L146" class="ln">   146  </span>
+<span id="L147" class="ln">   147  </span>	t.Run(&#34;locking successful&#34;, func(t *testing.T) {
+<span id="L148" class="ln">   148  </span>		r := &amp;mockpgrow{results: []any{
+<span id="L149" class="ln">   149  </span>			1,    <span class="comment">//procoid</span>
+<span id="L150" class="ln">   150  </span>			true, <span class="comment">//locked</span>
+<span id="L151" class="ln">   151  </span>		}}
+<span id="L152" class="ln">   152  </span>		m := mockpgconn{r}
+<span id="L153" class="ln">   153  </span>		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
+<span id="L154" class="ln">   154  </span>	})
+<span id="L155" class="ln">   155  </span>}
 <span id="L156" class="ln">   156  </span>
-<span id="L157" class="ln">   157  </span>	anyArgs := func(i int) []any {
-<span id="L158" class="ln">   158  </span>		args := make([]any, i)
-<span id="L159" class="ln">   159  </span>		for j := range i {
-<span id="L160" class="ln">   160  </span>			args[j] = pgxmock.AnyArg()
-<span id="L161" class="ln">   161  </span>		}
-<span id="L162" class="ln">   162  </span>		return args
-<span id="L163" class="ln">   163  </span>	}
+<span id="L157" class="ln">   157  </span>func TestExecuteFileScript(t *testing.T) {
+<span id="L158" class="ln">   158  </span>	initmockdb(t)
+<span id="L159" class="ln">   159  </span>	defer mockPool.Close()
+<span id="L160" class="ln">   160  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L161" class="ln">   161  </span>
+<span id="L162" class="ln">   162  </span>	<span class="comment">// Create temporary directory for test files</span>
+<span id="L163" class="ln">   163  </span>	tmpDir := t.TempDir()
 <span id="L164" class="ln">   164  </span>
 <span id="L165" class="ln">   165  </span>	t.Run(&#34;SQL file execution&#34;, func(t *testing.T) {
 <span id="L166" class="ln">   166  </span>		<span class="comment">// Create temporary SQL file</span>
