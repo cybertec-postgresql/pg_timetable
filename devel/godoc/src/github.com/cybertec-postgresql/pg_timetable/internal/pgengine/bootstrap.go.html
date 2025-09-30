@@ -304,82 +304,68 @@
 <span id="L247" class="ln">   247  </span>		return pge.ExecuteCustomScripts(ctx, filePath)
 <span id="L248" class="ln">   248  </span>
 <span id="L249" class="ln">   249  </span>	default:
-<span id="L250" class="ln">   250  </span>		<span class="comment">// Try to detect content type for files without extension</span>
-<span id="L251" class="ln">   251  </span>		content, err := os.ReadFile(filePath)
-<span id="L252" class="ln">   252  </span>		if err != nil {
-<span id="L253" class="ln">   253  </span>			pge.l.WithError(err).Error(&#34;cannot read file&#34;)
-<span id="L254" class="ln">   254  </span>			return err
-<span id="L255" class="ln">   255  </span>		}
-<span id="L256" class="ln">   256  </span>
-<span id="L257" class="ln">   257  </span>		<span class="comment">// Check if it looks like YAML (starts with &#34;chains:&#34; or contains YAML markers)</span>
-<span id="L258" class="ln">   258  </span>		contentStr := strings.TrimSpace(string(content))
-<span id="L259" class="ln">   259  </span>		if strings.HasPrefix(contentStr, &#34;chains:&#34;) {
-<span id="L260" class="ln">   260  </span>			pge.l.WithField(&#34;file&#34;, filePath).Info(&#34;Detected YAML content, processing as YAML&#34;)
-<span id="L261" class="ln">   261  </span>			return pge.LoadYamlChains(ctx, filePath, false)
-<span id="L262" class="ln">   262  </span>		}
-<span id="L263" class="ln">   263  </span>		pge.l.WithField(&#34;file&#34;, filePath).Info(&#34;Processing as SQL script&#34;)
-<span id="L264" class="ln">   264  </span>		return pge.ExecuteCustomScripts(ctx, filePath)
-<span id="L265" class="ln">   265  </span>	}
-<span id="L266" class="ln">   266  </span>}
-<span id="L267" class="ln">   267  </span>
-<span id="L268" class="ln">   268  </span><span class="comment">// ExecuteCustomScripts executes SQL scripts in files</span>
-<span id="L269" class="ln">   269  </span>func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error {
-<span id="L270" class="ln">   270  </span>	for _, f := range filename {
-<span id="L271" class="ln">   271  </span>		sql, err := os.ReadFile(f)
-<span id="L272" class="ln">   272  </span>		if err != nil {
-<span id="L273" class="ln">   273  </span>			pge.l.WithError(err).Error(&#34;cannot read command file&#34;)
-<span id="L274" class="ln">   274  </span>			return err
-<span id="L275" class="ln">   275  </span>		}
-<span id="L276" class="ln">   276  </span>		pge.l.Info(&#34;Executing script: &#34;, f)
-<span id="L277" class="ln">   277  </span>		if _, err = pge.ConfigDb.Exec(ctx, string(sql)); err != nil {
-<span id="L278" class="ln">   278  </span>			pge.l.WithError(err).Error(&#34;script execution failed&#34;)
-<span id="L279" class="ln">   279  </span>			return err
-<span id="L280" class="ln">   280  </span>		}
-<span id="L281" class="ln">   281  </span>		pge.l.Info(&#34;Script file executed: &#34;, f)
-<span id="L282" class="ln">   282  </span>	}
-<span id="L283" class="ln">   283  </span>	return nil
-<span id="L284" class="ln">   284  </span>}
-<span id="L285" class="ln">   285  </span>
-<span id="L286" class="ln">   286  </span><span class="comment">// ExecuteSchemaScripts executes initial schema scripts</span>
-<span id="L287" class="ln">   287  </span>func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
-<span id="L288" class="ln">   288  </span>	var exists bool
-<span id="L289" class="ln">   289  </span>	err := pge.ConfigDb.QueryRow(ctx, &#34;SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = &#39;timetable&#39;)&#34;).Scan(&amp;exists)
-<span id="L290" class="ln">   290  </span>	if err != nil {
-<span id="L291" class="ln">   291  </span>		return err
-<span id="L292" class="ln">   292  </span>	}
-<span id="L293" class="ln">   293  </span>	if !exists {
-<span id="L294" class="ln">   294  </span>		for i, sql := range sqls {
-<span id="L295" class="ln">   295  </span>			sqlName := sqlNames[i]
-<span id="L296" class="ln">   296  </span>			pge.l.Info(&#34;Executing script: &#34;, sqlName)
-<span id="L297" class="ln">   297  </span>			if _, err = pge.ConfigDb.Exec(ctx, sql); err != nil {
-<span id="L298" class="ln">   298  </span>				pge.l.WithError(err).Error(&#34;Script execution failed&#34;)
-<span id="L299" class="ln">   299  </span>				pge.l.Warn(&#34;Dropping \&#34;timetable\&#34; schema...&#34;)
-<span id="L300" class="ln">   300  </span>				_, err = pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
-<span id="L301" class="ln">   301  </span>				if err != nil {
-<span id="L302" class="ln">   302  </span>					pge.l.WithError(err).Error(&#34;Schema dropping failed&#34;)
-<span id="L303" class="ln">   303  </span>				}
-<span id="L304" class="ln">   304  </span>				return err
-<span id="L305" class="ln">   305  </span>			}
-<span id="L306" class="ln">   306  </span>			pge.l.Info(&#34;Schema file executed: &#34; + sqlName)
-<span id="L307" class="ln">   307  </span>		}
-<span id="L308" class="ln">   308  </span>		pge.l.Info(&#34;Configuration schema created...&#34;)
-<span id="L309" class="ln">   309  </span>	}
-<span id="L310" class="ln">   310  </span>	return nil
-<span id="L311" class="ln">   311  </span>}
-<span id="L312" class="ln">   312  </span>
-<span id="L313" class="ln">   313  </span><span class="comment">// Finalize closes session</span>
-<span id="L314" class="ln">   314  </span>func (pge *PgEngine) Finalize() {
-<span id="L315" class="ln">   315  </span>	pge.l.Info(&#34;Closing session&#34;)
-<span id="L316" class="ln">   316  </span>	sql := `WITH del_ch AS (DELETE FROM timetable.active_chain WHERE client_name = $1)
-<span id="L317" class="ln">   317  </span>DELETE FROM timetable.active_session WHERE client_name = $1`
-<span id="L318" class="ln">   318  </span>	_, err := pge.ConfigDb.Exec(context.Background(), sql, pge.ClientName)
-<span id="L319" class="ln">   319  </span>	if err != nil {
-<span id="L320" class="ln">   320  </span>		pge.l.WithError(err).Error(&#34;Cannot finalize database session&#34;)
-<span id="L321" class="ln">   321  </span>	}
-<span id="L322" class="ln">   322  </span>	pge.ConfigDb.Close()
-<span id="L323" class="ln">   323  </span>	pge.ConfigDb = nil
-<span id="L324" class="ln">   324  </span>}
-<span id="L325" class="ln">   325  </span>
+<span id="L250" class="ln">   250  </span>		return errors.New(&#34;unsupported file extension: &#34; + fileExt)
+<span id="L251" class="ln">   251  </span>	}
+<span id="L252" class="ln">   252  </span>}
+<span id="L253" class="ln">   253  </span>
+<span id="L254" class="ln">   254  </span><span class="comment">// ExecuteCustomScripts executes SQL scripts in files</span>
+<span id="L255" class="ln">   255  </span>func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error {
+<span id="L256" class="ln">   256  </span>	for _, f := range filename {
+<span id="L257" class="ln">   257  </span>		sql, err := os.ReadFile(f)
+<span id="L258" class="ln">   258  </span>		if err != nil {
+<span id="L259" class="ln">   259  </span>			pge.l.WithError(err).Error(&#34;cannot read command file&#34;)
+<span id="L260" class="ln">   260  </span>			return err
+<span id="L261" class="ln">   261  </span>		}
+<span id="L262" class="ln">   262  </span>		pge.l.Info(&#34;Executing script: &#34;, f)
+<span id="L263" class="ln">   263  </span>		if _, err = pge.ConfigDb.Exec(ctx, string(sql)); err != nil {
+<span id="L264" class="ln">   264  </span>			pge.l.WithError(err).Error(&#34;script execution failed&#34;)
+<span id="L265" class="ln">   265  </span>			return err
+<span id="L266" class="ln">   266  </span>		}
+<span id="L267" class="ln">   267  </span>		pge.l.Info(&#34;Script file executed: &#34;, f)
+<span id="L268" class="ln">   268  </span>	}
+<span id="L269" class="ln">   269  </span>	return nil
+<span id="L270" class="ln">   270  </span>}
+<span id="L271" class="ln">   271  </span>
+<span id="L272" class="ln">   272  </span><span class="comment">// ExecuteSchemaScripts executes initial schema scripts</span>
+<span id="L273" class="ln">   273  </span>func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
+<span id="L274" class="ln">   274  </span>	var exists bool
+<span id="L275" class="ln">   275  </span>	err := pge.ConfigDb.QueryRow(ctx, &#34;SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = &#39;timetable&#39;)&#34;).Scan(&amp;exists)
+<span id="L276" class="ln">   276  </span>	if err != nil {
+<span id="L277" class="ln">   277  </span>		return err
+<span id="L278" class="ln">   278  </span>	}
+<span id="L279" class="ln">   279  </span>	if !exists {
+<span id="L280" class="ln">   280  </span>		for i, sql := range sqls {
+<span id="L281" class="ln">   281  </span>			sqlName := sqlNames[i]
+<span id="L282" class="ln">   282  </span>			pge.l.Info(&#34;Executing script: &#34;, sqlName)
+<span id="L283" class="ln">   283  </span>			if _, err = pge.ConfigDb.Exec(ctx, sql); err != nil {
+<span id="L284" class="ln">   284  </span>				pge.l.WithError(err).Error(&#34;Script execution failed&#34;)
+<span id="L285" class="ln">   285  </span>				pge.l.Warn(&#34;Dropping \&#34;timetable\&#34; schema...&#34;)
+<span id="L286" class="ln">   286  </span>				_, err = pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
+<span id="L287" class="ln">   287  </span>				if err != nil {
+<span id="L288" class="ln">   288  </span>					pge.l.WithError(err).Error(&#34;Schema dropping failed&#34;)
+<span id="L289" class="ln">   289  </span>				}
+<span id="L290" class="ln">   290  </span>				return err
+<span id="L291" class="ln">   291  </span>			}
+<span id="L292" class="ln">   292  </span>			pge.l.Info(&#34;Schema file executed: &#34; + sqlName)
+<span id="L293" class="ln">   293  </span>		}
+<span id="L294" class="ln">   294  </span>		pge.l.Info(&#34;Configuration schema created...&#34;)
+<span id="L295" class="ln">   295  </span>	}
+<span id="L296" class="ln">   296  </span>	return nil
+<span id="L297" class="ln">   297  </span>}
+<span id="L298" class="ln">   298  </span>
+<span id="L299" class="ln">   299  </span><span class="comment">// Finalize closes session</span>
+<span id="L300" class="ln">   300  </span>func (pge *PgEngine) Finalize() {
+<span id="L301" class="ln">   301  </span>	pge.l.Info(&#34;Closing session&#34;)
+<span id="L302" class="ln">   302  </span>	sql := `WITH del_ch AS (DELETE FROM timetable.active_chain WHERE client_name = $1)
+<span id="L303" class="ln">   303  </span>DELETE FROM timetable.active_session WHERE client_name = $1`
+<span id="L304" class="ln">   304  </span>	_, err := pge.ConfigDb.Exec(context.Background(), sql, pge.ClientName)
+<span id="L305" class="ln">   305  </span>	if err != nil {
+<span id="L306" class="ln">   306  </span>		pge.l.WithError(err).Error(&#34;Cannot finalize database session&#34;)
+<span id="L307" class="ln">   307  </span>	}
+<span id="L308" class="ln">   308  </span>	pge.ConfigDb.Close()
+<span id="L309" class="ln">   309  </span>	pge.ConfigDb = nil
+<span id="L310" class="ln">   310  </span>}
+<span id="L311" class="ln">   311  </span>
 </pre><p></p>
 
 <div id="footer">

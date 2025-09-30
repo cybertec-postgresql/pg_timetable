@@ -1372,9 +1372,9 @@
 <tr>
 <td><code>parameters</code></td>
 <td>via <code>timetable.parameter</code></td>
-<td>Array of JSONB</td>
+<td>Array of any</td>
 <td><code>null</code></td>
-<td>Array of parameter values, each causing separate task execution</td>
+<td>Array of parameter values stored as individual JSONB rows with order_id</td>
 </tr>
 <tr>
 <td><code>run_as</code></td>
@@ -1465,7 +1465,7 @@
 <li><strong>Unique Names</strong>: Chain names must be unique across the database</li>
 <li><strong>Valid Cron</strong>: Schedule must be valid cron format (5 fields)</li>
 <li><strong>Valid Kind</strong>: Task kind must be one of: SQL, PROGRAM, BUILTIN</li>
-<li><strong>Parameter Types</strong>: Parameters must be strings or numbers (converted to JSONB array)</li>
+<li><strong>Parameter Types</strong>: Parameters can be any JSON-compatible type (strings, numbers, booleans, arrays, objects) and are stored as individual JSONB values</li>
 <li><strong>Timeout Values</strong>: Must be non-negative integers (milliseconds)</li>
 </ol>
 

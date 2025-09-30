@@ -369,9 +369,6 @@
 				
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#YamlTask.ToSQLParameters">func (t *YamlTask) ToSQLParameters() (string, error)</a></dd>
-				
-					
 					<dd>&nbsp; &nbsp; <a href="#YamlTask.ValidateTask">func (t *YamlTask) ValidateTask() error</a></dd>
 				
 			
@@ -622,7 +619,7 @@ a connection is the main loop period of 1 minute.
 		
 			
 			
-			<h2 id="nullString">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L140">nullString</a>
+			<h2 id="nullString">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L145">nullString</a>
 				<a class="permalink" href="#nullString">&#xb6;</a>
 				
 				
@@ -1111,7 +1108,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteCustomScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L269">ExecuteCustomScripts</a>
+				<h3 id="PgEngine.ExecuteCustomScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L255">ExecuteCustomScripts</a>
 					<a class="permalink" href="#PgEngine.ExecuteCustomScripts">&#xb6;</a>
 					
 					
@@ -1163,7 +1160,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSchemaScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L287">ExecuteSchemaScripts</a>
+				<h3 id="PgEngine.ExecuteSchemaScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L273">ExecuteSchemaScripts</a>
 					<a class="permalink" href="#PgEngine.ExecuteSchemaScripts">&#xb6;</a>
 					
 					
@@ -1176,7 +1173,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.Finalize">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L314">Finalize</a>
+				<h3 id="PgEngine.Finalize">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L300">Finalize</a>
 					<a class="permalink" href="#PgEngine.Finalize">&#xb6;</a>
 					
 					
@@ -1717,7 +1714,7 @@ where all IDs are the same across all running containers, e.g. 1
 
 			
 				
-				<h3 id="YamlChain.SetDefaults">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L211">SetDefaults</a>
+				<h3 id="YamlChain.SetDefaults">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L216">SetDefaults</a>
 					<a class="permalink" href="#YamlChain.SetDefaults">&#xb6;</a>
 					
 					
@@ -1730,7 +1727,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="YamlChain.ValidateChain">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L148">ValidateChain</a>
+				<h3 id="YamlChain.ValidateChain">func (*YamlChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L153">ValidateChain</a>
 					<a class="permalink" href="#YamlChain.ValidateChain">&#xb6;</a>
 					
 					
@@ -1767,7 +1764,7 @@ where all IDs are the same across all running containers, e.g. 1
 
 			
 				
-				<h3 id="ParseYamlFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L227">ParseYamlFile</a>
+				<h3 id="ParseYamlFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L232">ParseYamlFile</a>
 					<a class="permalink" href="#ParseYamlFile">&#xb6;</a>
 					
 					
@@ -1809,20 +1806,7 @@ where all IDs are the same across all running containers, e.g. 1
 
 			
 				
-				<h3 id="YamlTask.ToSQLParameters">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L264">ToSQLParameters</a>
-					<a class="permalink" href="#YamlTask.ToSQLParameters">&#xb6;</a>
-					
-					
-				</h3>
-				<pre>func (t *<a href="#YamlTask">YamlTask</a>) ToSQLParameters() (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
-				<p>ToSQLParameters converts YAML parameters to SQL-compatible format
-
-				
-				
-				
-			
-				
-				<h3 id="YamlTask.ValidateTask">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L189">ValidateTask</a>
+				<h3 id="YamlTask.ValidateTask">func (*YamlTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L194">ValidateTask</a>
 					<a class="permalink" href="#YamlTask.ValidateTask">&#xb6;</a>
 					
 					
