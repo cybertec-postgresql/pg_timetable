@@ -254,6 +254,11 @@ func TestParseYamlFile(t *testing.T) {
 		assert.Contains(t, err.Error(), "file not found")
 	})
 
+	t.Run("File cannot be read", func(t *testing.T) {
+		_, err := pgengine.ParseYamlFile(".")
+		assert.Error(t, err)
+	})
+
 	t.Run("Invalid YAML syntax", func(t *testing.T) {
 		invalidYaml := `chains:
   - name: "test"

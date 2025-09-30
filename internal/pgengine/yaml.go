@@ -59,7 +59,7 @@ func (pge *PgEngine) LoadYamlChains(ctx context.Context, filePath string, replac
 		}
 
 		// Multi-task chain - use direct SQL
-		chainID, err := pge.createChainFromYaml(ctx, &yamlChain)
+		chainID, err := pge.CreateChainFromYaml(ctx, &yamlChain)
 		if err != nil {
 			return fmt.Errorf("failed to create multi-task chain %s: %w", yamlChain.ChainName, err)
 		}
@@ -70,8 +70,8 @@ func (pge *PgEngine) LoadYamlChains(ctx context.Context, filePath string, replac
 	return nil
 }
 
-// createChainFromYaml creates a multi-task chain using direct SQL inserts
-func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error) {
+// CreateChainFromYaml creates a multi-task chain using direct SQL inserts
+func (pge *PgEngine) CreateChainFromYaml(ctx context.Context, yamlChain *YamlChain) (int64, error) {
 	// Insert chain
 	var chainID int64
 	err := pge.ConfigDb.QueryRow(ctx, `INSERT INTO timetable.chain (
@@ -121,13 +121,13 @@ func (pge *PgEngine) createChainFromYaml(ctx context.Context, yamlChain *YamlCha
 		if len(task.Parameters) > 0 {
 			for paramIndex, param := range task.Parameters {
 				orderID := paramIndex + 1
-				
+
 				// Convert parameter to JSON for JSONB storage
 				jsonValue, err := json.Marshal(param)
 				if err != nil {
 					return 0, fmt.Errorf("failed to marshal parameter %d to JSON: %w", orderID, err)
 				}
-				
+
 				_, err = pge.ConfigDb.Exec(ctx,
 					"INSERT INTO timetable.parameter (task_id, order_id, value) VALUES ($1, $2, $3::jsonb)",
 					taskID, orderID, string(jsonValue))
@@ -258,5 +258,3 @@ func ParseYamlFile(filePath string) (*YamlConfig, error) {
 
 	return &config, nil
 }
-
-
