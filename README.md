@@ -56,6 +56,40 @@ SELECT timetable.add_job('reindex-job', '0 0 * * 7', 'bash',
 - Full support for database driven logging
 - Enhanced cron-style scheduling
 - Optional concurrency protection
+- **NEW**: YAML-based chain definitions for easy configuration
+
+## YAML Configuration
+
+You can now define chains using YAML files instead of SQL inserts, making configuration more readable and maintainable:
+
+```yaml
+chains:
+  - name: "Daily ETL Pipeline"
+    schedule: "0 2 * * *"  # 2 AM daily
+    live: true
+    max_instances: 1
+    timeout: 3600000  # 1 hour
+    
+    tasks:
+      - name: "Extract data"
+        command: "SELECT extract_sales_data($1)"
+        parameters: ["yesterday"]
+        
+      - name: "Transform data"
+        command: "CALL transform_sales_data()"
+        autonomous: true
+        
+      - name: "Load to warehouse"
+        command: "CALL load_to_warehouse()"
+```
+
+Load YAML chains with:
+
+```bash
+pg_timetable --file chains.yaml --connstr "postgresql://user:pass@host/db"
+```
+
+See [`samples/yaml/`](samples/yaml/) for more examples and [`docs/yaml-format.md`](docs/yaml-format.md) for complete format specification.
 
 ## Installation
 

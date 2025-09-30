@@ -1,0 +1,16 @@
+# Basic YAML chain example
+# Equivalent to samples/Basic.sql
+
+chains:
+  - name: "notify every minute"
+    schedule: "* * * * *"  # Every minute
+    live: true
+    max_instances: 1
+    self_destruct: false
+    
+    tasks:
+      - name: "Send notification"
+        kind: "SQL"
+        command: "SELECT pg_notify($1, $2)"
+        parameters: ["TT_CHANNEL", "Ahoj from YAML base task"]
+        ignore_error: true

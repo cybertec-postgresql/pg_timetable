@@ -1,0 +1,51 @@
+chains:
+  - name: "parameter-examples"
+    schedule: "0 0 * * *"
+    live: true
+    
+    tasks:
+      # SQL task with parameters
+      - name: "sql-example"
+        kind: "SQL"
+        command: "SELECT $1, $2, $3, $4"
+        parameters:
+          - ["one", 2, 3.14, false]       # First execution with these parameters
+          - ["two", 4, 6.28, true]        # Second execution with these parameters
+      
+      # PROGRAM task with parameters
+      - name: "program-example"
+        kind: "PROGRAM"
+        command: "iconv"
+        parameters:
+          - ["-x", "Latin-ASCII", "-o", "file1.txt", "input1.txt"]  # First execution
+          - ["-x", "UTF-8", "-o", "file2.txt", "input2.txt"]        # Second execution
+      
+      # BUILTIN: Sleep task
+      - name: "sleep-example"
+        kind: "BUILTIN"
+        command: "Sleep"
+        parameters:
+          - 5     # Sleep for 5 seconds
+      
+      # BUILTIN: Log task
+      - name: "log-example"
+        kind: "BUILTIN"
+        command: "Log"
+        parameters:
+          - "WARNING: This is a test message"              # Simple string message
+          - {"Status": "WARNING", "Details": "Test object"} # Object message
+      
+      # BUILTIN: SendMail task
+      - name: "email-example"
+        kind: "BUILTIN"
+        command: "SendMail"
+        parameters:
+          - username: "user@example.com"
+            password: "password"
+            serverhost: "smtp.example.com"
+            serverport: 587
+            senderaddr: "user@example.com"
+            toaddr: ["recipient@example.com"]
+            subject: "pg_timetable - Test Email"
+            msgbody: "<h2>Hello User,</h2><p>This is a test email.</p>"
+            contenttype: "text/html; charset=UTF-8"

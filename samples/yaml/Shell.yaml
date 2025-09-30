@@ -1,0 +1,24 @@
+# Shell/Program task example
+# Equivalent to samples/Shell.sql
+
+chains:
+  - name: "psql chain" 
+    schedule: "* * * * *"  # Every minute
+    live: true
+    
+    tasks:
+      - name: "Run psql command"
+        kind: "PROGRAM"
+        command: "psql"
+        parameters:
+          - "-h"
+          - "localhost"  # Will be replaced with actual host at runtime
+          - "-p" 
+          - "5432"       # Will be replaced with actual port at runtime
+          - "-d"
+          - "postgres"   # Will be replaced with actual database at runtime
+          - "-U"
+          - "postgres"   # Will be replaced with actual user at runtime
+          - "-w"
+          - "-c"
+          - "SELECT now();"

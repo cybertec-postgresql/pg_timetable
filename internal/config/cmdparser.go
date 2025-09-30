@@ -21,10 +21,12 @@ type LoggingOpts struct {
 
 // StartOpts specifies the application startup options
 type StartOpts struct {
-	File    string `short:"f" long:"file" description:"SQL script file to execute during startup"`
-	Init    bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
-	Upgrade bool   `long:"upgrade" description:"Upgrade database to the latest version"`
-	Debug   bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
+	File     string `short:"f" long:"file" description:"SQL script or YAML chain definition file to execute during startup"`
+	Replace  bool   `long:"replace" description:"Replace existing chains when loading YAML files"`
+	Validate bool   `long:"validate" description:"Only validate YAML file without importing chains"`
+	Init     bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
+	Upgrade  bool   `long:"upgrade" description:"Upgrade database to the latest version"`
+	Debug    bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
 }
 
 // ResourceOpts specifies the maximum resources available to application

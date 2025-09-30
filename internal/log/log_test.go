@@ -35,6 +35,6 @@ func TestPgxLog(*testing.T) {
 	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: "trace"}))
 	var level tracelog.LogLevel
 	for level = tracelog.LogLevelNone; level <= tracelog.LogLevelTrace; level++ {
-		pgxl.Log(context.Background(), level, "foo", map[string]interface{}{"func": "TestPgxLog"})
+		pgxl.Log(context.Background(), level, "foo", map[string]any{"func": "TestPgxLog"})
 	}
 }

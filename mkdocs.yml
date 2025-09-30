@@ -66,8 +66,10 @@ nav:
     - Basic Jobs: basic_jobs.md
     - Migration: migration.md
     - Samples: samples.md
+    - YAML Chains: yaml-usage-guide.md
   - Reference:
     - API: api.md
+    - YAML Schema: yaml-format.md
   - Developer:
     - License: license.md
     - Documentation: ../devel/godoc/index.html

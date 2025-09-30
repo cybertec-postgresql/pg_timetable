@@ -140,12 +140,12 @@ func (hook *LogHook) send(cache []logrus.Entry) {
 		pgx.Identifier{"timetable", "log"},
 		[]string{"ts", "client_name", "pid", "log_level", "message", "message_data"},
 		pgx.CopyFromSlice(len(cache),
-			func(i int) ([]interface{}, error) {
+			func(i int) ([]any, error) {
 				jsonData, err := json.Marshal(cache[i].Data)
 				if err != nil {
 					return nil, err
 				}
-				return []interface{}{cache[i].Time,
+				return []any{cache[i].Time,
 					hook.client,
 					hook.pid,
 					adaptEntryLevel(cache[i].Level),

@@ -40,7 +40,7 @@ func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retC
 	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
 chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error) 
 VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10, $11)`,
-		task.ChainID, task.TaskID, task.Script, task.Kind,
+		task.ChainID, task.TaskID, task.Command, task.Kind,
 		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
 		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Vxid,
 		task.IgnoreError)
@@ -75,7 +75,7 @@ func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int) {
 
 // Select live chains with proper client_name value
 const sqlSelectLiveChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
-COALESCE(max_instances, 16) as max_instances, COALESCE(timeout, 0) as timeout, on_error
+COALESCE(max_instances, 16) as max_instances, COALESCE(timeout, 0) as timeout, COALESCE(on_error, '') as on_error
 FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`
 
 // SelectRebootChains returns a list of chains should be executed after reboot
@@ -103,7 +103,7 @@ func (pge *PgEngine) SelectChains(ctx context.Context, dest *[]Chain) error {
 // SelectIntervalChains returns list of interval chains to be executed
 func (pge *PgEngine) SelectIntervalChains(ctx context.Context, dest *[]IntervalChain) error {
 	const sqlSelectIntervalChains = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
-COALESCE(max_instances, 16), COALESCE(timeout, 0), on_error,
+COALESCE(max_instances, 16), COALESCE(timeout, 0), COALESCE(on_error, '') as on_error,
 EXTRACT(EPOCH FROM (substr(run_at, 7) :: interval)) :: int4 as interval_seconds,
 starts_with(run_at, '@after') as repeat_after
 FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL) AND substr(run_at, 1, 6) IN ('@every', '@after')`
@@ -119,7 +119,7 @@ FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL) AN
 func (pge *PgEngine) SelectChain(ctx context.Context, dest *Chain, chainID int) error {
 	// we accept not only live chains here because we want to run them in debug mode
 	const sqlSelectSingleChain = `SELECT chain_id, chain_name, self_destruct, exclusive_execution, 
-COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances, on_error
+COALESCE(timeout, 0) as timeout, COALESCE(max_instances, 16) as max_instances, COALESCE(on_error, '') as on_error
 FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_id = $2`
 	rows, err := pge.ConfigDb.Query(ctx, sqlSelectSingleChain, pge.ClientName, chainID)
 	if err != nil {

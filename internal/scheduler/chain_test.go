@@ -12,7 +12,6 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -118,7 +117,7 @@ func TestExecuteChainElement(t *testing.T) {
 }
 
 func TestExecuteOnErrorHandler(t *testing.T) {
-	c := Chain{ChainID: 42, OnErrorSQL: pgtype.Text{String: "FOO", Valid: true}}
+	c := Chain{ChainID: 42, OnError: "FOO"}
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")

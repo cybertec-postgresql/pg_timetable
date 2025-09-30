@@ -4,15 +4,26 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 )
+
+func anyArgs(i int) []any {
+	args := make([]any, i)
+	for j := range i {
+		args[j] = pgxmock.AnyArg()
+	}
+	return args
+}
 
 func TestExecuteSchemaScripts(t *testing.T) {
 	initmockdb(t)
@@ -78,10 +89,10 @@ func TestFinalizeConnection(t *testing.T) {
 }
 
 type mockpgrow struct {
-	results []interface{}
+	results []any
 }
 
-func (r *mockpgrow) Scan(dest ...interface{}) error {
+func (r *mockpgrow) Scan(dest ...any) error {
 	if len(r.results) > 0 {
 		if err, ok := r.results[0].(error); ok {
 			r.results = r.results[1:]
@@ -103,7 +114,7 @@ type mockpgconn struct {
 	r pgx.Row
 }
 
-func (m mockpgconn) QueryRow(context.Context, string, ...interface{}) pgx.Row {
+func (m mockpgconn) QueryRow(context.Context, string, ...any) pgx.Row {
 	return m.r
 }
 
@@ -117,7 +128,7 @@ func TestTryLockClientName(t *testing.T) {
 	})
 
 	t.Run("no schema yet", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
+		r := &mockpgrow{results: []any{
 			0, //procoid
 		}}
 		m := mockpgconn{r}
@@ -125,7 +136,7 @@ func TestTryLockClientName(t *testing.T) {
 	})
 
 	t.Run("locking error", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
+		r := &mockpgrow{results: []any{
 			1,                           //procoid
 			errors.New("locking error"), //error
 		}}
@@ -134,11 +145,218 @@ func TestTryLockClientName(t *testing.T) {
 	})
 
 	t.Run("locking successful", func(t *testing.T) {
-		r := &mockpgrow{results: []interface{}{
+		r := &mockpgrow{results: []any{
 			1,    //procoid
 			true, //locked
 		}}
 		m := mockpgconn{r}
 		assert.NoError(t, pge.TryLockClientName(context.Background(), m))
 	})
+}
+
+func TestExecuteFileScript(t *testing.T) {
+	initmockdb(t)
+	defer mockPool.Close()
+	mockpge := pgengine.NewDB(mockPool, "pgengine_unit_test")
+
+	// Create temporary directory for test files
+	tmpDir := t.TempDir()
+
+	t.Run("SQL file execution", func(t *testing.T) {
+		// Create temporary SQL file
+		sqlFile := filepath.Join(tmpDir, "test.sql")
+		err := os.WriteFile(sqlFile, []byte("SELECT 1;"), 0644)
+		assert.NoError(t, err)
+
+		// Mock the SQL execution
+		mockPool.ExpectExec("SELECT 1;").WillReturnResult(pgxmock.NewResult("SELECT", 1))
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = sqlFile
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.NoError(t, err)
+	})
+
+	t.Run("SQL file execution error", func(t *testing.T) {
+		// Create temporary SQL file
+		sqlFile := filepath.Join(tmpDir, "test_error.sql")
+		err := os.WriteFile(sqlFile, []byte("SELECT 1;"), 0644)
+		assert.NoError(t, err)
+
+		// Mock the SQL execution with error
+		mockPool.ExpectExec("SELECT 1;").WillReturnError(errors.New("SQL execution failed"))
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = sqlFile
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.Error(t, err)
+	})
+
+	t.Run("YAML file validation mode - valid file", func(t *testing.T) {
+		// Create temporary YAML file
+		yamlFile := filepath.Join(tmpDir, "test.yaml")
+		yamlContent := `chains:
+  - name: test_chain
+    tasks:
+      - name: test_task
+        command: SELECT 1`
+		err := os.WriteFile(yamlFile, []byte(yamlContent), 0644)
+		assert.NoError(t, err)
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.Validate = true
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.NoError(t, err)
+	})
+
+	t.Run("YAML file validation mode - invalid file", func(t *testing.T) {
+		// Create temporary YAML file with invalid content
+		yamlFile := filepath.Join(tmpDir, "invalid.yaml")
+		yamlContent := `chains:
+  - name: test_chain
+    invalid_field: value
+    - malformed yaml`
+		err := os.WriteFile(yamlFile, []byte(yamlContent), 0644)
+		assert.NoError(t, err)
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.Validate = true
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		// Expect error due to invalid YAML structure
+		assert.Error(t, err)
+	})
+
+	t.Run("YAML file import mode", func(t *testing.T) {
+		// Create temporary YAML file
+		yamlFile := filepath.Join(tmpDir, "test_import.yaml")
+		yamlContent := `chains:
+  - name: test_chain
+    tasks:
+      - name: test_task
+        command: SELECT 1`
+		err := os.WriteFile(yamlFile, []byte(yamlContent), 0644)
+		assert.NoError(t, err)
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.Validate = false
+		cmdOpts.Start.Replace = false
+
+		mockPool.ExpectQuery("SELECT EXISTS").
+			WithArgs("test_chain").
+			WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(false))
+		mockPool.ExpectQuery("INSERT INTO timetable\\.chain").
+			WithArgs(anyArgs(9)...).
+			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
+		mockPool.ExpectQuery("INSERT INTO timetable\\.task").
+			WithArgs(anyArgs(10)...).
+			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.NoError(t, err)
+	})
+
+	t.Run("YML file extension", func(t *testing.T) {
+		// Create temporary YML file
+		ymlFile := filepath.Join(tmpDir, "test.yml")
+		yamlContent := `chains:
+  - name: test_chain
+    tasks:
+      - name: test_task
+        command: SELECT 1`
+		err := os.WriteFile(ymlFile, []byte(yamlContent), 0644)
+		assert.NoError(t, err)
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = ymlFile
+		cmdOpts.Start.Validate = true
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.NoError(t, err)
+	})
+
+	t.Run("File without extension", func(t *testing.T) {
+		// Create file without extension with YAML content
+		noExtFile := filepath.Join(tmpDir, "test_no_ext")
+		yamlContent := `chains:
+  - name: test_chain
+    tasks:
+      - name: test_task
+        command: SELECT 1`
+		err := os.WriteFile(noExtFile, []byte(yamlContent), 0644)
+		assert.NoError(t, err)
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = noExtFile
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.Error(t, err)
+	})
+
+	t.Run("File not found error", func(t *testing.T) {
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = "/nonexistent/file.sql"
+
+		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.Error(t, err)
+	})
+
+	t.Run("YAML import with replace flag", func(t *testing.T) {
+		// Create temporary YAML file
+		yamlFile := filepath.Join(tmpDir, "test_replace.yaml")
+		yamlContent := `chains:
+  - name: test_chain_replace
+    tasks:
+      - name: test_task
+        command: SELECT 1`
+		err := os.WriteFile(yamlFile, []byte(yamlContent), 0644)
+		assert.NoError(t, err)
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.Validate = false
+		cmdOpts.Start.Replace = true
+
+		mockPool.ExpectExec("SELECT timetable\\.delete_job").
+			WithArgs("test_chain_replace").
+			WillReturnResult(pgxmock.NewResult("DELETE", 1))
+		mockPool.ExpectQuery("SELECT EXISTS").
+			WithArgs("test_chain_replace").
+			WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(false))
+		mockPool.ExpectQuery("INSERT INTO timetable\\.chain").
+			WithArgs(anyArgs(9)...).
+			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
+		mockPool.ExpectQuery("INSERT INTO timetable\\.task").
+			WithArgs(anyArgs(10)...).
+			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.NoError(t, err)
+	})
+
+	t.Run("SQL file with multiple statements", func(t *testing.T) {
+		// Create temporary SQL file with multiple statements
+		sqlFile := filepath.Join(tmpDir, "multi.sql")
+		sqlContent := `SELECT 1;
+SELECT 2;
+INSERT INTO test VALUES (1);`
+		err := os.WriteFile(sqlFile, []byte(sqlContent), 0644)
+		assert.NoError(t, err)
+
+		// Mock the SQL execution - use regex pattern to match the content
+		mockPool.ExpectExec(`SELECT 1;.*SELECT 2;.*INSERT INTO test VALUES \(1\);`).WillReturnResult(pgxmock.NewResult("SELECT", 1))
+
+		cmdOpts := config.CmdOptions{}
+		cmdOpts.Start.File = sqlFile
+
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		assert.NoError(t, err)
+	})
+
 }

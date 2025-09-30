@@ -13,12 +13,15 @@ The scheduling in **pg_timetable** encompasses three different abstraction level
 Currently, there are three different kinds of commands:
 
 ### `SQL`
+
 SQL snippet. Starting a cleanup, refreshing a materialized view or processing data.
 
 ### `PROGRAM`
+
 External Command. Anything that can be called as an external binary, including shells, e.g. `bash`, `pwsh`, etc. The external command will be called using golang's [exec.CommandContext](https://pkg.go.dev/os/exec#CommandContext).
 
 ### `BUILTIN`
+
 Internal Command. A prebuilt functionality included in **pg_timetable**. These include:
 
 * *NoOp*
@@ -78,42 +81,52 @@ In most cases, they have to be brought to live by passing input parameters to th
 Depending on the **command** kind argument can be represented by different *JSON* values.
 
 #### `SQL`
+
 Schema: `array`
 
 Example:
+
 ```sql
 '[ "one", 2, 3.14, false ]'::jsonb
 ```
 
 #### `PROGRAM`
+
 Schema: `array of strings`
 
 Example:
+
 ```sql
 '["-x", "Latin-ASCII", "-o", "orte_ansi.txt", "orte.txt"]'::jsonb
 ```
 
 #### `BUILTIN: Sleep`
+
 Schema: `integer`
 
 Example:
+
 ```sql
 '5' :: jsonb
 ```
 
 #### `BUILTIN: Log`
+
 Schema: `any`
 
 Examples:
+
 ```sql
 '"WARNING"'::jsonb
 '{"Status": "WARNING"}'::jsonb
 ```
 
 #### `BUILTIN: SendMail`
+
 Schema: `object`
 
 Example:
+
 ```sql
 '{
     "username":     "user@example.com",
@@ -133,9 +146,11 @@ Example:
 ```
 
 #### `BUILTIN: Download`
+
 Schema: `object`
 
 Example:
+
 ```sql
 '{
     "workersnum": 2, 
@@ -145,9 +160,11 @@ Example:
 ```
 
 #### `BUILTIN: CopyFromFile`
+
 Schema: `object`
 
 Example:
+
 ```sql
 '{
     "sql": "COPY location FROM STDIN", 
@@ -156,9 +173,11 @@ Example:
 ```
 
 #### `BUILTIN: CopyToFile`
+
 Schema: `object`
 
 Example:
+
 ```sql
 '{
     "sql": "COPY location TO STDOUT", 
@@ -167,10 +186,12 @@ Example:
 ```
 
 #### `BUILTIN: Shutdown`
-*value ignored*
+
+value ignored
 
 #### `BUILTIN: NoOp`
-*value ignored*
+
+value ignored
 
 ## Chain
 

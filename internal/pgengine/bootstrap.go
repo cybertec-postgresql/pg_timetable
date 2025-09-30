@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -31,9 +32,9 @@ var backoff = retry.WithCappedDuration(maxWaitTime, retry.NewExponential(WaitTim
 // PgxIface is common interface for every pgx class
 type PgxIface interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
-	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
-	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
 	Ping(ctx context.Context) error
 	CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error)
 }
@@ -108,7 +109,7 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 	}
 	pge.AddLogHook(ctx) //schema exists, we can log now
 	if cmdOpts.Start.File != "" {
-		if err := pge.ExecuteCustomScripts(ctx, cmdOpts.Start.File); err != nil {
+		if err := pge.ExecuteFileScript(ctx, cmdOpts); err != nil {
 			return nil, err
 		}
 	}
@@ -193,7 +194,7 @@ func (pge *PgEngine) AddLogHook(ctx context.Context) {
 
 // QueryRowIface specifies interface to use QueryRow method
 type QueryRowIface interface {
-	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
 // TryLockClientName obtains lock on the server to prevent another client with the same name
@@ -215,6 +216,39 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 		return errors.New("cannot obtain lock for a session")
 	}
 	return nil
+}
+
+// ExecuteFileScript handles both SQL and YAML files based on file extension
+func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions) error {
+	filePath := cmdOpts.Start.File
+
+	// Determine file type by extension
+	fileExt := strings.ToLower(filepath.Ext(filePath))
+
+	switch fileExt {
+	case ".yaml", ".yml":
+		// Handle YAML chain definition files
+		if cmdOpts.Start.Validate {
+			// Only validate, don't import
+			_, err := ParseYamlFile(filePath)
+			if err != nil {
+				pge.l.WithError(err).Error("YAML validation failed")
+				return err
+			}
+			pge.l.WithField("file", filePath).Info("YAML file validation successful")
+			return nil
+		}
+
+		// Import YAML chains
+		return pge.LoadYamlChains(ctx, filePath, cmdOpts.Start.Replace)
+
+	case ".sql":
+		// Handle SQL script files (existing behavior)
+		return pge.ExecuteCustomScripts(ctx, filePath)
+
+	default:
+		return errors.New("unsupported file extension: " + fileExt)
+	}
 }
 
 // ExecuteCustomScripts executes SQL scripts in files

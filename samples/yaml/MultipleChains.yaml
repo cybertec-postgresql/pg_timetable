@@ -1,0 +1,75 @@
+# Multiple chains in a single file example
+
+chains:
+  # Daily monitoring chain
+  - name: "Daily Health Check"
+    schedule: "0 8 * * *"  # Daily at 8 AM
+    live: true
+    max_instances: 1
+    
+    tasks:
+      - name: "Check database connections"
+        kind: "SQL"
+        command: |
+          SELECT 
+            'Database connection check: ' || 
+            CASE WHEN COUNT(*) > 0 THEN 'OK' ELSE 'FAIL' END as status
+          FROM pg_stat_activity 
+          WHERE state = 'active'
+          
+      - name: "Check disk space"
+        kind: "PROGRAM" 
+        command: "df"
+        parameters: ["-h", "/var/lib/postgresql"]
+        ignore_error: true
+        
+      - name: "Log health check"
+        kind: "SQL"
+        command: |
+          INSERT INTO health_check_log (check_date, status)
+          VALUES (CURRENT_DATE, 'completed')
+
+  # Hourly cleanup chain  
+  - name: "Hourly Cleanup"
+    schedule: "0 * * * *"  # Every hour
+    live: true
+    max_instances: 1
+    timeout: 300000  # 5 minutes
+    
+    tasks:
+      - name: "Clean temporary tables"
+        kind: "SQL"
+        command: |
+          DROP TABLE IF EXISTS temp_sales_extract;
+          DROP TABLE IF EXISTS temp_sales_transformed;
+        ignore_error: true
+        
+      - name: "Vacuum analyze stats tables"
+        kind: "SQL" 
+        command: "VACUUM ANALYZE pg_stat_user_tables"
+        autonomous: true
+        ignore_error: true
+
+  # Weekly report chain
+  - name: "Weekly Sales Report"
+    schedule: "0 9 * * 1"  # Monday at 9 AM
+    live: true
+    max_instances: 1
+    timeout: 1800000  # 30 minutes
+    
+    tasks:
+      - name: "Generate weekly sales summary"
+        kind: "SQL"
+        command: |
+          INSERT INTO weekly_reports (report_date, total_sales, total_orders)
+          SELECT 
+            DATE_TRUNC('week', CURRENT_DATE),
+            SUM(amount),
+            COUNT(*)
+          FROM sales_warehouse 
+          WHERE created_date >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '1 week'
+            AND created_date < DATE_TRUNC('week', CURRENT_DATE)
+            
+      - name: "Send report notification"
+        kind: "SQL"
+        command: "SELECT pg_notify('reports', 'Weekly sales report generated')"

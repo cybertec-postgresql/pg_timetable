@@ -8,7 +8,6 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -94,7 +93,7 @@ func TestExecuteSQLTask(t *testing.T) {
 	})
 
 	t.Run("Check remote SQL task", func(t *testing.T) {
-		task := pgengine.ChainTask{ConnectString: pgtype.Text{String: "foo", Valid: true}}
+		task := pgengine.ChainTask{ConnectString: "foo"}
 		_, err := pge.ExecuteSQLTask(ctx, nil, &task, []string{})
 		assert.ErrorContains(t, err, "cannot parse")
 	})
@@ -123,8 +122,8 @@ func TestExecLocalSQLTask(t *testing.T) {
 	task := pgengine.ChainTask{
 		TaskID:      42,
 		IgnoreError: true,
-		Script:      "FOO",
-		RunAs:       pgtype.Text{String: "Bob", Valid: true},
+		Command:     "FOO",
+		RunAs:       "Bob",
 	}
 	_, err := pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
 	assert.Error(t, err)
@@ -148,8 +147,8 @@ func TestExecStandaloneTask(t *testing.T) {
 	task := pgengine.ChainTask{
 		TaskID:      42,
 		IgnoreError: true,
-		Script:      "FOO",
-		RunAs:       pgtype.Text{String: "Bob", Valid: true},
+		Command:     "FOO",
+		RunAs:       "Bob",
 	}
 	cf := func() (pgengine.PgxConnIface, error) { return mockPool.AsConn(), nil }
 
@@ -227,8 +226,8 @@ func TestSetRole(t *testing.T) {
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("error"))
 	tx, err := mockPool.Begin(ctx)
 	assert.NoError(t, err)
-	assert.Error(t, pge.SetRole(ctx, tx, pgtype.Text{String: "foo", Valid: true}))
-	assert.NoError(t, pge.SetRole(ctx, tx, pgtype.Text{String: "", Valid: false}), "Should ignore empty run_as")
+	assert.Error(t, pge.SetRole(ctx, tx, "foo"))
+	assert.NoError(t, pge.SetRole(ctx, tx, ""), "Should ignore empty run_as")
 
 	mockPool.ExpectBegin()
 	mockPool.ExpectExec("RESET ROLE").WillReturnError(errors.New("error"))
