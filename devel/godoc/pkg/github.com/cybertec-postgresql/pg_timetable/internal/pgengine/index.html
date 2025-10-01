@@ -530,6 +530,12 @@ FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`</
                 return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00629.sql&#34;)
             },
         },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00721 Add more job control functions&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00721.sql&#34;)
+            },
+        },
     )
 }</pre>
 			
@@ -1564,7 +1570,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L156">initMigrator</a>
+				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L162">initMigrator</a>
 					<a class="permalink" href="#PgEngine.initMigrator">&#xb6;</a>
 					
 					
