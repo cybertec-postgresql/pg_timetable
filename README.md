@@ -86,10 +86,10 @@ chains:
 Load YAML chains with:
 
 ```bash
-pg_timetable --file chains.yaml --connstr "postgresql://user:pass@host/db"
+pg_timetable --file chains.yaml postgresql://user:pass@host/db
 ```
 
-See [`samples/yaml/`](samples/yaml/) for more examples and [`docs/yaml-format.md`](docs/yaml-format.md) for complete format specification.
+See [`samples/yaml/`](samples/yaml/) for more examples and [YAML Schema](https://cybertec-postgresql.github.io/pg_timetable/latest/yaml-format/) for complete format specification.
 
 ## Installation
 
