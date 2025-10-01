@@ -125,6 +125,14 @@ $$ LANGUAGE SQL;
 
 COMMENT ON FUNCTION timetable.move_task_down IS 'Switch the order of the task execution with a following task within the chain';
 
+-- delete_task() will delete the task from a chain
+CREATE OR REPLACE FUNCTION timetable.delete_task(IN task_id BIGINT) RETURNS boolean AS $$
+    WITH del_task AS (DELETE FROM timetable.task WHERE task_id = $1 RETURNING task_id)
+    SELECT EXISTS(SELECT 1 FROM del_task)
+$$ LANGUAGE SQL;
+
+COMMENT ON FUNCTION timetable.delete_task IS 'Delete the task from a chain';
+
 -- delete_job() will delete the chain and its tasks from the system
 CREATE OR REPLACE FUNCTION timetable.delete_job(IN job_name TEXT) RETURNS boolean AS $$
     WITH del_chain AS (DELETE FROM timetable.chain WHERE chain.chain_name = $1 RETURNING chain_id)
@@ -133,10 +141,18 @@ $$ LANGUAGE SQL;
 
 COMMENT ON FUNCTION timetable.delete_job IS 'Delete the chain and its tasks from the system';
 
--- delete_task() will delete the task from a chain
-CREATE OR REPLACE FUNCTION timetable.delete_task(IN task_id BIGINT) RETURNS boolean AS $$
-    WITH del_task AS (DELETE FROM timetable.task WHERE task_id = $1 RETURNING task_id)
-    SELECT EXISTS(SELECT 1 FROM del_task)
+-- pause_job() will pause the chain (set live = false)
+CREATE OR REPLACE FUNCTION timetable.pause_job(IN job_name TEXT) RETURNS boolean AS $$
+    WITH upd_chain AS (UPDATE timetable.chain SET live = false WHERE chain.chain_name = $1 RETURNING chain_id)
+    SELECT EXISTS(SELECT 1 FROM upd_chain)
 $$ LANGUAGE SQL;
 
-COMMENT ON FUNCTION timetable.delete_task IS 'Delete the task from a chain';
+COMMENT ON FUNCTION timetable.pause_job IS 'Pause the chain (set live = false)';
+
+-- resume_job() will resume the chain (set live = true)
+CREATE OR REPLACE FUNCTION timetable.resume_job(IN job_name TEXT) RETURNS boolean AS $$
+    WITH upd_chain AS (UPDATE timetable.chain SET live = true WHERE chain.chain_name = $1 RETURNING chain_id)
+    SELECT EXISTS(SELECT 1 FROM upd_chain)
+$$ LANGUAGE SQL;
+
+COMMENT ON FUNCTION timetable.resume_job IS 'Resume the chain (set live = true)';
