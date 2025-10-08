@@ -2,50 +2,50 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/api/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/background/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/basic_jobs/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/components/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/database_schema/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/installation/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/license/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/migration/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/samples/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/yaml-format/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/yaml-usage-guide/</loc>
-         <lastmod>2025-10-01</lastmod>
+         <lastmod>2025-10-08</lastmod>
     </url>
 </urlset>
