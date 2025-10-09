@@ -726,6 +726,24 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#builtin-copytoprogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      BUILTIN: CopyToProgram
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#builtin-copyfromprogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      BUILTIN: CopyFromProgram
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#builtin-shutdown" class="md-nav__link">
     <span class="md-ellipsis">
       BUILTIN: Shutdown
@@ -1358,6 +1376,24 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#builtin-copytoprogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      BUILTIN: CopyToProgram
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#builtin-copyfromprogram" class="md-nav__link">
+    <span class="md-ellipsis">
+      BUILTIN: CopyFromProgram
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#builtin-shutdown" class="md-nav__link">
     <span class="md-ellipsis">
       BUILTIN: Shutdown
@@ -1449,6 +1485,8 @@
 <li><em>Download</em></li>
 <li><em>CopyFromFile</em></li>
 <li><em>CopyToFile</em></li>
+<li><em>CopyFromProgram</em></li>
+<li><em>CopyToProgram</em></li>
 <li><em>Shutdown</em></li>
 </ul>
 <h2 id="task">Task</h2>
@@ -1621,6 +1659,24 @@ In most cases, they have to be brought to live by passing input parameters to th
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/location.txt&quot; </span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
+<h4 id="builtin-copytoprogram"><code>BUILTIN: CopyToProgram</code></h4>
+<p>Schema: <code>object</code></p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;,</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="s1">    &quot;cmd&quot;: &quot;gzip&quot;,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">    &quot;args&quot;: [&quot;-c&quot;, &quot;&gt;&quot;, &quot;/tmp/output.gz&quot;]</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</code></pre></div>
+<h4 id="builtin-copyfromprogram"><code>BUILTIN: CopyFromProgram</code></h4>
+<p>Schema: <code>object</code></p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="s1">    &quot;cmd&quot;: &quot;gunzip&quot;,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="s1">    &quot;args&quot;: [&quot;-c&quot;, &quot;/tmp/data.gz&quot;]</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+</code></pre></div>
 <h4 id="builtin-shutdown"><code>BUILTIN: Shutdown</code></h4>
 <p>value ignored</p>
 <h4 id="builtin-noop"><code>BUILTIN: NoOp</code></h4>
@@ -1694,10 +1750,10 @@ In most cases, they have to be brought to live by passing input parameters to th
 <p>All chains in <strong>pg_timetable</strong> are scheduled at the PostgreSQL server time zone.
 You can change the <a href="https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-TIMEZONES">timezone</a> 
 for the <strong>current session</strong> when adding new chains, e.g.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">SET</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="s1">&#39;UTC&#39;</span><span class="p">;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1">-- Run VACUUM at 00:05 every day in August UTC</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">SET</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="s1">&#39;UTC&#39;</span><span class="p">;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1">-- Run VACUUM at 00:05 every day in August UTC</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
 </code></pre></div>
 </div>
 
