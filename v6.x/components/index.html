@@ -1627,8 +1627,8 @@ In most cases, they have to be brought to live by passing input parameters to th
 <p>Example:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="s1">&#39;{</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;,</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="s1">    &quot;cmd&quot;: &quot;gzip&quot;,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">    &quot;args&quot;: [&quot;-c&quot;, &quot;&gt;&quot;, &quot;/tmp/output.gz&quot;]</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="s1">    &quot;cmd&quot;: &quot;sh&quot;,</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">    &quot;args&quot;: [&quot;gzip&quot;, &quot;-c&quot;, &quot;&gt;&quot;, &quot;/tmp/output.gz&quot;]</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-copyfromprogram"><code>BUILTIN: CopyFromProgram</code></h4>
