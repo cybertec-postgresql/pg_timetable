@@ -31,6 +31,8 @@ Internal Command. A prebuilt functionality included in **pg_timetable**. These i
 * *Download*
 * *CopyFromFile*
 * *CopyToFile*
+* *CopyFromProgram*
+* *CopyToProgram*
 * *Shutdown*
 
 ## Task
@@ -182,6 +184,34 @@ Example:
 '{
     "sql": "COPY location TO STDOUT", 
     "filename": "download/location.txt" 
+}'::jsonb
+```
+
+#### `BUILTIN: CopyToProgram`
+
+Schema: `object`
+
+Example:
+
+```sql
+'{
+    "sql": "COPY location TO STDOUT",
+    "cmd": "sh",
+    "args": ["gzip", "-c", ">", "/tmp/output.gz"]
+}'::jsonb
+```
+
+#### `BUILTIN: CopyFromProgram`
+
+Schema: `object`
+
+Example:
+
+```sql
+'{
+    "sql": "COPY location FROM STDIN",
+    "cmd": "gunzip",
+    "args": ["-c", "/tmp/data.gz"]
 }'::jsonb
 ```
 
