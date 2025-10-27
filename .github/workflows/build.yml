@@ -50,7 +50,7 @@ jobs:
       run: go test -failfast -v -timeout=300s -coverprofile=profile.cov ./...
 
     - name: Upload coverage profile
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: coverage-profile-${{ github.run_id }}
         path: profile.cov
@@ -70,7 +70,7 @@ jobs:
     steps:
 
     - name: Download coverage profile
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: coverage-profile-${{ github.run_id }}
 
