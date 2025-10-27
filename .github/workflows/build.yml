@@ -70,7 +70,7 @@ jobs:
     steps:
 
     - name: Download coverage profile
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: coverage-profile-${{ github.run_id }}
 
