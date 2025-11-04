@@ -131,7 +131,15 @@ FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_i
 
 // GetChainElements returns all elements for a given chain
 func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
-	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
+	const sqlSelectChainTasks = `SELECT 
+	task_id,
+	command,
+	kind,
+	COALESCE(run_as, '') as run_as,
+	ignore_error,
+	autonomous,
+	COALESCE(database_connection, '') as database_connection,
+	timeout
 FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
 	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
 	if err != nil {
