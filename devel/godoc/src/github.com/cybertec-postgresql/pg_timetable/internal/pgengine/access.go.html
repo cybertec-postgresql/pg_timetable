@@ -188,27 +188,35 @@
 <span id="L131" class="ln">   131  </span>
 <span id="L132" class="ln">   132  </span><span class="comment">// GetChainElements returns all elements for a given chain</span>
 <span id="L133" class="ln">   133  </span>func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
-<span id="L134" class="ln">   134  </span>	const sqlSelectChainTasks = `SELECT task_id, command, kind, run_as, ignore_error, autonomous, database_connection, timeout
-<span id="L135" class="ln">   135  </span>FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
-<span id="L136" class="ln">   136  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
-<span id="L137" class="ln">   137  </span>	if err != nil {
-<span id="L138" class="ln">   138  </span>		return err
-<span id="L139" class="ln">   139  </span>	}
-<span id="L140" class="ln">   140  </span>	*chainTasks, err = pgx.CollectRows(rows, pgx.RowToStructByName[ChainTask])
-<span id="L141" class="ln">   141  </span>	return err
-<span id="L142" class="ln">   142  </span>}
-<span id="L143" class="ln">   143  </span>
-<span id="L144" class="ln">   144  </span><span class="comment">// GetChainParamValues returns parameter values to pass for task being executed</span>
-<span id="L145" class="ln">   145  </span>func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error {
-<span id="L146" class="ln">   146  </span>	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
-<span id="L147" class="ln">   147  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
-<span id="L148" class="ln">   148  </span>	if err != nil {
-<span id="L149" class="ln">   149  </span>		return err
-<span id="L150" class="ln">   150  </span>	}
-<span id="L151" class="ln">   151  </span>	*paramValues, err = pgx.CollectRows(rows, pgx.RowTo[string])
-<span id="L152" class="ln">   152  </span>	return err
-<span id="L153" class="ln">   153  </span>}
-<span id="L154" class="ln">   154  </span>
+<span id="L134" class="ln">   134  </span>	const sqlSelectChainTasks = `SELECT 
+<span id="L135" class="ln">   135  </span>	task_id,
+<span id="L136" class="ln">   136  </span>	command,
+<span id="L137" class="ln">   137  </span>	kind,
+<span id="L138" class="ln">   138  </span>	COALESCE(run_as, &#39;&#39;) as run_as,
+<span id="L139" class="ln">   139  </span>	ignore_error,
+<span id="L140" class="ln">   140  </span>	autonomous,
+<span id="L141" class="ln">   141  </span>	COALESCE(database_connection, &#39;&#39;) as database_connection,
+<span id="L142" class="ln">   142  </span>	timeout
+<span id="L143" class="ln">   143  </span>FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
+<span id="L144" class="ln">   144  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
+<span id="L145" class="ln">   145  </span>	if err != nil {
+<span id="L146" class="ln">   146  </span>		return err
+<span id="L147" class="ln">   147  </span>	}
+<span id="L148" class="ln">   148  </span>	*chainTasks, err = pgx.CollectRows(rows, pgx.RowToStructByName[ChainTask])
+<span id="L149" class="ln">   149  </span>	return err
+<span id="L150" class="ln">   150  </span>}
+<span id="L151" class="ln">   151  </span>
+<span id="L152" class="ln">   152  </span><span class="comment">// GetChainParamValues returns parameter values to pass for task being executed</span>
+<span id="L153" class="ln">   153  </span>func (pge *PgEngine) GetChainParamValues(ctx context.Context, paramValues *[]string, task *ChainTask) error {
+<span id="L154" class="ln">   154  </span>	const sqlGetParamValues = `SELECT value FROM timetable.parameter WHERE task_id = $1 AND value IS NOT NULL ORDER BY order_id ASC`
+<span id="L155" class="ln">   155  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlGetParamValues, task.TaskID)
+<span id="L156" class="ln">   156  </span>	if err != nil {
+<span id="L157" class="ln">   157  </span>		return err
+<span id="L158" class="ln">   158  </span>	}
+<span id="L159" class="ln">   159  </span>	*paramValues, err = pgx.CollectRows(rows, pgx.RowTo[string])
+<span id="L160" class="ln">   160  </span>	return err
+<span id="L161" class="ln">   161  </span>}
+<span id="L162" class="ln">   162  </span>
 </pre><p></p>
 
 <div id="footer">
