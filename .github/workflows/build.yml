@@ -42,7 +42,7 @@ jobs:
         go version
 
     - name: GolangCI-Lint
-      uses: golangci/golangci-lint-action@v8
+      uses: golangci/golangci-lint-action@v9
       with:
         version: latest
         
