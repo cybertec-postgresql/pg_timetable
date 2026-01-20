@@ -75,7 +75,7 @@
 <span id="L18" class="ln">    18  </span>	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L19" class="ln">    19  </span>
 <span id="L20" class="ln">    20  </span>	et := func(task string, params []string) (err error) {
-<span id="L21" class="ln">    21  </span>		_, err = mocksch.executeBuiltinTask(context.TODO(), task, params)
+<span id="L21" class="ln">    21  </span>		err = mocksch.executeBuiltinTask(context.TODO(), &amp;pgengine.ChainTask{Command: task}, params)
 <span id="L22" class="ln">    22  </span>		return
 <span id="L23" class="ln">    23  </span>	}
 <span id="L24" class="ln">    24  </span>

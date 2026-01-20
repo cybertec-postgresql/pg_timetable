@@ -86,48 +86,44 @@
 <span id="L29" class="ln">    29  </span>func TestShellCommand(t *testing.T) {
 <span id="L30" class="ln">    30  </span>	scheduler.Cmd = testCommander{}
 <span id="L31" class="ln">    31  </span>	var err error
-<span id="L32" class="ln">    32  </span>	var out string
-<span id="L33" class="ln">    33  </span>	var retCode int
-<span id="L34" class="ln">    34  </span>
-<span id="L35" class="ln">    35  </span>	mock, err := pgxmock.NewPool() <span class="comment">//</span>
-<span id="L36" class="ln">    36  </span>	assert.NoError(t, err)
-<span id="L37" class="ln">    37  </span>	pge := pgengine.NewDB(mock, &#34;scheduler_unit_test&#34;)
-<span id="L38" class="ln">    38  </span>	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
-<span id="L39" class="ln">    39  </span>	ctx := context.Background()
-<span id="L40" class="ln">    40  </span>
-<span id="L41" class="ln">    41  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;&#34;, []string{&#34;&#34;})
-<span id="L42" class="ln">    42  </span>	assert.EqualError(t, err, &#34;program command cannot be empty&#34;, &#34;Empty command should out, fail&#34;)
-<span id="L43" class="ln">    43  </span>
-<span id="L44" class="ln">    44  </span>	_, out, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping0&#34;, nil)
-<span id="L45" class="ln">    45  </span>	assert.NoError(t, err, &#34;Command with nil param is out, OK&#34;)
-<span id="L46" class="ln">    46  </span>	assert.True(t, strings.HasPrefix(string(out), &#34;ping0&#34;), &#34;Output should containt only command &#34;)
+<span id="L32" class="ln">    32  </span>
+<span id="L33" class="ln">    33  </span>	mock, err := pgxmock.NewPool() <span class="comment">//</span>
+<span id="L34" class="ln">    34  </span>	assert.NoError(t, err)
+<span id="L35" class="ln">    35  </span>	pge := pgengine.NewDB(mock, &#34;scheduler_unit_test&#34;)
+<span id="L36" class="ln">    36  </span>	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
+<span id="L37" class="ln">    37  </span>	ctx := context.Background()
+<span id="L38" class="ln">    38  </span>
+<span id="L39" class="ln">    39  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{}, []string{&#34;&#34;})
+<span id="L40" class="ln">    40  </span>	assert.EqualError(t, err, &#34;program command cannot be empty&#34;, &#34;Empty command should out, fail&#34;)
+<span id="L41" class="ln">    41  </span>
+<span id="L42" class="ln">    42  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping0&#34;}, nil)
+<span id="L43" class="ln">    43  </span>	assert.NoError(t, err, &#34;Command with nil param is out, OK&#34;)
+<span id="L44" class="ln">    44  </span>
+<span id="L45" class="ln">    45  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping1&#34;}, []string{})
+<span id="L46" class="ln">    46  </span>	assert.NoError(t, err, &#34;Command with empty array param is OK&#34;)
 <span id="L47" class="ln">    47  </span>
-<span id="L48" class="ln">    48  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping1&#34;, []string{})
-<span id="L49" class="ln">    49  </span>	assert.NoError(t, err, &#34;Command with empty array param is OK&#34;)
+<span id="L48" class="ln">    48  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping2&#34;}, []string{&#34;&#34;})
+<span id="L49" class="ln">    49  </span>	assert.NoError(t, err, &#34;Command with empty string param is OK&#34;)
 <span id="L50" class="ln">    50  </span>
-<span id="L51" class="ln">    51  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping2&#34;, []string{&#34;&#34;})
-<span id="L52" class="ln">    52  </span>	assert.NoError(t, err, &#34;Command with empty string param is OK&#34;)
+<span id="L51" class="ln">    51  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping3&#34;}, []string{&#34;[]&#34;})
+<span id="L52" class="ln">    52  </span>	assert.NoError(t, err, &#34;Command with empty json array param is OK&#34;)
 <span id="L53" class="ln">    53  </span>
-<span id="L54" class="ln">    54  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping3&#34;, []string{&#34;[]&#34;})
-<span id="L55" class="ln">    55  </span>	assert.NoError(t, err, &#34;Command with empty json array param is OK&#34;)
+<span id="L54" class="ln">    54  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping3&#34;}, []string{&#34;[null]&#34;})
+<span id="L55" class="ln">    55  </span>	assert.NoError(t, err, &#34;Command with nil array param is OK&#34;)
 <span id="L56" class="ln">    56  </span>
-<span id="L57" class="ln">    57  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping3&#34;, []string{&#34;[null]&#34;})
-<span id="L58" class="ln">    58  </span>	assert.NoError(t, err, &#34;Command with nil array param is OK&#34;)
+<span id="L57" class="ln">    57  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping4&#34;}, []string{`[&#34;localhost&#34;]`})
+<span id="L58" class="ln">    58  </span>	assert.NoError(t, err, &#34;Command with one param is OK&#34;)
 <span id="L59" class="ln">    59  </span>
-<span id="L60" class="ln">    60  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping4&#34;, []string{`[&#34;localhost&#34;]`})
-<span id="L61" class="ln">    61  </span>	assert.NoError(t, err, &#34;Command with one param is OK&#34;)
+<span id="L60" class="ln">    60  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping5&#34;}, []string{`[&#34;localhost&#34;, &#34;-4&#34;]`})
+<span id="L61" class="ln">    61  </span>	assert.NoError(t, err, &#34;Command with many params is OK&#34;)
 <span id="L62" class="ln">    62  </span>
-<span id="L63" class="ln">    63  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping5&#34;, []string{`[&#34;localhost&#34;, &#34;-4&#34;]`})
-<span id="L64" class="ln">    64  </span>	assert.NoError(t, err, &#34;Command with many params is OK&#34;)
+<span id="L63" class="ln">    63  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;pong&#34;}, nil)
+<span id="L64" class="ln">    64  </span>	assert.IsType(t, (*exec.Error)(nil), err, &#34;Uknown command should produce error&#34;)
 <span id="L65" class="ln">    65  </span>
-<span id="L66" class="ln">    66  </span>	_, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;pong&#34;, nil)
-<span id="L67" class="ln">    67  </span>	assert.IsType(t, (*exec.Error)(nil), err, &#34;Uknown command should produce error&#34;)
-<span id="L68" class="ln">    68  </span>
-<span id="L69" class="ln">    69  </span>	retCode, _, err = scheduler.ExecuteProgramCommand(ctx, &#34;ping5&#34;, []string{`{&#34;param1&#34;: &#34;localhost&#34;}`})
-<span id="L70" class="ln">    70  </span>	assert.IsType(t, (*json.UnmarshalTypeError)(nil), err, &#34;Command should fail with mailformed json parameter&#34;)
-<span id="L71" class="ln">    71  </span>	assert.NotEqual(t, 0, retCode, &#34;return code should indicate failure.&#34;)
-<span id="L72" class="ln">    72  </span>}
-<span id="L73" class="ln">    73  </span>
+<span id="L66" class="ln">    66  </span>	err = scheduler.ExecuteProgramCommand(ctx, &amp;pgengine.ChainTask{Command: &#34;ping5&#34;}, []string{`{&#34;param1&#34;: &#34;localhost&#34;}`})
+<span id="L67" class="ln">    67  </span>	assert.IsType(t, (*json.UnmarshalTypeError)(nil), err, &#34;Command should fail with mailformed json parameter&#34;)
+<span id="L68" class="ln">    68  </span>}
+<span id="L69" class="ln">    69  </span>
 </pre><p></p>
 
 <div id="footer">

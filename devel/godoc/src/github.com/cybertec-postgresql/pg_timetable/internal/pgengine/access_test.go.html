@@ -164,9 +164,9 @@
 <span id="L107" class="ln">   107  </span>	t.Run(&#34;Check LogChainElementExecution if sql fails&#34;, func(*testing.T) {
 <span id="L108" class="ln">   108  </span>		mockPool.ExpectExec(&#34;INSERT INTO .*execution_log&#34;).WithArgs(
 <span id="L109" class="ln">   109  </span>			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(),
-<span id="L110" class="ln">   110  </span>			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+<span id="L110" class="ln">   110  </span>			pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
 <span id="L111" class="ln">   111  </span>			WillReturnError(errors.New(&#34;Failed to log chain element execution status&#34;))
-<span id="L112" class="ln">   112  </span>		pge.LogTaskExecution(context.Background(), &amp;pgengine.ChainTask{}, 0, &#34;STATUS&#34;)
+<span id="L112" class="ln">   112  </span>		pge.LogTaskExecution(context.Background(), &amp;pgengine.ChainTask{}, 0, &#34;STATUS&#34;, &#34;&#34;)
 <span id="L113" class="ln">   113  </span>	})
 <span id="L114" class="ln">   114  </span>
 <span id="L115" class="ln">   115  </span>	assert.NoError(t, mockPool.ExpectationsWereMet(), &#34;there were unfulfilled expectations&#34;)

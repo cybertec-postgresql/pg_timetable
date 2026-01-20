@@ -85,7 +85,7 @@
 <span id="L28" class="ln">    28  </span>}
 <span id="L29" class="ln">    29  </span>
 <span id="L30" class="ln">    30  </span><span class="comment">// LogTaskExecution will log current chain element execution status including retcode</span>
-<span id="L31" class="ln">    31  </span>func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string) {
+<span id="L31" class="ln">    31  </span>func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string, params string) {
 <span id="L32" class="ln">    32  </span>	switch pge.Logging.LogDBLevel {
 <span id="L33" class="ln">    33  </span>	case &#34;none&#34;:
 <span id="L34" class="ln">    34  </span>		return
@@ -95,12 +95,12 @@
 <span id="L38" class="ln">    38  </span>		}
 <span id="L39" class="ln">    39  </span>	}
 <span id="L40" class="ln">    40  </span>	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
-<span id="L41" class="ln">    41  </span>chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error) 
-<span id="L42" class="ln">    42  </span>VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, &#39;&#39;), $9, $10, $11)`,
+<span id="L41" class="ln">    41  </span>chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error, params) 
+<span id="L42" class="ln">    42  </span>VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, &#39;&#39;), $9, $10, $11, $12)`,
 <span id="L43" class="ln">    43  </span>		task.ChainID, task.TaskID, task.Command, task.Kind,
 <span id="L44" class="ln">    44  </span>		fmt.Sprintf(&#34;%f seconds&#34;, float64(task.Duration)/1000000),
 <span id="L45" class="ln">    45  </span>		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Vxid,
-<span id="L46" class="ln">    46  </span>		task.IgnoreError)
+<span id="L46" class="ln">    46  </span>		task.IgnoreError, params)
 <span id="L47" class="ln">    47  </span>	if err != nil {
 <span id="L48" class="ln">    48  </span>		pge.l.WithError(err).Error(&#34;Failed to log chain element execution status&#34;)
 <span id="L49" class="ln">    49  </span>	}

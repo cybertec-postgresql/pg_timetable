@@ -208,16 +208,16 @@
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.DeleteChain">func (pge *PgEngine) DeleteChain(ctx context.Context, chainID int) bool</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecAutonomousSQLTask">func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecAutonomousSQLTask">func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecLocalSQLTask">func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecLocalSQLTask">func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (err error)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecRemoteSQLTask">func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecRemoteSQLTask">func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecStandaloneTask">func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxConnIface, error), task *ChainTask, paramValues []string) (string, error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecStandaloneTask">func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxConnIface, error), task *ChainTask, paramValues []string) error</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteCustomScripts">func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error</a></dd>
@@ -226,10 +226,10 @@
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteFileScript">func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLCommand">func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, command string, paramValues []string) (out string, err error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLCommand">func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, task *ChainTask, paramValues []string) (err error)</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLTask">func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLTask">func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (err error)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSchemaScripts">func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error</a></dd>
@@ -268,7 +268,7 @@
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.LoadYamlChains">func (pge *PgEngine) LoadYamlChains(ctx context.Context, filePath string, replace bool) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.LogTaskExecution">func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string)</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.LogTaskExecution">func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string, params string)</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.MigrateDb">func (pge *PgEngine) MigrateDb(ctx context.Context) error</a></dd>
@@ -534,6 +534,12 @@ FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`</
             <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00721 Add more job control functions&#34;,
             <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
                 return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00721.sql&#34;)
+            },
+        },
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00733 Add params column to timetable.execution_log table&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00733.sql&#34;)
             },
         },
     )
@@ -984,7 +990,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.CommitTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L29">CommitTransaction</a>
+				<h3 id="PgEngine.CommitTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L28">CommitTransaction</a>
 					<a class="permalink" href="#PgEngine.CommitTransaction">&#xb6;</a>
 					
 					
@@ -1075,12 +1081,12 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L112">ExecAutonomousSQLTask</a>
+				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L111">ExecAutonomousSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecAutonomousSQLTask">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecAutonomousSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecAutonomousSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
 				<p>ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
 
 				
@@ -1088,12 +1094,12 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecLocalSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L71">ExecLocalSQLTask</a>
+				<h3 id="PgEngine.ExecLocalSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L70">ExecLocalSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecLocalSQLTask">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecLocalSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecLocalSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
 				<p>ExecLocalSQLTask executes local task in the chain transaction
 
 				
@@ -1101,12 +1107,12 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L104">ExecRemoteSQLTask</a>
+				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L103">ExecRemoteSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecRemoteSQLTask">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecRemoteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecRemoteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
 				<p>ExecRemoteSQLTask executes task against remote connection
 
 				
@@ -1114,12 +1120,12 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecStandaloneTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L90">ExecStandaloneTask</a>
+				<h3 id="PgEngine.ExecStandaloneTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L89">ExecStandaloneTask</a>
 					<a class="permalink" href="#PgEngine.ExecStandaloneTask">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecStandaloneTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, connf func() (<a href="#PgxConnIface">PgxConnIface</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>), task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecStandaloneTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, connf func() (<a href="#PgxConnIface">PgxConnIface</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>), task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
 				<p>ExecStandaloneTask executes task against the provided connection interface, it can be remote connection or acquired connection from the pool
 
 				
@@ -1153,12 +1159,12 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L120">ExecuteSQLCommand</a>
+				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L119">ExecuteSQLCommand</a>
 					<a class="permalink" href="#PgEngine.ExecuteSQLCommand">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLCommand(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor, command <a href="https://pkg.go.dev/builtin/#string">string</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLCommand(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
 				<p>ExecuteSQLCommand executes chain command with parameters inside transaction
 
 				
@@ -1166,12 +1172,12 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L59">ExecuteSQLTask</a>
+				<h3 id="PgEngine.ExecuteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L58">ExecuteSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecuteSQLTask">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (out <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
 				<p>ExecuteSQLTask executes SQL task
 
 				
@@ -1205,7 +1211,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L163">FinalizeDBConnection</a>
+				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L164">FinalizeDBConnection</a>
 					<a class="permalink" href="#PgEngine.FinalizeDBConnection">&#xb6;</a>
 					
 					
@@ -1244,7 +1250,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L144">GetLocalDBConnection</a>
+				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L145">GetLocalDBConnection</a>
 					<a class="permalink" href="#PgEngine.GetLocalDBConnection">&#xb6;</a>
 					
 					
@@ -1257,7 +1263,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L153">GetRemoteDBConnection</a>
+				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L154">GetRemoteDBConnection</a>
 					<a class="permalink" href="#PgEngine.GetRemoteDBConnection">&#xb6;</a>
 					
 					
@@ -1342,7 +1348,7 @@ where all IDs are the same across all running containers, e.g. 1
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) LogTaskExecution(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, retCode <a href="https://pkg.go.dev/builtin/#int">int</a>, output <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) LogTaskExecution(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, retCode <a href="https://pkg.go.dev/builtin/#int">int</a>, output <a href="https://pkg.go.dev/builtin/#string">string</a>, params <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
 				<p>LogTaskExecution will log current chain element execution status including retcode
 
 				
@@ -1363,7 +1369,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.MustRollbackToSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L52">MustRollbackToSavepoint</a>
+				<h3 id="PgEngine.MustRollbackToSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L51">MustRollbackToSavepoint</a>
 					<a class="permalink" href="#PgEngine.MustRollbackToSavepoint">&#xb6;</a>
 					
 					
@@ -1376,7 +1382,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.MustSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L45">MustSavepoint</a>
+				<h3 id="PgEngine.MustSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L44">MustSavepoint</a>
 					<a class="permalink" href="#PgEngine.MustSavepoint">&#xb6;</a>
 					
 					
@@ -1414,7 +1420,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L183">ResetRole</a>
+				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L184">ResetRole</a>
 					<a class="permalink" href="#PgEngine.ResetRole">&#xb6;</a>
 					
 					
@@ -1427,7 +1433,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.RollbackTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L37">RollbackTransaction</a>
+				<h3 id="PgEngine.RollbackTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L36">RollbackTransaction</a>
 					<a class="permalink" href="#PgEngine.RollbackTransaction">&#xb6;</a>
 					
 					
@@ -1492,7 +1498,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L193">SetCurrentTaskContext</a>
+				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L194">SetCurrentTaskContext</a>
 					<a class="permalink" href="#PgEngine.SetCurrentTaskContext">&#xb6;</a>
 					
 					
@@ -1505,7 +1511,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L173">SetRole</a>
+				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L174">SetRole</a>
 					<a class="permalink" href="#PgEngine.SetRole">&#xb6;</a>
 					
 					
@@ -1518,7 +1524,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.StartTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L17">StartTransaction</a>
+				<h3 id="PgEngine.StartTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L16">StartTransaction</a>
 					<a class="permalink" href="#PgEngine.StartTransaction">&#xb6;</a>
 					
 					
@@ -1570,7 +1576,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L162">initMigrator</a>
+				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L168">initMigrator</a>
 					<a class="permalink" href="#PgEngine.initMigrator">&#xb6;</a>
 					
 					

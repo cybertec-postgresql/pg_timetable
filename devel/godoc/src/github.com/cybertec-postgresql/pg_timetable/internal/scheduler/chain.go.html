@@ -60,8 +60,8 @@
 <span id="L3" class="ln">     3  </span>import (
 <span id="L4" class="ln">     4  </span>	&#34;cmp&#34;
 <span id="L5" class="ln">     5  </span>	&#34;context&#34;
-<span id="L6" class="ln">     6  </span>	&#34;fmt&#34;
-<span id="L7" class="ln">     7  </span>	&#34;strings&#34;
+<span id="L6" class="ln">     6  </span>	&#34;errors&#34;
+<span id="L7" class="ln">     7  </span>	&#34;fmt&#34;
 <span id="L8" class="ln">     8  </span>	&#34;time&#34;
 <span id="L9" class="ln">     9  </span>
 <span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
@@ -279,80 +279,72 @@
 <span id="L222" class="ln">   222  </span>		l := chainL.WithField(&#34;task&#34;, task.TaskID)
 <span id="L223" class="ln">   223  </span>		l.Info(&#34;Starting task&#34;)
 <span id="L224" class="ln">   224  </span>		taskCtx := log.WithLogger(chainCtx, l)
-<span id="L225" class="ln">   225  </span>		retCode := sch.executeTask(taskCtx, tx, &amp;task)
-<span id="L226" class="ln">   226  </span>
-<span id="L227" class="ln">   227  </span>		<span class="comment">// we use background context here because current one (chainCtx) might be cancelled</span>
-<span id="L228" class="ln">   228  </span>		bctx = log.WithLogger(ctx, l)
-<span id="L229" class="ln">   229  </span>		if retCode != 0 {
-<span id="L230" class="ln">   230  </span>			if !task.IgnoreError {
-<span id="L231" class="ln">   231  </span>				chainL.Error(&#34;Chain failed&#34;)
-<span id="L232" class="ln">   232  </span>				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
-<span id="L233" class="ln">   233  </span>				sch.pgengine.RollbackTransaction(bctx, tx)
-<span id="L234" class="ln">   234  </span>				sch.executeOnErrorHandler(bctx, chain)
-<span id="L235" class="ln">   235  </span>				return
-<span id="L236" class="ln">   236  </span>			}
-<span id="L237" class="ln">   237  </span>			l.Info(&#34;Ignoring task failure&#34;)
-<span id="L238" class="ln">   238  </span>		}
-<span id="L239" class="ln">   239  </span>	}
-<span id="L240" class="ln">   240  </span>	bctx = log.WithLogger(chainCtx, chainL)
-<span id="L241" class="ln">   241  </span>	sch.pgengine.CommitTransaction(bctx, tx)
-<span id="L242" class="ln">   242  </span>	chainL.Info(&#34;Chain executed successfully&#34;)
-<span id="L243" class="ln">   243  </span>	sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
-<span id="L244" class="ln">   244  </span>	if chain.SelfDestruct {
-<span id="L245" class="ln">   245  </span>		sch.pgengine.DeleteChain(bctx, chain.ChainID)
-<span id="L246" class="ln">   246  </span>	}
-<span id="L247" class="ln">   247  </span>}
-<span id="L248" class="ln">   248  </span>
-<span id="L249" class="ln">   249  </span><span class="comment">/* execute a task */</span>
-<span id="L250" class="ln">   250  </span>func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
-<span id="L251" class="ln">   251  </span>	var (
-<span id="L252" class="ln">   252  </span>		paramValues []string
-<span id="L253" class="ln">   253  </span>		err         error
-<span id="L254" class="ln">   254  </span>		out         string
-<span id="L255" class="ln">   255  </span>		retCode     int
-<span id="L256" class="ln">   256  </span>		cancel      context.CancelFunc
-<span id="L257" class="ln">   257  </span>	)
-<span id="L258" class="ln">   258  </span>
-<span id="L259" class="ln">   259  </span>	l := log.GetLogger(ctx)
-<span id="L260" class="ln">   260  </span>	err = sch.pgengine.GetChainParamValues(ctx, &amp;paramValues, task)
-<span id="L261" class="ln">   261  </span>	if err != nil {
-<span id="L262" class="ln">   262  </span>		l.WithError(err).Error(&#34;cannot fetch parameters values for chain: &#34;, err)
-<span id="L263" class="ln">   263  </span>		return -1
-<span id="L264" class="ln">   264  </span>	}
-<span id="L265" class="ln">   265  </span>
-<span id="L266" class="ln">   266  </span>	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.TaskTimeout, task.Timeout)
-<span id="L267" class="ln">   267  </span>	if cancel != nil {
-<span id="L268" class="ln">   268  </span>		defer cancel()
-<span id="L269" class="ln">   269  </span>	}
-<span id="L270" class="ln">   270  </span>
-<span id="L271" class="ln">   271  </span>	task.StartedAt = time.Now()
-<span id="L272" class="ln">   272  </span>	switch task.Kind {
-<span id="L273" class="ln">   273  </span>	case &#34;SQL&#34;:
-<span id="L274" class="ln">   274  </span>		out, err = sch.pgengine.ExecuteSQLTask(ctx, tx, task, paramValues)
-<span id="L275" class="ln">   275  </span>	case &#34;PROGRAM&#34;:
-<span id="L276" class="ln">   276  </span>		if sch.pgengine.NoProgramTasks {
-<span id="L277" class="ln">   277  </span>			l.Info(&#34;Program task execution skipped&#34;)
-<span id="L278" class="ln">   278  </span>			return -2
-<span id="L279" class="ln">   279  </span>		}
-<span id="L280" class="ln">   280  </span>		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Command, paramValues)
-<span id="L281" class="ln">   281  </span>	case &#34;BUILTIN&#34;:
-<span id="L282" class="ln">   282  </span>		out, err = sch.executeBuiltinTask(ctx, task.Command, paramValues)
-<span id="L283" class="ln">   283  </span>	}
-<span id="L284" class="ln">   284  </span>	task.Duration = time.Since(task.StartedAt).Microseconds()
-<span id="L285" class="ln">   285  </span>
-<span id="L286" class="ln">   286  </span>	if err != nil {
-<span id="L287" class="ln">   287  </span>		if retCode == 0 {
-<span id="L288" class="ln">   288  </span>			retCode = -1
-<span id="L289" class="ln">   289  </span>		}
-<span id="L290" class="ln">   290  </span>		out = strings.Join([]string{out, err.Error()}, &#34;\n&#34;)
-<span id="L291" class="ln">   291  </span>		l.WithError(err).Error(&#34;Task execution failed&#34;)
-<span id="L292" class="ln">   292  </span>	} else {
-<span id="L293" class="ln">   293  </span>		l.Info(&#34;Task executed successfully&#34;)
-<span id="L294" class="ln">   294  </span>	}
-<span id="L295" class="ln">   295  </span>	sch.pgengine.LogTaskExecution(context.Background(), task, retCode, out)
-<span id="L296" class="ln">   296  </span>	return retCode
-<span id="L297" class="ln">   297  </span>}
-<span id="L298" class="ln">   298  </span>
+<span id="L225" class="ln">   225  </span>		err = sch.executeTask(taskCtx, tx, &amp;task)
+<span id="L226" class="ln">   226  </span>		if err != nil {
+<span id="L227" class="ln">   227  </span>			l.WithError(err).Error(&#34;Task execution failed&#34;)
+<span id="L228" class="ln">   228  </span>		} else {
+<span id="L229" class="ln">   229  </span>			l.Info(&#34;Task executed successfully&#34;)
+<span id="L230" class="ln">   230  </span>		}
+<span id="L231" class="ln">   231  </span>
+<span id="L232" class="ln">   232  </span>		<span class="comment">// we use background context here because current one (chainCtx) might be cancelled</span>
+<span id="L233" class="ln">   233  </span>		bctx = log.WithLogger(ctx, l)
+<span id="L234" class="ln">   234  </span>		if err != nil {
+<span id="L235" class="ln">   235  </span>			if !task.IgnoreError {
+<span id="L236" class="ln">   236  </span>				chainL.Error(&#34;Chain failed&#34;)
+<span id="L237" class="ln">   237  </span>				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
+<span id="L238" class="ln">   238  </span>				sch.pgengine.RollbackTransaction(bctx, tx)
+<span id="L239" class="ln">   239  </span>				sch.executeOnErrorHandler(bctx, chain)
+<span id="L240" class="ln">   240  </span>				return
+<span id="L241" class="ln">   241  </span>			}
+<span id="L242" class="ln">   242  </span>			l.Info(&#34;Ignoring task failure&#34;)
+<span id="L243" class="ln">   243  </span>		}
+<span id="L244" class="ln">   244  </span>	}
+<span id="L245" class="ln">   245  </span>	bctx = log.WithLogger(chainCtx, chainL)
+<span id="L246" class="ln">   246  </span>	sch.pgengine.CommitTransaction(bctx, tx)
+<span id="L247" class="ln">   247  </span>	chainL.Info(&#34;Chain executed successfully&#34;)
+<span id="L248" class="ln">   248  </span>	sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
+<span id="L249" class="ln">   249  </span>	if chain.SelfDestruct {
+<span id="L250" class="ln">   250  </span>		sch.pgengine.DeleteChain(bctx, chain.ChainID)
+<span id="L251" class="ln">   251  </span>	}
+<span id="L252" class="ln">   252  </span>}
+<span id="L253" class="ln">   253  </span>
+<span id="L254" class="ln">   254  </span><span class="comment">/* execute a task */</span>
+<span id="L255" class="ln">   255  </span>func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) error {
+<span id="L256" class="ln">   256  </span>	var (
+<span id="L257" class="ln">   257  </span>		paramValues []string
+<span id="L258" class="ln">   258  </span>		err         error
+<span id="L259" class="ln">   259  </span>		cancel      context.CancelFunc
+<span id="L260" class="ln">   260  </span>	)
+<span id="L261" class="ln">   261  </span>
+<span id="L262" class="ln">   262  </span>	l := log.GetLogger(ctx)
+<span id="L263" class="ln">   263  </span>	err = sch.pgengine.GetChainParamValues(ctx, &amp;paramValues, task)
+<span id="L264" class="ln">   264  </span>	if err != nil {
+<span id="L265" class="ln">   265  </span>		l.WithError(err).Error(&#34;cannot fetch parameters values for chain: &#34;, err)
+<span id="L266" class="ln">   266  </span>		return err
+<span id="L267" class="ln">   267  </span>	}
+<span id="L268" class="ln">   268  </span>
+<span id="L269" class="ln">   269  </span>	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.TaskTimeout, task.Timeout)
+<span id="L270" class="ln">   270  </span>	if cancel != nil {
+<span id="L271" class="ln">   271  </span>		defer cancel()
+<span id="L272" class="ln">   272  </span>	}
+<span id="L273" class="ln">   273  </span>
+<span id="L274" class="ln">   274  </span>	task.StartedAt = time.Now()
+<span id="L275" class="ln">   275  </span>	switch task.Kind {
+<span id="L276" class="ln">   276  </span>	case &#34;SQL&#34;:
+<span id="L277" class="ln">   277  </span>		err = sch.pgengine.ExecuteSQLTask(ctx, tx, task, paramValues)
+<span id="L278" class="ln">   278  </span>	case &#34;PROGRAM&#34;:
+<span id="L279" class="ln">   279  </span>		if sch.pgengine.NoProgramTasks {
+<span id="L280" class="ln">   280  </span>			l.Info(&#34;Program task execution skipped&#34;)
+<span id="L281" class="ln">   281  </span>			return errors.New(&#34;program tasks execution is disabled&#34;)
+<span id="L282" class="ln">   282  </span>		}
+<span id="L283" class="ln">   283  </span>		err = sch.ExecuteProgramCommand(ctx, task, paramValues)
+<span id="L284" class="ln">   284  </span>	case &#34;BUILTIN&#34;:
+<span id="L285" class="ln">   285  </span>		err = sch.executeBuiltinTask(ctx, task, paramValues)
+<span id="L286" class="ln">   286  </span>	}
+<span id="L287" class="ln">   287  </span>	task.Duration = time.Since(task.StartedAt).Microseconds()
+<span id="L288" class="ln">   288  </span>	return err
+<span id="L289" class="ln">   289  </span>}
+<span id="L290" class="ln">   290  </span>
 </pre><p></p>
 
 <div id="footer">

@@ -156,50 +156,46 @@
 <span id="L99" class="ln">    99  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
 <span id="L100" class="ln">   100  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
 <span id="L101" class="ln">   101  </span>
-<span id="L102" class="ln">   102  </span>	ctx, cancel := context.WithCancel(context.Background())
-<span id="L103" class="ln">   103  </span>	defer cancel()
-<span id="L104" class="ln">   104  </span>	sch.executeChain(ctx, Chain{Timeout: 1})
-<span id="L105" class="ln">   105  </span>}
-<span id="L106" class="ln">   106  </span>
-<span id="L107" class="ln">   107  </span>func TestExecuteChainElement(t *testing.T) {
-<span id="L108" class="ln">   108  </span>	mock, err := pgxmock.NewPool()
-<span id="L109" class="ln">   109  </span>	assert.NoError(t, err)
-<span id="L110" class="ln">   110  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
-<span id="L111" class="ln">   111  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
-<span id="L112" class="ln">   112  </span>
-<span id="L113" class="ln">   113  </span>	ctx, cancel := context.WithCancel(context.Background())
-<span id="L114" class="ln">   114  </span>	defer cancel()
-<span id="L115" class="ln">   115  </span>	mock.ExpectQuery(&#34;SELECT&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;value&#34;}).AddRow(&#34;foo&#34;))
-<span id="L116" class="ln">   116  </span>	sch.executeTask(ctx, mock, &amp;pgengine.ChainTask{Timeout: 1})
-<span id="L117" class="ln">   117  </span>}
-<span id="L118" class="ln">   118  </span>
-<span id="L119" class="ln">   119  </span>func TestExecuteOnErrorHandler(t *testing.T) {
-<span id="L120" class="ln">   120  </span>	c := Chain{ChainID: 42, OnError: &#34;FOO&#34;}
-<span id="L121" class="ln">   121  </span>	mock, err := pgxmock.NewPool()
-<span id="L122" class="ln">   122  </span>	assert.NoError(t, err)
-<span id="L123" class="ln">   123  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
-<span id="L124" class="ln">   124  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
-<span id="L125" class="ln">   125  </span>
-<span id="L126" class="ln">   126  </span>	t.Run(&#34;check error handler if everything is fine&#34;, func(t *testing.T) {
-<span id="L127" class="ln">   127  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnResult(pgxmock.NewResult(&#34;FOO&#34;, 1))
-<span id="L128" class="ln">   128  </span>		sch.executeOnErrorHandler(context.Background(), c)
-<span id="L129" class="ln">   129  </span>		assert.NoError(t, mock.ExpectationsWereMet())
-<span id="L130" class="ln">   130  </span>	})
-<span id="L131" class="ln">   131  </span>
-<span id="L132" class="ln">   132  </span>	t.Run(&#34;check error handler if context cancelled&#34;, func(*testing.T) {
-<span id="L133" class="ln">   133  </span>		ctx, cancel := context.WithCancel(context.Background())
-<span id="L134" class="ln">   134  </span>		cancel()
-<span id="L135" class="ln">   135  </span>		sch.executeOnErrorHandler(ctx, c)
-<span id="L136" class="ln">   136  </span>	})
-<span id="L137" class="ln">   137  </span>
-<span id="L138" class="ln">   138  </span>	t.Run(&#34;check error handler if error&#34;, func(*testing.T) {
-<span id="L139" class="ln">   139  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnError(errors.New(&#34;Syntax error near FOO&#34;))
-<span id="L140" class="ln">   140  </span>		sch.executeOnErrorHandler(context.Background(), c)
-<span id="L141" class="ln">   141  </span>	})
-<span id="L142" class="ln">   142  </span>
-<span id="L143" class="ln">   143  </span>	assert.NoError(t, mock.ExpectationsWereMet())
-<span id="L144" class="ln">   144  </span>}
-<span id="L145" class="ln">   145  </span>
+<span id="L102" class="ln">   102  </span>	sch.executeChain(t.Context(), Chain{Timeout: 1})
+<span id="L103" class="ln">   103  </span>}
+<span id="L104" class="ln">   104  </span>
+<span id="L105" class="ln">   105  </span>func TestExecuteChainElement(t *testing.T) {
+<span id="L106" class="ln">   106  </span>	mock, err := pgxmock.NewPool()
+<span id="L107" class="ln">   107  </span>	assert.NoError(t, err)
+<span id="L108" class="ln">   108  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L109" class="ln">   109  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
+<span id="L110" class="ln">   110  </span>
+<span id="L111" class="ln">   111  </span>	mock.ExpectQuery(&#34;SELECT&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;value&#34;}).AddRow(&#34;foo&#34;))
+<span id="L112" class="ln">   112  </span>	_ = sch.executeTask(t.Context(), mock, &amp;pgengine.ChainTask{Timeout: 1})
+<span id="L113" class="ln">   113  </span>}
+<span id="L114" class="ln">   114  </span>
+<span id="L115" class="ln">   115  </span>func TestExecuteOnErrorHandler(t *testing.T) {
+<span id="L116" class="ln">   116  </span>	c := Chain{ChainID: 42, OnError: &#34;FOO&#34;}
+<span id="L117" class="ln">   117  </span>	mock, err := pgxmock.NewPool()
+<span id="L118" class="ln">   118  </span>	assert.NoError(t, err)
+<span id="L119" class="ln">   119  </span>	pge := pgengine.NewDB(mock, &#34;-c&#34;, &#34;scheduler_unit_test&#34;, &#34;--password=somestrong&#34;)
+<span id="L120" class="ln">   120  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
+<span id="L121" class="ln">   121  </span>
+<span id="L122" class="ln">   122  </span>	t.Run(&#34;check error handler if everything is fine&#34;, func(t *testing.T) {
+<span id="L123" class="ln">   123  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnResult(pgxmock.NewResult(&#34;FOO&#34;, 1))
+<span id="L124" class="ln">   124  </span>		sch.executeOnErrorHandler(context.Background(), c)
+<span id="L125" class="ln">   125  </span>		assert.NoError(t, mock.ExpectationsWereMet())
+<span id="L126" class="ln">   126  </span>	})
+<span id="L127" class="ln">   127  </span>
+<span id="L128" class="ln">   128  </span>	t.Run(&#34;check error handler if context cancelled&#34;, func(*testing.T) {
+<span id="L129" class="ln">   129  </span>		ctx, cancel := context.WithCancel(context.Background())
+<span id="L130" class="ln">   130  </span>		cancel()
+<span id="L131" class="ln">   131  </span>		sch.executeOnErrorHandler(ctx, c)
+<span id="L132" class="ln">   132  </span>	})
+<span id="L133" class="ln">   133  </span>
+<span id="L134" class="ln">   134  </span>	t.Run(&#34;check error handler if error&#34;, func(*testing.T) {
+<span id="L135" class="ln">   135  </span>		mock.ExpectExec(&#34;FOO&#34;).WillReturnError(errors.New(&#34;Syntax error near FOO&#34;))
+<span id="L136" class="ln">   136  </span>		sch.executeOnErrorHandler(context.Background(), c)
+<span id="L137" class="ln">   137  </span>	})
+<span id="L138" class="ln">   138  </span>
+<span id="L139" class="ln">   139  </span>	assert.NoError(t, mock.ExpectationsWereMet())
+<span id="L140" class="ln">   140  </span>}
+<span id="L141" class="ln">   141  </span>
 </pre><p></p>
 
 <div id="footer">

@@ -66,161 +66,167 @@
 <span id="L9" class="ln">     9  </span>	&#34;time&#34;
 <span id="L10" class="ln">    10  </span>
 <span id="L11" class="ln">    11  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
-<span id="L12" class="ln">    12  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/tasks&#34;
-<span id="L13" class="ln">    13  </span>)
-<span id="L14" class="ln">    14  </span>
-<span id="L15" class="ln">    15  </span><span class="comment">// BuiltinTasks maps builtin task names with event handlers</span>
-<span id="L16" class="ln">    16  </span>var BuiltinTasks = map[string](func(context.Context, *Scheduler, string) (string, error)){
-<span id="L17" class="ln">    17  </span>	&#34;NoOp&#34;:            taskNoOp,
-<span id="L18" class="ln">    18  </span>	&#34;Sleep&#34;:           taskSleep,
-<span id="L19" class="ln">    19  </span>	&#34;Log&#34;:             taskLog,
-<span id="L20" class="ln">    20  </span>	&#34;SendMail&#34;:        taskSendMail,
-<span id="L21" class="ln">    21  </span>	&#34;Download&#34;:        taskDownload,
-<span id="L22" class="ln">    22  </span>	&#34;CopyFromFile&#34;:    taskCopyFromFile,
-<span id="L23" class="ln">    23  </span>	&#34;CopyToFile&#34;:      taskCopyToFile,
-<span id="L24" class="ln">    24  </span>	&#34;CopyToProgram&#34;:   taskCopyToProgram,
-<span id="L25" class="ln">    25  </span>	&#34;CopyFromProgram&#34;: taskCopyFromProgram,
-<span id="L26" class="ln">    26  </span>	&#34;Shutdown&#34;:        taskShutdown}
-<span id="L27" class="ln">    27  </span>
-<span id="L28" class="ln">    28  </span>func (sch *Scheduler) executeBuiltinTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
-<span id="L29" class="ln">    29  </span>	var s string
-<span id="L30" class="ln">    30  </span>	f := BuiltinTasks[name]
-<span id="L31" class="ln">    31  </span>	if f == nil {
-<span id="L32" class="ln">    32  </span>		return &#34;&#34;, errors.New(&#34;No built-in task found: &#34; + name)
-<span id="L33" class="ln">    33  </span>	}
-<span id="L34" class="ln">    34  </span>	l := log.GetLogger(ctx)
-<span id="L35" class="ln">    35  </span>	l.WithField(&#34;name&#34;, name).Debugf(&#34;Executing builtin task with parameters %+q&#34;, paramValues)
-<span id="L36" class="ln">    36  </span>	if len(paramValues) == 0 {
-<span id="L37" class="ln">    37  </span>		return f(ctx, sch, &#34;&#34;)
-<span id="L38" class="ln">    38  </span>	}
-<span id="L39" class="ln">    39  </span>	for _, val := range paramValues {
-<span id="L40" class="ln">    40  </span>		if s, err = f(ctx, sch, val); err != nil {
-<span id="L41" class="ln">    41  </span>			return
-<span id="L42" class="ln">    42  </span>		}
-<span id="L43" class="ln">    43  </span>		stdout += fmt.Sprintln(s)
-<span id="L44" class="ln">    44  </span>	}
-<span id="L45" class="ln">    45  </span>	return
-<span id="L46" class="ln">    46  </span>}
-<span id="L47" class="ln">    47  </span>
-<span id="L48" class="ln">    48  </span>func taskNoOp(_ context.Context, _ *Scheduler, val string) (stdout string, err error) {
-<span id="L49" class="ln">    49  </span>	return &#34;NoOp task called with value: &#34; + val, nil
-<span id="L50" class="ln">    50  </span>}
-<span id="L51" class="ln">    51  </span>
-<span id="L52" class="ln">    52  </span>func taskSleep(ctx context.Context, _ *Scheduler, val string) (stdout string, err error) {
-<span id="L53" class="ln">    53  </span>	var d int
-<span id="L54" class="ln">    54  </span>	if d, err = strconv.Atoi(val); err != nil {
-<span id="L55" class="ln">    55  </span>		return &#34;&#34;, err
-<span id="L56" class="ln">    56  </span>	}
-<span id="L57" class="ln">    57  </span>	dur := time.Duration(d) * time.Second
-<span id="L58" class="ln">    58  </span>	select {
-<span id="L59" class="ln">    59  </span>	case &lt;-ctx.Done():
-<span id="L60" class="ln">    60  </span>		return &#34;&#34;, ctx.Err()
-<span id="L61" class="ln">    61  </span>	case &lt;-time.After(dur):
-<span id="L62" class="ln">    62  </span>		return &#34;Sleep task called for &#34; + dur.String(), nil
-<span id="L63" class="ln">    63  </span>	}
-<span id="L64" class="ln">    64  </span>}
-<span id="L65" class="ln">    65  </span>
-<span id="L66" class="ln">    66  </span>func taskLog(ctx context.Context, _ *Scheduler, val string) (stdout string, err error) {
-<span id="L67" class="ln">    67  </span>	log.GetLogger(ctx).Print(val)
-<span id="L68" class="ln">    68  </span>	return &#34;Logged: &#34; + val, nil
-<span id="L69" class="ln">    69  </span>}
-<span id="L70" class="ln">    70  </span>
-<span id="L71" class="ln">    71  </span>func taskSendMail(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
-<span id="L72" class="ln">    72  </span>	conn := tasks.EmailConn{ServerPort: 587, ContentType: &#34;text/plain&#34;}
-<span id="L73" class="ln">    73  </span>	if err := json.Unmarshal([]byte(paramValues), &amp;conn); err != nil {
-<span id="L74" class="ln">    74  </span>		return &#34;&#34;, err
-<span id="L75" class="ln">    75  </span>	}
-<span id="L76" class="ln">    76  </span>	return &#34;&#34;, tasks.SendMail(ctx, conn)
-<span id="L77" class="ln">    77  </span>}
-<span id="L78" class="ln">    78  </span>
-<span id="L79" class="ln">    79  </span>func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
-<span id="L80" class="ln">    80  </span>	type copyFrom struct {
-<span id="L81" class="ln">    81  </span>		SQL      string `json:&#34;sql&#34;`
-<span id="L82" class="ln">    82  </span>		Filename string `json:&#34;filename&#34;`
-<span id="L83" class="ln">    83  </span>	}
-<span id="L84" class="ln">    84  </span>	var ct copyFrom
-<span id="L85" class="ln">    85  </span>	if err := json.Unmarshal([]byte(val), &amp;ct); err != nil {
-<span id="L86" class="ln">    86  </span>		return &#34;&#34;, err
-<span id="L87" class="ln">    87  </span>	}
-<span id="L88" class="ln">    88  </span>	count, err := sch.pgengine.CopyFromFile(ctx, ct.Filename, ct.SQL)
-<span id="L89" class="ln">    89  </span>	if err == nil {
-<span id="L90" class="ln">    90  </span>		stdout = fmt.Sprintf(&#34;%d rows copied from %s&#34;, count, ct.Filename)
-<span id="L91" class="ln">    91  </span>	}
-<span id="L92" class="ln">    92  </span>	return stdout, err
-<span id="L93" class="ln">    93  </span>}
-<span id="L94" class="ln">    94  </span>
-<span id="L95" class="ln">    95  </span>func taskCopyToFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
-<span id="L96" class="ln">    96  </span>	type copyTo struct {
-<span id="L97" class="ln">    97  </span>		SQL      string `json:&#34;sql&#34;`
-<span id="L98" class="ln">    98  </span>		Filename string `json:&#34;filename&#34;`
-<span id="L99" class="ln">    99  </span>	}
-<span id="L100" class="ln">   100  </span>	var ct copyTo
-<span id="L101" class="ln">   101  </span>	if err := json.Unmarshal([]byte(val), &amp;ct); err != nil {
-<span id="L102" class="ln">   102  </span>		return &#34;&#34;, err
-<span id="L103" class="ln">   103  </span>	}
-<span id="L104" class="ln">   104  </span>	count, err := sch.pgengine.CopyToFile(ctx, ct.Filename, ct.SQL)
-<span id="L105" class="ln">   105  </span>	if err == nil {
-<span id="L106" class="ln">   106  </span>		stdout = fmt.Sprintf(&#34;%d rows copied to %s&#34;, count, ct.Filename)
-<span id="L107" class="ln">   107  </span>	}
-<span id="L108" class="ln">   108  </span>	return stdout, err
-<span id="L109" class="ln">   109  </span>}
-<span id="L110" class="ln">   110  </span>
-<span id="L111" class="ln">   111  </span>func taskCopyToProgram(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
-<span id="L112" class="ln">   112  </span>	type copyToProgram struct {
-<span id="L113" class="ln">   113  </span>		SQL  string   `json:&#34;sql&#34;`
-<span id="L114" class="ln">   114  </span>		Cmd  string   `json:&#34;cmd&#34;`
-<span id="L115" class="ln">   115  </span>		Args []string `json:&#34;args&#34;`
-<span id="L116" class="ln">   116  </span>	}
-<span id="L117" class="ln">   117  </span>	var ctp copyToProgram
-<span id="L118" class="ln">   118  </span>	if err := json.Unmarshal([]byte(val), &amp;ctp); err != nil {
-<span id="L119" class="ln">   119  </span>		return &#34;&#34;, err
-<span id="L120" class="ln">   120  </span>	}
-<span id="L121" class="ln">   121  </span>	count, err := sch.pgengine.CopyToProgram(ctx, ctp.SQL, ctp.Cmd, ctp.Args...)
-<span id="L122" class="ln">   122  </span>	if err == nil {
-<span id="L123" class="ln">   123  </span>		stdout = fmt.Sprintf(&#34;%d rows copied to program %s&#34;, count, ctp.Cmd)
-<span id="L124" class="ln">   124  </span>	}
-<span id="L125" class="ln">   125  </span>	return stdout, err
-<span id="L126" class="ln">   126  </span>}
-<span id="L127" class="ln">   127  </span>
-<span id="L128" class="ln">   128  </span>func taskCopyFromProgram(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
-<span id="L129" class="ln">   129  </span>	type copyFromProgram struct {
-<span id="L130" class="ln">   130  </span>		SQL  string   `json:&#34;sql&#34;`
-<span id="L131" class="ln">   131  </span>		Cmd  string   `json:&#34;cmd&#34;`
-<span id="L132" class="ln">   132  </span>		Args []string `json:&#34;args&#34;`
-<span id="L133" class="ln">   133  </span>	}
-<span id="L134" class="ln">   134  </span>	var cfp copyFromProgram
-<span id="L135" class="ln">   135  </span>	if err := json.Unmarshal([]byte(val), &amp;cfp); err != nil {
-<span id="L136" class="ln">   136  </span>		return &#34;&#34;, err
-<span id="L137" class="ln">   137  </span>	}
-<span id="L138" class="ln">   138  </span>	count, err := sch.pgengine.CopyFromProgram(ctx, cfp.SQL, cfp.Cmd, cfp.Args...)
-<span id="L139" class="ln">   139  </span>	if err == nil {
-<span id="L140" class="ln">   140  </span>		stdout = fmt.Sprintf(&#34;%d rows copied from program %s&#34;, count, cfp.Cmd)
-<span id="L141" class="ln">   141  </span>	}
-<span id="L142" class="ln">   142  </span>	return stdout, err
-<span id="L143" class="ln">   143  </span>}
-<span id="L144" class="ln">   144  </span>
-<span id="L145" class="ln">   145  </span>func taskDownload(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
-<span id="L146" class="ln">   146  </span>	type downloadOpts struct {
-<span id="L147" class="ln">   147  </span>		WorkersNum int      `json:&#34;workersnum&#34;`
-<span id="L148" class="ln">   148  </span>		FileUrls   []string `json:&#34;fileurls&#34;`
-<span id="L149" class="ln">   149  </span>		DestPath   string   `json:&#34;destpath&#34;`
-<span id="L150" class="ln">   150  </span>	}
-<span id="L151" class="ln">   151  </span>	var opts downloadOpts
-<span id="L152" class="ln">   152  </span>	if err := json.Unmarshal([]byte(paramValues), &amp;opts); err != nil {
-<span id="L153" class="ln">   153  </span>		return &#34;&#34;, err
-<span id="L154" class="ln">   154  </span>	}
-<span id="L155" class="ln">   155  </span>	if len(opts.FileUrls) == 0 {
-<span id="L156" class="ln">   156  </span>		return &#34;&#34;, errors.New(&#34;files to download are not specified&#34;)
-<span id="L157" class="ln">   157  </span>	}
-<span id="L158" class="ln">   158  </span>	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
-<span id="L159" class="ln">   159  </span>}
-<span id="L160" class="ln">   160  </span>
-<span id="L161" class="ln">   161  </span>func taskShutdown(_ context.Context, sch *Scheduler, val string) (stdout string, err error) {
-<span id="L162" class="ln">   162  </span>	sch.l.WithField(&#34;message&#34;, val).Info(&#34;Shutdown command received&#34;)
-<span id="L163" class="ln">   163  </span>	sch.Shutdown()
-<span id="L164" class="ln">   164  </span>	return &#34;Shutdown task called&#34;, nil
+<span id="L12" class="ln">    12  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/tasks&#34;
+<span id="L14" class="ln">    14  </span>)
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span><span class="comment">// BuiltinTasks maps builtin task names with event handlers</span>
+<span id="L17" class="ln">    17  </span>var BuiltinTasks = map[string](func(context.Context, *Scheduler, string) (string, error)){
+<span id="L18" class="ln">    18  </span>	&#34;NoOp&#34;:            taskNoOp,
+<span id="L19" class="ln">    19  </span>	&#34;Sleep&#34;:           taskSleep,
+<span id="L20" class="ln">    20  </span>	&#34;Log&#34;:             taskLog,
+<span id="L21" class="ln">    21  </span>	&#34;SendMail&#34;:        taskSendMail,
+<span id="L22" class="ln">    22  </span>	&#34;Download&#34;:        taskDownload,
+<span id="L23" class="ln">    23  </span>	&#34;CopyFromFile&#34;:    taskCopyFromFile,
+<span id="L24" class="ln">    24  </span>	&#34;CopyToFile&#34;:      taskCopyToFile,
+<span id="L25" class="ln">    25  </span>	&#34;CopyToProgram&#34;:   taskCopyToProgram,
+<span id="L26" class="ln">    26  </span>	&#34;CopyFromProgram&#34;: taskCopyFromProgram,
+<span id="L27" class="ln">    27  </span>	&#34;Shutdown&#34;:        taskShutdown}
+<span id="L28" class="ln">    28  </span>
+<span id="L29" class="ln">    29  </span>func (sch *Scheduler) executeBuiltinTask(ctx context.Context, task *pgengine.ChainTask, paramValues []string) (err error) {
+<span id="L30" class="ln">    30  </span>	var stdout string
+<span id="L31" class="ln">    31  </span>	var errCodes = map[bool]int{true: 0, false: -1}
+<span id="L32" class="ln">    32  </span>	name := task.Command
+<span id="L33" class="ln">    33  </span>	f := BuiltinTasks[name]
+<span id="L34" class="ln">    34  </span>	if f == nil {
+<span id="L35" class="ln">    35  </span>		return errors.New(&#34;No built-in task found: &#34; + name)
+<span id="L36" class="ln">    36  </span>	}
+<span id="L37" class="ln">    37  </span>	l := log.GetLogger(ctx)
+<span id="L38" class="ln">    38  </span>	l.WithField(&#34;name&#34;, name).Debugf(&#34;Executing builtin task with parameters %+q&#34;, paramValues)
+<span id="L39" class="ln">    39  </span>	if len(paramValues) == 0 {
+<span id="L40" class="ln">    40  </span>		stdout, err = f(ctx, sch, &#34;&#34;)
+<span id="L41" class="ln">    41  </span>		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, &#34;&#34;)
+<span id="L42" class="ln">    42  </span>		return err
+<span id="L43" class="ln">    43  </span>	}
+<span id="L44" class="ln">    44  </span>	for _, val := range paramValues {
+<span id="L45" class="ln">    45  </span>		stdout, err = f(ctx, sch, val)
+<span id="L46" class="ln">    46  </span>		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, val)
+<span id="L47" class="ln">    47  </span>		if err != nil {
+<span id="L48" class="ln">    48  </span>			return
+<span id="L49" class="ln">    49  </span>		}
+<span id="L50" class="ln">    50  </span>	}
+<span id="L51" class="ln">    51  </span>	return
+<span id="L52" class="ln">    52  </span>}
+<span id="L53" class="ln">    53  </span>
+<span id="L54" class="ln">    54  </span>func taskNoOp(_ context.Context, _ *Scheduler, val string) (stdout string, err error) {
+<span id="L55" class="ln">    55  </span>	return &#34;NoOp task called with value: &#34; + val, nil
+<span id="L56" class="ln">    56  </span>}
+<span id="L57" class="ln">    57  </span>
+<span id="L58" class="ln">    58  </span>func taskSleep(ctx context.Context, _ *Scheduler, val string) (stdout string, err error) {
+<span id="L59" class="ln">    59  </span>	var d int
+<span id="L60" class="ln">    60  </span>	if d, err = strconv.Atoi(val); err != nil {
+<span id="L61" class="ln">    61  </span>		return &#34;&#34;, err
+<span id="L62" class="ln">    62  </span>	}
+<span id="L63" class="ln">    63  </span>	dur := time.Duration(d) * time.Second
+<span id="L64" class="ln">    64  </span>	select {
+<span id="L65" class="ln">    65  </span>	case &lt;-ctx.Done():
+<span id="L66" class="ln">    66  </span>		return &#34;&#34;, ctx.Err()
+<span id="L67" class="ln">    67  </span>	case &lt;-time.After(dur):
+<span id="L68" class="ln">    68  </span>		return &#34;Sleep task called for &#34; + dur.String(), nil
+<span id="L69" class="ln">    69  </span>	}
+<span id="L70" class="ln">    70  </span>}
+<span id="L71" class="ln">    71  </span>
+<span id="L72" class="ln">    72  </span>func taskLog(ctx context.Context, _ *Scheduler, val string) (stdout string, err error) {
+<span id="L73" class="ln">    73  </span>	log.GetLogger(ctx).Print(val)
+<span id="L74" class="ln">    74  </span>	return &#34;Logged: &#34; + val, nil
+<span id="L75" class="ln">    75  </span>}
+<span id="L76" class="ln">    76  </span>
+<span id="L77" class="ln">    77  </span>func taskSendMail(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
+<span id="L78" class="ln">    78  </span>	conn := tasks.EmailConn{ServerPort: 587, ContentType: &#34;text/plain&#34;}
+<span id="L79" class="ln">    79  </span>	if err := json.Unmarshal([]byte(paramValues), &amp;conn); err != nil {
+<span id="L80" class="ln">    80  </span>		return &#34;&#34;, err
+<span id="L81" class="ln">    81  </span>	}
+<span id="L82" class="ln">    82  </span>	return &#34;&#34;, tasks.SendMail(ctx, conn)
+<span id="L83" class="ln">    83  </span>}
+<span id="L84" class="ln">    84  </span>
+<span id="L85" class="ln">    85  </span>func taskCopyFromFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+<span id="L86" class="ln">    86  </span>	type copyFrom struct {
+<span id="L87" class="ln">    87  </span>		SQL      string `json:&#34;sql&#34;`
+<span id="L88" class="ln">    88  </span>		Filename string `json:&#34;filename&#34;`
+<span id="L89" class="ln">    89  </span>	}
+<span id="L90" class="ln">    90  </span>	var ct copyFrom
+<span id="L91" class="ln">    91  </span>	if err := json.Unmarshal([]byte(val), &amp;ct); err != nil {
+<span id="L92" class="ln">    92  </span>		return &#34;&#34;, err
+<span id="L93" class="ln">    93  </span>	}
+<span id="L94" class="ln">    94  </span>	count, err := sch.pgengine.CopyFromFile(ctx, ct.Filename, ct.SQL)
+<span id="L95" class="ln">    95  </span>	if err == nil {
+<span id="L96" class="ln">    96  </span>		stdout = fmt.Sprintf(&#34;%d rows copied from %s&#34;, count, ct.Filename)
+<span id="L97" class="ln">    97  </span>	}
+<span id="L98" class="ln">    98  </span>	return stdout, err
+<span id="L99" class="ln">    99  </span>}
+<span id="L100" class="ln">   100  </span>
+<span id="L101" class="ln">   101  </span>func taskCopyToFile(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+<span id="L102" class="ln">   102  </span>	type copyTo struct {
+<span id="L103" class="ln">   103  </span>		SQL      string `json:&#34;sql&#34;`
+<span id="L104" class="ln">   104  </span>		Filename string `json:&#34;filename&#34;`
+<span id="L105" class="ln">   105  </span>	}
+<span id="L106" class="ln">   106  </span>	var ct copyTo
+<span id="L107" class="ln">   107  </span>	if err := json.Unmarshal([]byte(val), &amp;ct); err != nil {
+<span id="L108" class="ln">   108  </span>		return &#34;&#34;, err
+<span id="L109" class="ln">   109  </span>	}
+<span id="L110" class="ln">   110  </span>	count, err := sch.pgengine.CopyToFile(ctx, ct.Filename, ct.SQL)
+<span id="L111" class="ln">   111  </span>	if err == nil {
+<span id="L112" class="ln">   112  </span>		stdout = fmt.Sprintf(&#34;%d rows copied to %s&#34;, count, ct.Filename)
+<span id="L113" class="ln">   113  </span>	}
+<span id="L114" class="ln">   114  </span>	return stdout, err
+<span id="L115" class="ln">   115  </span>}
+<span id="L116" class="ln">   116  </span>
+<span id="L117" class="ln">   117  </span>func taskCopyToProgram(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+<span id="L118" class="ln">   118  </span>	type copyToProgram struct {
+<span id="L119" class="ln">   119  </span>		SQL  string   `json:&#34;sql&#34;`
+<span id="L120" class="ln">   120  </span>		Cmd  string   `json:&#34;cmd&#34;`
+<span id="L121" class="ln">   121  </span>		Args []string `json:&#34;args&#34;`
+<span id="L122" class="ln">   122  </span>	}
+<span id="L123" class="ln">   123  </span>	var ctp copyToProgram
+<span id="L124" class="ln">   124  </span>	if err := json.Unmarshal([]byte(val), &amp;ctp); err != nil {
+<span id="L125" class="ln">   125  </span>		return &#34;&#34;, err
+<span id="L126" class="ln">   126  </span>	}
+<span id="L127" class="ln">   127  </span>	count, err := sch.pgengine.CopyToProgram(ctx, ctp.SQL, ctp.Cmd, ctp.Args...)
+<span id="L128" class="ln">   128  </span>	if err == nil {
+<span id="L129" class="ln">   129  </span>		stdout = fmt.Sprintf(&#34;%d rows copied to program %s&#34;, count, ctp.Cmd)
+<span id="L130" class="ln">   130  </span>	}
+<span id="L131" class="ln">   131  </span>	return stdout, err
+<span id="L132" class="ln">   132  </span>}
+<span id="L133" class="ln">   133  </span>
+<span id="L134" class="ln">   134  </span>func taskCopyFromProgram(ctx context.Context, sch *Scheduler, val string) (stdout string, err error) {
+<span id="L135" class="ln">   135  </span>	type copyFromProgram struct {
+<span id="L136" class="ln">   136  </span>		SQL  string   `json:&#34;sql&#34;`
+<span id="L137" class="ln">   137  </span>		Cmd  string   `json:&#34;cmd&#34;`
+<span id="L138" class="ln">   138  </span>		Args []string `json:&#34;args&#34;`
+<span id="L139" class="ln">   139  </span>	}
+<span id="L140" class="ln">   140  </span>	var cfp copyFromProgram
+<span id="L141" class="ln">   141  </span>	if err := json.Unmarshal([]byte(val), &amp;cfp); err != nil {
+<span id="L142" class="ln">   142  </span>		return &#34;&#34;, err
+<span id="L143" class="ln">   143  </span>	}
+<span id="L144" class="ln">   144  </span>	count, err := sch.pgengine.CopyFromProgram(ctx, cfp.SQL, cfp.Cmd, cfp.Args...)
+<span id="L145" class="ln">   145  </span>	if err == nil {
+<span id="L146" class="ln">   146  </span>		stdout = fmt.Sprintf(&#34;%d rows copied from program %s&#34;, count, cfp.Cmd)
+<span id="L147" class="ln">   147  </span>	}
+<span id="L148" class="ln">   148  </span>	return stdout, err
+<span id="L149" class="ln">   149  </span>}
+<span id="L150" class="ln">   150  </span>
+<span id="L151" class="ln">   151  </span>func taskDownload(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
+<span id="L152" class="ln">   152  </span>	type downloadOpts struct {
+<span id="L153" class="ln">   153  </span>		WorkersNum int      `json:&#34;workersnum&#34;`
+<span id="L154" class="ln">   154  </span>		FileUrls   []string `json:&#34;fileurls&#34;`
+<span id="L155" class="ln">   155  </span>		DestPath   string   `json:&#34;destpath&#34;`
+<span id="L156" class="ln">   156  </span>	}
+<span id="L157" class="ln">   157  </span>	var opts downloadOpts
+<span id="L158" class="ln">   158  </span>	if err := json.Unmarshal([]byte(paramValues), &amp;opts); err != nil {
+<span id="L159" class="ln">   159  </span>		return &#34;&#34;, err
+<span id="L160" class="ln">   160  </span>	}
+<span id="L161" class="ln">   161  </span>	if len(opts.FileUrls) == 0 {
+<span id="L162" class="ln">   162  </span>		return &#34;&#34;, errors.New(&#34;files to download are not specified&#34;)
+<span id="L163" class="ln">   163  </span>	}
+<span id="L164" class="ln">   164  </span>	return tasks.DownloadUrls(ctx, opts.FileUrls, opts.DestPath, opts.WorkersNum)
 <span id="L165" class="ln">   165  </span>}
 <span id="L166" class="ln">   166  </span>
+<span id="L167" class="ln">   167  </span>func taskShutdown(_ context.Context, sch *Scheduler, val string) (stdout string, err error) {
+<span id="L168" class="ln">   168  </span>	sch.l.WithField(&#34;message&#34;, val).Info(&#34;Shutdown command received&#34;)
+<span id="L169" class="ln">   169  </span>	sch.Shutdown()
+<span id="L170" class="ln">   170  </span>	return &#34;Shutdown task called&#34;, nil
+<span id="L171" class="ln">   171  </span>}
+<span id="L172" class="ln">   172  </span>
 </pre><p></p>
 
 <div id="footer">

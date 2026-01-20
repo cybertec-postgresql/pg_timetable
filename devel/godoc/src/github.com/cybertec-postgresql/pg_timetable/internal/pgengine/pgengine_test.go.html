@@ -192,7 +192,7 @@
 <span id="L135" class="ln">   135  </span>		assert.NoError(t, err, &#34;Should start transaction&#34;)
 <span id="L136" class="ln">   136  </span>		assert.Greater(t, txid, int64(0), &#34;Should return transaction id&#34;)
 <span id="L137" class="ln">   137  </span>		f := func(sql string, params []string) error {
-<span id="L138" class="ln">   138  </span>			_, err := pge.ExecuteSQLCommand(ctx, tx, sql, params)
+<span id="L138" class="ln">   138  </span>			err := pge.ExecuteSQLCommand(ctx, tx, &amp;pgengine.ChainTask{Command: sql}, params)
 <span id="L139" class="ln">   139  </span>			return err
 <span id="L140" class="ln">   140  </span>		}
 <span id="L141" class="ln">   141  </span>		assert.Error(t, f(&#34;&#34;, nil), &#34;Should error for empty script&#34;)
