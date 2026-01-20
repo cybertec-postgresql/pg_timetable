@@ -29,8 +29,6 @@ func (c testCommander) CombinedOutput(_ context.Context, command string, args ..
 func TestShellCommand(t *testing.T) {
 	scheduler.Cmd = testCommander{}
 	var err error
-	var out string
-	var retCode int
 
 	mock, err := pgxmock.NewPool() //
 	assert.NoError(t, err)
@@ -38,35 +36,33 @@ func TestShellCommand(t *testing.T) {
 	scheduler := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 	ctx := context.Background()
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "", []string{""})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{}, []string{""})
 	assert.EqualError(t, err, "program command cannot be empty", "Empty command should out, fail")
 
-	_, out, err = scheduler.ExecuteProgramCommand(ctx, "ping0", nil)
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping0"}, nil)
 	assert.NoError(t, err, "Command with nil param is out, OK")
-	assert.True(t, strings.HasPrefix(string(out), "ping0"), "Output should containt only command ")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping1", []string{})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping1"}, []string{})
 	assert.NoError(t, err, "Command with empty array param is OK")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping2", []string{""})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping2"}, []string{""})
 	assert.NoError(t, err, "Command with empty string param is OK")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping3", []string{"[]"})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping3"}, []string{"[]"})
 	assert.NoError(t, err, "Command with empty json array param is OK")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping3", []string{"[null]"})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping3"}, []string{"[null]"})
 	assert.NoError(t, err, "Command with nil array param is OK")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping4", []string{`["localhost"]`})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping4"}, []string{`["localhost"]`})
 	assert.NoError(t, err, "Command with one param is OK")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "ping5", []string{`["localhost", "-4"]`})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping5"}, []string{`["localhost", "-4"]`})
 	assert.NoError(t, err, "Command with many params is OK")
 
-	_, _, err = scheduler.ExecuteProgramCommand(ctx, "pong", nil)
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "pong"}, nil)
 	assert.IsType(t, (*exec.Error)(nil), err, "Uknown command should produce error")
 
-	retCode, _, err = scheduler.ExecuteProgramCommand(ctx, "ping5", []string{`{"param1": "localhost"}`})
+	err = scheduler.ExecuteProgramCommand(ctx, &pgengine.ChainTask{Command: "ping5"}, []string{`{"param1": "localhost"}`})
 	assert.IsType(t, (*json.UnmarshalTypeError)(nil), err, "Command should fail with mailformed json parameter")
-	assert.NotEqual(t, 0, retCode, "return code should indicate failure.")
 }

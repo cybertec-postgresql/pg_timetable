@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
 type commander interface {
@@ -26,11 +27,11 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 var Cmd commander = realCommander{}
 
 // ExecuteProgramCommand executes program command and returns status code, output and error if any
-func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string, paramValues []string) (code int, stdout string, stderr error) {
+func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.ChainTask, paramValues []string) error {
 
-	command = strings.TrimSpace(command)
+	command := strings.TrimSpace(task.Command)
 	if command == "" {
-		return -1, "", errors.New("program command cannot be empty")
+		return errors.New("program command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		paramValues = []string{""}
@@ -39,24 +40,21 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, command string,
 		params := []string{}
 		if val > "" {
 			if err := json.Unmarshal([]byte(val), &params); err != nil {
-				return -1, "", err
+				return err
 			}
 		}
 		out, err := Cmd.CombinedOutput(ctx, command, params...) // #nosec
-		cmdLine := fmt.Sprintf("%s %v: ", command, params)
-		stdout = strings.TrimSpace(string(out))
-		l := sch.l.WithField("command", cmdLine).
-			WithField("output", string(out))
 		if err != nil {
 			//check if we're dealing with an ExitError - i.e. return code other than 0
 			if exitError, ok := err.(*exec.ExitError); ok {
 				exitCode := exitError.ExitCode()
-				l.WithField("retcode", exitCode).Debug("Program run", cmdLine, exitCode)
-				return exitCode, stdout, exitError
+				sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
+				return exitError
 			}
-			return -1, stdout, err
+			sch.pgengine.LogTaskExecution(context.Background(), task, -1, string(out), val)
+			return err
 		}
-		l.WithField("retcode", 0).Debug("Program run")
+		sch.pgengine.LogTaskExecution(context.Background(), task, 0, string(out), val)
 	}
-	return 0, stdout, nil
+	return nil
 }

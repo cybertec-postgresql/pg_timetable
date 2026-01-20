@@ -3,8 +3,8 @@ package scheduler
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -222,11 +222,16 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		l := chainL.WithField("task", task.TaskID)
 		l.Info("Starting task")
 		taskCtx := log.WithLogger(chainCtx, l)
-		retCode := sch.executeTask(taskCtx, tx, &task)
+		err = sch.executeTask(taskCtx, tx, &task)
+		if err != nil {
+			l.WithError(err).Error("Task execution failed")
+		} else {
+			l.Info("Task executed successfully")
+		}
 
 		// we use background context here because current one (chainCtx) might be cancelled
 		bctx = log.WithLogger(ctx, l)
-		if retCode != 0 {
+		if err != nil {
 			if !task.IgnoreError {
 				chainL.Error("Chain failed")
 				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
@@ -247,12 +252,10 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 }
 
 /* execute a task */
-func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) int {
+func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine.ChainTask) error {
 	var (
 		paramValues []string
 		err         error
-		out         string
-		retCode     int
 		cancel      context.CancelFunc
 	)
 
@@ -260,7 +263,7 @@ func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine
 	err = sch.pgengine.GetChainParamValues(ctx, &paramValues, task)
 	if err != nil {
 		l.WithError(err).Error("cannot fetch parameters values for chain: ", err)
-		return -1
+		return err
 	}
 
 	ctx, cancel = getTimeoutContext(ctx, sch.Config().Resource.TaskTimeout, task.Timeout)
@@ -271,27 +274,16 @@ func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine
 	task.StartedAt = time.Now()
 	switch task.Kind {
 	case "SQL":
-		out, err = sch.pgengine.ExecuteSQLTask(ctx, tx, task, paramValues)
+		err = sch.pgengine.ExecuteSQLTask(ctx, tx, task, paramValues)
 	case "PROGRAM":
 		if sch.pgengine.NoProgramTasks {
 			l.Info("Program task execution skipped")
-			return -2
+			return errors.New("program tasks execution is disabled")
 		}
-		retCode, out, err = sch.ExecuteProgramCommand(ctx, task.Command, paramValues)
+		err = sch.ExecuteProgramCommand(ctx, task, paramValues)
 	case "BUILTIN":
-		out, err = sch.executeBuiltinTask(ctx, task.Command, paramValues)
+		err = sch.executeBuiltinTask(ctx, task, paramValues)
 	}
 	task.Duration = time.Since(task.StartedAt).Microseconds()
-
-	if err != nil {
-		if retCode == 0 {
-			retCode = -1
-		}
-		out = strings.Join([]string{out, err.Error()}, "\n")
-		l.WithError(err).Error("Task execution failed")
-	} else {
-		l.Info("Task executed successfully")
-	}
-	sch.pgengine.LogTaskExecution(context.Background(), task, retCode, out)
-	return retCode
+	return err
 }

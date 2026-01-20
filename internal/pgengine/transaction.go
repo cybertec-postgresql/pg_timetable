@@ -10,7 +10,6 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	pgx "github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // StartTransaction returns transaction object, virtual transaction id and error
@@ -56,7 +55,7 @@ func (pge *PgEngine) MustRollbackToSavepoint(ctx context.Context, tx pgx.Tx, tas
 }
 
 // ExecuteSQLTask executes SQL task
-func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error) {
+func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (err error) {
 	switch {
 	case task.IsRemote():
 		return pge.ExecRemoteSQLTask(ctx, task, paramValues)
@@ -68,15 +67,15 @@ func (pge *PgEngine) ExecuteSQLTask(ctx context.Context, tx pgx.Tx, task *ChainT
 }
 
 // ExecLocalSQLTask executes local task in the chain transaction
-func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (out string, err error) {
+func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *ChainTask, paramValues []string) (err error) {
 	if err := pge.SetRole(ctx, tx, task.RunAs); err != nil {
-		return "", err
+		return err
 	}
 	if task.IgnoreError {
 		pge.MustSavepoint(ctx, tx, task.TaskID)
 	}
 	pge.SetCurrentTaskContext(ctx, tx, task.ChainID, task.TaskID)
-	out, err = pge.ExecuteSQLCommand(ctx, tx, task.Command, paramValues)
+	err = pge.ExecuteSQLCommand(ctx, tx, task, paramValues)
 	if err != nil && task.IgnoreError {
 		pge.MustRollbackToSavepoint(ctx, tx, task.TaskID)
 	}
@@ -87,21 +86,21 @@ func (pge *PgEngine) ExecLocalSQLTask(ctx context.Context, tx pgx.Tx, task *Chai
 }
 
 // ExecStandaloneTask executes task against the provided connection interface, it can be remote connection or acquired connection from the pool
-func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxConnIface, error), task *ChainTask, paramValues []string) (string, error) {
+func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxConnIface, error), task *ChainTask, paramValues []string) error {
 	conn, err := connf()
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer pge.FinalizeDBConnection(ctx, conn)
 	if err := pge.SetRole(ctx, conn, task.RunAs); err != nil {
-		return "", err
+		return err
 	}
 	pge.SetCurrentTaskContext(ctx, conn, task.ChainID, task.TaskID)
-	return pge.ExecuteSQLCommand(ctx, conn, task.Command, paramValues)
+	return pge.ExecuteSQLCommand(ctx, conn, task, paramValues)
 }
 
 // ExecRemoteSQLTask executes task against remote connection
-func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
+func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error {
 	log.GetLogger(ctx).Info("Switching to remote task mode")
 	return pge.ExecStandaloneTask(ctx,
 		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, task.ConnectString) },
@@ -109,7 +108,7 @@ func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, par
 }
 
 // ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
-func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) (string, error) {
+func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error {
 	log.GetLogger(ctx).Info("Switching to autonomous task mode")
 	return pge.ExecStandaloneTask(ctx,
 		func() (PgxConnIface, error) { return pge.GetLocalDBConnection(ctx) },
@@ -117,25 +116,27 @@ func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask,
 }
 
 // ExecuteSQLCommand executes chain command with parameters inside transaction
-func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, command string, paramValues []string) (out string, err error) {
-	var ct pgconn.CommandTag
+func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, task *ChainTask, paramValues []string) (err error) {
 	var params []any
-	if strings.TrimSpace(command) == "" {
-		return "", errors.New("SQL command cannot be empty")
+	var errCodes = map[bool]int{false: 0, true: -1}
+	if strings.TrimSpace(task.Command) == "" {
+		return errors.New("SQL command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
-		ct, err = executor.Exec(ctx, command)
-		out = ct.String()
-		return
+		ct, e := executor.Exec(ctx, task.Command)
+		pge.LogTaskExecution(context.Background(), task, errCodes[err != nil], ct.String(), "")
+		return e
 	}
 	for _, val := range paramValues {
-		if val > "" {
-			if err = json.Unmarshal([]byte(val), &params); err != nil {
-				return
-			}
-			ct, err = executor.Exec(ctx, command, params...)
-			out = out + ct.String() + "\n"
+		if val == "" {
+			continue
 		}
+		if err = json.Unmarshal([]byte(val), &params); err != nil {
+			return
+		}
+		ct, e := executor.Exec(ctx, task.Command, params...)
+		err = errors.Join(err, e)
+		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), val)
 	}
 	return
 }

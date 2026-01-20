@@ -135,7 +135,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NoError(t, err, "Should start transaction")
 		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		f := func(sql string, params []string) error {
-			_, err := pge.ExecuteSQLCommand(ctx, tx, sql, params)
+			err := pge.ExecuteSQLCommand(ctx, tx, &pgengine.ChainTask{Command: sql}, params)
 			return err
 		}
 		assert.Error(t, f("", nil), "Should error for empty script")
