@@ -28,7 +28,7 @@ func (pge *PgEngine) IsAlive() bool {
 }
 
 // LogTaskExecution will log current chain element execution status including retcode
-func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string) {
+func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retCode int, output string, params string) {
 	switch pge.Logging.LogDBLevel {
 	case "none":
 		return
@@ -38,12 +38,12 @@ func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retC
 		}
 	}
 	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.execution_log (
-chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error) 
-VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10, $11)`,
+chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error, params) 
+VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10, $11, $12)`,
 		task.ChainID, task.TaskID, task.Command, task.Kind,
 		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
 		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Vxid,
-		task.IgnoreError)
+		task.IgnoreError, params)
 	if err != nil {
 		pge.l.WithError(err).Error("Failed to log chain element execution status")
 	}

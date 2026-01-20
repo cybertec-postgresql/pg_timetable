@@ -99,9 +99,7 @@ func TestExecuteChain(t *testing.T) {
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	sch.executeChain(ctx, Chain{Timeout: 1})
+	sch.executeChain(t.Context(), Chain{Timeout: 1})
 }
 
 func TestExecuteChainElement(t *testing.T) {
@@ -110,10 +108,8 @@ func TestExecuteChainElement(t *testing.T) {
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow("foo"))
-	sch.executeTask(ctx, mock, &pgengine.ChainTask{Timeout: 1})
+	_ = sch.executeTask(t.Context(), mock, &pgengine.ChainTask{Timeout: 1})
 }
 
 func TestExecuteOnErrorHandler(t *testing.T) {

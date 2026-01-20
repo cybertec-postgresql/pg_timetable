@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 )
 
@@ -25,22 +26,27 @@ var BuiltinTasks = map[string](func(context.Context, *Scheduler, string) (string
 	"CopyFromProgram": taskCopyFromProgram,
 	"Shutdown":        taskShutdown}
 
-func (sch *Scheduler) executeBuiltinTask(ctx context.Context, name string, paramValues []string) (stdout string, err error) {
-	var s string
+func (sch *Scheduler) executeBuiltinTask(ctx context.Context, task *pgengine.ChainTask, paramValues []string) (err error) {
+	var stdout string
+	var errCodes = map[bool]int{true: 0, false: -1}
+	name := task.Command
 	f := BuiltinTasks[name]
 	if f == nil {
-		return "", errors.New("No built-in task found: " + name)
+		return errors.New("No built-in task found: " + name)
 	}
 	l := log.GetLogger(ctx)
 	l.WithField("name", name).Debugf("Executing builtin task with parameters %+q", paramValues)
 	if len(paramValues) == 0 {
-		return f(ctx, sch, "")
+		stdout, err = f(ctx, sch, "")
+		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, "")
+		return err
 	}
 	for _, val := range paramValues {
-		if s, err = f(ctx, sch, val); err != nil {
+		stdout, err = f(ctx, sch, val)
+		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, val)
+		if err != nil {
 			return
 		}
-		stdout += fmt.Sprintln(s)
 	}
 	return
 }

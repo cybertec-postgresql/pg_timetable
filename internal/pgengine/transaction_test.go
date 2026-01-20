@@ -88,13 +88,13 @@ func TestExecuteSQLTask(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	t.Run("Check autonomous SQL task", func(t *testing.T) {
-		_, err := pge.ExecuteSQLTask(ctx, nil, &pgengine.ChainTask{Autonomous: true}, []string{})
+		err := pge.ExecuteSQLTask(ctx, nil, &pgengine.ChainTask{Autonomous: true}, []string{})
 		assert.ErrorContains(t, err, "pgpool.Acquire() method is not implemented")
 	})
 
 	t.Run("Check remote SQL task", func(t *testing.T) {
 		task := pgengine.ChainTask{ConnectString: "foo"}
-		_, err := pge.ExecuteSQLTask(ctx, nil, &task, []string{})
+		err := pge.ExecuteSQLTask(ctx, nil, &task, []string{})
 		assert.ErrorContains(t, err, "cannot parse")
 	})
 
@@ -102,7 +102,7 @@ func TestExecuteSQLTask(t *testing.T) {
 		mockPool.ExpectBegin()
 		tx, err := mockPool.Begin(ctx)
 		assert.NoError(t, err)
-		_, err = pge.ExecuteSQLTask(ctx, tx, &pgengine.ChainTask{IgnoreError: true}, []string{})
+		err = pge.ExecuteSQLTask(ctx, tx, &pgengine.ChainTask{IgnoreError: true}, []string{})
 		assert.ErrorContains(t, err, "SQL command cannot be empty")
 	})
 }
@@ -125,11 +125,11 @@ func TestExecLocalSQLTask(t *testing.T) {
 		Command:     "FOO",
 		RunAs:       "Bob",
 	}
-	_, err := pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
+	err := pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
 	assert.Error(t, err)
 
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("unknown role Bob"))
-	_, err = pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
+	err = pge.ExecLocalSQLTask(ctx, mockPool, &task, []string{})
 	assert.ErrorContains(t, err, "unknown role Bob")
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
@@ -152,16 +152,16 @@ func TestExecStandaloneTask(t *testing.T) {
 	}
 	cf := func() (pgengine.PgxConnIface, error) { return mockPool.AsConn(), nil }
 
-	_, err := pge.ExecStandaloneTask(ctx, cf, &task, []string{})
+	err := pge.ExecStandaloneTask(ctx, cf, &task, []string{})
 	assert.Error(t, err)
 
 	mockPool.ExpectExec("SET ROLE").WillReturnError(errors.New("unknown role Bob"))
 	mockPool.ExpectClose()
-	_, err = pge.ExecStandaloneTask(ctx, cf, &task, []string{})
+	err = pge.ExecStandaloneTask(ctx, cf, &task, []string{})
 	assert.ErrorContains(t, err, "unknown role Bob")
 
 	cf = func() (pgengine.PgxConnIface, error) { return nil, errors.New("no connection") }
-	_, err = pge.ExecStandaloneTask(ctx, cf, &task, []string{})
+	err = pge.ExecStandaloneTask(ctx, cf, &task, []string{})
 	assert.ErrorContains(t, err, "no connection")
 
 	assert.NoError(t, mockPool.ExpectationsWereMet())
@@ -181,19 +181,19 @@ func TestExecuteSQLCommand(t *testing.T) {
 
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
-	_, err := pge.ExecuteSQLCommand(ctx, mockPool, "", []string{})
+	err := pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{}, []string{})
 	assert.Error(t, err)
 
 	mockPool.ExpectExec("correct json").WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "correct json", []string{})
+	err = pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{Command: "correct json"}, []string{})
 	assert.NoError(t, err)
 
 	mockPool.ExpectExec("correct json").WithArgs("John", 30.0, nil).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "correct json", []string{`["John", 30, null]`})
+	err = pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{Command: "correct json"}, []string{`["John", 30, null]`})
 	assert.NoError(t, err)
 
 	mockPool.ExpectExec("incorrect json").WillReturnError(json.Unmarshal([]byte("foo"), &struct{}{}))
-	_, err = pge.ExecuteSQLCommand(ctx, mockPool, "incorrect json", []string{"foo"})
+	err = pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{Command: "incorrect json"}, []string{"foo"})
 	assert.Error(t, err)
 }
 

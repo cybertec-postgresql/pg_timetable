@@ -27,4 +27,5 @@ VALUES
     (11, '00573 Add ability to start a chain with delay'),
     (12, '00575 Add on_error handling'),
     (13, '00629 Add ignore_error column to timetable.execution_log'),
-    (14, '00721 Add more job control functions');
+    (14, '00721 Add more job control functions'),
+    (15, '00733 Add params column to timetable.execution_log table');
