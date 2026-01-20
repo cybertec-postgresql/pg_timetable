@@ -118,7 +118,8 @@ CREATE TABLE timetable.execution_log (
     kind            timetable.command_kind,
     command         TEXT,
     output          TEXT,
-    client_name     TEXT        NOT NULL
+    client_name     TEXT        NOT NULL,
+    params          TEXT
 );
 
 COMMENT ON TABLE timetable.execution_log IS
