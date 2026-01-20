@@ -28,7 +28,8 @@ var Cmd commander = realCommander{}
 
 // ExecuteProgramCommand executes program command and returns status code, output and error if any
 func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.ChainTask, paramValues []string) error {
-
+	var err error
+	var exitCode int
 	command := strings.TrimSpace(task.Command)
 	if command == "" {
 		return errors.New("program command cannot be empty")
@@ -37,24 +38,22 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.
 		paramValues = []string{""}
 	}
 	for _, val := range paramValues {
+		exitCode = 0
 		params := []string{}
 		if val > "" {
 			if err := json.Unmarshal([]byte(val), &params); err != nil {
 				return err
 			}
 		}
-		out, err := Cmd.CombinedOutput(ctx, command, params...) // #nosec
-		if err != nil {
-			//check if we're dealing with an ExitError - i.e. return code other than 0
+		out, e := Cmd.CombinedOutput(ctx, command, params...) // #nosec
+		if e != nil {
+			exitCode = -1
+			err = errors.Join(err, e) // accumulate errors for all param sets
 			if exitError, ok := err.(*exec.ExitError); ok {
-				exitCode := exitError.ExitCode()
-				sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
-				return exitError
+				exitCode = exitError.ExitCode()
 			}
-			sch.pgengine.LogTaskExecution(context.Background(), task, -1, string(out), val)
-			return err
 		}
-		sch.pgengine.LogTaskExecution(context.Background(), task, 0, string(out), val)
+		sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
 	}
-	return nil
+	return err
 }
