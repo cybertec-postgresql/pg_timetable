@@ -31,7 +31,7 @@ It is completely database driven and provides a couple of advanced concepts.
 3. Create a new job, e.g. run `VACUUM` each night at 00:30 Postgres server time zone
 
     ```sql
-    my_database=> SELECT timetable.add_job('frequent-vacuum', '30 * * * *', 'VACUUM');
+    my_database=> SELECT timetable.add_job('frequent-vacuum', '30 0 * * *', 'VACUUM');
     add_job
     ---------
           3
