@@ -124,7 +124,7 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		ct, e := executor.Exec(ctx, task.Command)
-		pge.LogTaskExecution(context.Background(), task, errCodes[err != nil], ct.String(), "")
+		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), "")
 		return e
 	}
 	for _, val := range paramValues {
