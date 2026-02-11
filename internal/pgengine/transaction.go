@@ -131,7 +131,8 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 		if val == "" {
 			continue
 		}
-		if err = json.Unmarshal([]byte(val), &params); err != nil {
+		if parseErr := json.Unmarshal([]byte(val), &params); parseErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", val, parseErr))
 			return
 		}
 		ct, e := executor.Exec(ctx, task.Command, params...)
