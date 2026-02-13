@@ -17,10 +17,9 @@ linters:
     rules:
       - path: (.+)\.go$
         text: SA5008   # ignore staticcheck for go-flags
-      - path: api/
-        text: "var-naming: avoid meaningless package names"
-        linters:
+      - linters:
           - revive
+        text: "var-naming: avoid"
     paths:
       - third_party$
       - builtin$
