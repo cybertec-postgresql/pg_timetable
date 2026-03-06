@@ -124,14 +124,15 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 	}
 	if len(paramValues) == 0 { //mimic empty param
 		ct, e := executor.Exec(ctx, task.Command)
-		pge.LogTaskExecution(context.Background(), task, errCodes[err != nil], ct.String(), "")
+		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), "")
 		return e
 	}
 	for _, val := range paramValues {
 		if val == "" {
 			continue
 		}
-		if err = json.Unmarshal([]byte(val), &params); err != nil {
+		if parseErr := json.Unmarshal([]byte(val), &params); parseErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", val, parseErr))
 			return
 		}
 		ct, e := executor.Exec(ctx, task.Command, params...)

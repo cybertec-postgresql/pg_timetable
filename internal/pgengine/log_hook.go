@@ -141,6 +141,12 @@ func (hook *LogHook) send(cache []logrus.Entry) {
 		[]string{"ts", "client_name", "pid", "log_level", "message", "message_data"},
 		pgx.CopyFromSlice(len(cache),
 			func(i int) ([]any, error) {
+				if errVal, ok := cache[i].Data[logrus.ErrorKey]; ok {
+					if e, isErr := errVal.(error); isErr && e != nil {
+						cache[i].Data[logrus.ErrorKey] = e.Error()
+					}
+				}
+
 				jsonData, err := json.Marshal(cache[i].Data)
 				if err != nil {
 					return nil, err
