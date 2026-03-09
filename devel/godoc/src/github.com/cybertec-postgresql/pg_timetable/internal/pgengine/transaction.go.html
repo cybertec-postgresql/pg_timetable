@@ -181,82 +181,83 @@
 <span id="L124" class="ln">   124  </span>	}
 <span id="L125" class="ln">   125  </span>	if len(paramValues) == 0 { <span class="comment">//mimic empty param</span>
 <span id="L126" class="ln">   126  </span>		ct, e := executor.Exec(ctx, task.Command)
-<span id="L127" class="ln">   127  </span>		pge.LogTaskExecution(context.Background(), task, errCodes[err != nil], ct.String(), &#34;&#34;)
+<span id="L127" class="ln">   127  </span>		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), &#34;&#34;)
 <span id="L128" class="ln">   128  </span>		return e
 <span id="L129" class="ln">   129  </span>	}
 <span id="L130" class="ln">   130  </span>	for _, val := range paramValues {
 <span id="L131" class="ln">   131  </span>		if val == &#34;&#34; {
 <span id="L132" class="ln">   132  </span>			continue
 <span id="L133" class="ln">   133  </span>		}
-<span id="L134" class="ln">   134  </span>		if err = json.Unmarshal([]byte(val), &amp;params); err != nil {
-<span id="L135" class="ln">   135  </span>			return
-<span id="L136" class="ln">   136  </span>		}
-<span id="L137" class="ln">   137  </span>		ct, e := executor.Exec(ctx, task.Command, params...)
-<span id="L138" class="ln">   138  </span>		err = errors.Join(err, e)
-<span id="L139" class="ln">   139  </span>		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), val)
-<span id="L140" class="ln">   140  </span>	}
-<span id="L141" class="ln">   141  </span>	return
-<span id="L142" class="ln">   142  </span>}
-<span id="L143" class="ln">   143  </span>
-<span id="L144" class="ln">   144  </span><span class="comment">// GetLocalDBConnection acquires a connection from a local pool and returns it</span>
-<span id="L145" class="ln">   145  </span>func (pge *PgEngine) GetLocalDBConnection(ctx context.Context) (conn PgxConnIface, err error) {
-<span id="L146" class="ln">   146  </span>	c, err := pge.ConfigDb.Acquire(ctx)
-<span id="L147" class="ln">   147  </span>	if err != nil {
-<span id="L148" class="ln">   148  </span>		return nil, err
-<span id="L149" class="ln">   149  </span>	}
-<span id="L150" class="ln">   150  </span>	return c.Hijack(), nil
-<span id="L151" class="ln">   151  </span>}
-<span id="L152" class="ln">   152  </span>
-<span id="L153" class="ln">   153  </span><span class="comment">// GetRemoteDBConnection create a remote db connection object</span>
-<span id="L154" class="ln">   154  </span>func (pge *PgEngine) GetRemoteDBConnection(ctx context.Context, connectionString string) (conn PgxConnIface, err error) {
-<span id="L155" class="ln">   155  </span>	conn, err = pgx.Connect(ctx, connectionString)
-<span id="L156" class="ln">   156  </span>	if err != nil {
-<span id="L157" class="ln">   157  </span>		return nil, err
-<span id="L158" class="ln">   158  </span>	}
-<span id="L159" class="ln">   159  </span>	log.GetLogger(ctx).Info(&#34;Remote connection established...&#34;)
-<span id="L160" class="ln">   160  </span>	return
-<span id="L161" class="ln">   161  </span>}
-<span id="L162" class="ln">   162  </span>
-<span id="L163" class="ln">   163  </span><span class="comment">// FinalizeDBConnection closes session</span>
-<span id="L164" class="ln">   164  </span>func (pge *PgEngine) FinalizeDBConnection(ctx context.Context, remoteDb PgxConnIface) {
-<span id="L165" class="ln">   165  </span>	l := log.GetLogger(ctx)
-<span id="L166" class="ln">   166  </span>	l.Info(&#34;Closing standalone session&#34;)
-<span id="L167" class="ln">   167  </span>	if err := remoteDb.Close(ctx); err != nil {
-<span id="L168" class="ln">   168  </span>		l.WithError(err).Error(&#34;Cannot close database connection:&#34;, err)
-<span id="L169" class="ln">   169  </span>	}
-<span id="L170" class="ln">   170  </span>	remoteDb = nil
-<span id="L171" class="ln">   171  </span>}
-<span id="L172" class="ln">   172  </span>
-<span id="L173" class="ln">   173  </span><span class="comment">// SetRole - set the current user identifier of the current session</span>
-<span id="L174" class="ln">   174  </span>func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID string) error {
-<span id="L175" class="ln">   175  </span>	if strings.TrimSpace(runUID) == &#34;&#34; {
-<span id="L176" class="ln">   176  </span>		return nil
-<span id="L177" class="ln">   177  </span>	}
-<span id="L178" class="ln">   178  </span>	log.GetLogger(ctx).Info(&#34;Setting role to &#34;, runUID)
-<span id="L179" class="ln">   179  </span>	_, err := executor.Exec(ctx, fmt.Sprintf(&#34;SET ROLE %v&#34;, runUID))
-<span id="L180" class="ln">   180  </span>	return err
-<span id="L181" class="ln">   181  </span>}
-<span id="L182" class="ln">   182  </span>
-<span id="L183" class="ln">   183  </span><span class="comment">// ResetRole - RESET forms reset the current user identifier to be the current session user identifier</span>
-<span id="L184" class="ln">   184  </span>func (pge *PgEngine) ResetRole(ctx context.Context, executor executor) {
-<span id="L185" class="ln">   185  </span>	l := log.GetLogger(ctx)
-<span id="L186" class="ln">   186  </span>	l.Info(&#34;Resetting role&#34;)
-<span id="L187" class="ln">   187  </span>	_, err := executor.Exec(ctx, `RESET ROLE`)
-<span id="L188" class="ln">   188  </span>	if err != nil {
-<span id="L189" class="ln">   189  </span>		l.WithError(err).Error(&#34;Failed to set a role&#34;, err)
-<span id="L190" class="ln">   190  </span>	}
-<span id="L191" class="ln">   191  </span>}
-<span id="L192" class="ln">   192  </span>
-<span id="L193" class="ln">   193  </span><span class="comment">// SetCurrentTaskContext - set the working transaction &#34;pg_timetable.current_task_id&#34; run-time parameter</span>
-<span id="L194" class="ln">   194  </span>func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, executor executor, chainID int, taskID int) {
-<span id="L195" class="ln">   195  </span>	_, err := executor.Exec(ctx, `SELECT set_config(&#39;pg_timetable.current_task_id&#39;, $1, false),
-<span id="L196" class="ln">   196  </span>set_config(&#39;pg_timetable.current_chain_id&#39;, $2, false),
-<span id="L197" class="ln">   197  </span>set_config(&#39;pg_timetable.current_client_name&#39;, $3, false)`, strconv.Itoa(taskID), strconv.Itoa(chainID), pge.ClientName)
-<span id="L198" class="ln">   198  </span>	if err != nil {
-<span id="L199" class="ln">   199  </span>		log.GetLogger(ctx).WithError(err).Error(&#34;Failed to set current task context&#34;, err)
-<span id="L200" class="ln">   200  </span>	}
-<span id="L201" class="ln">   201  </span>}
-<span id="L202" class="ln">   202  </span>
+<span id="L134" class="ln">   134  </span>		if parseErr := json.Unmarshal([]byte(val), &amp;params); parseErr != nil {
+<span id="L135" class="ln">   135  </span>			err = errors.Join(err, fmt.Errorf(&#34;failed to parse parameter %s: %w&#34;, val, parseErr))
+<span id="L136" class="ln">   136  </span>			return
+<span id="L137" class="ln">   137  </span>		}
+<span id="L138" class="ln">   138  </span>		ct, e := executor.Exec(ctx, task.Command, params...)
+<span id="L139" class="ln">   139  </span>		err = errors.Join(err, e)
+<span id="L140" class="ln">   140  </span>		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), val)
+<span id="L141" class="ln">   141  </span>	}
+<span id="L142" class="ln">   142  </span>	return
+<span id="L143" class="ln">   143  </span>}
+<span id="L144" class="ln">   144  </span>
+<span id="L145" class="ln">   145  </span><span class="comment">// GetLocalDBConnection acquires a connection from a local pool and returns it</span>
+<span id="L146" class="ln">   146  </span>func (pge *PgEngine) GetLocalDBConnection(ctx context.Context) (conn PgxConnIface, err error) {
+<span id="L147" class="ln">   147  </span>	c, err := pge.ConfigDb.Acquire(ctx)
+<span id="L148" class="ln">   148  </span>	if err != nil {
+<span id="L149" class="ln">   149  </span>		return nil, err
+<span id="L150" class="ln">   150  </span>	}
+<span id="L151" class="ln">   151  </span>	return c.Hijack(), nil
+<span id="L152" class="ln">   152  </span>}
+<span id="L153" class="ln">   153  </span>
+<span id="L154" class="ln">   154  </span><span class="comment">// GetRemoteDBConnection create a remote db connection object</span>
+<span id="L155" class="ln">   155  </span>func (pge *PgEngine) GetRemoteDBConnection(ctx context.Context, connectionString string) (conn PgxConnIface, err error) {
+<span id="L156" class="ln">   156  </span>	conn, err = pgx.Connect(ctx, connectionString)
+<span id="L157" class="ln">   157  </span>	if err != nil {
+<span id="L158" class="ln">   158  </span>		return nil, err
+<span id="L159" class="ln">   159  </span>	}
+<span id="L160" class="ln">   160  </span>	log.GetLogger(ctx).Info(&#34;Remote connection established...&#34;)
+<span id="L161" class="ln">   161  </span>	return
+<span id="L162" class="ln">   162  </span>}
+<span id="L163" class="ln">   163  </span>
+<span id="L164" class="ln">   164  </span><span class="comment">// FinalizeDBConnection closes session</span>
+<span id="L165" class="ln">   165  </span>func (pge *PgEngine) FinalizeDBConnection(ctx context.Context, remoteDb PgxConnIface) {
+<span id="L166" class="ln">   166  </span>	l := log.GetLogger(ctx)
+<span id="L167" class="ln">   167  </span>	l.Info(&#34;Closing standalone session&#34;)
+<span id="L168" class="ln">   168  </span>	if err := remoteDb.Close(ctx); err != nil {
+<span id="L169" class="ln">   169  </span>		l.WithError(err).Error(&#34;Cannot close database connection:&#34;, err)
+<span id="L170" class="ln">   170  </span>	}
+<span id="L171" class="ln">   171  </span>	remoteDb = nil
+<span id="L172" class="ln">   172  </span>}
+<span id="L173" class="ln">   173  </span>
+<span id="L174" class="ln">   174  </span><span class="comment">// SetRole - set the current user identifier of the current session</span>
+<span id="L175" class="ln">   175  </span>func (pge *PgEngine) SetRole(ctx context.Context, executor executor, runUID string) error {
+<span id="L176" class="ln">   176  </span>	if strings.TrimSpace(runUID) == &#34;&#34; {
+<span id="L177" class="ln">   177  </span>		return nil
+<span id="L178" class="ln">   178  </span>	}
+<span id="L179" class="ln">   179  </span>	log.GetLogger(ctx).Info(&#34;Setting role to &#34;, runUID)
+<span id="L180" class="ln">   180  </span>	_, err := executor.Exec(ctx, fmt.Sprintf(&#34;SET ROLE %v&#34;, runUID))
+<span id="L181" class="ln">   181  </span>	return err
+<span id="L182" class="ln">   182  </span>}
+<span id="L183" class="ln">   183  </span>
+<span id="L184" class="ln">   184  </span><span class="comment">// ResetRole - RESET forms reset the current user identifier to be the current session user identifier</span>
+<span id="L185" class="ln">   185  </span>func (pge *PgEngine) ResetRole(ctx context.Context, executor executor) {
+<span id="L186" class="ln">   186  </span>	l := log.GetLogger(ctx)
+<span id="L187" class="ln">   187  </span>	l.Info(&#34;Resetting role&#34;)
+<span id="L188" class="ln">   188  </span>	_, err := executor.Exec(ctx, `RESET ROLE`)
+<span id="L189" class="ln">   189  </span>	if err != nil {
+<span id="L190" class="ln">   190  </span>		l.WithError(err).Error(&#34;Failed to set a role&#34;, err)
+<span id="L191" class="ln">   191  </span>	}
+<span id="L192" class="ln">   192  </span>}
+<span id="L193" class="ln">   193  </span>
+<span id="L194" class="ln">   194  </span><span class="comment">// SetCurrentTaskContext - set the working transaction &#34;pg_timetable.current_task_id&#34; run-time parameter</span>
+<span id="L195" class="ln">   195  </span>func (pge *PgEngine) SetCurrentTaskContext(ctx context.Context, executor executor, chainID int, taskID int) {
+<span id="L196" class="ln">   196  </span>	_, err := executor.Exec(ctx, `SELECT set_config(&#39;pg_timetable.current_task_id&#39;, $1, false),
+<span id="L197" class="ln">   197  </span>set_config(&#39;pg_timetable.current_chain_id&#39;, $2, false),
+<span id="L198" class="ln">   198  </span>set_config(&#39;pg_timetable.current_client_name&#39;, $3, false)`, strconv.Itoa(taskID), strconv.Itoa(chainID), pge.ClientName)
+<span id="L199" class="ln">   199  </span>	if err != nil {
+<span id="L200" class="ln">   200  </span>		log.GetLogger(ctx).WithError(err).Error(&#34;Failed to set current task context&#34;, err)
+<span id="L201" class="ln">   201  </span>	}
+<span id="L202" class="ln">   202  </span>}
+<span id="L203" class="ln">   203  </span>
 </pre><p></p>
 
 <div id="footer">

@@ -198,28 +198,34 @@
 <span id="L141" class="ln">   141  </span>		[]string{&#34;ts&#34;, &#34;client_name&#34;, &#34;pid&#34;, &#34;log_level&#34;, &#34;message&#34;, &#34;message_data&#34;},
 <span id="L142" class="ln">   142  </span>		pgx.CopyFromSlice(len(cache),
 <span id="L143" class="ln">   143  </span>			func(i int) ([]any, error) {
-<span id="L144" class="ln">   144  </span>				jsonData, err := json.Marshal(cache[i].Data)
-<span id="L145" class="ln">   145  </span>				if err != nil {
-<span id="L146" class="ln">   146  </span>					return nil, err
-<span id="L147" class="ln">   147  </span>				}
-<span id="L148" class="ln">   148  </span>				return []any{cache[i].Time,
-<span id="L149" class="ln">   149  </span>					hook.client,
-<span id="L150" class="ln">   150  </span>					hook.pid,
-<span id="L151" class="ln">   151  </span>					adaptEntryLevel(cache[i].Level),
-<span id="L152" class="ln">   152  </span>					cache[i].Message,
-<span id="L153" class="ln">   153  </span>					jsonData}, nil
-<span id="L154" class="ln">   154  </span>			}),
-<span id="L155" class="ln">   155  </span>	)
-<span id="L156" class="ln">   156  </span>	if err != nil {
-<span id="L157" class="ln">   157  </span>		select {
-<span id="L158" class="ln">   158  </span>		case hook.lastError &lt;- err:
-<span id="L159" class="ln">   159  </span>			<span class="comment">//error sent to the logger</span>
-<span id="L160" class="ln">   160  </span>		default:
-<span id="L161" class="ln">   161  </span>			<span class="comment">//there is unprocessed error already</span>
-<span id="L162" class="ln">   162  </span>		}
-<span id="L163" class="ln">   163  </span>	}
-<span id="L164" class="ln">   164  </span>}
-<span id="L165" class="ln">   165  </span>
+<span id="L144" class="ln">   144  </span>				if errVal, ok := cache[i].Data[logrus.ErrorKey]; ok {
+<span id="L145" class="ln">   145  </span>					if e, isErr := errVal.(error); isErr &amp;&amp; e != nil {
+<span id="L146" class="ln">   146  </span>						cache[i].Data[logrus.ErrorKey] = e.Error()
+<span id="L147" class="ln">   147  </span>					}
+<span id="L148" class="ln">   148  </span>				}
+<span id="L149" class="ln">   149  </span>
+<span id="L150" class="ln">   150  </span>				jsonData, err := json.Marshal(cache[i].Data)
+<span id="L151" class="ln">   151  </span>				if err != nil {
+<span id="L152" class="ln">   152  </span>					return nil, err
+<span id="L153" class="ln">   153  </span>				}
+<span id="L154" class="ln">   154  </span>				return []any{cache[i].Time,
+<span id="L155" class="ln">   155  </span>					hook.client,
+<span id="L156" class="ln">   156  </span>					hook.pid,
+<span id="L157" class="ln">   157  </span>					adaptEntryLevel(cache[i].Level),
+<span id="L158" class="ln">   158  </span>					cache[i].Message,
+<span id="L159" class="ln">   159  </span>					jsonData}, nil
+<span id="L160" class="ln">   160  </span>			}),
+<span id="L161" class="ln">   161  </span>	)
+<span id="L162" class="ln">   162  </span>	if err != nil {
+<span id="L163" class="ln">   163  </span>		select {
+<span id="L164" class="ln">   164  </span>		case hook.lastError &lt;- err:
+<span id="L165" class="ln">   165  </span>			<span class="comment">//error sent to the logger</span>
+<span id="L166" class="ln">   166  </span>		default:
+<span id="L167" class="ln">   167  </span>			<span class="comment">//there is unprocessed error already</span>
+<span id="L168" class="ln">   168  </span>		}
+<span id="L169" class="ln">   169  </span>	}
+<span id="L170" class="ln">   170  </span>}
+<span id="L171" class="ln">   171  </span>
 </pre><p></p>
 
 <div id="footer">
