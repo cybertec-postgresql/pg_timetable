@@ -66,6 +66,45 @@ func printVersion() {
 `, version, dbapi, commit, date)
 }
 
+// run contains the core application logic and returns an exit code.
+func run(ctx context.Context, cmdOpts *config.CmdOptions, logger log.LoggerHookerIface) int {
+	apiserver := api.Init(cmdOpts.RESTApi, logger)
+
+	var err error
+	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
+		logger.WithError(err).Error("Connection failed")
+		return ExitCodeDBEngineError
+	}
+	defer pge.Finalize()
+
+	if cmdOpts.Start.Upgrade {
+		if err := pge.MigrateDb(ctx); err != nil {
+			logger.WithError(err).Error("Upgrade failed")
+			return ExitCodeUpgradeError
+		}
+	} else {
+		if upgrade, err := pge.CheckNeedMigrateDb(ctx); upgrade || err != nil {
+			if upgrade {
+				logger.Error("You need to upgrade your database before proceeding, use --upgrade option")
+			}
+			if err != nil {
+				logger.WithError(err).Error("Migration check failed")
+			}
+			return ExitCodeUpgradeError
+		}
+	}
+	if cmdOpts.Start.Init {
+		return ExitCodeOK
+	}
+	sch := scheduler.New(pge, logger)
+	apiserver.APIHandler = sch
+
+	if sch.Run(ctx) == scheduler.ShutdownStatus {
+		return ExitCodeShutdownCommand
+	}
+	return ExitCodeOK
+}
+
 func main() {
 	cmdOpts, err := config.NewConfig(os.Stdout)
 	if err != nil {
@@ -93,40 +132,5 @@ func main() {
 		os.Exit(exitCode)
 	}()
 
-	apiserver := api.Init(cmdOpts.RESTApi, logger)
-
-	if pge, err = pgengine.New(ctx, *cmdOpts, logger); err != nil {
-		logger.WithError(err).Error("Connection failed")
-		exitCode = ExitCodeDBEngineError
-		return
-	}
-	defer pge.Finalize()
-
-	if cmdOpts.Start.Upgrade {
-		if err := pge.MigrateDb(ctx); err != nil {
-			logger.WithError(err).Error("Upgrade failed")
-			exitCode = ExitCodeUpgradeError
-			return
-		}
-	} else {
-		if upgrade, err := pge.CheckNeedMigrateDb(ctx); upgrade || err != nil {
-			if upgrade {
-				logger.Error("You need to upgrade your database before proceeding, use --upgrade option")
-			}
-			if err != nil {
-				logger.WithError(err).Error("Migration check failed")
-			}
-			exitCode = ExitCodeUpgradeError
-			return
-		}
-	}
-	if cmdOpts.Start.Init {
-		return
-	}
-	sch := scheduler.New(pge, logger)
-	apiserver.APIHandler = sch
-
-	if sch.Run(ctx) == scheduler.ShutdownStatus {
-		exitCode = ExitCodeShutdownCommand
-	}
+	exitCode = run(ctx, cmdOpts, logger)
 }
