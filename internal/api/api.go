@@ -24,6 +24,7 @@ type RestAPIServer struct {
 }
 
 func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
+	mux := http.NewServeMux()
 	s := &RestAPIServer{
 		nil,
 		logger,
@@ -32,12 +33,13 @@ func Init(opts config.RestAPIOpts, logger log.LoggerIface) *RestAPIServer {
 			ReadTimeout:    10 * time.Second,
 			WriteTimeout:   10 * time.Second,
 			MaxHeaderBytes: 1 << 20,
+			Handler:        mux,
 		},
 	}
-	http.HandleFunc("/liveness", s.livenessHandler)
-	http.HandleFunc("/readiness", s.readinessHandler)
-	http.HandleFunc("/startchain", s.chainHandler)
-	http.HandleFunc("/stopchain", s.chainHandler)
+	mux.HandleFunc("/liveness", s.livenessHandler)
+	mux.HandleFunc("/readiness", s.readinessHandler)
+	mux.HandleFunc("/startchain", s.chainHandler)
+	mux.HandleFunc("/stopchain", s.chainHandler)
 	if opts.Port != 0 {
 		logger.WithField("port", opts.Port).Info("Starting REST API server...")
 		go func() { logger.Error(s.ListenAndServe()) }()
