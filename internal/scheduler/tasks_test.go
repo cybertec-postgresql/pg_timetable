@@ -13,7 +13,8 @@ import (
 
 func TestExecuteTask(t *testing.T) {
 	mock, err := pgxmock.NewPool() //
-	assert.NoError(t, err)
+	a := assert.New(t)
+	a.NoError(err)
 	pge := pgengine.NewDB(mock, "--log-database-level=none")
 	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 
@@ -22,30 +23,36 @@ func TestExecuteTask(t *testing.T) {
 		return
 	}
 
-	assert.Error(t, et("foo", []string{}))
+	a.Error(et("foo", []string{}))
 
-	assert.Error(t, et("Sleep", []string{"foo"}))
-	assert.NoError(t, et("Sleep", []string{"1"}))
+	a.Error(et("Sleep", []string{"foo"}))
+	a.NoError(et("Sleep", []string{"1"}))
 
-	assert.NoError(t, et("NoOp", []string{}))
-	assert.NoError(t, et("NoOp", []string{"foo", "bar"}))
+	a.NoError(et("NoOp", []string{}))
+	a.NoError(et("NoOp", []string{"foo", "bar"}))
 
-	assert.NoError(t, et("Log", []string{"foo"}))
+	a.NoError(et("Log", []string{"foo"}))
 
-	assert.Error(t, et("CopyFromFile", []string{"foo"}), "Invalid json")
-	assert.Error(t, et("CopyFromFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
+	a.Error(et("CopyFromFile", []string{"foo"}), "Invalid json")
+	a.Error(et("CopyFromFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
 
-	assert.Error(t, et("CopyToFile", []string{"foo"}), "Invalid json")
-	assert.Error(t, et("CopyToFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
+	a.Error(et("CopyToFile", []string{"foo"}), "Invalid json")
+	a.Error(et("CopyToFile", []string{`{"sql": "COPY", "filename": "foo"}`}), "Acquire() should fail")
 
-	assert.Error(t, et("SendMail", []string{"foo"}), "Invalid json")
-	assert.Error(t, et("SendMail", []string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user"}`}))
+	a.Error(et("CopyToProgram", []string{"foo"}), "Invalid json")
+	a.Error(et("CopyToProgram", []string{`{"sql": "COPY", "program": "foo"}`}), "Acquire() should fail")
 
-	assert.Error(t, et("Download", []string{"foo"}), "Invalid json")
-	assert.EqualError(t, et("Download", []string{`{"workersnum": 0, "fileurls": [] }`}),
+	a.Error(et("CopyFromProgram", []string{"foo"}), "Invalid json")
+	a.Error(et("CopyFromProgram", []string{`{"sql": "COPY", "program": "foo"}`}), "Acquire() should fail")
+
+	a.Error(et("SendMail", []string{"foo"}), "Invalid json")
+	a.Error(et("SendMail", []string{`{"ServerHost":"smtp.example.com","ServerPort":587,"Username":"user"}`}))
+
+	a.Error(et("Download", []string{"foo"}), "Invalid json")
+	a.EqualError(et("Download", []string{`{"workersnum": 0, "fileurls": [] }`}),
 		"files to download are not specified", "Download with empty files should fail")
-	assert.Error(t, et("Download", []string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "" }`}),
+	a.Error(et("Download", []string{`{"workersnum": 0, "fileurls": ["http://foo.bar"], "destpath": "" }`}),
 		"Downlod incorrect url should fail")
 
-	assert.NoError(t, et("Shutdown", []string{}))
+	a.NoError(et("Shutdown", []string{}))
 }
