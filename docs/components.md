@@ -239,7 +239,6 @@ Once tasks have been arranged, they have to be scheduled as a **chain**. For thi
 | `self_destruct` | `boolean` | Self destruct the chain after successful execution. Failed chains will be executed according to the schedule one more time |
 | `exclusive_execution` | `boolean` | Specifies whether the chain should be executed exclusively while all other chains are paused |
 | `client_name` | `text` | Specifies which client should execute the chain. Set this to `NULL` to allow any client |
-| `timeout` | `integer` | Abort a chain that takes more than the specified number of milliseconds |
 | `on_error` | — | Holds SQL to execute if an error occurs. If task produced an error is marked with `ignore_error` then nothing is done |
 
 !!! note
