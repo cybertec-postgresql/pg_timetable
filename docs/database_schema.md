@@ -17,7 +17,7 @@
 ## Сron related functions
 
 ```sql
---8<-- "internal/pgengine/sql/cron_functions.sql"
+--8<-- "internal/pgengine/sql/cron.sql"
 ```
 
 ## ER-Diagram
