@@ -13,7 +13,7 @@
 
 
 
-<script>var goVersion = "go1.25.9";</script>
+<script>var goVersion = "go1.25.10";</script>
 <script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
 
 </head>
@@ -87,10 +87,66 @@
 <span id="L30" class="ln">    30  </span>	assert.NoError(t, err)
 <span id="L31" class="ln">    31  </span>}
 <span id="L32" class="ln">    32  </span>
+<span id="L33" class="ln">    33  </span>func TestValidateOTel(t *testing.T) {
+<span id="L34" class="ln">    34  </span>	tests := []struct {
+<span id="L35" class="ln">    35  </span>		name    string
+<span id="L36" class="ln">    36  </span>		opts    OTelOpts
+<span id="L37" class="ln">    37  </span>		wantErr string
+<span id="L38" class="ln">    38  </span>	}{
+<span id="L39" class="ln">    39  </span>		{
+<span id="L40" class="ln">    40  </span>			name: &#34;valid default config&#34;,
+<span id="L41" class="ln">    41  </span>			opts: OTelOpts{SampleRatio: 1.0, MetricPeriod: 30, ShutdownTimeout: 5},
+<span id="L42" class="ln">    42  </span>		},
+<span id="L43" class="ln">    43  </span>		{
+<span id="L44" class="ln">    44  </span>			name:    &#34;sample ratio too high&#34;,
+<span id="L45" class="ln">    45  </span>			opts:    OTelOpts{SampleRatio: 1.5, MetricPeriod: 30, ShutdownTimeout: 5},
+<span id="L46" class="ln">    46  </span>			wantErr: &#34;otel-sample-ratio must be between 0.0 and 1.0&#34;,
+<span id="L47" class="ln">    47  </span>		},
+<span id="L48" class="ln">    48  </span>		{
+<span id="L49" class="ln">    49  </span>			name:    &#34;sample ratio negative&#34;,
+<span id="L50" class="ln">    50  </span>			opts:    OTelOpts{SampleRatio: -0.1, MetricPeriod: 30, ShutdownTimeout: 5},
+<span id="L51" class="ln">    51  </span>			wantErr: &#34;otel-sample-ratio must be between 0.0 and 1.0&#34;,
+<span id="L52" class="ln">    52  </span>		},
+<span id="L53" class="ln">    53  </span>		{
+<span id="L54" class="ln">    54  </span>			name:    &#34;metric period zero&#34;,
+<span id="L55" class="ln">    55  </span>			opts:    OTelOpts{SampleRatio: 1.0, MetricPeriod: 0, ShutdownTimeout: 5},
+<span id="L56" class="ln">    56  </span>			wantErr: &#34;otel-metric-period must be &gt; 0&#34;,
+<span id="L57" class="ln">    57  </span>		},
+<span id="L58" class="ln">    58  </span>		{
+<span id="L59" class="ln">    59  </span>			name:    &#34;shutdown timeout zero&#34;,
+<span id="L60" class="ln">    60  </span>			opts:    OTelOpts{SampleRatio: 1.0, MetricPeriod: 30, ShutdownTimeout: 0},
+<span id="L61" class="ln">    61  </span>			wantErr: &#34;otel-shutdown-timeout must be &gt; 0&#34;,
+<span id="L62" class="ln">    62  </span>		},
+<span id="L63" class="ln">    63  </span>		{
+<span id="L64" class="ln">    64  </span>			name:    &#34;unsupported endpoint scheme&#34;,
+<span id="L65" class="ln">    65  </span>			opts:    OTelOpts{SampleRatio: 1.0, MetricPeriod: 30, ShutdownTimeout: 5, Endpoint: &#34;ftp://localhost:4317&#34;},
+<span id="L66" class="ln">    66  </span>			wantErr: &#34;unsupported OTel endpoint scheme: ftp&#34;,
+<span id="L67" class="ln">    67  </span>		},
+<span id="L68" class="ln">    68  </span>		{
+<span id="L69" class="ln">    69  </span>			name: &#34;valid grpc endpoint&#34;,
+<span id="L70" class="ln">    70  </span>			opts: OTelOpts{SampleRatio: 1.0, MetricPeriod: 30, ShutdownTimeout: 5, Endpoint: &#34;grpc://localhost:4317&#34;},
+<span id="L71" class="ln">    71  </span>		},
+<span id="L72" class="ln">    72  </span>		{
+<span id="L73" class="ln">    73  </span>			name: &#34;valid https endpoint&#34;,
+<span id="L74" class="ln">    74  </span>			opts: OTelOpts{SampleRatio: 1.0, MetricPeriod: 30, ShutdownTimeout: 5, Endpoint: &#34;https://api.honeycomb.io&#34;},
+<span id="L75" class="ln">    75  </span>		},
+<span id="L76" class="ln">    76  </span>	}
+<span id="L77" class="ln">    77  </span>	for _, tt := range tests {
+<span id="L78" class="ln">    78  </span>		t.Run(tt.name, func(t *testing.T) {
+<span id="L79" class="ln">    79  </span>			err := ValidateOTel(tt.opts)
+<span id="L80" class="ln">    80  </span>			if tt.wantErr == &#34;&#34; {
+<span id="L81" class="ln">    81  </span>				assert.NoError(t, err)
+<span id="L82" class="ln">    82  </span>			} else {
+<span id="L83" class="ln">    83  </span>				assert.EqualError(t, err, tt.wantErr)
+<span id="L84" class="ln">    84  </span>			}
+<span id="L85" class="ln">    85  </span>		})
+<span id="L86" class="ln">    86  </span>	}
+<span id="L87" class="ln">    87  </span>}
+<span id="L88" class="ln">    88  </span>
 </pre><p></p>
 
 <div id="footer">
-Build version go1.25.9.<br/>
+Build version go1.25.10.<br/>
 </div>
 
 </div><!-- .container -->

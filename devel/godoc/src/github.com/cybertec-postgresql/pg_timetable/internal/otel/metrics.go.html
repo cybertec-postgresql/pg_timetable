@@ -1,0 +1,160 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/pg_timetable/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.10";</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/pg_timetable/devel/godoc/src">src</a>/<a href="/pg_timetable/devel/godoc/src/github.com">github.com</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel">otel</a>/<span class="text-muted">metrics.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/otel">github.com/cybertec-postgresql/pg_timetable/internal/otel</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package otel
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>
+<span id="L6" class="ln">     6  </span>	&#34;go.opentelemetry.io/otel/attribute&#34;
+<span id="L7" class="ln">     7  </span>	&#34;go.opentelemetry.io/otel/metric&#34;
+<span id="L8" class="ln">     8  </span>)
+<span id="L9" class="ln">     9  </span>
+<span id="L10" class="ln">    10  </span>var chainDurationBuckets = []float64{0.001, 0.01, 0.1, 0.5, 1, 5, 10, 30, 60, 120, 300}
+<span id="L11" class="ln">    11  </span>
+<span id="L12" class="ln">    12  </span>func (p *Provider) registerMetrics() error {
+<span id="L13" class="ln">    13  </span>	m := p.Meter()
+<span id="L14" class="ln">    14  </span>	var err error
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span>	p.chainStarted, err = m.Int64Counter(&#34;pgtimetable.chain.started&#34;,
+<span id="L17" class="ln">    17  </span>		metric.WithDescription(&#34;Number of chain executions started&#34;),
+<span id="L18" class="ln">    18  </span>		metric.WithUnit(&#34;{execution}&#34;))
+<span id="L19" class="ln">    19  </span>	if err != nil {
+<span id="L20" class="ln">    20  </span>		return err
+<span id="L21" class="ln">    21  </span>	}
+<span id="L22" class="ln">    22  </span>
+<span id="L23" class="ln">    23  </span>	p.chainCompleted, err = m.Int64Counter(&#34;pgtimetable.chain.completed&#34;,
+<span id="L24" class="ln">    24  </span>		metric.WithDescription(&#34;Number of chain executions completed successfully&#34;),
+<span id="L25" class="ln">    25  </span>		metric.WithUnit(&#34;{execution}&#34;))
+<span id="L26" class="ln">    26  </span>	if err != nil {
+<span id="L27" class="ln">    27  </span>		return err
+<span id="L28" class="ln">    28  </span>	}
+<span id="L29" class="ln">    29  </span>
+<span id="L30" class="ln">    30  </span>	p.chainFailed, err = m.Int64Counter(&#34;pgtimetable.chain.failed&#34;,
+<span id="L31" class="ln">    31  </span>		metric.WithDescription(&#34;Number of chain executions that failed&#34;),
+<span id="L32" class="ln">    32  </span>		metric.WithUnit(&#34;{execution}&#34;))
+<span id="L33" class="ln">    33  </span>	if err != nil {
+<span id="L34" class="ln">    34  </span>		return err
+<span id="L35" class="ln">    35  </span>	}
+<span id="L36" class="ln">    36  </span>
+<span id="L37" class="ln">    37  </span>	p.chainDuration, err = m.Float64Histogram(&#34;pgtimetable.chain.duration&#34;,
+<span id="L38" class="ln">    38  </span>		metric.WithDescription(&#34;Chain execution duration&#34;),
+<span id="L39" class="ln">    39  </span>		metric.WithUnit(&#34;s&#34;),
+<span id="L40" class="ln">    40  </span>		metric.WithExplicitBucketBoundaries(chainDurationBuckets...))
+<span id="L41" class="ln">    41  </span>	if err != nil {
+<span id="L42" class="ln">    42  </span>		return err
+<span id="L43" class="ln">    43  </span>	}
+<span id="L44" class="ln">    44  </span>
+<span id="L45" class="ln">    45  </span>	p.taskExecuted, err = m.Int64Counter(&#34;pgtimetable.task.executed&#34;,
+<span id="L46" class="ln">    46  </span>		metric.WithDescription(&#34;Number of tasks executed&#34;),
+<span id="L47" class="ln">    47  </span>		metric.WithUnit(&#34;{execution}&#34;))
+<span id="L48" class="ln">    48  </span>	if err != nil {
+<span id="L49" class="ln">    49  </span>		return err
+<span id="L50" class="ln">    50  </span>	}
+<span id="L51" class="ln">    51  </span>
+<span id="L52" class="ln">    52  </span>	return nil
+<span id="L53" class="ln">    53  </span>}
+<span id="L54" class="ln">    54  </span>
+<span id="L55" class="ln">    55  </span><span class="comment">// RecordChainStarted increments the chain started counter.</span>
+<span id="L56" class="ln">    56  </span>func (p *Provider) RecordChainStarted(ctx context.Context, clientName string) {
+<span id="L57" class="ln">    57  </span>	if p.chainStarted != nil {
+<span id="L58" class="ln">    58  </span>		p.chainStarted.Add(ctx, 1, metric.WithAttributes(attribute.String(&#34;client.name&#34;, clientName)))
+<span id="L59" class="ln">    59  </span>	}
+<span id="L60" class="ln">    60  </span>}
+<span id="L61" class="ln">    61  </span>
+<span id="L62" class="ln">    62  </span><span class="comment">// RecordChainCompleted increments the chain completed counter.</span>
+<span id="L63" class="ln">    63  </span>func (p *Provider) RecordChainCompleted(ctx context.Context, clientName string) {
+<span id="L64" class="ln">    64  </span>	if p.chainCompleted != nil {
+<span id="L65" class="ln">    65  </span>		p.chainCompleted.Add(ctx, 1, metric.WithAttributes(attribute.String(&#34;client.name&#34;, clientName)))
+<span id="L66" class="ln">    66  </span>	}
+<span id="L67" class="ln">    67  </span>}
+<span id="L68" class="ln">    68  </span>
+<span id="L69" class="ln">    69  </span><span class="comment">// RecordChainFailed increments the chain failed counter.</span>
+<span id="L70" class="ln">    70  </span>func (p *Provider) RecordChainFailed(ctx context.Context, clientName string) {
+<span id="L71" class="ln">    71  </span>	if p.chainFailed != nil {
+<span id="L72" class="ln">    72  </span>		p.chainFailed.Add(ctx, 1, metric.WithAttributes(attribute.String(&#34;client.name&#34;, clientName)))
+<span id="L73" class="ln">    73  </span>	}
+<span id="L74" class="ln">    74  </span>}
+<span id="L75" class="ln">    75  </span>
+<span id="L76" class="ln">    76  </span><span class="comment">// RecordChainDuration records the chain execution duration in seconds.</span>
+<span id="L77" class="ln">    77  </span>func (p *Provider) RecordChainDuration(ctx context.Context, seconds float64, clientName string) {
+<span id="L78" class="ln">    78  </span>	if p.chainDuration != nil {
+<span id="L79" class="ln">    79  </span>		p.chainDuration.Record(ctx, seconds, metric.WithAttributes(attribute.String(&#34;client.name&#34;, clientName)))
+<span id="L80" class="ln">    80  </span>	}
+<span id="L81" class="ln">    81  </span>}
+<span id="L82" class="ln">    82  </span>
+<span id="L83" class="ln">    83  </span><span class="comment">// RecordTaskExecuted increments the task executed counter.</span>
+<span id="L84" class="ln">    84  </span>func (p *Provider) RecordTaskExecuted(ctx context.Context, clientName, taskKind string) {
+<span id="L85" class="ln">    85  </span>	if p.taskExecuted != nil {
+<span id="L86" class="ln">    86  </span>		p.taskExecuted.Add(ctx, 1, metric.WithAttributes(
+<span id="L87" class="ln">    87  </span>			attribute.String(&#34;client.name&#34;, clientName),
+<span id="L88" class="ln">    88  </span>			attribute.String(&#34;task.kind&#34;, taskKind),
+<span id="L89" class="ln">    89  </span>		))
+<span id="L90" class="ln">    90  </span>	}
+<span id="L91" class="ln">    91  </span>}
+<span id="L92" class="ln">    92  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.10.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

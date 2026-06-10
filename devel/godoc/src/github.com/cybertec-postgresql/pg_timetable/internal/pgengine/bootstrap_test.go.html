@@ -13,7 +13,7 @@
 
 
 
-<script>var goVersion = "go1.25.9";</script>
+<script>var goVersion = "go1.25.10";</script>
 <script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
 
 </head>
@@ -157,7 +157,7 @@
 <span id="L100" class="ln">   100  </span>		}
 <span id="L101" class="ln">   101  </span>		destv := reflect.ValueOf(dest[0])
 <span id="L102" class="ln">   102  </span>		typ := destv.Type()
-<span id="L103" class="ln">   103  </span>		if typ.Kind() != reflect.Ptr {
+<span id="L103" class="ln">   103  </span>		if typ.Kind() != reflect.Pointer {
 <span id="L104" class="ln">   104  </span>			return fmt.Errorf(&#34;dest must be pointer; got %T&#34;, destv)
 <span id="L105" class="ln">   105  </span>		}
 <span id="L106" class="ln">   106  </span>		destv.Elem().Set(reflect.ValueOf(r.results[0]))
@@ -421,7 +421,7 @@
 </pre><p></p>
 
 <div id="footer">
-Build version go1.25.9.<br/>
+Build version go1.25.10.<br/>
 </div>
 
 </div><!-- .container -->

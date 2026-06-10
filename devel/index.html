@@ -1032,6 +1032,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="opentelemetry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1284,6 +1312,7 @@ It is completely database driven and provides a couple of advanced concepts.</p>
 <li>Cron-style scheduling at the PostgreSQL server time zone</li>
 <li>Optional concurrency protection</li>
 <li>Task and chain can have execution timeout settings</li>
+<li>OpenTelemetry tracing and metrics export (opt-in)</li>
 </ul>
 <h2 id="quick-start">Quick Start</h2>
 <ol>
@@ -1350,6 +1379,16 @@ It is completely database driven and provides a couple of advanced concepts.</p>
 <a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>
 <a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>REST:
 <a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">      </span>--rest-port<span class="o">=</span><span class="w">                                 </span>REST<span class="w"> </span>API<span class="w"> </span>port<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span><span class="o">)</span><span class="w"> </span><span class="o">[</span><span class="nv">$PGTT_RESTPORT</span><span class="o">]</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>OTel:
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="w">      </span>--otel-endpoint<span class="o">=</span><span class="w">                             </span>OTLP<span class="w"> </span>exporter<span class="w"> </span>endpoint<span class="w"> </span>URL<span class="w"> </span><span class="o">(</span>grpc://,<span class="w"> </span>http://,<span class="w"> </span>https://<span class="o">)</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a><span class="w">      </span>--otel-traces<span class="w">                                </span>Enable<span class="w"> </span>OpenTelemetry<span class="w"> </span>distributed<span class="w"> </span>tracing
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="w">      </span>--otel-metrics<span class="w">                               </span>Enable<span class="w"> </span>OpenTelemetry<span class="w"> </span>metrics<span class="w"> </span><span class="nb">export</span>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a><span class="w">      </span>--otel-service-name<span class="o">=</span><span class="w">                         </span>OTel<span class="w"> </span>service.name<span class="w"> </span>resource<span class="w"> </span>attribute<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>pg_timetable<span class="o">)</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a><span class="w">      </span>--otel-insecure<span class="w">                              </span>Disable<span class="w"> </span>TLS<span class="w"> </span><span class="k">for</span><span class="w"> </span>OTLP<span class="w"> </span>connection<span class="w"> </span><span class="o">(</span>dev/test<span class="w"> </span>only<span class="o">)</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="w">      </span>--otel-sample-ratio<span class="o">=</span><span class="w">                         </span>Trace<span class="w"> </span>sampling<span class="w"> </span>ratio<span class="w"> </span><span class="m">0</span>.0-1.0<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">1</span>.0<span class="o">)</span>
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a><span class="w">      </span>--otel-metric-period<span class="o">=</span><span class="w">                        </span>Metrics<span class="w"> </span><span class="nb">export</span><span class="w"> </span>interval<span class="w"> </span><span class="k">in</span><span class="w"> </span>seconds<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">30</span><span class="o">)</span>
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="w">      </span>--otel-shutdown-timeout<span class="o">=</span><span class="w">                     </span>OTel<span class="w"> </span>provider<span class="w"> </span>flush<span class="w"> </span>timeout<span class="w"> </span><span class="k">in</span><span class="w"> </span>seconds<span class="w"> </span>on<span class="w"> </span>shutdown<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">5</span><span class="o">)</span>
 </code></pre></div>
 <h2 id="contributing">Contributing</h2>
 <p>If you want to contribute to <strong>pg_timetable</strong> and help make it better, feel free to open an 
