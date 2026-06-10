@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	flags "github.com/jessevdk/go-flags"
 	"github.com/spf13/viper"
@@ -103,5 +104,34 @@ func NewConfig(writer io.Writer) (*CmdOptions, error) {
 		p.WriteHelp(buf)
 		return conf, errors.New(buf.String())
 	}
+	if err := ValidateOTel(conf.OTel); err != nil {
+		return conf, err
+	}
 	return conf, nil
+}
+
+// ValidateOTel validates OTelOpts fields and returns an error for invalid values.
+func ValidateOTel(opts OTelOpts) error {
+	if opts.SampleRatio < 0.0 || opts.SampleRatio > 1.0 {
+		return errors.New("otel-sample-ratio must be between 0.0 and 1.0")
+	}
+	if opts.MetricPeriod <= 0 {
+		return errors.New("otel-metric-period must be > 0")
+	}
+	if opts.ShutdownTimeout <= 0 {
+		return errors.New("otel-shutdown-timeout must be > 0")
+	}
+	if opts.Endpoint != "" {
+		u, err := url.Parse(opts.Endpoint)
+		if err != nil {
+			return fmt.Errorf("otel: invalid endpoint URL: %w", err)
+		}
+		switch u.Scheme {
+		case "grpc", "http", "https":
+			// valid
+		default:
+			return fmt.Errorf("unsupported OTel endpoint scheme: %s", u.Scheme)
+		}
+	}
+	return nil
 }

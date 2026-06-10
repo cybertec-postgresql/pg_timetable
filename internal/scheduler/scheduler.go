@@ -7,6 +7,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
 
@@ -44,11 +45,12 @@ type Scheduler struct {
 	intervalChainMutex sync.Mutex
 
 	shutdown chan struct{} // closed when shutdown is called
+	provider *otel.Provider
 	status   RunStatus
 }
 
 // New returns a new instance of Scheduler
-func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
+func New(pge *pgengine.PgEngine, logger log.LoggerIface, provider *otel.Provider) *Scheduler {
 	return &Scheduler{
 		l:              logger,
 		pgengine:       pge,
@@ -57,6 +59,7 @@ func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler {
 		activeChains:   make(map[int]func()), //holds cancel() functions to stop chains
 		intervalChains: make(map[int]IntervalChain),
 		shutdown:       make(chan struct{}),
+		provider:       provider,
 		status:         RunningStatus,
 	}
 }

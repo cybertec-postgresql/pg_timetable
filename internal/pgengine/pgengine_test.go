@@ -12,6 +12,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
@@ -185,7 +186,7 @@ func TestSamplesScripts(t *testing.T) {
 		assert.NoError(t, pge.ExecuteCustomScripts(ctx, "../../samples/"+f.Name()),
 			"Sample query failed: ", f.Name())
 		// either context should be cancelled or 'shutdown.sql' will terminate the session
-		assert.True(t, scheduler.New(pge, l).Run(ctx) > scheduler.RunningStatus)
+		assert.True(t, scheduler.New(pge, l, otel.NewNoop()).Run(ctx) > scheduler.RunningStatus)
 		_, err = pge.ConfigDb.Exec(context.Background(),
 			"TRUNCATE timetable.task, timetable.chain CASCADE")
 		assert.NoError(t, err)

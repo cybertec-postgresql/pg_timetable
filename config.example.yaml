@@ -68,3 +68,32 @@ resource:
 rest:
   # rest-port:                     REST API port (default: 0)
   rest-port: 8008
+
+# - OpenTelemetry Settings -
+otel:
+  # otel-endpoint:            OTLP exporter endpoint URL (grpc://, http://, https://)
+  endpoint: ""
+
+  # otel-traces:              Enable distributed tracing (default: false)
+  traces: false
+
+  # otel-metrics:             Enable metrics export (default: false)
+  metrics: false
+
+  # otel-service-name:        OTel service.name resource attribute (default: pg_timetable)
+  service-name: pg_timetable
+
+  # otel-headers:             Custom headers for OTLP export (map of key: value)
+  headers: {}
+
+  # otel-insecure:            Disable TLS for OTLP connection - dev only (default: false)
+  insecure: false
+
+  # otel-sample-ratio:        Trace sampling ratio 0.0-1.0 (default: 1.0 = 100%)
+  sample-ratio: 1.0
+
+  # otel-metric-period:       Metrics export interval in seconds (default: 30)
+  metric-period: 30
+
+  # otel-shutdown-timeout:    OTel flush timeout in seconds on shutdown (default: 5)
+  shutdown-timeout: 5

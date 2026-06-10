@@ -42,6 +42,19 @@ type RestAPIOpts struct {
 	Port int `long:"rest-port" mapstructure:"rest-port" description:"REST API port" env:"PGTT_RESTPORT" default:"0"`
 }
 
+// OTelOpts specifies OpenTelemetry configuration
+type OTelOpts struct {
+	Endpoint        string            `long:"otel-endpoint" mapstructure:"otel-endpoint" description:"OTLP exporter endpoint URL (grpc://, http://, https://)"`
+	Traces          bool              `long:"otel-traces" mapstructure:"otel-traces" description:"Enable OpenTelemetry distributed tracing"`
+	Metrics         bool              `long:"otel-metrics" mapstructure:"otel-metrics" description:"Enable OpenTelemetry metrics export"`
+	ServiceName     string            `long:"otel-service-name" mapstructure:"otel-service-name" description:"OTel service.name resource attribute" default:"pg_timetable"`
+	Headers         map[string]string `long:"otel-headers" mapstructure:"otel-headers" description:"Custom HTTP headers for OTLP export" no-flag:"true"`
+	Insecure        bool              `long:"otel-insecure" mapstructure:"otel-insecure" description:"Disable TLS for OTLP connection (dev/test only)"`
+	SampleRatio     float64           `long:"otel-sample-ratio" mapstructure:"otel-sample-ratio" description:"Trace sampling ratio 0.0-1.0" default:"1.0"`
+	MetricPeriod    int               `long:"otel-metric-period" mapstructure:"otel-metric-period" description:"Metrics export interval in seconds" default:"30"`
+	ShutdownTimeout int               `long:"otel-shutdown-timeout" mapstructure:"otel-shutdown-timeout" description:"OTel provider flush timeout in seconds on shutdown" default:"5"`
+}
+
 // CmdOptions holds command line options passed
 type CmdOptions struct {
 	ClientName     string       `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
@@ -51,6 +64,7 @@ type CmdOptions struct {
 	Start          StartOpts    `group:"Start" mapstructure:"Start"`
 	Resource       ResourceOpts `group:"Resource" mapstructure:"Resource"`
 	RESTApi        RestAPIOpts  `group:"REST" mapstructure:"REST"`
+	OTel           OTelOpts     `group:"OTel" mapstructure:"OTel"`
 	NoProgramTasks bool         `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
 	NoHelpMessage  bool         `long:"no-help" mapstructure:"no-help" hidden:"system use"`
 	Version        bool         `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
