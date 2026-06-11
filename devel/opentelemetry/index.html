@@ -1011,10 +1011,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#tracing-with-a-local-jaeger-instance" class="md-nav__link">
+  <a href="#all-signals-at-once-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tracing with a local Jaeger instance
+        All signals at once (recommended)
       
     </span>
   </a>
@@ -1022,10 +1022,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#metrics-via-otel-collector-prometheus" class="md-nav__link">
+  <a href="#traces-only-jaeger" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Metrics via OTel Collector → Prometheus
+        Traces only — Jaeger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-only-otel-collector-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics only — OTel Collector → Prometheus
       
     </span>
   </a>
@@ -1347,10 +1358,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#tracing-with-a-local-jaeger-instance" class="md-nav__link">
+  <a href="#all-signals-at-once-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tracing with a local Jaeger instance
+        All signals at once (recommended)
       
     </span>
   </a>
@@ -1358,10 +1369,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#metrics-via-otel-collector-prometheus" class="md-nav__link">
+  <a href="#traces-only-jaeger" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Metrics via OTel Collector → Prometheus
+        Traces only — Jaeger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-only-otel-collector-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics only — OTel Collector → Prometheus
       
     </span>
   </a>
@@ -1556,24 +1578,51 @@ behaves exactly as before with zero additional overhead.</p>
 </table>
 <hr />
 <h2 id="quick-start">Quick Start</h2>
-<h3 id="tracing-with-a-local-jaeger-instance">Tracing with a local Jaeger instance</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Start Jaeger</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span>-p<span class="w"> </span><span class="m">16686</span>:16686<span class="w"> </span>jaegertracing/all-in-one:latest
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># 2. Run pg_timetable with tracing enabled</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--otel-traces<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--otel-insecure<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+<h3 id="all-signals-at-once-recommended">All signals at once (recommended)</h3>
+<p>The easiest way to get both traces and metrics working locally is the
+<a href="https://github.com/grafana/otel-lgtm"><code>grafana/otel-lgtm</code></a> image. It bundles an OTel Collector,
+Grafana, Tempo (traces), and Mimir (metrics) in a single container — no configuration required.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Start the all-in-one observability stack</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4318</span>:4318<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">3000</span>:3000<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>grafana/otel-lgtm
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># 2. Run pg_timetable with both signals enabled</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span>--otel-traces<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--otel-metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--otel-insecure<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+</code></pre></div>
+<p>Open <a href="http://localhost:3000">http://localhost:3000</a> (default credentials <code>admin</code>/<code>admin</code>) to explore traces in <strong>Tempo</strong>
+and metrics in <strong>Mimir</strong> via Grafana.</p>
+<hr />
+<h3 id="traces-only-jaeger">Traces only — Jaeger</h3>
+<div class="admonition warning">
+<p class="admonition-title">Traces only</p>
+<p>Jaeger implements the OTLP <strong>trace</strong> service only. Enabling <code>--otel-metrics</code> with a Jaeger
+endpoint will produce export errors. Use this setup when you need traces exclusively.</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1. Start Jaeger</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span>-p<span class="w"> </span><span class="m">16686</span>:16686<span class="w"> </span>jaegertracing/all-in-one:latest
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># 2. Run pg_timetable with tracing only</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--otel-traces<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--otel-insecure<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
 </code></pre></div>
 <p>Open <a href="http://localhost:16686">http://localhost:16686</a> and select service <strong>pg_timetable</strong> to see traces.</p>
-<h3 id="metrics-via-otel-collector-prometheus">Metrics via OTel Collector → Prometheus</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://otel-collector:4317<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--otel-metrics<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--otel-metric-period<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+<h3 id="metrics-only-otel-collector-prometheus">Metrics only — OTel Collector → Prometheus</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://otel-collector:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--otel-metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--otel-metric-period<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
 </code></pre></div>
 <hr />
 <h2 id="protocol-selection">Protocol Selection</h2>
@@ -1706,11 +1755,11 @@ alerting and root-cause analysis.</p>
 <h2 id="authentication-security">Authentication &amp; Security</h2>
 <p>SaaS observability backends (Honeycomb, Grafana Cloud, Datadog, etc.) typically require an
 API key. Pass it as a custom HTTP header via the YAML configuration file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">otel</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://api.honeycomb.io</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">x-honeycomb-team</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YOUR_API_KEY</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://api.honeycomb.io</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">x-honeycomb-team</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YOUR_API_KEY</span>
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -1722,10 +1771,10 @@ Header values are <strong>never written to log output</strong>.</p>
 <h2 id="sampling">Sampling</h2>
 <p>By default, 100 % of chain executions are traced. For high-frequency deployments you can
 reduce trace volume with a ratio sampler:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Trace 10 % of chain executions</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pg_timetable<span class="w"> </span>--otel-traces<span class="w"> </span>--otel-sample-ratio<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Trace 10 % of chain executions</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pg_timetable<span class="w"> </span>--otel-traces<span class="w"> </span>--otel-sample-ratio<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
 </code></pre></div>
 <table>
 <thead>
@@ -1760,46 +1809,46 @@ reduce trace volume with a ratio sampler:</p>
 <hr />
 <h2 id="cli-reference">CLI Reference</h2>
 <p>All OTel flags are optional. When <code>--otel-endpoint</code> is absent, all other OTel flags are ignored.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>OTel:
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  --otel-endpoint=          OTLP exporter endpoint URL (grpc://, http://, https://)
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  --otel-traces             Enable OpenTelemetry distributed tracing
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  --otel-metrics            Enable OpenTelemetry metrics export
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  --otel-service-name=      OTel service.name resource attribute (default: pg_timetable)
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  --otel-insecure           Disable TLS for OTLP connection (dev/test only)
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  --otel-sample-ratio=      Trace sampling ratio 0.0–1.0 (default: 1.0)
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>  --otel-metric-period=     Metrics export interval in seconds (default: 30)
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>  --otel-shutdown-timeout=  OTel provider flush timeout in seconds on shutdown (default: 5)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>OTel:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  --otel-endpoint=          OTLP exporter endpoint URL (grpc://, http://, https://)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  --otel-traces             Enable OpenTelemetry distributed tracing
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  --otel-metrics            Enable OpenTelemetry metrics export
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  --otel-service-name=      OTel service.name resource attribute (default: pg_timetable)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  --otel-insecure           Disable TLS for OTLP connection (dev/test only)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  --otel-sample-ratio=      Trace sampling ratio 0.0–1.0 (default: 1.0)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  --otel-metric-period=     Metrics export interval in seconds (default: 30)
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  --otel-shutdown-timeout=  OTel provider flush timeout in seconds on shutdown (default: 5)
 </code></pre></div>
 <hr />
 <h2 id="yaml-configuration">YAML Configuration</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># - OpenTelemetry Settings -</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">otel</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="c1"># OTLP exporter endpoint URL (grpc://, http://, https://)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="c1"># Enable distributed tracing (default: false)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="c1"># Enable metrics export (default: false)</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="c1"># OTel service.name resource attribute (default: pg_timetable)</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="nt">service-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pg_timetable</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="c1"># Custom headers for OTLP export — use for API key auth (map of key: value)</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span><span class="c1"># Disable TLS for OTLP connection — dev only (default: false)</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">  </span><span class="nt">insecure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">  </span><span class="c1"># Trace sampling ratio 0.0–1.0 (default: 1.0 = 100%)</span>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">  </span><span class="nt">sample-ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">  </span><span class="c1"># Metrics export interval in seconds (default: 30)</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">  </span><span class="nt">metric-period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">  </span><span class="c1"># OTel flush timeout in seconds on shutdown (default: 5)</span>
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">  </span><span class="nt">shutdown-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># - OpenTelemetry Settings -</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="c1"># OTLP exporter endpoint URL (grpc://, http://, https://)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="c1"># Enable distributed tracing (default: false)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span><span class="c1"># Enable metrics export (default: false)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="c1"># OTel service.name resource attribute (default: pg_timetable)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span><span class="nt">service-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pg_timetable</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span><span class="c1"># Custom headers for OTLP export — use for API key auth (map of key: value)</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">  </span><span class="c1"># Disable TLS for OTLP connection — dev only (default: false)</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">  </span><span class="nt">insecure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">  </span><span class="c1"># Trace sampling ratio 0.0–1.0 (default: 1.0 = 100%)</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">  </span><span class="nt">sample-ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">  </span><span class="c1"># Metrics export interval in seconds (default: 30)</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">  </span><span class="nt">metric-period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">  </span><span class="c1"># OTel flush timeout in seconds on shutdown (default: 5)</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">  </span><span class="nt">shutdown-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 </code></pre></div>
 <hr />
 <h2 id="otel-resource-attributes">OTel Resource Attributes</h2>
