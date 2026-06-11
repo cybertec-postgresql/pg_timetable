@@ -25,13 +25,45 @@ pg_timetable supports two OTel signals, each independently enabled:
 
 ## Quick Start
 
-### Tracing with a local Jaeger instance
+### All signals at once (recommended)
+
+The easiest way to get both traces and metrics working locally is the
+[`grafana/otel-lgtm`](https://github.com/grafana/otel-lgtm) image. It bundles an OTel Collector,
+Grafana, Tempo (traces), and Mimir (metrics) in a single container — no configuration required.
+
+```bash
+# 1. Start the all-in-one observability stack
+docker run --rm -d \
+  -p 4317:4317 \
+  -p 4318:4318 \
+  -p 3000:3000 \
+  grafana/otel-lgtm
+
+# 2. Run pg_timetable with both signals enabled
+pg_timetable \
+  --otel-endpoint grpc://localhost:4317 \
+  --otel-traces \
+  --otel-metrics \
+  --otel-insecure \
+  postgresql://scheduler:pass@localhost/mydb
+```
+
+Open <http://localhost:3000> (default credentials `admin`/`admin`) to explore traces in **Tempo**
+and metrics in **Mimir** via Grafana.
+
+---
+
+### Traces only — Jaeger
+
+!!! warning "Traces only"
+    Jaeger implements the OTLP **trace** service only. Enabling `--otel-metrics` with a Jaeger
+    endpoint will produce export errors. Use this setup when you need traces exclusively.
 
 ```bash
 # 1. Start Jaeger
 docker run --rm -d -p 4317:4317 -p 16686:16686 jaegertracing/all-in-one:latest
 
-# 2. Run pg_timetable with tracing enabled
+# 2. Run pg_timetable with tracing only
 pg_timetable \
   --otel-endpoint grpc://localhost:4317 \
   --otel-traces \
@@ -41,7 +73,7 @@ pg_timetable \
 
 Open <http://localhost:16686> and select service **pg_timetable** to see traces.
 
-### Metrics via OTel Collector → Prometheus
+### Metrics only — OTel Collector → Prometheus
 
 ```bash
 pg_timetable \
