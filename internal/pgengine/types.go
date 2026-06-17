@@ -2,11 +2,21 @@ package pgengine
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
 	pgconn "github.com/jackc/pgx/v5/pgconn"
 )
+
+// logIdent combines a numeric ID and a human-readable name for log fields,
+// e.g. "42|Import Chain From S3". If the name is empty only the ID is returned.
+func logIdent(id int, name string) string {
+	if name == "" {
+		return strconv.Itoa(id)
+	}
+	return strconv.Itoa(id) + "|" + name
+}
 
 type executor interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error)
@@ -21,6 +31,11 @@ type Chain struct {
 	MaxInstances       int    `db:"max_instances" yaml:"max_instances,omitempty"`
 	Timeout            int    `db:"timeout" yaml:"timeout,omitempty"`
 	OnError            string `db:"on_error" yaml:"on_error,omitempty"`
+}
+
+// String returns a log-friendly identifier, e.g. "42|Import Chain From S3".
+func (chain Chain) String() string {
+	return logIdent(chain.ChainID, chain.ChainName)
 }
 
 // IntervalChain structure used to represent repeated chains.
@@ -43,6 +58,7 @@ func (ichain IntervalChain) IsListed(ichains []IntervalChain) bool {
 type ChainTask struct {
 	ChainID       int       `db:"-" yaml:"-"`
 	TaskID        int       `db:"task_id" yaml:"-"`
+	TaskName      string    `db:"task_name" yaml:"-"`
 	Command       string    `db:"command" yaml:"command"`
 	Kind          string    `db:"kind" yaml:"kind,omitempty"`
 	RunAs         string    `db:"run_as" yaml:"run_as,omitempty"`
@@ -57,4 +73,9 @@ type ChainTask struct {
 
 func (task *ChainTask) IsRemote() bool {
 	return strings.TrimSpace(task.ConnectString) != ""
+}
+
+// String returns a log-friendly identifier, e.g. "49|Check_if_file_exist".
+func (task ChainTask) String() string {
+	return logIdent(task.TaskID, task.TaskName)
 }

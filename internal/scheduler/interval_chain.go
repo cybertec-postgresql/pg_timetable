@@ -14,9 +14,9 @@ type IntervalChain = pgengine.IntervalChain
 func (sch *Scheduler) SendIntervalChain(c IntervalChain) {
 	select {
 	case sch.ichainsChan <- c:
-		sch.l.WithField("chain", c.ChainID).Debug("Sent interval chain to the execution channel")
+		sch.l.WithField("chain", c).Debug("Sent interval chain to the execution channel")
 	default:
-		sch.l.WithField("chain", c.ChainID).Error("Failed to send interval chain to the execution channel")
+		sch.l.WithField("chain", c).Error("Failed to send interval chain to the execution channel")
 	}
 }
 
@@ -76,7 +76,7 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 				if !sch.isValid(ichain) { // chain not in the list of active chains
 					continue
 				}
-				chainL := sch.l.WithField("chain", ichain.ChainID)
+				chainL := sch.l.WithField("chain", ichain)
 				chainContext := log.WithLogger(ctx, chainL)
 				chainL.Info("Starting chain")
 				if !ichain.RepeatAfter {

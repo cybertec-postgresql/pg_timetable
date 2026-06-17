@@ -21,9 +21,9 @@ type (
 func (sch *Scheduler) SendChain(c Chain) {
 	select {
 	case sch.chainsChan <- c:
-		sch.l.WithField("chain", c.ChainID).Debug("Sent chain to the execution channel")
+		sch.l.WithField("chain", c).Debug("Sent chain to the execution channel")
 	default:
-		sch.l.WithField("chain", c.ChainID).Error("Failed to send chain to the execution channel")
+		sch.l.WithField("chain", c).Error("Failed to send chain to the execution channel")
 	}
 }
 
@@ -145,7 +145,7 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 		default:
 			select {
 			case chain := <-chains:
-				chainL := sch.l.WithField("chain", chain.ChainID)
+				chainL := sch.l.WithField("chain", chain)
 				chainContext := log.WithLogger(ctx, chainL)
 				if !sch.pgengine.InsertChainRunStatus(ctx, chain.ChainID, chain.MaxInstances) {
 					chainL.Info("Cannot proceed. Sleeping")
@@ -179,7 +179,7 @@ func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 	if ctx.Err() != nil || chain.OnError == "" {
 		return
 	}
-	l := sch.l.WithField("chain", chain.ChainID)
+	l := sch.l.WithField("chain", chain)
 	l.Info("Starting error handling")
 	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnError); err != nil {
 		l.Info("Error handler failed")
@@ -200,7 +200,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 		defer cancel()
 	}
 
-	chainL := sch.l.WithField("chain", chain.ChainID)
+	chainL := sch.l.WithField("chain", chain)
 	tx, vxid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
@@ -219,7 +219,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	for _, task := range ChainTasks {
 		task.ChainID = chain.ChainID
 		task.Vxid = vxid
-		l := chainL.WithField("task", task.TaskID)
+		l := chainL.WithField("task", task)
 		l.Info("Starting task")
 		taskCtx := log.WithLogger(chainCtx, l)
 		err = sch.executeTask(taskCtx, tx, &task)
