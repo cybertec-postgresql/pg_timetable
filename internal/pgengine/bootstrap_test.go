@@ -100,7 +100,7 @@ func (r *mockpgrow) Scan(dest ...any) error {
 		}
 		destv := reflect.ValueOf(dest[0])
 		typ := destv.Type()
-		if typ.Kind() != reflect.Ptr {
+		if typ.Kind() != reflect.Pointer {
 			return fmt.Errorf("dest must be pointer; got %T", destv)
 		}
 		destv.Elem().Set(reflect.ValueOf(r.results[0]))
