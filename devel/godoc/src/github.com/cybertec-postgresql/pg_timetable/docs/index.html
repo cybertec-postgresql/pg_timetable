@@ -61,7 +61,6 @@ It is completely database driven and provides a couple of advanced concepts.</p>
 <li>Cron-style scheduling at the PostgreSQL server time zone</li>
 <li>Optional concurrency protection</li>
 <li>Task and chain can have execution timeout settings</li>
-<li>OpenTelemetry tracing and metrics export (opt-in)</li>
 </ul>
 <h2>Quick Start</h2>
 <ol>
@@ -130,16 +129,6 @@ Resource:
 
 REST:
       --rest-port=                                 REST API port (default: 0) [$PGTT_RESTPORT]
-
-OTel:
-      --otel-endpoint=                             OTLP exporter endpoint URL (grpc://, http://, https://)
-      --otel-traces                                Enable OpenTelemetry distributed tracing
-      --otel-metrics                               Enable OpenTelemetry metrics export
-      --otel-service-name=                         OTel service.name resource attribute (default: pg_timetable)
-      --otel-insecure                              Disable TLS for OTLP connection (dev/test only)
-      --otel-sample-ratio=                         Trace sampling ratio 0.0-1.0 (default: 1.0)
-      --otel-metric-period=                        Metrics export interval in seconds (default: 30)
-      --otel-shutdown-timeout=                     OTel provider flush timeout in seconds on shutdown (default: 5)
 </code></pre>
 <h2>Contributing</h2>
 <p>If you want to contribute to <strong>pg_timetable</strong> and help make it better, feel free to open an

@@ -169,7 +169,7 @@
 				<dd><a href="#Scheduler">type Scheduler</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#New">func New(pge *pgengine.PgEngine, logger log.LoggerIface, provider *otel.Provider) *Scheduler</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#New">func New(pge *pgengine.PgEngine, logger log.LoggerIface) *Scheduler</a></dd>
 				
 				
 					
@@ -326,7 +326,7 @@
 		
 			
 			
-			<h2 id="getTimeoutContext">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L173">getTimeoutContext</a>
+			<h2 id="getTimeoutContext">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L170">getTimeoutContext</a>
 				<a class="permalink" href="#getTimeoutContext">&#xb6;</a>
 				
 				
@@ -470,7 +470,7 @@
 		
 			
 			
-			<h2 id="Chain">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L19">Chain</a>
+			<h2 id="Chain">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L16">Chain</a>
 				<a class="permalink" href="#Chain">&#xb6;</a>
 				
 				
@@ -492,7 +492,7 @@
 		
 			
 			
-			<h2 id="ChainSignal">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L20">ChainSignal</a>
+			<h2 id="ChainSignal">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L17">ChainSignal</a>
 				<a class="permalink" href="#ChainSignal">&#xb6;</a>
 				
 				
@@ -536,7 +536,7 @@
 		
 			
 			
-			<h2 id="RunStatus">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L21">RunStatus</a>
+			<h2 id="RunStatus">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L20">RunStatus</a>
 				<a class="permalink" href="#RunStatus">&#xb6;</a>
 				
 				
@@ -569,7 +569,7 @@
 		
 			
 			
-			<h2 id="Scheduler">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L33">Scheduler</a>
+			<h2 id="Scheduler">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L32">Scheduler</a>
 				<a class="permalink" href="#Scheduler">&#xb6;</a>
 				
 				
@@ -591,7 +591,6 @@
 <span id="Scheduler.intervalChainMutex"></span>    intervalChainMutex <a href="https://pkg.go.dev/sync/">sync</a>.<a href="https://pkg.go.dev/sync/#Mutex">Mutex</a>
 
 <span id="Scheduler.shutdown"></span>    shutdown chan struct{} <span class="comment">// closed when shutdown is called</span>
-<span id="Scheduler.provider"></span>    provider *<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/otel/">otel</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/otel/#Provider">Provider</a>
 <span id="Scheduler.status"></span>    status   <a href="#RunStatus">RunStatus</a>
 }
 </pre>
@@ -606,12 +605,12 @@
 
 			
 				
-				<h3 id="New">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L53">New</a>
+				<h3 id="New">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L51">New</a>
 					<a class="permalink" href="#New">&#xb6;</a>
 					
 					
 				</h3>
-				<pre>func New(pge *<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/">pgengine</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/#PgEngine">PgEngine</a>, logger <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/">log</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/#LoggerIface">LoggerIface</a>, provider *<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/otel/">otel</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/otel/#Provider">Provider</a>) *<a href="#Scheduler">Scheduler</a></pre>
+				<pre>func New(pge *<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/">pgengine</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/#PgEngine">PgEngine</a>, logger <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/">log</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/log/#LoggerIface">LoggerIface</a>) *<a href="#Scheduler">Scheduler</a></pre>
 				<p>New returns a new instance of Scheduler
 
 				
@@ -620,7 +619,7 @@
 
 			
 				
-				<h3 id="Scheduler.Config">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L73">Config</a>
+				<h3 id="Scheduler.Config">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L70">Config</a>
 					<a class="permalink" href="#Scheduler.Config">&#xb6;</a>
 					
 					
@@ -646,7 +645,7 @@
 				
 			
 				
-				<h3 id="Scheduler.IsReady">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L78">IsReady</a>
+				<h3 id="Scheduler.IsReady">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L75">IsReady</a>
 					<a class="permalink" href="#Scheduler.IsReady">&#xb6;</a>
 					
 					
@@ -659,7 +658,7 @@
 				
 			
 				
-				<h3 id="Scheduler.Lock">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L34">Lock</a>
+				<h3 id="Scheduler.Lock">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L31">Lock</a>
 					<a class="permalink" href="#Scheduler.Lock">&#xb6;</a>
 					
 					
@@ -672,7 +671,7 @@
 				
 			
 				
-				<h3 id="Scheduler.Run">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L98">Run</a>
+				<h3 id="Scheduler.Run">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L95">Run</a>
 					<a class="permalink" href="#Scheduler.Run">&#xb6;</a>
 					
 					
@@ -686,7 +685,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.SendChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L24">SendChain</a>
+				<h3 id="Scheduler.SendChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L21">SendChain</a>
 					<a class="permalink" href="#Scheduler.SendChain">&#xb6;</a>
 					
 					
@@ -712,7 +711,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.Shutdown">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L68">Shutdown</a>
+				<h3 id="Scheduler.Shutdown">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L65">Shutdown</a>
 					<a class="permalink" href="#Scheduler.Shutdown">&#xb6;</a>
 					
 					
@@ -725,7 +724,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.StartChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L82">StartChain</a>
+				<h3 id="Scheduler.StartChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L79">StartChain</a>
 					<a class="permalink" href="#Scheduler.StartChain">&#xb6;</a>
 					
 					
@@ -737,7 +736,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.StopChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L89">StopChain</a>
+				<h3 id="Scheduler.StopChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/scheduler.go.html#L86">StopChain</a>
 					<a class="permalink" href="#Scheduler.StopChain">&#xb6;</a>
 					
 					
@@ -749,7 +748,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.Unlock">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L43">Unlock</a>
+				<h3 id="Scheduler.Unlock">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L40">Unlock</a>
 					<a class="permalink" href="#Scheduler.Unlock">&#xb6;</a>
 					
 					
@@ -762,7 +761,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.addActiveChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L117">addActiveChain</a>
+				<h3 id="Scheduler.addActiveChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L114">addActiveChain</a>
 					<a class="permalink" href="#Scheduler.addActiveChain">&#xb6;</a>
 					
 					
@@ -774,7 +773,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.chainWorker">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L143">chainWorker</a>
+				<h3 id="Scheduler.chainWorker">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L140">chainWorker</a>
 					<a class="permalink" href="#Scheduler.chainWorker">&#xb6;</a>
 					
 					
@@ -786,7 +785,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.deleteActiveChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L123">deleteActiveChain</a>
+				<h3 id="Scheduler.deleteActiveChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L120">deleteActiveChain</a>
 					<a class="permalink" href="#Scheduler.deleteActiveChain">&#xb6;</a>
 					
 					
@@ -810,7 +809,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.executeChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L195">executeChain</a>
+				<h3 id="Scheduler.executeChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L192">executeChain</a>
 					<a class="permalink" href="#Scheduler.executeChain">&#xb6;</a>
 					
 					
@@ -823,7 +822,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.executeOnErrorHandler">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L181">executeOnErrorHandler</a>
+				<h3 id="Scheduler.executeOnErrorHandler">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L178">executeOnErrorHandler</a>
 					<a class="permalink" href="#Scheduler.executeOnErrorHandler">&#xb6;</a>
 					
 					
@@ -835,7 +834,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.executeTask">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L274">executeTask</a>
+				<h3 id="Scheduler.executeTask">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L255">executeTask</a>
 					<a class="permalink" href="#Scheduler.executeTask">&#xb6;</a>
 					
 					
@@ -872,7 +871,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.processAsyncChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L64">processAsyncChain</a>
+				<h3 id="Scheduler.processAsyncChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L61">processAsyncChain</a>
 					<a class="permalink" href="#Scheduler.processAsyncChain">&#xb6;</a>
 					
 					
@@ -896,7 +895,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.retrieveAsyncChainsAndRun">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L51">retrieveAsyncChainsAndRun</a>
+				<h3 id="Scheduler.retrieveAsyncChainsAndRun">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L48">retrieveAsyncChainsAndRun</a>
 					<a class="permalink" href="#Scheduler.retrieveAsyncChainsAndRun">&#xb6;</a>
 					
 					
@@ -908,7 +907,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.retrieveChainsAndRun">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L89">retrieveChainsAndRun</a>
+				<h3 id="Scheduler.retrieveChainsAndRun">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L86">retrieveChainsAndRun</a>
 					<a class="permalink" href="#Scheduler.retrieveChainsAndRun">&#xb6;</a>
 					
 					
@@ -932,7 +931,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.terminateChains">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L129">terminateChains</a>
+				<h3 id="Scheduler.terminateChains">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L126">terminateChains</a>
 					<a class="permalink" href="#Scheduler.terminateChains">&#xb6;</a>
 					
 					

@@ -71,9 +71,9 @@
 <span id="L14" class="ln">    14  </span>func (sch *Scheduler) SendIntervalChain(c IntervalChain) {
 <span id="L15" class="ln">    15  </span>	select {
 <span id="L16" class="ln">    16  </span>	case sch.ichainsChan &lt;- c:
-<span id="L17" class="ln">    17  </span>		sch.l.WithField(&#34;chain&#34;, c.ChainID).Debug(&#34;Sent interval chain to the execution channel&#34;)
+<span id="L17" class="ln">    17  </span>		sch.l.WithField(&#34;chain&#34;, c).Debug(&#34;Sent interval chain to the execution channel&#34;)
 <span id="L18" class="ln">    18  </span>	default:
-<span id="L19" class="ln">    19  </span>		sch.l.WithField(&#34;chain&#34;, c.ChainID).Error(&#34;Failed to send interval chain to the execution channel&#34;)
+<span id="L19" class="ln">    19  </span>		sch.l.WithField(&#34;chain&#34;, c).Error(&#34;Failed to send interval chain to the execution channel&#34;)
 <span id="L20" class="ln">    20  </span>	}
 <span id="L21" class="ln">    21  </span>}
 <span id="L22" class="ln">    22  </span>
@@ -133,7 +133,7 @@
 <span id="L76" class="ln">    76  </span>				if !sch.isValid(ichain) { <span class="comment">// chain not in the list of active chains</span>
 <span id="L77" class="ln">    77  </span>					continue
 <span id="L78" class="ln">    78  </span>				}
-<span id="L79" class="ln">    79  </span>				chainL := sch.l.WithField(&#34;chain&#34;, ichain.ChainID)
+<span id="L79" class="ln">    79  </span>				chainL := sch.l.WithField(&#34;chain&#34;, ichain)
 <span id="L80" class="ln">    80  </span>				chainContext := log.WithLogger(ctx, chainL)
 <span id="L81" class="ln">    81  </span>				chainL.Info(&#34;Starting chain&#34;)
 <span id="L82" class="ln">    82  </span>				if !ichain.RepeatAfter {

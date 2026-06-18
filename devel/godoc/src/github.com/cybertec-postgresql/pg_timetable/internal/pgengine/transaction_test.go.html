@@ -263,9 +263,9 @@
 <span id="L206" class="ln">   206  </span>	assert.Error(t, pge.GetChainElements(ctx, &amp;[]pgengine.ChainTask{}, 0))
 <span id="L207" class="ln">   207  </span>
 <span id="L208" class="ln">   208  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnRows(
-<span id="L209" class="ln">   209  </span>		pgxmock.NewRows([]string{&#34;task_id&#34;, &#34;command&#34;, &#34;kind&#34;, &#34;run_as&#34;,
+<span id="L209" class="ln">   209  </span>		pgxmock.NewRows([]string{&#34;task_id&#34;, &#34;task_name&#34;, &#34;command&#34;, &#34;kind&#34;, &#34;run_as&#34;,
 <span id="L210" class="ln">   210  </span>			&#34;ignore_error&#34;, &#34;autonomous&#34;, &#34;database_connection&#34;, &#34;timeout&#34;}).
-<span id="L211" class="ln">   211  </span>			AddRow(24, &#34;foo&#34;, &#34;sql&#34;, &#34;user&#34;, false, false, &#34;postgres://foo@boo/bar&#34;, 0))
+<span id="L211" class="ln">   211  </span>			AddRow(24, &#34;task1&#34;, &#34;foo&#34;, &#34;sql&#34;, &#34;user&#34;, false, false, &#34;postgres://foo@boo/bar&#34;, 0))
 <span id="L212" class="ln">   212  </span>	assert.NoError(t, pge.GetChainElements(ctx, &amp;[]pgengine.ChainTask{}, 0))
 <span id="L213" class="ln">   213  </span>
 <span id="L214" class="ln">   214  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnError(errors.New(&#34;error&#34;))

@@ -118,6 +118,9 @@
 				<dd><a href="#adaptEntryLevel">func adaptEntryLevel(level logrus.Level) string</a></dd>
 			
 				
+				<dd><a href="#logIdent">func logIdent(id int, name string) string</a></dd>
+			
+				
 				<dd><a href="#nullString">func nullString(s string) any</a></dd>
 			
 				
@@ -127,6 +130,9 @@
 				
 				<dd><a href="#Chain">type Chain</a></dd>
 				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Chain.String">func (chain Chain) String() string</a></dd>
 				
 			
 				
@@ -140,6 +146,9 @@
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#ChainTask.IsRemote">func (task *ChainTask) IsRemote() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#ChainTask.String">func (task ChainTask) String() string</a></dd>
 				
 			
 				
@@ -631,6 +640,21 @@ a connection is the main loop period of 1 minute.
 		
 			
 			
+			<h2 id="logIdent">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L14">logIdent</a>
+				<a class="permalink" href="#logIdent">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func logIdent(id <a href="https://pkg.go.dev/builtin/#int">int</a>, name <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			<p>logIdent combines a numeric ID and a human-readable name for log fields,
+e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is returned.
+
+			
+			
+
+		
+			
+			
 			<h2 id="nullString">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/yaml.go.html#L145">nullString</a>
 				<a class="permalink" href="#nullString">&#xb6;</a>
 				
@@ -659,7 +683,7 @@ a connection is the main loop period of 1 minute.
 		
 			
 			
-			<h2 id="Chain">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L16">Chain</a>
+			<h2 id="Chain">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L26">Chain</a>
 				<a class="permalink" href="#Chain">&#xb6;</a>
 				
 				
@@ -687,6 +711,19 @@ a connection is the main loop period of 1 minute.
 
 			
 
+			
+				
+				<h3 id="Chain.String">func (Chain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L37">String</a>
+					<a class="permalink" href="#Chain.String">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (chain <a href="#Chain">Chain</a>) String() <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+				<p>String returns a log-friendly identifier, e.g. &quot;42|Import Chain From S3&quot;.
+
+				
+				
+				
 			
 		
 			
@@ -720,7 +757,7 @@ a connection is the main loop period of 1 minute.
 		
 			
 			
-			<h2 id="ChainTask">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L43">ChainTask</a>
+			<h2 id="ChainTask">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L58">ChainTask</a>
 				<a class="permalink" href="#ChainTask">&#xb6;</a>
 				
 				
@@ -730,6 +767,7 @@ a connection is the main loop period of 1 minute.
 			<pre>type ChainTask struct {
 <span id="ChainTask.ChainID"></span>    ChainID       <a href="https://pkg.go.dev/builtin/#int">int</a>       `db:&#34;-&#34; yaml:&#34;-&#34;`
 <span id="ChainTask.TaskID"></span>    TaskID        <a href="https://pkg.go.dev/builtin/#int">int</a>       `db:&#34;task_id&#34; yaml:&#34;-&#34;`
+<span id="ChainTask.TaskName"></span>    TaskName      <a href="https://pkg.go.dev/builtin/#string">string</a>    `db:&#34;task_name&#34; yaml:&#34;-&#34;`
 <span id="ChainTask.Command"></span>    Command       <a href="https://pkg.go.dev/builtin/#string">string</a>    `db:&#34;command&#34; yaml:&#34;command&#34;`
 <span id="ChainTask.Kind"></span>    Kind          <a href="https://pkg.go.dev/builtin/#string">string</a>    `db:&#34;kind&#34; yaml:&#34;kind,omitempty&#34;`
 <span id="ChainTask.RunAs"></span>    RunAs         <a href="https://pkg.go.dev/builtin/#string">string</a>    `db:&#34;run_as&#34; yaml:&#34;run_as,omitempty&#34;`
@@ -755,7 +793,7 @@ a connection is the main loop period of 1 minute.
 
 			
 				
-				<h3 id="ChainTask.IsRemote">func (*ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L58">IsRemote</a>
+				<h3 id="ChainTask.IsRemote">func (*ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L74">IsRemote</a>
 					<a class="permalink" href="#ChainTask.IsRemote">&#xb6;</a>
 					
 					
@@ -766,10 +804,23 @@ a connection is the main loop period of 1 minute.
 				
 				
 			
+				
+				<h3 id="ChainTask.String">func (ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L79">String</a>
+					<a class="permalink" href="#ChainTask.String">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (task <a href="#ChainTask">ChainTask</a>) String() <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+				<p>String returns a log-friendly identifier, e.g. &quot;49|Check_if_file_exist&quot;.
+
+				
+				
+				
+			
 		
 			
 			
-			<h2 id="IntervalChain">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L27">IntervalChain</a>
+			<h2 id="IntervalChain">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L42">IntervalChain</a>
 				<a class="permalink" href="#IntervalChain">&#xb6;</a>
 				
 				
@@ -795,7 +846,7 @@ a connection is the main loop period of 1 minute.
 
 			
 				
-				<h3 id="IntervalChain.IsListed">func (IntervalChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L33">IsListed</a>
+				<h3 id="IntervalChain.IsListed">func (IntervalChain) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L48">IsListed</a>
 					<a class="permalink" href="#IntervalChain.IsListed">&#xb6;</a>
 					
 					
@@ -1237,7 +1288,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetChainParamValues">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L153">GetChainParamValues</a>
+				<h3 id="PgEngine.GetChainParamValues">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L154">GetChainParamValues</a>
 					<a class="permalink" href="#PgEngine.GetChainParamValues">&#xb6;</a>
 					
 					
@@ -1833,7 +1884,7 @@ where all IDs are the same across all running containers, e.g. 1
 		
 			
 			
-			<h2 id="executor">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L11">executor</a>
+			<h2 id="executor">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L21">executor</a>
 				<a class="permalink" href="#executor">&#xb6;</a>
 				
 				
