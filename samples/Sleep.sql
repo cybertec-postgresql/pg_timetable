@@ -1,5 +1,5 @@
 SELECT timetable.add_job(
-    job_name            => 'sleep every minute',
+    job_name            => 'sleep_every_10s',
     job_schedule        => '@every 10 seconds',
     job_command         => 'Sleep',
     job_parameters      => '20' :: jsonb,

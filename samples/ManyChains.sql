@@ -1,5 +1,5 @@
 SELECT timetable.add_job(
-    job_name            => 'HelloWorld' || g.i,
+    job_name            => 'hello_world_' || g.i,
     job_schedule        => '* * * * *',
     job_kind            => 'PROGRAM'::timetable.command_kind,
     job_command         => 'bash',

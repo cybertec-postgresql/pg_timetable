@@ -1,5 +1,5 @@
 SELECT timetable.add_job(
-        job_name            => 'fail',
+        job_name            => 'fail_with_on_error_notify',
         job_schedule        => '* * * * *',
         job_command         => 'SELECT 42/0',
         job_kind            => 'SQL'::timetable.command_kind,

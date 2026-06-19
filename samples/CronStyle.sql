@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS timetable.dummy_log (
 -- └──────────── minute (0 - 59)
 
 SELECT timetable.add_job (
-    job_name     => 'cron_Job run after 40th minutes after 2 hour on 27th of every month ',
+    job_name     => 'cron_insert_every_2h_on_27th',
     job_schedule => '40 */2 27 * *',
     job_command  => $$INSERT INTO timetable.dummy_log (event_name) VALUES ('Cron test')$$
 );

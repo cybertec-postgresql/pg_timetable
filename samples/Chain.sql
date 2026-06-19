@@ -29,7 +29,7 @@ BEGIN
         exclusive_execution
     ) VALUES (
         DEFAULT,            -- chain_id, 
-        'chain operation',  -- chain_name
+        'chain_operation',  -- chain_name
         '* * * * *',        -- run_at, 
         1,                  -- max_instances, 
         TRUE,               -- live, 

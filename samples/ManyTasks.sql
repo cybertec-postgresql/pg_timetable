@@ -1,7 +1,7 @@
 WITH 
     cte_chain (v_chain_id) AS ( -- let's create a new chain and add tasks to it later
         INSERT INTO timetable.chain (chain_name, run_at, max_instances, live) 
-        VALUES ('many tasks', '* * * * *', 1, true)
+        VALUES ('many_tasks', '* * * * *', 1, true)
         RETURNING chain_id
     ),
     cte_tasks(v_task_id) AS ( -- now we'll add 500 tasks to the chain, some of them will fail

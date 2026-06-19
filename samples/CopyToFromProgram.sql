@@ -22,7 +22,7 @@ DECLARE
 BEGIN
     -- Create the chain with default values executed every minute (NULL == '* * * * *' :: timetable.cron)
     INSERT INTO timetable.chain (chain_name, live, self_destruct)
-    VALUES ('Sync etcd with PostgreSQL', TRUE, TRUE)
+    VALUES ('sync_etcd_with_postgresql', TRUE, TRUE)
     RETURNING chain_id INTO v_chain_id;
 
     -- Step 1. Write key-value pairs to etcd

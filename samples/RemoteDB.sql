@@ -13,7 +13,7 @@ BEGIN
 
     -- add a remote job
     INSERT INTO timetable.chain (chain_id, chain_name, run_at, live) 
-    VALUES (DEFAULT, 'remote db', '* * * * *', TRUE)
+    VALUES (DEFAULT, 'remote_db', '* * * * *', TRUE)
     RETURNING chain_id INTO v_chain_id;
 
     INSERT INTO timetable.task (chain_id, task_order, command, database_connection, ignore_error)

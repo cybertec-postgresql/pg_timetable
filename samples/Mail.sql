@@ -6,7 +6,7 @@ DECLARE
     v_chain_id bigint;
 BEGIN
     -- Get the chain id
-    INSERT INTO timetable.chain (chain_name, max_instances, live) VALUES ('Send Mail', 1, TRUE)
+    INSERT INTO timetable.chain (chain_name, max_instances, live) VALUES ('send_mail', 1, TRUE)
     RETURNING chain_id INTO v_chain_id;
 
     -- Add SendMail task

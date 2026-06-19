@@ -1,5 +1,5 @@
 SELECT timetable.add_job(
-    job_name            => 'notify every minute',
+    job_name            => 'notify_every_minute',
     job_schedule        => '* * * * *',
     job_command         => 'SELECT pg_notify($1, $2)',
     job_parameters      => '[ "TT_CHANNEL", "Ahoj from SQL base task" ]' :: jsonb,
