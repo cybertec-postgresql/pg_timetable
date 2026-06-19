@@ -133,6 +133,7 @@ FROM timetable.chain WHERE (client_name = $1 OR client_name IS NULL) AND chain_i
 func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTask, chainID int) error {
 	const sqlSelectChainTasks = `SELECT 
 	task_id,
+	COALESCE(task_name, '') as task_name,
 	command,
 	kind,
 	COALESCE(run_as, '') as run_as,
