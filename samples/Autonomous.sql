@@ -25,7 +25,7 @@ WITH
     cte_chain (v_chain_id) AS (
         INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct) 
         VALUES (
-            'call proc() every 10 sec', -- chain_name, 
+            'call_proc_every_10s', -- chain_name, 
             '@every 10 seconds',        -- run_at,
             1,     -- max_instances, 
             TRUE,  -- live, 

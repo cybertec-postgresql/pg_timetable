@@ -7,7 +7,7 @@ END;
 $BODY$;
 
 SELECT timetable.add_job(
-    job_name            => 'notify then destruct',
+    job_name            => 'notify_then_destruct',
     job_schedule        => '* * * * *',
     job_command         => 'SELECT raise_func($1)',
     job_parameters      => '[ "Ahoj from self destruct task" ]' :: jsonb,

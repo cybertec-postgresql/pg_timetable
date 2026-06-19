@@ -1,0 +1,80 @@
+# Demo setup for pg_timetable
+#
+# Loaded sample chains (all self-contained, no external dependencies):
+#   01 Basic.sql          — pg_notify every minute
+#   02 CronStyle.sql      — cron expression scheduling demo
+#   03 Chain.sql          — multi-task chain with shared log table
+#   04 ErrorHandling.sql  — division-by-zero with on_error notification
+#   05 Log.sql            — built-in Log task
+#   06 NoOp.sql           — built-in NoOp task
+#   07 Sleep.sql          — built-in Sleep task (@every 10 seconds)
+#   08 Autonomous.sql     — autonomous task with mid-chain COMMITs
+#   09 Exclusive.sql      — exclusive execution lock demo
+#   10 DelayedRetry.sql   — retry with back-off on failure
+#   11 SelfDestruct.sql   — chain that removes itself after one run
+#   12 ClientMessages.sql — LISTEN/NOTIFY between client and scheduler
+#
+# Usage:
+#   docker compose up          — start PostgreSQL + pg_timetable
+#   docker compose up --build  — rebuild pg_timetable image first
+#   docker compose down -v     — stop and remove all volumes
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: pg_timetable_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: timetable
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: scheduler_password
+    ports:
+      - "5432:5432"
+    volumes:
+      # postgres 18+ requires the volume at /var/lib/postgresql (not /data)
+      - pg_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scheduler -d timetable"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pg_timetable:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pg_timetable_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Full connection string — the only supported connection env var
+      PGTT_CONNSTR: "host=postgres port=5432 dbname=timetable user=scheduler password=scheduler_password sslmode=disable"
+      # REST API port
+      PGTT_RESTPORT: "8008"
+    volumes:
+      # Sample files are loaded by pg_timetable after the schema is bootstrapped,
+      # so all timetable.* functions are already available when they run.
+      - ./samples/:/samples/:ro
+    ports:
+      - "8008:8008"
+    command:
+      - --clientname=demo_worker
+      - --upgrade
+      - --file=/samples/Basic.sql
+      - --file=/samples/CronStyle.sql
+      - --file=/samples/Chain.sql
+      - --file=/samples/ErrorHandling.sql
+      - --file=/samples/Log.sql
+      - --file=/samples/NoOp.sql
+      - --file=/samples/Sleep.sql
+      - --file=/samples/Autonomous.sql
+      - --file=/samples/Exclusive.sql
+      - --file=/samples/DelayedRetry.sql
+      - --file=/samples/SelfDestruct.sql
+      - --file=/samples/ClientMessages.sql
+      # - --log-level=debug
+
+volumes:
+  pg_data:

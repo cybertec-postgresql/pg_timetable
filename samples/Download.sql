@@ -23,7 +23,7 @@ DECLARE
 BEGIN
     -- Create the chain with default values executed every minute (NULL == '* * * * *' :: timetable.cron)
     INSERT INTO timetable.chain (chain_name, live)
-    VALUES ('Download locations and aggregate', TRUE)
+    VALUES ('download_locations_and_aggregate', TRUE)
     RETURNING chain_id INTO v_chain_id;
 
     -- Step 1. Download file from the server
@@ -46,7 +46,7 @@ BEGIN
     -- Step 2. Transform Unicode characters into ASCII
     -- Create the program task to call 'uconv' and name it 'unaccent'
     INSERT INTO timetable.task (chain_id, task_order, kind, command, ignore_error, task_name)
-    VALUES (v_chain_id, 2, 'PROGRAM', 'uconv', TRUE, 'unaccent')
+    VALUES (v_chain_id, 2, 'PROGRAM', 'uconv', TRUE, 'remove_accents')
     RETURNING task_id INTO v_task_id;
 
     -- Create the parameters for the 'unaccent' task. Input and output files in this case
@@ -69,7 +69,7 @@ BEGIN
     RAISE NOTICE 'Step 3 completed. Import task added with ID: %', v_task_id;
 
     INSERT INTO timetable.task (chain_id, task_order, kind, command, ignore_error, task_name)
-    VALUES (v_chain_id, 4, 'PROGRAM', 'bash', TRUE, 'remove .csv')
+    VALUES (v_chain_id, 4, 'PROGRAM', 'bash', TRUE, 'remove_csv_files')
     RETURNING task_id INTO v_task_id;
 
     INSERT INTO timetable.parameter (task_id, order_id, value)

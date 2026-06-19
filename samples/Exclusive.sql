@@ -9,7 +9,7 @@ END;
 $BODY$;
 
 SELECT timetable.add_job(
-    job_name            => 'exclusive sleepy task every 10 sec',
+    job_name            => 'exclusive_sleep_every_10s',
     job_schedule        => '@every 10 seconds',
     job_command         => 'SELECT sleepy_func($1)',
     job_parameters      => '[ "Configuration EVERY 10sec" ]'::jsonb,
@@ -20,7 +20,7 @@ SELECT timetable.add_job(
 ) as chain_id
 UNION
 SELECT timetable.add_job(
-    job_name            => 'exclusive sleepy task after 10 sec',
+    job_name            => 'exclusive_sleep_after_10s',
     job_schedule        => '@after 10 seconds',
     job_command         => 'SELECT sleepy_func($1)',
     job_parameters      => '[ "Configuration AFTER 10sec" ]'::jsonb,

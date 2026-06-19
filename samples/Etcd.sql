@@ -37,7 +37,7 @@ INSERT INTO timetable.chain (
     self_destruct
 )
 VALUES (
-    'ETCD Prefix-Read-Clean',
+    'etcd_prefix_read_clean',
     '* * * * *', -- Run every minute, but self_destruct will make it run once
     1,
     TRUE,
@@ -49,7 +49,7 @@ RETURNING chain_id;
 -- This task will be executed 3 times, once for each parameter row below.
 WITH task AS (
     INSERT INTO timetable.task (chain_id, task_order, task_name, kind, command, ignore_error)
-    SELECT currval('timetable.chain_chain_id_seq'), 10, 'Write keys to etcd', 'PROGRAM', 'etcdctl', FALSE
+    SELECT currval('timetable.chain_chain_id_seq'), 10, 'write_keys_to_etcd', 'PROGRAM', 'etcdctl', FALSE
     RETURNING task_id
 )
 INSERT INTO timetable.parameter (task_id, order_id, value)
@@ -69,7 +69,7 @@ INSERT INTO timetable.task (
 SELECT
     currval('timetable.chain_chain_id_seq'),
     20,
-    'Read from etcd with prefix',
+    'read_from_etcd_with_prefix',
     'SQL',
     $$COPY etcd_json_raw (data) FROM PROGRAM 'etcdctl --endpoints=http://127.0.0.1:2379 get --prefix /pg_timetable/multi/ --write-out=json'$$,
     FALSE;
@@ -86,7 +86,7 @@ INSERT INTO timetable.task (
 SELECT
     currval('timetable.chain_chain_id_seq'),
     30,
-    'Parse etcd output and store',
+    'parse_etcd_output_and_store',
     'SQL',
     $$INSERT INTO public.etcd_test_data (key, value)
       SELECT
@@ -109,7 +109,7 @@ INSERT INTO timetable.task (
 SELECT
     currval('timetable.chain_chain_id_seq'),
     40,
-    'Log etcd output',
+    'log_etcd_output',
     'SQL',
     $task$
     DO
@@ -127,7 +127,7 @@ SELECT
 -- Task 5: Clean up the keys in etcd
 WITH task AS (
     INSERT INTO timetable.task (chain_id, task_order, task_name, kind, command, ignore_error)
-    SELECT currval('timetable.chain_chain_id_seq'), 50, 'Clean up etcd', 'PROGRAM', 'etcdctl', FALSE
+    SELECT currval('timetable.chain_chain_id_seq'), 50, 'clean_up_etcd', 'PROGRAM', 'etcdctl', FALSE
     RETURNING task_id
 )
 INSERT INTO timetable.parameter (task_id, order_id, value)

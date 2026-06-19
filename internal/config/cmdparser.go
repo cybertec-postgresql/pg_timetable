@@ -21,7 +21,7 @@ type LoggingOpts struct {
 
 // StartOpts specifies the application startup options
 type StartOpts struct {
-	File     string `short:"f" long:"file" description:"SQL script or YAML chain definition file to execute during startup"`
+	File     []string `short:"f" long:"file" description:"SQL script or YAML chain definition file to execute during startup"`
 	Replace  bool   `long:"replace" description:"Replace existing chains when loading YAML files"`
 	Validate bool   `long:"validate" description:"Only validate YAML file without importing chains"`
 	Init     bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
@@ -86,8 +86,8 @@ func Parse(writer io.Writer) (*flags.Parser, error) {
 			return nil, err
 		}
 	}
-	if cmdOpts.Start.File != "" {
-		if _, err := os.Stat(cmdOpts.Start.File); os.IsNotExist(err) {
+	for _, f := range cmdOpts.Start.File {
+		if _, err := os.Stat(f); os.IsNotExist(err) {
 			return nil, err
 		}
 	}

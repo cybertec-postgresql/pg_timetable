@@ -32,7 +32,7 @@ END
 $$;
 
 SELECT timetable.add_job(
-        job_name            => 'retry if fail',
+        job_name            => 'retry_on_fail_delayed',
         job_schedule        => '@every 10 minutes',
         job_command         => 'SELECT 42/0',
         job_kind            => 'SQL'::timetable.command_kind,

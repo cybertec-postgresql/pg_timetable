@@ -1,5 +1,5 @@
 SELECT timetable.add_job(
-    job_name            => 'Builtin-in Log',
+    job_name            => 'builtin_log_every_minute',
     job_schedule        => NULL, -- same as '* * * * *'
     job_command         => 'Log',
     job_kind            => 'BUILTIN'::timetable.command_kind,

@@ -10,7 +10,7 @@ END;
 $BODY$;
 
 SELECT timetable.add_job(
-    job_name            => 'raise client message every minute',
+    job_name            => 'raise_client_message_every_minute',
     job_schedule        => '* * * * *',
     job_command         => 'SELECT raise_func($1)',
     job_parameters      => '[ "Hey from client messages task" ]' :: jsonb,
