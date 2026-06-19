@@ -229,9 +229,9 @@
 <span id="L172" class="ln">   172  </span>		mockPool.ExpectExec(&#34;SELECT 1;&#34;).WillReturnResult(pgxmock.NewResult(&#34;SELECT&#34;, 1))
 <span id="L173" class="ln">   173  </span>
 <span id="L174" class="ln">   174  </span>		cmdOpts := config.CmdOptions{}
-<span id="L175" class="ln">   175  </span>		cmdOpts.Start.File = sqlFile
+<span id="L175" class="ln">   175  </span>		cmdOpts.Start.File = []string{sqlFile}
 <span id="L176" class="ln">   176  </span>
-<span id="L177" class="ln">   177  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L177" class="ln">   177  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, sqlFile)
 <span id="L178" class="ln">   178  </span>		assert.NoError(t, err)
 <span id="L179" class="ln">   179  </span>	})
 <span id="L180" class="ln">   180  </span>
@@ -245,9 +245,9 @@
 <span id="L188" class="ln">   188  </span>		mockPool.ExpectExec(&#34;SELECT 1;&#34;).WillReturnError(errors.New(&#34;SQL execution failed&#34;))
 <span id="L189" class="ln">   189  </span>
 <span id="L190" class="ln">   190  </span>		cmdOpts := config.CmdOptions{}
-<span id="L191" class="ln">   191  </span>		cmdOpts.Start.File = sqlFile
+<span id="L191" class="ln">   191  </span>		cmdOpts.Start.File = []string{sqlFile}
 <span id="L192" class="ln">   192  </span>
-<span id="L193" class="ln">   193  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L193" class="ln">   193  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, sqlFile)
 <span id="L194" class="ln">   194  </span>		assert.Error(t, err)
 <span id="L195" class="ln">   195  </span>	})
 <span id="L196" class="ln">   196  </span>
@@ -263,10 +263,10 @@
 <span id="L206" class="ln">   206  </span>		assert.NoError(t, err)
 <span id="L207" class="ln">   207  </span>
 <span id="L208" class="ln">   208  </span>		cmdOpts := config.CmdOptions{}
-<span id="L209" class="ln">   209  </span>		cmdOpts.Start.File = yamlFile
+<span id="L209" class="ln">   209  </span>		cmdOpts.Start.File = []string{yamlFile}
 <span id="L210" class="ln">   210  </span>		cmdOpts.Start.Validate = true
 <span id="L211" class="ln">   211  </span>
-<span id="L212" class="ln">   212  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L212" class="ln">   212  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 <span id="L213" class="ln">   213  </span>		assert.NoError(t, err)
 <span id="L214" class="ln">   214  </span>	})
 <span id="L215" class="ln">   215  </span>
@@ -281,10 +281,10 @@
 <span id="L224" class="ln">   224  </span>		assert.NoError(t, err)
 <span id="L225" class="ln">   225  </span>
 <span id="L226" class="ln">   226  </span>		cmdOpts := config.CmdOptions{}
-<span id="L227" class="ln">   227  </span>		cmdOpts.Start.File = yamlFile
+<span id="L227" class="ln">   227  </span>		cmdOpts.Start.File = []string{yamlFile}
 <span id="L228" class="ln">   228  </span>		cmdOpts.Start.Validate = true
 <span id="L229" class="ln">   229  </span>
-<span id="L230" class="ln">   230  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L230" class="ln">   230  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 <span id="L231" class="ln">   231  </span>		<span class="comment">// Expect error due to invalid YAML structure</span>
 <span id="L232" class="ln">   232  </span>		assert.Error(t, err)
 <span id="L233" class="ln">   233  </span>	})
@@ -301,7 +301,7 @@
 <span id="L244" class="ln">   244  </span>		assert.NoError(t, err)
 <span id="L245" class="ln">   245  </span>
 <span id="L246" class="ln">   246  </span>		cmdOpts := config.CmdOptions{}
-<span id="L247" class="ln">   247  </span>		cmdOpts.Start.File = yamlFile
+<span id="L247" class="ln">   247  </span>		cmdOpts.Start.File = []string{yamlFile}
 <span id="L248" class="ln">   248  </span>		cmdOpts.Start.Validate = false
 <span id="L249" class="ln">   249  </span>		cmdOpts.Start.Replace = false
 <span id="L250" class="ln">   250  </span>
@@ -315,7 +315,7 @@
 <span id="L258" class="ln">   258  </span>			WithArgs(anyArgs(10)...).
 <span id="L259" class="ln">   259  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
 <span id="L260" class="ln">   260  </span>
-<span id="L261" class="ln">   261  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L261" class="ln">   261  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 <span id="L262" class="ln">   262  </span>		assert.NoError(t, err)
 <span id="L263" class="ln">   263  </span>	})
 <span id="L264" class="ln">   264  </span>
@@ -331,10 +331,10 @@
 <span id="L274" class="ln">   274  </span>		assert.NoError(t, err)
 <span id="L275" class="ln">   275  </span>
 <span id="L276" class="ln">   276  </span>		cmdOpts := config.CmdOptions{}
-<span id="L277" class="ln">   277  </span>		cmdOpts.Start.File = ymlFile
+<span id="L277" class="ln">   277  </span>		cmdOpts.Start.File = []string{ymlFile}
 <span id="L278" class="ln">   278  </span>		cmdOpts.Start.Validate = true
 <span id="L279" class="ln">   279  </span>
-<span id="L280" class="ln">   280  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L280" class="ln">   280  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, ymlFile)
 <span id="L281" class="ln">   281  </span>		assert.NoError(t, err)
 <span id="L282" class="ln">   282  </span>	})
 <span id="L283" class="ln">   283  </span>
@@ -350,17 +350,17 @@
 <span id="L293" class="ln">   293  </span>		assert.NoError(t, err)
 <span id="L294" class="ln">   294  </span>
 <span id="L295" class="ln">   295  </span>		cmdOpts := config.CmdOptions{}
-<span id="L296" class="ln">   296  </span>		cmdOpts.Start.File = noExtFile
+<span id="L296" class="ln">   296  </span>		cmdOpts.Start.File = []string{noExtFile}
 <span id="L297" class="ln">   297  </span>
-<span id="L298" class="ln">   298  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L298" class="ln">   298  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, noExtFile)
 <span id="L299" class="ln">   299  </span>		assert.Error(t, err)
 <span id="L300" class="ln">   300  </span>	})
 <span id="L301" class="ln">   301  </span>
 <span id="L302" class="ln">   302  </span>	t.Run(&#34;File not found error&#34;, func(t *testing.T) {
 <span id="L303" class="ln">   303  </span>		cmdOpts := config.CmdOptions{}
-<span id="L304" class="ln">   304  </span>		cmdOpts.Start.File = &#34;/nonexistent/file.sql&#34;
+<span id="L304" class="ln">   304  </span>		cmdOpts.Start.File = []string{&#34;/nonexistent/file.sql&#34;}
 <span id="L305" class="ln">   305  </span>
-<span id="L306" class="ln">   306  </span>		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L306" class="ln">   306  </span>		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts, &#34;/nonexistent/file.sql&#34;)
 <span id="L307" class="ln">   307  </span>		assert.Error(t, err)
 <span id="L308" class="ln">   308  </span>	})
 <span id="L309" class="ln">   309  </span>
@@ -376,7 +376,7 @@
 <span id="L319" class="ln">   319  </span>		assert.NoError(t, err)
 <span id="L320" class="ln">   320  </span>
 <span id="L321" class="ln">   321  </span>		cmdOpts := config.CmdOptions{}
-<span id="L322" class="ln">   322  </span>		cmdOpts.Start.File = yamlFile
+<span id="L322" class="ln">   322  </span>		cmdOpts.Start.File = []string{yamlFile}
 <span id="L323" class="ln">   323  </span>		cmdOpts.Start.Validate = false
 <span id="L324" class="ln">   324  </span>		cmdOpts.Start.Replace = true
 <span id="L325" class="ln">   325  </span>
@@ -393,7 +393,7 @@
 <span id="L336" class="ln">   336  </span>			WithArgs(anyArgs(10)...).
 <span id="L337" class="ln">   337  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
 <span id="L338" class="ln">   338  </span>
-<span id="L339" class="ln">   339  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L339" class="ln">   339  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 <span id="L340" class="ln">   340  </span>		assert.NoError(t, err)
 <span id="L341" class="ln">   341  </span>	})
 <span id="L342" class="ln">   342  </span>
@@ -410,9 +410,9 @@
 <span id="L353" class="ln">   353  </span>		mockPool.ExpectExec(`SELECT 1;.*SELECT 2;.*INSERT INTO test VALUES \(1\);`).WillReturnResult(pgxmock.NewResult(&#34;SELECT&#34;, 1))
 <span id="L354" class="ln">   354  </span>
 <span id="L355" class="ln">   355  </span>		cmdOpts := config.CmdOptions{}
-<span id="L356" class="ln">   356  </span>		cmdOpts.Start.File = sqlFile
+<span id="L356" class="ln">   356  </span>		cmdOpts.Start.File = []string{sqlFile}
 <span id="L357" class="ln">   357  </span>
-<span id="L358" class="ln">   358  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+<span id="L358" class="ln">   358  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, sqlFile)
 <span id="L359" class="ln">   359  </span>		assert.NoError(t, err)
 <span id="L360" class="ln">   360  </span>	})
 <span id="L361" class="ln">   361  </span>

@@ -440,12 +440,12 @@
 			<p>StartOpts specifies the application startup options
 
 			<pre>type StartOpts struct {
-<span id="StartOpts.File"></span>    File     <a href="https://pkg.go.dev/builtin/#string">string</a> `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script or YAML chain definition file to execute during startup&#34;`
-<span id="StartOpts.Replace"></span>    Replace  <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;replace&#34; description:&#34;Replace existing chains when loading YAML files&#34;`
-<span id="StartOpts.Validate"></span>    Validate <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;validate&#34; description:&#34;Only validate YAML file without importing chains&#34;`
-<span id="StartOpts.Init"></span>    Init     <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
-<span id="StartOpts.Upgrade"></span>    Upgrade  <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;upgrade&#34; description:&#34;Upgrade database to the latest version&#34;`
-<span id="StartOpts.Debug"></span>    Debug    <a href="https://pkg.go.dev/builtin/#bool">bool</a>   `long:&#34;debug&#34; description:&#34;Run in debug mode. Only asynchronous chains will be executed&#34;`
+<span id="StartOpts.File"></span>    File     []<a href="https://pkg.go.dev/builtin/#string">string</a> `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script or YAML chain definition file to execute during startup&#34;`
+<span id="StartOpts.Replace"></span>    Replace  <a href="https://pkg.go.dev/builtin/#bool">bool</a>     `long:&#34;replace&#34; description:&#34;Replace existing chains when loading YAML files&#34;`
+<span id="StartOpts.Validate"></span>    Validate <a href="https://pkg.go.dev/builtin/#bool">bool</a>     `long:&#34;validate&#34; description:&#34;Only validate YAML file without importing chains&#34;`
+<span id="StartOpts.Init"></span>    Init     <a href="https://pkg.go.dev/builtin/#bool">bool</a>     `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
+<span id="StartOpts.Upgrade"></span>    Upgrade  <a href="https://pkg.go.dev/builtin/#bool">bool</a>     `long:&#34;upgrade&#34; description:&#34;Upgrade database to the latest version&#34;`
+<span id="StartOpts.Debug"></span>    Debug    <a href="https://pkg.go.dev/builtin/#bool">bool</a>     `long:&#34;debug&#34; description:&#34;Run in debug mode. Only asynchronous chains will be executed&#34;`
 }
 </pre>
 

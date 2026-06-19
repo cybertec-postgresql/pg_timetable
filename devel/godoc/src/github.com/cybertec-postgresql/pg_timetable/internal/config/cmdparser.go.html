@@ -78,7 +78,7 @@
 <span id="L21" class="ln">    21  </span>
 <span id="L22" class="ln">    22  </span><span class="comment">// StartOpts specifies the application startup options</span>
 <span id="L23" class="ln">    23  </span>type StartOpts struct {
-<span id="L24" class="ln">    24  </span>	File     string `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script or YAML chain definition file to execute during startup&#34;`
+<span id="L24" class="ln">    24  </span>	File     []string `short:&#34;f&#34; long:&#34;file&#34; description:&#34;SQL script or YAML chain definition file to execute during startup&#34;`
 <span id="L25" class="ln">    25  </span>	Replace  bool   `long:&#34;replace&#34; description:&#34;Replace existing chains when loading YAML files&#34;`
 <span id="L26" class="ln">    26  </span>	Validate bool   `long:&#34;validate&#34; description:&#34;Only validate YAML file without importing chains&#34;`
 <span id="L27" class="ln">    27  </span>	Init     bool   `long:&#34;init&#34; description:&#34;Initialize database schema to the latest version and exit. Can be used with --upgrade&#34;`
@@ -143,8 +143,8 @@
 <span id="L86" class="ln">    86  </span>			return nil, err
 <span id="L87" class="ln">    87  </span>		}
 <span id="L88" class="ln">    88  </span>	}
-<span id="L89" class="ln">    89  </span>	if cmdOpts.Start.File != &#34;&#34; {
-<span id="L90" class="ln">    90  </span>		if _, err := os.Stat(cmdOpts.Start.File); os.IsNotExist(err) {
+<span id="L89" class="ln">    89  </span>	for _, f := range cmdOpts.Start.File {
+<span id="L90" class="ln">    90  </span>		if _, err := os.Stat(f); os.IsNotExist(err) {
 <span id="L91" class="ln">    91  </span>			return nil, err
 <span id="L92" class="ln">    92  </span>		}
 <span id="L93" class="ln">    93  </span>	}

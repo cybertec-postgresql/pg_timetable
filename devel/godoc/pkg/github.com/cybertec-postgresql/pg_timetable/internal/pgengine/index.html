@@ -232,7 +232,7 @@
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteCustomScripts">func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error</a></dd>
 				
 					
-					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteFileScript">func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions) error</a></dd>
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteFileScript">func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions, filePath string) error</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.ExecuteSQLCommand">func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, task *ChainTask, paramValues []string) (err error)</a></dd>
@@ -1184,7 +1184,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteCustomScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L255">ExecuteCustomScripts</a>
+				<h3 id="PgEngine.ExecuteCustomScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L254">ExecuteCustomScripts</a>
 					<a class="permalink" href="#PgEngine.ExecuteCustomScripts">&#xb6;</a>
 					
 					
@@ -1202,7 +1202,7 @@ We assume here all checks for proper schema validation are done beforehannd
 					
 					
 				</h3>
-				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteFileScript(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, cmdOpts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#CmdOptions">CmdOptions</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteFileScript(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, cmdOpts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#CmdOptions">CmdOptions</a>, filePath <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
 				<p>ExecuteFileScript handles both SQL and YAML files based on file extension
 
 				
@@ -1236,7 +1236,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSchemaScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L273">ExecuteSchemaScripts</a>
+				<h3 id="PgEngine.ExecuteSchemaScripts">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L272">ExecuteSchemaScripts</a>
 					<a class="permalink" href="#PgEngine.ExecuteSchemaScripts">&#xb6;</a>
 					
 					
@@ -1249,7 +1249,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.Finalize">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L300">Finalize</a>
+				<h3 id="PgEngine.Finalize">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L299">Finalize</a>
 					<a class="permalink" href="#PgEngine.Finalize">&#xb6;</a>
 					
 					
