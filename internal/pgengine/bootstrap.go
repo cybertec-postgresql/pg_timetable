@@ -108,8 +108,8 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 		return nil, err
 	}
 	pge.AddLogHook(ctx) //schema exists, we can log now
-	if cmdOpts.Start.File != "" {
-		if err := pge.ExecuteFileScript(ctx, cmdOpts); err != nil {
+	for _, f := range cmdOpts.Start.File {
+		if err := pge.ExecuteFileScript(ctx, cmdOpts, f); err != nil {
 			return nil, err
 		}
 	}
@@ -219,8 +219,7 @@ func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) 
 }
 
 // ExecuteFileScript handles both SQL and YAML files based on file extension
-func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions) error {
-	filePath := cmdOpts.Start.File
+func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions, filePath string) error {
 
 	// Determine file type by extension
 	fileExt := strings.ToLower(filepath.Ext(filePath))

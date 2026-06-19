@@ -172,9 +172,9 @@ func TestExecuteFileScript(t *testing.T) {
 		mockPool.ExpectExec("SELECT 1;").WillReturnResult(pgxmock.NewResult("SELECT", 1))
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = sqlFile
+		cmdOpts.Start.File = []string{sqlFile}
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, sqlFile)
 		assert.NoError(t, err)
 	})
 
@@ -188,9 +188,9 @@ func TestExecuteFileScript(t *testing.T) {
 		mockPool.ExpectExec("SELECT 1;").WillReturnError(errors.New("SQL execution failed"))
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = sqlFile
+		cmdOpts.Start.File = []string{sqlFile}
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, sqlFile)
 		assert.Error(t, err)
 	})
 
@@ -206,10 +206,10 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.File = []string{yamlFile}
 		cmdOpts.Start.Validate = true
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 		assert.NoError(t, err)
 	})
 
@@ -224,10 +224,10 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.File = []string{yamlFile}
 		cmdOpts.Start.Validate = true
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 		// Expect error due to invalid YAML structure
 		assert.Error(t, err)
 	})
@@ -244,7 +244,7 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.File = []string{yamlFile}
 		cmdOpts.Start.Validate = false
 		cmdOpts.Start.Replace = false
 
@@ -258,7 +258,7 @@ func TestExecuteFileScript(t *testing.T) {
 			WithArgs(anyArgs(10)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 		assert.NoError(t, err)
 	})
 
@@ -274,10 +274,10 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = ymlFile
+		cmdOpts.Start.File = []string{ymlFile}
 		cmdOpts.Start.Validate = true
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, ymlFile)
 		assert.NoError(t, err)
 	})
 
@@ -293,17 +293,17 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = noExtFile
+		cmdOpts.Start.File = []string{noExtFile}
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, noExtFile)
 		assert.Error(t, err)
 	})
 
 	t.Run("File not found error", func(t *testing.T) {
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = "/nonexistent/file.sql"
+		cmdOpts.Start.File = []string{"/nonexistent/file.sql"}
 
-		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err := mockpge.ExecuteFileScript(context.Background(), cmdOpts, "/nonexistent/file.sql")
 		assert.Error(t, err)
 	})
 
@@ -319,7 +319,7 @@ func TestExecuteFileScript(t *testing.T) {
 		assert.NoError(t, err)
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = yamlFile
+		cmdOpts.Start.File = []string{yamlFile}
 		cmdOpts.Start.Validate = false
 		cmdOpts.Start.Replace = true
 
@@ -336,7 +336,7 @@ func TestExecuteFileScript(t *testing.T) {
 			WithArgs(anyArgs(10)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
 		assert.NoError(t, err)
 	})
 
@@ -353,9 +353,9 @@ INSERT INTO test VALUES (1);`
 		mockPool.ExpectExec(`SELECT 1;.*SELECT 2;.*INSERT INTO test VALUES \(1\);`).WillReturnResult(pgxmock.NewResult("SELECT", 1))
 
 		cmdOpts := config.CmdOptions{}
-		cmdOpts.Start.File = sqlFile
+		cmdOpts.Start.File = []string{sqlFile}
 
-		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts)
+		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, sqlFile)
 		assert.NoError(t, err)
 	})
 
