@@ -9,6 +9,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -28,7 +29,7 @@ func TestAsyncChains(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "scheduler_unit_test")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 	n1 := &pgconn.Notification{Payload: `{"ConfigID": 1, "Command": "START"}`}
 	n2 := &pgconn.Notification{Payload: `{"ConfigID": 2, "Command": "START"}`}
 	ns := &pgconn.Notification{Payload: `{"ConfigID": 24, "Command": "STOP"}`}
@@ -59,7 +60,7 @@ func TestChainWorker(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic"}), otel.NewNoop())
 	chains := make(chan Chain, 16)
 
 	t.Run("Check chainWorker if context cancelled", func(*testing.T) {
@@ -97,7 +98,7 @@ func TestExecuteChain(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
 	sch.executeChain(t.Context(), Chain{Timeout: 1})
 }
@@ -106,7 +107,7 @@ func TestExecuteChainElement(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
 	mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow("foo"))
 	_ = sch.executeTask(t.Context(), mock, &pgengine.ChainTask{Timeout: 1})
@@ -117,7 +118,7 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
 	t.Run("check error handler if everything is fine", func(t *testing.T) {
 		mock.ExpectExec("FOO").WillReturnResult(pgxmock.NewResult("FOO", 1))

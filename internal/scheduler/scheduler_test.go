@@ -10,6 +10,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 )
 
@@ -34,7 +35,7 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, err, "Creating program tasks failed")
 	err = pge.ExecuteCustomScripts(context.Background(), "../../samples/ManyTasks.sql")
 	assert.NoError(t, err, "Creating many tasks failed")
-	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 	assert.NoError(t, sch.StartChain(context.Background(), 1))
 	assert.ErrorContains(t, sch.StopChain(context.Background(), -1), "No running chain found")
 	go func() {

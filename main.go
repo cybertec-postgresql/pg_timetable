@@ -11,6 +11,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/api"
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 )
@@ -96,7 +97,23 @@ func run(ctx context.Context, cmdOpts *config.CmdOptions, logger log.LoggerHooke
 	if cmdOpts.Start.Init {
 		return ExitCodeOK
 	}
-	sch := scheduler.New(pge, logger)
+
+	// Initialise OTel provider (noop when not configured)
+	otelProvider, otelErr := otel.New(ctx, cmdOpts.OTel, cmdOpts.ClientName, version)
+	if otelErr != nil {
+		logger.WithError(otelErr).Warn("OTel provider init failed; continuing without telemetry")
+		otelProvider = otel.NewNoop()
+	}
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(),
+			otelProvider.ShutdownTimeout())
+		defer shutdownCancel()
+		if err := otelProvider.Shutdown(shutdownCtx); err != nil {
+			logger.WithError(err).Warn("OTel provider shutdown failed")
+		}
+	}()
+
+	sch := scheduler.New(pge, logger, otelProvider)
 	apiserver.APIHandler = sch
 
 	if sch.Run(ctx) == scheduler.ShutdownStatus {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 	"github.com/pashagolub/pgxmock/v5"
@@ -34,7 +35,7 @@ func TestShellCommand(t *testing.T) {
 	mock, err := pgxmock.NewPool() //
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "--log-database-level=none")
-	sch := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
+	sch := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 	ctx := context.Background()
 
 	err = sch.ExecuteProgramCommand(ctx, &pgengine.ChainTask{}, []string{""})

@@ -70,6 +70,7 @@ nav:
   - Reference:
     - API: api.md
     - YAML Schema: yaml-format.md
+    - OpenTelemetry: opentelemetry.md
   - Developer:
     - License: license.md
     - Documentation: ../devel/godoc/index.html

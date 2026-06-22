@@ -10,6 +10,9 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	pgx "github.com/jackc/pgx/v5"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type (
@@ -195,6 +198,18 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var cancel context.CancelFunc
 	var vxid int64
 
+	// OTel tracing: create root span for this chain execution
+	chainStart := time.Now()
+	tracer := sch.provider.Tracer()
+	ctx, chainSpan := tracer.Start(ctx, "chain.execute",
+		trace.WithAttributes(
+			attribute.Int("chain.id", chain.ChainID),
+			attribute.String("chain.name", chain.ChainName),
+			attribute.String("client.name", sch.Config().ClientName),
+		))
+	defer chainSpan.End()
+	sch.provider.RecordChainStarted(ctx, sch.Config().ClientName)
+
 	chainCtx, cancel := getTimeoutContext(ctx, sch.Config().Resource.ChainTimeout, chain.Timeout)
 	if cancel != nil {
 		defer cancel()
@@ -236,6 +251,8 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 				chainL.Error("Chain failed")
 				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 				sch.pgengine.RollbackTransaction(bctx, tx)
+				chainSpan.SetStatus(codes.Error, "chain failed")
+				sch.provider.RecordChainFailed(bctx, sch.Config().ClientName)
 				sch.executeOnErrorHandler(bctx, chain)
 				return
 			}
@@ -244,7 +261,9 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 	bctx = log.WithLogger(chainCtx, chainL)
 	sch.pgengine.CommitTransaction(bctx, tx)
+	sch.provider.RecordChainDuration(ctx, time.Since(chainStart).Seconds(), sch.Config().ClientName)
 	chainL.Info("Chain executed successfully")
+	sch.provider.RecordChainCompleted(ctx, sch.Config().ClientName)
 	sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 	if chain.SelfDestruct {
 		sch.pgengine.DeleteChain(bctx, chain.ChainID)
@@ -258,6 +277,15 @@ func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine
 		err         error
 		cancel      context.CancelFunc
 	)
+
+	// OTel tracing: create child span for this task execution
+	tracer := sch.provider.Tracer()
+	ctx, taskSpan := tracer.Start(ctx, "task.execute",
+		trace.WithAttributes(
+			attribute.String("task.name", task.Command),
+			attribute.String("task.kind", task.Kind),
+		))
+	defer taskSpan.End()
 
 	l := log.GetLogger(ctx)
 	err = sch.pgengine.GetChainParamValues(ctx, &paramValues, task)
@@ -285,5 +313,13 @@ func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine
 		err = sch.executeBuiltinTask(ctx, task, paramValues)
 	}
 	task.Duration = time.Since(task.StartedAt).Microseconds()
+	returnCode := 0
+	if err != nil {
+		returnCode = -1
+		taskSpan.RecordError(err)
+		taskSpan.SetStatus(codes.Error, err.Error())
+	}
+	taskSpan.SetAttributes(attribute.Int("task.return_code", returnCode))
+	sch.provider.RecordTaskExecuted(ctx, sch.Config().ClientName, task.Kind)
 	return err
 }
