@@ -109,6 +109,9 @@ func New(ctx context.Context, cmdOpts config.CmdOptions, logger log.LoggerHooker
 	}
 	pge.AddLogHook(ctx) //schema exists, we can log now
 	for _, f := range cmdOpts.Start.File {
+		if strings.TrimSpace(f) == "" {
+			continue
+		}
 		if err := pge.ExecuteFileScript(ctx, cmdOpts, f); err != nil {
 			return nil, err
 		}

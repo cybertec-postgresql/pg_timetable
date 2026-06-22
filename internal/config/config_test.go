@@ -28,6 +28,28 @@ func TestConfig(t *testing.T) {
 	assert.NoError(t, os.Setenv("PGTT_CLIENTNAME", "worker001"))
 	_, err = NewConfig(nil)
 	assert.NoError(t, err)
+	assert.NoError(t, os.Unsetenv("PGTT_CLIENTNAME"))
+}
+
+func TestConfigFileFlag(t *testing.T) {
+	// No --file should result in an empty slice, not [""] or ["[]"]
+	os.Args = []string{0: "config_test", "--clientname=worker"}
+	conf, err := NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Empty(t, conf.Start.File)
+
+	// A single --file must round-trip without bracket/quote artifacts
+	os.Args = []string{0: "config_test", "--clientname=worker", "--file=../../samples/Basic.sql"}
+	conf, err = NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"../../samples/Basic.sql"}, conf.Start.File)
+
+	// Multiple --file values must all be preserved
+	os.Args = []string{0: "config_test", "--clientname=worker",
+		"--file=../../samples/Basic.sql", "--file=../../samples/Chain.sql"}
+	conf, err = NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"../../samples/Basic.sql", "../../samples/Chain.sql"}, conf.Start.File)
 }
 
 func TestValidateOTel(t *testing.T) {
