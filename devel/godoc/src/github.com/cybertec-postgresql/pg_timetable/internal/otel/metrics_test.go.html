@@ -1,0 +1,159 @@
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#375EAB"/>
+
+  <title>src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics_test.go - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/pg_timetable/devel/godoc/lib/godoc/style.css"/>
+
+<script>window.initFuncs = [];</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/jquery.js" defer=""></script>
+
+
+
+
+<script>var goVersion = "go1.25.11";</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
+
+</head>
+<body>
+
+<div id="lowframe" style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">▽</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Source file
+    <a href="/pg_timetable/devel/godoc/src">src</a>/<a href="/pg_timetable/devel/godoc/src/github.com">github.com</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql">cybertec-postgresql</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable">pg_timetable</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal">internal</a>/<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel">otel</a>/<span class="text-muted">metrics_test.go</span>
+  </h1>
+
+
+
+
+
+  <h2>
+    Documentation: <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/otel">github.com/cybertec-postgresql/pg_timetable/internal/otel</a>
+  </h2>
+
+
+
+<div id="nav"></div>
+
+
+<script type="text/javascript">document.ANALYSIS_DATA = null;</script>
+<pre><span id="L1" class="ln">     1  </span>package otel_test
+<span id="L2" class="ln">     2  </span>
+<span id="L3" class="ln">     3  </span>import (
+<span id="L4" class="ln">     4  </span>	&#34;context&#34;
+<span id="L5" class="ln">     5  </span>	&#34;testing&#34;
+<span id="L6" class="ln">     6  </span>
+<span id="L7" class="ln">     7  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/otel&#34;
+<span id="L9" class="ln">     9  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/stretchr/testify/require&#34;
+<span id="L11" class="ln">    11  </span>	sdkmetric &#34;go.opentelemetry.io/otel/sdk/metric&#34;
+<span id="L12" class="ln">    12  </span>	&#34;go.opentelemetry.io/otel/sdk/metric/metricdata&#34;
+<span id="L13" class="ln">    13  </span>	&#34;go.opentelemetry.io/otel/sdk/resource&#34;
+<span id="L14" class="ln">    14  </span>)
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span>func buildMetricProvider(t *testing.T) (*otel.Provider, *sdkmetric.ManualReader) {
+<span id="L17" class="ln">    17  </span>	t.Helper()
+<span id="L18" class="ln">    18  </span>	reader := sdkmetric.NewManualReader()
+<span id="L19" class="ln">    19  </span>	res := resource.Default()
+<span id="L20" class="ln">    20  </span>	mp := sdkmetric.NewMeterProvider(
+<span id="L21" class="ln">    21  </span>		sdkmetric.WithReader(reader),
+<span id="L22" class="ln">    22  </span>		sdkmetric.WithResource(res),
+<span id="L23" class="ln">    23  </span>	)
+<span id="L24" class="ln">    24  </span>	<span class="comment">// Build a provider with the meter provider injected via config (noop trace, real metric)</span>
+<span id="L25" class="ln">    25  </span>	<span class="comment">// We use a workaround: build an opts with no endpoint to get noop trace,</span>
+<span id="L26" class="ln">    26  </span>	<span class="comment">// then we need to inject the metric provider. Since Provider.mp is unexported,</span>
+<span id="L27" class="ln">    27  </span>	<span class="comment">// we test via the public API: RecordChainStarted etc. on a fully-configured provider.</span>
+<span id="L28" class="ln">    28  </span>	<span class="comment">// For unit test purposes, we just verify noop record methods don&#39;t panic and</span>
+<span id="L29" class="ln">    29  </span>	<span class="comment">// that the underlying meter provider works through the SDK directly.</span>
+<span id="L30" class="ln">    30  </span>	_ = mp
+<span id="L31" class="ln">    31  </span>	_ = reader
+<span id="L32" class="ln">    32  </span>	p := otel.NewNoop()
+<span id="L33" class="ln">    33  </span>	return p, reader
+<span id="L34" class="ln">    34  </span>}
+<span id="L35" class="ln">    35  </span>
+<span id="L36" class="ln">    36  </span>func TestMetricRecordMethodsDoNotPanic(t *testing.T) {
+<span id="L37" class="ln">    37  </span>	p, reader := buildMetricProvider(t)
+<span id="L38" class="ln">    38  </span>	_ = reader
+<span id="L39" class="ln">    39  </span>	ctx := context.Background()
+<span id="L40" class="ln">    40  </span>	assert.NotPanics(t, func() {
+<span id="L41" class="ln">    41  </span>		p.RecordChainStarted(ctx, &#34;worker1&#34;)
+<span id="L42" class="ln">    42  </span>		p.RecordChainCompleted(ctx, &#34;worker1&#34;)
+<span id="L43" class="ln">    43  </span>		p.RecordChainFailed(ctx, &#34;worker1&#34;)
+<span id="L44" class="ln">    44  </span>		p.RecordChainDuration(ctx, 2.5, &#34;worker1&#34;)
+<span id="L45" class="ln">    45  </span>		p.RecordTaskExecuted(ctx, &#34;worker1&#34;, &#34;SQL&#34;)
+<span id="L46" class="ln">    46  </span>		p.RecordTaskExecuted(ctx, &#34;worker1&#34;, &#34;PROGRAM&#34;)
+<span id="L47" class="ln">    47  </span>		p.RecordTaskExecuted(ctx, &#34;worker1&#34;, &#34;BUILTIN&#34;)
+<span id="L48" class="ln">    48  </span>	})
+<span id="L49" class="ln">    49  </span>}
+<span id="L50" class="ln">    50  </span>
+<span id="L51" class="ln">    51  </span>func TestMetricValidationIntegration(t *testing.T) {
+<span id="L52" class="ln">    52  </span>	ctx := context.Background()
+<span id="L53" class="ln">    53  </span>	opts := config.OTelOpts{
+<span id="L54" class="ln">    54  </span>		Endpoint:        &#34;ftp://localhost:4317&#34;,
+<span id="L55" class="ln">    55  </span>		Traces:          true,
+<span id="L56" class="ln">    56  </span>		SampleRatio:     1.0,
+<span id="L57" class="ln">    57  </span>		MetricPeriod:    30,
+<span id="L58" class="ln">    58  </span>		ShutdownTimeout: 5,
+<span id="L59" class="ln">    59  </span>		ServiceName:     &#34;pg_timetable&#34;,
+<span id="L60" class="ln">    60  </span>	}
+<span id="L61" class="ln">    61  </span>	_, err := otel.New(ctx, opts, &#34;test&#34;, &#34;0.0.1&#34;)
+<span id="L62" class="ln">    62  </span>	require.Error(t, err)
+<span id="L63" class="ln">    63  </span>}
+<span id="L64" class="ln">    64  </span>
+<span id="L65" class="ln">    65  </span>func TestSDKMetricInstrumentsDirectly(t *testing.T) {
+<span id="L66" class="ln">    66  </span>	reader := sdkmetric.NewManualReader()
+<span id="L67" class="ln">    67  </span>	res := resource.Default()
+<span id="L68" class="ln">    68  </span>	mp := sdkmetric.NewMeterProvider(
+<span id="L69" class="ln">    69  </span>		sdkmetric.WithReader(reader),
+<span id="L70" class="ln">    70  </span>		sdkmetric.WithResource(res),
+<span id="L71" class="ln">    71  </span>	)
+<span id="L72" class="ln">    72  </span>	defer mp.Shutdown(context.Background()) <span class="comment">//nolint:errcheck</span>
+<span id="L73" class="ln">    73  </span>
+<span id="L74" class="ln">    74  </span>	m := mp.Meter(&#34;pg_timetable&#34;)
+<span id="L75" class="ln">    75  </span>	counter, err := m.Int64Counter(&#34;pgtimetable.chain.started&#34;)
+<span id="L76" class="ln">    76  </span>	require.NoError(t, err)
+<span id="L77" class="ln">    77  </span>
+<span id="L78" class="ln">    78  </span>	ctx := context.Background()
+<span id="L79" class="ln">    79  </span>	counter.Add(ctx, 3)
+<span id="L80" class="ln">    80  </span>
+<span id="L81" class="ln">    81  </span>	var rm metricdata.ResourceMetrics
+<span id="L82" class="ln">    82  </span>	err = reader.Collect(ctx, &amp;rm)
+<span id="L83" class="ln">    83  </span>	require.NoError(t, err)
+<span id="L84" class="ln">    84  </span>	require.Len(t, rm.ScopeMetrics, 1)
+<span id="L85" class="ln">    85  </span>	require.Len(t, rm.ScopeMetrics[0].Metrics, 1)
+<span id="L86" class="ln">    86  </span>
+<span id="L87" class="ln">    87  </span>	data := rm.ScopeMetrics[0].Metrics[0].Data.(metricdata.Sum[int64])
+<span id="L88" class="ln">    88  </span>	require.Len(t, data.DataPoints, 1)
+<span id="L89" class="ln">    89  </span>	assert.Equal(t, int64(3), data.DataPoints[0].Value)
+<span id="L90" class="ln">    90  </span>}
+<span id="L91" class="ln">    91  </span>
+</pre><p></p>
+
+<div id="footer">
+Build version go1.25.11.<br/>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+
+
+</body></html>

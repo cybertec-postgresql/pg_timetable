@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>otel - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/pg_timetable/devel/godoc/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/jquery.js" defer></script>
+
+
+
+
+<script>var goVersion = "go1.25.11";</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer></script>
+
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package otel
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/cybertec-postgresql/pg_timetable/internal/otel"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				<p>Package otel provides OpenTelemetry tracing and metrics support for pg_timetable.
+The Provider is opt-in: when OTel is not configured it returns noop implementations
+with no performance overhead.
+
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+				<dd><a href="#pkg-variables">Variables</a></dd>
+			
+			
+				
+				<dd><a href="#buildMeterProvider">func buildMeterProvider(ctx context.Context, u *url.URL, opts config.OTelOpts, res *resource.Resource) (*sdkmetric.MeterProvider, error)</a></dd>
+			
+				
+				<dd><a href="#buildMetricExporter">func buildMetricExporter(ctx context.Context, u *url.URL, opts config.OTelOpts) (sdkmetric.Exporter, error)</a></dd>
+			
+				
+				<dd><a href="#buildResource">func buildResource(ctx context.Context, serviceName, clientName, serviceVersion string) (*resource.Resource, error)</a></dd>
+			
+				
+				<dd><a href="#buildTraceExporter">func buildTraceExporter(ctx context.Context, u *url.URL, opts config.OTelOpts) (sdktrace.SpanExporter, error)</a></dd>
+			
+				
+				<dd><a href="#buildTracerProvider">func buildTracerProvider(ctx context.Context, u *url.URL, opts config.OTelOpts, res *resource.Resource) (*sdktrace.TracerProvider, error)</a></dd>
+			
+			
+				
+				<dd><a href="#Provider">type Provider</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#New">func New(ctx context.Context, opts config.OTelOpts, clientName, serviceVersion string) (*Provider, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewNoop">func NewNoop() *Provider</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.Meter">func (p *Provider) Meter() metric.Meter</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.RecordChainCompleted">func (p *Provider) RecordChainCompleted(ctx context.Context, clientName string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.RecordChainDuration">func (p *Provider) RecordChainDuration(ctx context.Context, seconds float64, clientName string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.RecordChainFailed">func (p *Provider) RecordChainFailed(ctx context.Context, clientName string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.RecordChainStarted">func (p *Provider) RecordChainStarted(ctx context.Context, clientName string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.RecordTaskExecuted">func (p *Provider) RecordTaskExecuted(ctx context.Context, clientName, taskKind string)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.Shutdown">func (p *Provider) Shutdown(ctx context.Context) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.ShutdownTimeout">func (p *Provider) ShutdownTimeout() time.Duration</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.Tracer">func (p *Provider) Tracer() trace.Tracer</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#Provider.registerMetrics">func (p *Provider) registerMetrics() error</a></dd>
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html">metrics.go</a>
+			
+				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html">otel.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+			<h2 id="pkg-variables">Variables</h2>
+			
+				
+				<pre>var <span id="chainDurationBuckets">chainDurationBuckets</span> = []<a href="https://pkg.go.dev/builtin/#float64">float64</a>{0.001, 0.01, 0.1, 0.5, 1, 5, 10, 30, 60, 120, 300}</pre>
+			
+		
+		
+			
+			
+			<h2 id="buildMeterProvider">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L186">buildMeterProvider</a>
+				<a class="permalink" href="#buildMeterProvider">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func buildMeterProvider(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, u *<a href="https://pkg.go.dev/net/url/">url</a>.<a href="https://pkg.go.dev/net/url/#URL">URL</a>, opts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#OTelOpts">OTelOpts</a>, res *<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource/">resource</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource/#Resource">Resource</a>) (*<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric/">sdkmetric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric/#MeterProvider">MeterProvider</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="buildMetricExporter">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L201">buildMetricExporter</a>
+				<a class="permalink" href="#buildMetricExporter">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func buildMetricExporter(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, u *<a href="https://pkg.go.dev/net/url/">url</a>.<a href="https://pkg.go.dev/net/url/#URL">URL</a>, opts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#OTelOpts">OTelOpts</a>) (<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric/">sdkmetric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric/#Exporter">Exporter</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="buildResource">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L137">buildResource</a>
+				<a class="permalink" href="#buildResource">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func buildResource(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, serviceName, clientName, serviceVersion <a href="https://pkg.go.dev/builtin/#string">string</a>) (*<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource/">resource</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource/#Resource">Resource</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="buildTraceExporter">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L161">buildTraceExporter</a>
+				<a class="permalink" href="#buildTraceExporter">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func buildTraceExporter(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, u *<a href="https://pkg.go.dev/net/url/">url</a>.<a href="https://pkg.go.dev/net/url/#URL">URL</a>, opts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#OTelOpts">OTelOpts</a>) (<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/trace/">sdktrace</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/trace/#SpanExporter">SpanExporter</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="buildTracerProvider">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L147">buildTracerProvider</a>
+				<a class="permalink" href="#buildTracerProvider">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func buildTracerProvider(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, u *<a href="https://pkg.go.dev/net/url/">url</a>.<a href="https://pkg.go.dev/net/url/#URL">URL</a>, opts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#OTelOpts">OTelOpts</a>, res *<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource/">resource</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/resource/#Resource">Resource</a>) (*<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/trace/">sdktrace</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/trace/#TracerProvider">TracerProvider</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			
+			
+			
+
+		
+		
+			
+			
+			<h2 id="Provider">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L32">Provider</a>
+				<a class="permalink" href="#Provider">&#xb6;</a>
+				
+				
+			</h2>
+			<p>Provider holds OTel TracerProvider and MeterProvider instances.
+Both are nil when the corresponding signal is not configured, in which case
+Tracer() and Meter() return noop implementations.
+
+			<pre>type Provider struct {
+<span id="Provider.tp"></span>    tp              *<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/trace/">sdktrace</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/trace/#TracerProvider">TracerProvider</a>
+<span id="Provider.mp"></span>    mp              *<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric/">sdkmetric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric/#MeterProvider">MeterProvider</a>
+<span id="Provider.shutdownTimeout"></span>    shutdownTimeout <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Duration">Duration</a>
+
+    <span class="comment">// metric instruments (nil when metrics disabled)</span>
+<span id="Provider.chainStarted"></span>    chainStarted   <a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/">metric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/#Int64Counter">Int64Counter</a>
+<span id="Provider.chainCompleted"></span>    chainCompleted <a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/">metric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/#Int64Counter">Int64Counter</a>
+<span id="Provider.chainFailed"></span>    chainFailed    <a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/">metric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/#Int64Counter">Int64Counter</a>
+<span id="Provider.chainDuration"></span>    chainDuration  <a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/">metric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/#Float64Histogram">Float64Histogram</a>
+<span id="Provider.taskExecuted"></span>    taskExecuted   <a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/">metric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/#Int64Counter">Int64Counter</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="New">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L48">New</a>
+					<a class="permalink" href="#New">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func New(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, opts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#OTelOpts">OTelOpts</a>, clientName, serviceVersion <a href="https://pkg.go.dev/builtin/#string">string</a>) (*<a href="#Provider">Provider</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>New initialises an OTel Provider from the given options.
+When opts.Endpoint is empty or both Traces and Metrics are false, a noop
+Provider is returned without connecting to any backend.
+
+				
+				
+			
+				
+				<h3 id="NewNoop">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L90">NewNoop</a>
+					<a class="permalink" href="#NewNoop">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewNoop() *<a href="#Provider">Provider</a></pre>
+				<p>NewNoop returns a Provider that produces no spans or metrics and makes no
+outbound connections. Use in tests and as a safe default before full wiring.
+
+				
+				
+			
+
+			
+				
+				<h3 id="Provider.Meter">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L105">Meter</a>
+					<a class="permalink" href="#Provider.Meter">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) Meter() <a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/">metric</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/metric/#Meter">Meter</a></pre>
+				<p>Meter returns the OTel Meter for pg_timetable instrumentation.
+Returns a noop Meter when metrics are not configured.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.RecordChainCompleted">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html#L63">RecordChainCompleted</a>
+					<a class="permalink" href="#Provider.RecordChainCompleted">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) RecordChainCompleted(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, clientName <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<p>RecordChainCompleted increments the chain completed counter.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.RecordChainDuration">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html#L77">RecordChainDuration</a>
+					<a class="permalink" href="#Provider.RecordChainDuration">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) RecordChainDuration(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, seconds <a href="https://pkg.go.dev/builtin/#float64">float64</a>, clientName <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<p>RecordChainDuration records the chain execution duration in seconds.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.RecordChainFailed">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html#L70">RecordChainFailed</a>
+					<a class="permalink" href="#Provider.RecordChainFailed">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) RecordChainFailed(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, clientName <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<p>RecordChainFailed increments the chain failed counter.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.RecordChainStarted">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html#L56">RecordChainStarted</a>
+					<a class="permalink" href="#Provider.RecordChainStarted">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) RecordChainStarted(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, clientName <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<p>RecordChainStarted increments the chain started counter.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.RecordTaskExecuted">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html#L84">RecordTaskExecuted</a>
+					<a class="permalink" href="#Provider.RecordTaskExecuted">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) RecordTaskExecuted(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, clientName, taskKind <a href="https://pkg.go.dev/builtin/#string">string</a>)</pre>
+				<p>RecordTaskExecuted increments the task executed counter.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.Shutdown">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L114">Shutdown</a>
+					<a class="permalink" href="#Provider.Shutdown">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) Shutdown(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>Shutdown flushes pending spans and metrics and releases resources.
+It is safe to call multiple times.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.ShutdownTimeout">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L133">ShutdownTimeout</a>
+					<a class="permalink" href="#Provider.ShutdownTimeout">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) ShutdownTimeout() <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Duration">Duration</a></pre>
+				<p>ShutdownTimeout returns the configured shutdown flush timeout.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.Tracer">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/otel.go.html#L96">Tracer</a>
+					<a class="permalink" href="#Provider.Tracer">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) Tracer() <a href="https://pkg.go.dev/go.opentelemetry.io/otel/trace/">trace</a>.<a href="https://pkg.go.dev/go.opentelemetry.io/otel/trace/#Tracer">Tracer</a></pre>
+				<p>Tracer returns the OTel Tracer for pg_timetable instrumentation.
+Returns a noop Tracer when tracing is not configured.
+
+				
+				
+				
+			
+				
+				<h3 id="Provider.registerMetrics">func (*Provider) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/otel/metrics.go.html#L12">registerMetrics</a>
+					<a class="permalink" href="#Provider.registerMetrics">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (p *<a href="#Provider">Provider</a>) registerMetrics() <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				
+				
+				
+				
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.25.11.<br>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

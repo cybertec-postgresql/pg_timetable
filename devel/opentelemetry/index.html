@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/api/">
+        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/opentelemetry/">
       
       
-        <link rel="prev" href="../yaml-usage-guide/">
+        <link rel="prev" href="../yaml-format/">
       
       
-        <link rel="next" href="../yaml-format/">
+        <link rel="next" href="../license/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>API - 🕰️ pg_timetable</title>
+        <title>OpenTelemetry - 🕰️ pg_timetable</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#rest-api" class="md-skip">
+        <a href="#opentelemetry-support" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              API
+              OpenTelemetry
             
           </span>
         </div>
@@ -296,7 +296,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../api/" class="md-tabs__link">
           
   
   
@@ -869,37 +869,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
         
   
   
@@ -915,104 +888,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#health-check-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Health check endpoints
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Health check endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#get-liveness" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /liveness
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-readiness" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /readiness
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#chain-management-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chain management endpoints
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Chain management endpoints">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#get-startchainidchain-id" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /startchain?id=&lt;chain-id&gt;
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-stopchainidchain-id" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /stopchain?id=&lt;chain-id&gt;
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1050,10 +925,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../opentelemetry/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1069,6 +971,214 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#all-signals-at-once-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All signals at once (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#traces-only-jaeger" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traces only — Jaeger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-only-otel-collector-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics only — OTel Collector → Prometheus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#protocol-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol Selection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trace-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trace Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-chainexecute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span: chain.execute
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-taskexecute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span: task.execute
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metric-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metric Instruments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication &amp; Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resilience
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#otel-resource-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTel Resource Attributes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1225,22 +1335,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#health-check-endpoints" class="md-nav__link">
+  <a href="#signals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Health check endpoints
+        Signals
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Health check endpoints">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-liveness" class="md-nav__link">
+  <a href="#all-signals-at-once-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /liveness
+        All signals at once (recommended)
       
     </span>
   </a>
@@ -1248,10 +1369,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-readiness" class="md-nav__link">
+  <a href="#traces-only-jaeger" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /readiness
+        Traces only — Jaeger
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics-only-otel-collector-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metrics only — OTel Collector → Prometheus
       
     </span>
   </a>
@@ -1264,22 +1396,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#chain-management-endpoints" class="md-nav__link">
+  <a href="#protocol-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Chain management endpoints
+        Protocol Selection
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Chain management endpoints">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trace-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trace Schema">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#get-startchainidchain-id" class="md-nav__link">
+  <a href="#span-chainexecute" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /startchain?id=&lt;chain-id&gt;
+        Span: chain.execute
       
     </span>
   </a>
@@ -1287,10 +1430,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-stopchainidchain-id" class="md-nav__link">
+  <a href="#span-taskexecute" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /stopchain?id=&lt;chain-id&gt;
+        Span: task.execute
       
     </span>
   </a>
@@ -1299,6 +1442,83 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metric-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metric Instruments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication &amp; Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sampling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resilience
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#otel-resource-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTel Resource Attributes
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1322,24 +1542,340 @@
   
 
 
-<h1 id="rest-api">REST API</h1>
-<p><strong>pg_timetable</strong> has a rich REST API, which can be used by external tools in order to perform start/stop/reinitialize/restarts/reloads, 
-by any kind of tools to perform HTTP health checks, and of course, could also be used for monitoring.</p>
-<p>Below you will find the list of <strong>pg_timetable</strong> REST API endpoints.</p>
-<h2 id="health-check-endpoints">Health check endpoints</h2>
-<h3 id="get-liveness"><code>GET /liveness</code></h3>
-<p>Always returns HTTP status code <code>200</code>, indicating that <strong>pg_timetable</strong> is running.</p>
-<h3 id="get-readiness"><code>GET /readiness</code></h3>
-<p>Returns HTTP status code <code>200</code> when the <strong>pg_timetable</strong> is running, and the scheduler is in the main loop processing chains. 
-If the scheduler connects to the database, creates the database schema, or upgrades it, it will return the HTTP status code <code>503</code>.</p>
-<h2 id="chain-management-endpoints">Chain management endpoints</h2>
-<h3 id="get-startchainidchain-id"><code>GET /startchain?id=&lt;chain-id&gt;</code></h3>
-<p>Returns HTTP status code <code>200</code> if the chain with the given id can be added to the worker queue. It doesn't, however, mean the chain execution starts immediately. It is up to the worker to perform load and other checks before starting the chain.
-In the case of an error, the HTTP status code <code>400</code> followed by an error message returned.</p>
-<h3 id="get-stopchainidchain-id"><code>GET /stopchain?id=&lt;chain-id&gt;</code></h3>
-<p>Returns HTTP status code <code>200</code> if the chain with the given id is working at the moment and can be stopped. If the chain is running the<br />
-cancel signal would be sent immediately.
-In the case of an error, the HTTP status code <code>400</code> followed by an error message returned.</p>
+<h1 id="opentelemetry-support">OpenTelemetry Support</h1>
+<p><strong>pg_timetable</strong> has built-in support for <a href="https://opentelemetry.io/">OpenTelemetry</a> (OTel), the
+industry-standard observability framework. When enabled, pg_timetable exports distributed traces
+and metrics to any OTLP-compatible backend (Jaeger, Grafana Tempo, Honeycomb, Datadog, etc.)
+without any code changes — purely through configuration.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>OTel support is fully <strong>opt-in</strong>. When <code>--otel-endpoint</code> is not configured, pg_timetable
+behaves exactly as before with zero additional overhead.</p>
+</div>
+<hr />
+<h2 id="signals">Signals</h2>
+<p>pg_timetable supports two OTel signals, each independently enabled:</p>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Flag</th>
+<th>What it provides</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Traces</strong></td>
+<td><code>--otel-traces</code></td>
+<td>A distributed trace per chain execution with child spans for every task</td>
+</tr>
+<tr>
+<td><strong>Metrics</strong></td>
+<td><code>--otel-metrics</code></td>
+<td>Counters and a histogram covering chain and task throughput</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="all-signals-at-once-recommended">All signals at once (recommended)</h3>
+<p>The easiest way to get both traces and metrics working locally is the
+<a href="https://github.com/grafana/otel-lgtm"><code>grafana/otel-lgtm</code></a> image. It bundles an OTel Collector,
+Grafana, Tempo (traces), and Mimir (metrics) in a single container — no configuration required.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Start the all-in-one observability stack</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4318</span>:4318<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">3000</span>:3000<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>grafana/otel-lgtm
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># 2. Run pg_timetable with both signals enabled</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span>--otel-traces<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--otel-metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--otel-insecure<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+</code></pre></div>
+<p>Open <a href="http://localhost:3000">http://localhost:3000</a> (default credentials <code>admin</code>/<code>admin</code>) to explore traces in <strong>Tempo</strong>
+and metrics in <strong>Mimir</strong> via Grafana.</p>
+<hr />
+<h3 id="traces-only-jaeger">Traces only — Jaeger</h3>
+<div class="admonition warning">
+<p class="admonition-title">Traces only</p>
+<p>Jaeger implements the OTLP <strong>trace</strong> service only. Enabling <code>--otel-metrics</code> with a Jaeger
+endpoint will produce export errors. Use this setup when you need traces exclusively.</p>
+</div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1. Start Jaeger</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span>-p<span class="w"> </span><span class="m">16686</span>:16686<span class="w"> </span>jaegertracing/all-in-one:latest
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># 2. Run pg_timetable with tracing only</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--otel-traces<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--otel-insecure<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+</code></pre></div>
+<p>Open <a href="http://localhost:16686">http://localhost:16686</a> and select service <strong>pg_timetable</strong> to see traces.</p>
+<h3 id="metrics-only-otel-collector-prometheus">Metrics only — OTel Collector → Prometheus</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pg_timetable<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://otel-collector:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--otel-metrics<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--otel-metric-period<span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+</code></pre></div>
+<hr />
+<h2 id="protocol-selection">Protocol Selection</h2>
+<p>The OTLP transport protocol is inferred automatically from the endpoint URL scheme:</p>
+<table>
+<thead>
+<tr>
+<th>Scheme</th>
+<th>Transport</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>grpc://</code></td>
+<td>OTLP/gRPC</td>
+</tr>
+<tr>
+<td><code>http://</code></td>
+<td>OTLP/HTTP (protobuf)</td>
+</tr>
+<tr>
+<td><code>https://</code></td>
+<td>OTLP/HTTP with TLS</td>
+</tr>
+</tbody>
+</table>
+<p>TLS is <strong>enabled by default</strong> for all transports. Use <code>--otel-insecure</code> to disable TLS verification
+in development environments.</p>
+<hr />
+<h2 id="trace-schema">Trace Schema</h2>
+<p>Each chain execution produces a root span <strong><code>chain.execute</code></strong> containing child spans
+<strong><code>task.execute</code></strong> for every task in the chain.</p>
+<h3 id="span-chainexecute">Span: <code>chain.execute</code></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chain.id</code></td>
+<td>Chain ID (integer)</td>
+</tr>
+<tr>
+<td><code>chain.name</code></td>
+<td>Chain name</td>
+</tr>
+<tr>
+<td><code>client.name</code></td>
+<td>pg_timetable client name (<code>--clientname</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="span-taskexecute">Span: <code>task.execute</code></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>task.name</code></td>
+<td>Task command</td>
+</tr>
+<tr>
+<td><code>task.kind</code></td>
+<td><code>SQL</code>, <code>PROGRAM</code>, or <code>BUILTIN</code></td>
+</tr>
+<tr>
+<td><code>task.return_code</code></td>
+<td><code>0</code> on success, <code>-1</code> on failure</td>
+</tr>
+</tbody>
+</table>
+<p>Failed tasks produce an OTel <strong>error event</strong> with the error message, allowing trace-based
+alerting and root-cause analysis.</p>
+<hr />
+<h2 id="metric-instruments">Metric Instruments</h2>
+<p>All instruments are registered under the meter name <code>pg_timetable</code> and carry the
+<code>client.name</code> attribute for multi-instance deployments.</p>
+<table>
+<thead>
+<tr>
+<th>Instrument</th>
+<th>Kind</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pgtimetable.chain.started</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Chain executions started</td>
+</tr>
+<tr>
+<td><code>pgtimetable.chain.completed</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Chain executions completed successfully</td>
+</tr>
+<tr>
+<td><code>pgtimetable.chain.failed</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Chain executions that failed</td>
+</tr>
+<tr>
+<td><code>pgtimetable.chain.duration</code></td>
+<td>Histogram</td>
+<td><code>s</code></td>
+<td>Wall-clock duration of chain execution</td>
+</tr>
+<tr>
+<td><code>pgtimetable.task.executed</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Tasks executed (labelled by <code>task.kind</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The histogram uses these explicit bucket boundaries (seconds):
+<code>0.001, 0.01, 0.1, 0.5, 1, 5, 10, 30, 60, 120, 300</code></p>
+<hr />
+<h2 id="authentication-security">Authentication &amp; Security</h2>
+<p>SaaS observability backends (Honeycomb, Grafana Cloud, Datadog, etc.) typically require an
+API key. Pass it as a custom HTTP header via the YAML configuration file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://api.honeycomb.io</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">x-honeycomb-team</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YOUR_API_KEY</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code>otel.headers</code> can only be set via the YAML configuration file — it is not available
+as a CLI flag to prevent API keys from appearing in shell history or process listings.
+Header values are <strong>never written to log output</strong>.</p>
+</div>
+<hr />
+<h2 id="sampling">Sampling</h2>
+<p>By default, 100 % of chain executions are traced. For high-frequency deployments you can
+reduce trace volume with a ratio sampler:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Trace 10 % of chain executions</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pg_timetable<span class="w"> </span>--otel-traces<span class="w"> </span>--otel-sample-ratio<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--otel-endpoint<span class="w"> </span>grpc://localhost:4317<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>postgresql://scheduler:pass@localhost/mydb
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>1.0</code> (default)</td>
+<td>Every chain execution is traced</td>
+</tr>
+<tr>
+<td><code>0.5</code></td>
+<td>~50 % of executions traced</td>
+</tr>
+<tr>
+<td><code>0.0</code></td>
+<td>No traces generated</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="resilience">Resilience</h2>
+<ul>
+<li><strong>Unreachable backend</strong>: pg_timetable starts normally and logs a <code>WARN</code> message. Chain
+  scheduling is never interrupted by OTel export failures.</li>
+<li><strong>Graceful shutdown</strong>: On <code>SIGTERM</code>, pg_timetable flushes pending spans and metrics before
+  exiting. The flush timeout is controlled by <code>--otel-shutdown-timeout</code> (default: 5 s).</li>
+</ul>
+<hr />
+<h2 id="cli-reference">CLI Reference</h2>
+<p>All OTel flags are optional. When <code>--otel-endpoint</code> is absent, all other OTel flags are ignored.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>OTel:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  --otel-endpoint=          OTLP exporter endpoint URL (grpc://, http://, https://)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  --otel-traces             Enable OpenTelemetry distributed tracing
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  --otel-metrics            Enable OpenTelemetry metrics export
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>  --otel-service-name=      OTel service.name resource attribute (default: pg_timetable)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>  --otel-insecure           Disable TLS for OTLP connection (dev/test only)
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  --otel-sample-ratio=      Trace sampling ratio 0.0–1.0 (default: 1.0)
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>  --otel-metric-period=     Metrics export interval in seconds (default: 30)
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>  --otel-shutdown-timeout=  OTel provider flush timeout in seconds on shutdown (default: 5)
+</code></pre></div>
+<hr />
+<h2 id="yaml-configuration">YAML Configuration</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># - OpenTelemetry Settings -</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="c1"># OTLP exporter endpoint URL (grpc://, http://, https://)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="c1"># Enable distributed tracing (default: false)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">  </span><span class="c1"># Enable metrics export (default: false)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="c1"># OTel service.name resource attribute (default: pg_timetable)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span><span class="nt">service-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pg_timetable</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span><span class="c1"># Custom headers for OTLP export — use for API key auth (map of key: value)</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">  </span><span class="c1"># Disable TLS for OTLP connection — dev only (default: false)</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">  </span><span class="nt">insecure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">  </span><span class="c1"># Trace sampling ratio 0.0–1.0 (default: 1.0 = 100%)</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">  </span><span class="nt">sample-ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">  </span><span class="c1"># Metrics export interval in seconds (default: 30)</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">  </span><span class="nt">metric-period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">  </span><span class="c1"># OTel flush timeout in seconds on shutdown (default: 5)</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">  </span><span class="nt">shutdown-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<hr />
+<h2 id="otel-resource-attributes">OTel Resource Attributes</h2>
+<p>Every span and metric datapoint carries these resource attributes identifying the
+pg_timetable instance:</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>service.name</code></td>
+<td><code>--otel-service-name</code> (default: <code>pg_timetable</code>)</td>
+</tr>
+<tr>
+<td><code>service.version</code></td>
+<td>pg_timetable binary version</td>
+</tr>
+<tr>
+<td><code>client.name</code></td>
+<td><code>--clientname</code> value</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -1377,7 +1913,7 @@ In the case of an error, the HTTP status code <code>400</code> followed by an er
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../yaml-usage-guide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: YAML Chains">
+          <a href="../yaml-format/" class="md-footer__link md-footer__link--prev" aria-label="Previous: YAML Schema">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1387,20 +1923,20 @@ In the case of an error, the HTTP status code <code>400</code> followed by an er
                 Previous
               </span>
               <div class="md-ellipsis">
-                YAML Chains
+                YAML Schema
               </div>
             </div>
           </a>
         
         
           
-          <a href="../yaml-format/" class="md-footer__link md-footer__link--next" aria-label="Next: YAML Schema">
+          <a href="../license/" class="md-footer__link md-footer__link--next" aria-label="Next: License">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                YAML Schema
+                License
               </div>
             </div>
             <div class="md-footer__button md-icon">
