@@ -166,205 +166,208 @@
 <span id="L109" class="ln">   109  </span>	}
 <span id="L110" class="ln">   110  </span>	pge.AddLogHook(ctx) <span class="comment">//schema exists, we can log now</span>
 <span id="L111" class="ln">   111  </span>	for _, f := range cmdOpts.Start.File {
-<span id="L112" class="ln">   112  </span>		if err := pge.ExecuteFileScript(ctx, cmdOpts, f); err != nil {
-<span id="L113" class="ln">   113  </span>			return nil, err
+<span id="L112" class="ln">   112  </span>		if f == &#34;&#34; {
+<span id="L113" class="ln">   113  </span>			continue
 <span id="L114" class="ln">   114  </span>		}
-<span id="L115" class="ln">   115  </span>	}
-<span id="L116" class="ln">   116  </span>	return pge, nil
-<span id="L117" class="ln">   117  </span>}
-<span id="L118" class="ln">   118  </span>
-<span id="L119" class="ln">   119  </span><span class="comment">// NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.</span>
-<span id="L120" class="ln">   120  </span><span class="comment">// We assume here all checks for proper schema validation are done beforehannd</span>
-<span id="L121" class="ln">   121  </span>func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
-<span id="L122" class="ln">   122  </span>	return &amp;PgEngine{
-<span id="L123" class="ln">   123  </span>		l:               log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}),
-<span id="L124" class="ln">   124  </span>		ConfigDb:        DB,
-<span id="L125" class="ln">   125  </span>		CmdOptions:      *config.NewCmdOptions(args...),
-<span id="L126" class="ln">   126  </span>		chainSignalChan: make(chan ChainSignal, 64),
-<span id="L127" class="ln">   127  </span>	}
-<span id="L128" class="ln">   128  </span>}
-<span id="L129" class="ln">   129  </span>
-<span id="L130" class="ln">   130  </span>func quoteIdent(s string) string {
-<span id="L131" class="ln">   131  </span>	return `&#34;` + strings.ReplaceAll(s, `&#34;`, `&#34;&#34;`) + `&#34;`
-<span id="L132" class="ln">   132  </span>}
-<span id="L133" class="ln">   133  </span>
-<span id="L134" class="ln">   134  </span><span class="comment">// getPgxConnConfig transforms standard connestion string to pgx specific one with</span>
-<span id="L135" class="ln">   135  </span>func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
-<span id="L136" class="ln">   136  </span>	connConfig, err := pgxpool.ParseConfig(pge.ConnStr)
-<span id="L137" class="ln">   137  </span>	if err != nil {
-<span id="L138" class="ln">   138  </span>		pge.l.WithError(err).Error(&#34;Cannot parse connection string&#34;)
-<span id="L139" class="ln">   139  </span>		return nil
-<span id="L140" class="ln">   140  </span>	}
-<span id="L141" class="ln">   141  </span>	<span class="comment">// in the worst scenario we need separate connections for each of workers,</span>
-<span id="L142" class="ln">   142  </span>	<span class="comment">// separate connection for Scheduler.retrieveChainsAndRun(),</span>
-<span id="L143" class="ln">   143  </span>	<span class="comment">// separate connection for Scheduler.retrieveIntervalChainsAndRun(),</span>
-<span id="L144" class="ln">   144  </span>	<span class="comment">// and another connection for LogHook.send()</span>
-<span id="L145" class="ln">   145  </span>	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers) + 3
-<span id="L146" class="ln">   146  </span>	connConfig.ConnConfig.RuntimeParams[&#34;application_name&#34;] = &#34;pg_timetable&#34;
-<span id="L147" class="ln">   147  </span>	connConfig.ConnConfig.OnNotice = func(_ *pgconn.PgConn, n *pgconn.Notice) {
-<span id="L148" class="ln">   148  </span>		pge.l.WithField(&#34;severity&#34;, n.Severity).WithField(&#34;notice&#34;, n.Message).Info(&#34;Notice received&#34;)
-<span id="L149" class="ln">   149  </span>	}
-<span id="L150" class="ln">   150  </span>	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
-<span id="L151" class="ln">   151  </span>		pge.l.WithField(&#34;pid&#34;, pgconn.PgConn().PID()).
-<span id="L152" class="ln">   152  </span>			WithField(&#34;client&#34;, pge.ClientName).
-<span id="L153" class="ln">   153  </span>			Debug(&#34;Trying to get lock for the session&#34;)
-<span id="L154" class="ln">   154  </span>		if err = pge.TryLockClientName(ctx, pgconn); err != nil {
-<span id="L155" class="ln">   155  </span>			return err
-<span id="L156" class="ln">   156  </span>		}
-<span id="L157" class="ln">   157  </span>
-<span id="L158" class="ln">   158  </span>		_, err = pgconn.Exec(ctx, &#34;LISTEN &#34;+quoteIdent(pge.ClientName))
-<span id="L159" class="ln">   159  </span>		if pge.logTypeOID == InvalidOid {
-<span id="L160" class="ln">   160  </span>			err = pgconn.QueryRow(ctx, &#34;select coalesce(to_regtype(&#39;timetable.log_type&#39;)::oid, 0)&#34;).Scan(&amp;pge.logTypeOID)
-<span id="L161" class="ln">   161  </span>		}
-<span id="L162" class="ln">   162  </span>		pgconn.TypeMap().RegisterType(&amp;pgtype.Type{Name: &#34;timetable.log_type&#34;, OID: pge.logTypeOID, Codec: &amp;pgtype.EnumCodec{}})
-<span id="L163" class="ln">   163  </span>		return err
-<span id="L164" class="ln">   164  </span>	}
-<span id="L165" class="ln">   165  </span>	<span class="comment">// reset session before returning connection to the pool</span>
-<span id="L166" class="ln">   166  </span>	<span class="comment">// after task completion, if the task is not properly finalized (especially when running in autonomous mode),</span>
-<span id="L167" class="ln">   167  </span>	<span class="comment">// some objects and/or setting changes will still exist in the session</span>
-<span id="L168" class="ln">   168  </span>	connConfig.AfterRelease = func(pgconn *pgx.Conn) bool {
-<span id="L169" class="ln">   169  </span>		var err error
-<span id="L170" class="ln">   170  </span>		if pgconn.DeallocateAll(context.Background()) != nil {
-<span id="L171" class="ln">   171  </span>			return false <span class="comment">// destroy the connection in case of error</span>
-<span id="L172" class="ln">   172  </span>		}
-<span id="L173" class="ln">   173  </span>		if _, err = pgconn.Exec(context.Background(), &#34;DISCARD ALL&#34;); err == nil {
-<span id="L174" class="ln">   174  </span>			_, err = pgconn.Exec(context.Background(), &#34;LISTEN &#34;+quoteIdent(pge.ClientName))
+<span id="L115" class="ln">   115  </span>		if err := pge.ExecuteFileScript(ctx, cmdOpts, f); err != nil {
+<span id="L116" class="ln">   116  </span>			return nil, err
+<span id="L117" class="ln">   117  </span>		}
+<span id="L118" class="ln">   118  </span>	}
+<span id="L119" class="ln">   119  </span>	return pge, nil
+<span id="L120" class="ln">   120  </span>}
+<span id="L121" class="ln">   121  </span>
+<span id="L122" class="ln">   122  </span><span class="comment">// NewDB creates pgengine instance for already opened database connection, allowing to bypass a parameters based credentials.</span>
+<span id="L123" class="ln">   123  </span><span class="comment">// We assume here all checks for proper schema validation are done beforehannd</span>
+<span id="L124" class="ln">   124  </span>func NewDB(DB PgxPoolIface, args ...string) *PgEngine {
+<span id="L125" class="ln">   125  </span>	return &amp;PgEngine{
+<span id="L126" class="ln">   126  </span>		l:               log.Init(config.LoggingOpts{LogLevel: &#34;error&#34;}),
+<span id="L127" class="ln">   127  </span>		ConfigDb:        DB,
+<span id="L128" class="ln">   128  </span>		CmdOptions:      *config.NewCmdOptions(args...),
+<span id="L129" class="ln">   129  </span>		chainSignalChan: make(chan ChainSignal, 64),
+<span id="L130" class="ln">   130  </span>	}
+<span id="L131" class="ln">   131  </span>}
+<span id="L132" class="ln">   132  </span>
+<span id="L133" class="ln">   133  </span>func quoteIdent(s string) string {
+<span id="L134" class="ln">   134  </span>	return `&#34;` + strings.ReplaceAll(s, `&#34;`, `&#34;&#34;`) + `&#34;`
+<span id="L135" class="ln">   135  </span>}
+<span id="L136" class="ln">   136  </span>
+<span id="L137" class="ln">   137  </span><span class="comment">// getPgxConnConfig transforms standard connestion string to pgx specific one with</span>
+<span id="L138" class="ln">   138  </span>func (pge *PgEngine) getPgxConnConfig() *pgxpool.Config {
+<span id="L139" class="ln">   139  </span>	connConfig, err := pgxpool.ParseConfig(pge.ConnStr)
+<span id="L140" class="ln">   140  </span>	if err != nil {
+<span id="L141" class="ln">   141  </span>		pge.l.WithError(err).Error(&#34;Cannot parse connection string&#34;)
+<span id="L142" class="ln">   142  </span>		return nil
+<span id="L143" class="ln">   143  </span>	}
+<span id="L144" class="ln">   144  </span>	<span class="comment">// in the worst scenario we need separate connections for each of workers,</span>
+<span id="L145" class="ln">   145  </span>	<span class="comment">// separate connection for Scheduler.retrieveChainsAndRun(),</span>
+<span id="L146" class="ln">   146  </span>	<span class="comment">// separate connection for Scheduler.retrieveIntervalChainsAndRun(),</span>
+<span id="L147" class="ln">   147  </span>	<span class="comment">// and another connection for LogHook.send()</span>
+<span id="L148" class="ln">   148  </span>	connConfig.MaxConns = int32(pge.Resource.CronWorkers) + int32(pge.Resource.IntervalWorkers) + 3
+<span id="L149" class="ln">   149  </span>	connConfig.ConnConfig.RuntimeParams[&#34;application_name&#34;] = &#34;pg_timetable&#34;
+<span id="L150" class="ln">   150  </span>	connConfig.ConnConfig.OnNotice = func(_ *pgconn.PgConn, n *pgconn.Notice) {
+<span id="L151" class="ln">   151  </span>		pge.l.WithField(&#34;severity&#34;, n.Severity).WithField(&#34;notice&#34;, n.Message).Info(&#34;Notice received&#34;)
+<span id="L152" class="ln">   152  </span>	}
+<span id="L153" class="ln">   153  </span>	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgx.Conn) (err error) {
+<span id="L154" class="ln">   154  </span>		pge.l.WithField(&#34;pid&#34;, pgconn.PgConn().PID()).
+<span id="L155" class="ln">   155  </span>			WithField(&#34;client&#34;, pge.ClientName).
+<span id="L156" class="ln">   156  </span>			Debug(&#34;Trying to get lock for the session&#34;)
+<span id="L157" class="ln">   157  </span>		if err = pge.TryLockClientName(ctx, pgconn); err != nil {
+<span id="L158" class="ln">   158  </span>			return err
+<span id="L159" class="ln">   159  </span>		}
+<span id="L160" class="ln">   160  </span>
+<span id="L161" class="ln">   161  </span>		_, err = pgconn.Exec(ctx, &#34;LISTEN &#34;+quoteIdent(pge.ClientName))
+<span id="L162" class="ln">   162  </span>		if pge.logTypeOID == InvalidOid {
+<span id="L163" class="ln">   163  </span>			err = pgconn.QueryRow(ctx, &#34;select coalesce(to_regtype(&#39;timetable.log_type&#39;)::oid, 0)&#34;).Scan(&amp;pge.logTypeOID)
+<span id="L164" class="ln">   164  </span>		}
+<span id="L165" class="ln">   165  </span>		pgconn.TypeMap().RegisterType(&amp;pgtype.Type{Name: &#34;timetable.log_type&#34;, OID: pge.logTypeOID, Codec: &amp;pgtype.EnumCodec{}})
+<span id="L166" class="ln">   166  </span>		return err
+<span id="L167" class="ln">   167  </span>	}
+<span id="L168" class="ln">   168  </span>	<span class="comment">// reset session before returning connection to the pool</span>
+<span id="L169" class="ln">   169  </span>	<span class="comment">// after task completion, if the task is not properly finalized (especially when running in autonomous mode),</span>
+<span id="L170" class="ln">   170  </span>	<span class="comment">// some objects and/or setting changes will still exist in the session</span>
+<span id="L171" class="ln">   171  </span>	connConfig.AfterRelease = func(pgconn *pgx.Conn) bool {
+<span id="L172" class="ln">   172  </span>		var err error
+<span id="L173" class="ln">   173  </span>		if pgconn.DeallocateAll(context.Background()) != nil {
+<span id="L174" class="ln">   174  </span>			return false <span class="comment">// destroy the connection in case of error</span>
 <span id="L175" class="ln">   175  </span>		}
-<span id="L176" class="ln">   176  </span>		return err == nil
-<span id="L177" class="ln">   177  </span>	}
-<span id="L178" class="ln">   178  </span>
-<span id="L179" class="ln">   179  </span>	if !pge.Start.Debug { <span class="comment">//will handle notification in HandleNotifications directly</span>
-<span id="L180" class="ln">   180  </span>		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
-<span id="L181" class="ln">   181  </span>	}
-<span id="L182" class="ln">   182  </span>	tracelogger := &amp;tracelog.TraceLog{
-<span id="L183" class="ln">   183  </span>		Logger:   log.NewPgxLogger(pge.l),
-<span id="L184" class="ln">   184  </span>		LogLevel: map[bool]tracelog.LogLevel{false: tracelog.LogLevelWarn, true: tracelog.LogLevelDebug}[pge.Verbose()],
-<span id="L185" class="ln">   185  </span>	}
-<span id="L186" class="ln">   186  </span>	connConfig.ConnConfig.Tracer = tracelogger
-<span id="L187" class="ln">   187  </span>	return connConfig
-<span id="L188" class="ln">   188  </span>}
-<span id="L189" class="ln">   189  </span>
-<span id="L190" class="ln">   190  </span><span class="comment">// AddLogHook adds a new pgx log hook to logrus logger</span>
-<span id="L191" class="ln">   191  </span>func (pge *PgEngine) AddLogHook(ctx context.Context) {
-<span id="L192" class="ln">   192  </span>	pge.l.AddHook(NewHook(ctx, pge, pge.Logging.LogDBLevel))
-<span id="L193" class="ln">   193  </span>}
-<span id="L194" class="ln">   194  </span>
-<span id="L195" class="ln">   195  </span><span class="comment">// QueryRowIface specifies interface to use QueryRow method</span>
-<span id="L196" class="ln">   196  </span>type QueryRowIface interface {
-<span id="L197" class="ln">   197  </span>	QueryRow(context.Context, string, ...any) pgx.Row
-<span id="L198" class="ln">   198  </span>}
-<span id="L199" class="ln">   199  </span>
-<span id="L200" class="ln">   200  </span><span class="comment">// TryLockClientName obtains lock on the server to prevent another client with the same name</span>
-<span id="L201" class="ln">   201  </span>func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) error {
-<span id="L202" class="ln">   202  </span>	sql := &#34;SELECT COALESCE(to_regproc(&#39;timetable.try_lock_client_name&#39;)::int4, 0)&#34;
-<span id="L203" class="ln">   203  </span>	var procoid int <span class="comment">// check if the schema is available first</span>
-<span id="L204" class="ln">   204  </span>	if err := conn.QueryRow(ctx, sql).Scan(&amp;procoid); err != nil {
-<span id="L205" class="ln">   205  </span>		return err
-<span id="L206" class="ln">   206  </span>	}
-<span id="L207" class="ln">   207  </span>	if procoid == 0 { <span class="comment">//there is no schema yet, will lock after bootstrapping</span>
-<span id="L208" class="ln">   208  </span>		pge.l.Debug(&#34;There is no schema yet, will lock after bootstrapping&#34;)
-<span id="L209" class="ln">   209  </span>		return nil
-<span id="L210" class="ln">   210  </span>	}
-<span id="L211" class="ln">   211  </span>	sql = &#34;SELECT timetable.try_lock_client_name($1, $2)&#34;
-<span id="L212" class="ln">   212  </span>	var locked bool
-<span id="L213" class="ln">   213  </span>	if e := conn.QueryRow(ctx, sql, pge.Getsid(), pge.ClientName).Scan(&amp;locked); e != nil {
-<span id="L214" class="ln">   214  </span>		return e
-<span id="L215" class="ln">   215  </span>	} else if !locked {
-<span id="L216" class="ln">   216  </span>		return errors.New(&#34;cannot obtain lock for a session&#34;)
-<span id="L217" class="ln">   217  </span>	}
-<span id="L218" class="ln">   218  </span>	return nil
-<span id="L219" class="ln">   219  </span>}
-<span id="L220" class="ln">   220  </span>
-<span id="L221" class="ln">   221  </span><span class="comment">// ExecuteFileScript handles both SQL and YAML files based on file extension</span>
-<span id="L222" class="ln">   222  </span>func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions, filePath string) error {
+<span id="L176" class="ln">   176  </span>		if _, err = pgconn.Exec(context.Background(), &#34;DISCARD ALL&#34;); err == nil {
+<span id="L177" class="ln">   177  </span>			_, err = pgconn.Exec(context.Background(), &#34;LISTEN &#34;+quoteIdent(pge.ClientName))
+<span id="L178" class="ln">   178  </span>		}
+<span id="L179" class="ln">   179  </span>		return err == nil
+<span id="L180" class="ln">   180  </span>	}
+<span id="L181" class="ln">   181  </span>
+<span id="L182" class="ln">   182  </span>	if !pge.Start.Debug { <span class="comment">//will handle notification in HandleNotifications directly</span>
+<span id="L183" class="ln">   183  </span>		connConfig.ConnConfig.OnNotification = pge.NotificationHandler
+<span id="L184" class="ln">   184  </span>	}
+<span id="L185" class="ln">   185  </span>	tracelogger := &amp;tracelog.TraceLog{
+<span id="L186" class="ln">   186  </span>		Logger:   log.NewPgxLogger(pge.l),
+<span id="L187" class="ln">   187  </span>		LogLevel: map[bool]tracelog.LogLevel{false: tracelog.LogLevelWarn, true: tracelog.LogLevelDebug}[pge.Verbose()],
+<span id="L188" class="ln">   188  </span>	}
+<span id="L189" class="ln">   189  </span>	connConfig.ConnConfig.Tracer = tracelogger
+<span id="L190" class="ln">   190  </span>	return connConfig
+<span id="L191" class="ln">   191  </span>}
+<span id="L192" class="ln">   192  </span>
+<span id="L193" class="ln">   193  </span><span class="comment">// AddLogHook adds a new pgx log hook to logrus logger</span>
+<span id="L194" class="ln">   194  </span>func (pge *PgEngine) AddLogHook(ctx context.Context) {
+<span id="L195" class="ln">   195  </span>	pge.l.AddHook(NewHook(ctx, pge, pge.Logging.LogDBLevel))
+<span id="L196" class="ln">   196  </span>}
+<span id="L197" class="ln">   197  </span>
+<span id="L198" class="ln">   198  </span><span class="comment">// QueryRowIface specifies interface to use QueryRow method</span>
+<span id="L199" class="ln">   199  </span>type QueryRowIface interface {
+<span id="L200" class="ln">   200  </span>	QueryRow(context.Context, string, ...any) pgx.Row
+<span id="L201" class="ln">   201  </span>}
+<span id="L202" class="ln">   202  </span>
+<span id="L203" class="ln">   203  </span><span class="comment">// TryLockClientName obtains lock on the server to prevent another client with the same name</span>
+<span id="L204" class="ln">   204  </span>func (pge *PgEngine) TryLockClientName(ctx context.Context, conn QueryRowIface) error {
+<span id="L205" class="ln">   205  </span>	sql := &#34;SELECT COALESCE(to_regproc(&#39;timetable.try_lock_client_name&#39;)::int4, 0)&#34;
+<span id="L206" class="ln">   206  </span>	var procoid int <span class="comment">// check if the schema is available first</span>
+<span id="L207" class="ln">   207  </span>	if err := conn.QueryRow(ctx, sql).Scan(&amp;procoid); err != nil {
+<span id="L208" class="ln">   208  </span>		return err
+<span id="L209" class="ln">   209  </span>	}
+<span id="L210" class="ln">   210  </span>	if procoid == 0 { <span class="comment">//there is no schema yet, will lock after bootstrapping</span>
+<span id="L211" class="ln">   211  </span>		pge.l.Debug(&#34;There is no schema yet, will lock after bootstrapping&#34;)
+<span id="L212" class="ln">   212  </span>		return nil
+<span id="L213" class="ln">   213  </span>	}
+<span id="L214" class="ln">   214  </span>	sql = &#34;SELECT timetable.try_lock_client_name($1, $2)&#34;
+<span id="L215" class="ln">   215  </span>	var locked bool
+<span id="L216" class="ln">   216  </span>	if e := conn.QueryRow(ctx, sql, pge.Getsid(), pge.ClientName).Scan(&amp;locked); e != nil {
+<span id="L217" class="ln">   217  </span>		return e
+<span id="L218" class="ln">   218  </span>	} else if !locked {
+<span id="L219" class="ln">   219  </span>		return errors.New(&#34;cannot obtain lock for a session&#34;)
+<span id="L220" class="ln">   220  </span>	}
+<span id="L221" class="ln">   221  </span>	return nil
+<span id="L222" class="ln">   222  </span>}
 <span id="L223" class="ln">   223  </span>
-<span id="L224" class="ln">   224  </span>	<span class="comment">// Determine file type by extension</span>
-<span id="L225" class="ln">   225  </span>	fileExt := strings.ToLower(filepath.Ext(filePath))
+<span id="L224" class="ln">   224  </span><span class="comment">// ExecuteFileScript handles both SQL and YAML files based on file extension</span>
+<span id="L225" class="ln">   225  </span>func (pge *PgEngine) ExecuteFileScript(ctx context.Context, cmdOpts config.CmdOptions, filePath string) error {
 <span id="L226" class="ln">   226  </span>
-<span id="L227" class="ln">   227  </span>	switch fileExt {
-<span id="L228" class="ln">   228  </span>	case &#34;.yaml&#34;, &#34;.yml&#34;:
-<span id="L229" class="ln">   229  </span>		<span class="comment">// Handle YAML chain definition files</span>
-<span id="L230" class="ln">   230  </span>		if cmdOpts.Start.Validate {
-<span id="L231" class="ln">   231  </span>			<span class="comment">// Only validate, don&#39;t import</span>
-<span id="L232" class="ln">   232  </span>			_, err := ParseYamlFile(filePath)
-<span id="L233" class="ln">   233  </span>			if err != nil {
-<span id="L234" class="ln">   234  </span>				pge.l.WithError(err).Error(&#34;YAML validation failed&#34;)
-<span id="L235" class="ln">   235  </span>				return err
-<span id="L236" class="ln">   236  </span>			}
-<span id="L237" class="ln">   237  </span>			pge.l.WithField(&#34;file&#34;, filePath).Info(&#34;YAML file validation successful&#34;)
-<span id="L238" class="ln">   238  </span>			return nil
-<span id="L239" class="ln">   239  </span>		}
-<span id="L240" class="ln">   240  </span>
-<span id="L241" class="ln">   241  </span>		<span class="comment">// Import YAML chains</span>
-<span id="L242" class="ln">   242  </span>		return pge.LoadYamlChains(ctx, filePath, cmdOpts.Start.Replace)
+<span id="L227" class="ln">   227  </span>	<span class="comment">// Determine file type by extension</span>
+<span id="L228" class="ln">   228  </span>	fileExt := strings.ToLower(filepath.Ext(filePath))
+<span id="L229" class="ln">   229  </span>
+<span id="L230" class="ln">   230  </span>	switch fileExt {
+<span id="L231" class="ln">   231  </span>	case &#34;.yaml&#34;, &#34;.yml&#34;:
+<span id="L232" class="ln">   232  </span>		<span class="comment">// Handle YAML chain definition files</span>
+<span id="L233" class="ln">   233  </span>		if cmdOpts.Start.Validate {
+<span id="L234" class="ln">   234  </span>			<span class="comment">// Only validate, don&#39;t import</span>
+<span id="L235" class="ln">   235  </span>			_, err := ParseYamlFile(filePath)
+<span id="L236" class="ln">   236  </span>			if err != nil {
+<span id="L237" class="ln">   237  </span>				pge.l.WithError(err).Error(&#34;YAML validation failed&#34;)
+<span id="L238" class="ln">   238  </span>				return err
+<span id="L239" class="ln">   239  </span>			}
+<span id="L240" class="ln">   240  </span>			pge.l.WithField(&#34;file&#34;, filePath).Info(&#34;YAML file validation successful&#34;)
+<span id="L241" class="ln">   241  </span>			return nil
+<span id="L242" class="ln">   242  </span>		}
 <span id="L243" class="ln">   243  </span>
-<span id="L244" class="ln">   244  </span>	case &#34;.sql&#34;:
-<span id="L245" class="ln">   245  </span>		<span class="comment">// Handle SQL script files (existing behavior)</span>
-<span id="L246" class="ln">   246  </span>		return pge.ExecuteCustomScripts(ctx, filePath)
-<span id="L247" class="ln">   247  </span>
-<span id="L248" class="ln">   248  </span>	default:
-<span id="L249" class="ln">   249  </span>		return errors.New(&#34;unsupported file extension: &#34; + fileExt)
-<span id="L250" class="ln">   250  </span>	}
-<span id="L251" class="ln">   251  </span>}
-<span id="L252" class="ln">   252  </span>
-<span id="L253" class="ln">   253  </span><span class="comment">// ExecuteCustomScripts executes SQL scripts in files</span>
-<span id="L254" class="ln">   254  </span>func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error {
-<span id="L255" class="ln">   255  </span>	for _, f := range filename {
-<span id="L256" class="ln">   256  </span>		sql, err := os.ReadFile(f)
-<span id="L257" class="ln">   257  </span>		if err != nil {
-<span id="L258" class="ln">   258  </span>			pge.l.WithError(err).Error(&#34;cannot read command file&#34;)
-<span id="L259" class="ln">   259  </span>			return err
-<span id="L260" class="ln">   260  </span>		}
-<span id="L261" class="ln">   261  </span>		pge.l.Info(&#34;Executing script: &#34;, f)
-<span id="L262" class="ln">   262  </span>		if _, err = pge.ConfigDb.Exec(ctx, string(sql)); err != nil {
-<span id="L263" class="ln">   263  </span>			pge.l.WithError(err).Error(&#34;script execution failed&#34;)
-<span id="L264" class="ln">   264  </span>			return err
-<span id="L265" class="ln">   265  </span>		}
-<span id="L266" class="ln">   266  </span>		pge.l.Info(&#34;Script file executed: &#34;, f)
-<span id="L267" class="ln">   267  </span>	}
-<span id="L268" class="ln">   268  </span>	return nil
-<span id="L269" class="ln">   269  </span>}
-<span id="L270" class="ln">   270  </span>
-<span id="L271" class="ln">   271  </span><span class="comment">// ExecuteSchemaScripts executes initial schema scripts</span>
-<span id="L272" class="ln">   272  </span>func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
-<span id="L273" class="ln">   273  </span>	var exists bool
-<span id="L274" class="ln">   274  </span>	err := pge.ConfigDb.QueryRow(ctx, &#34;SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = &#39;timetable&#39;)&#34;).Scan(&amp;exists)
-<span id="L275" class="ln">   275  </span>	if err != nil {
-<span id="L276" class="ln">   276  </span>		return err
-<span id="L277" class="ln">   277  </span>	}
-<span id="L278" class="ln">   278  </span>	if !exists {
-<span id="L279" class="ln">   279  </span>		for i, sql := range sqls {
-<span id="L280" class="ln">   280  </span>			sqlName := sqlNames[i]
-<span id="L281" class="ln">   281  </span>			pge.l.Info(&#34;Executing script: &#34;, sqlName)
-<span id="L282" class="ln">   282  </span>			if _, err = pge.ConfigDb.Exec(ctx, sql); err != nil {
-<span id="L283" class="ln">   283  </span>				pge.l.WithError(err).Error(&#34;Script execution failed&#34;)
-<span id="L284" class="ln">   284  </span>				pge.l.Warn(&#34;Dropping \&#34;timetable\&#34; schema...&#34;)
-<span id="L285" class="ln">   285  </span>				_, err = pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
-<span id="L286" class="ln">   286  </span>				if err != nil {
-<span id="L287" class="ln">   287  </span>					pge.l.WithError(err).Error(&#34;Schema dropping failed&#34;)
-<span id="L288" class="ln">   288  </span>				}
-<span id="L289" class="ln">   289  </span>				return err
-<span id="L290" class="ln">   290  </span>			}
-<span id="L291" class="ln">   291  </span>			pge.l.Info(&#34;Schema file executed: &#34; + sqlName)
-<span id="L292" class="ln">   292  </span>		}
-<span id="L293" class="ln">   293  </span>		pge.l.Info(&#34;Configuration schema created...&#34;)
-<span id="L294" class="ln">   294  </span>	}
-<span id="L295" class="ln">   295  </span>	return nil
-<span id="L296" class="ln">   296  </span>}
-<span id="L297" class="ln">   297  </span>
-<span id="L298" class="ln">   298  </span><span class="comment">// Finalize closes session</span>
-<span id="L299" class="ln">   299  </span>func (pge *PgEngine) Finalize() {
-<span id="L300" class="ln">   300  </span>	pge.l.Info(&#34;Closing session&#34;)
-<span id="L301" class="ln">   301  </span>	sql := `WITH del_ch AS (DELETE FROM timetable.active_chain WHERE client_name = $1)
-<span id="L302" class="ln">   302  </span>DELETE FROM timetable.active_session WHERE client_name = $1`
-<span id="L303" class="ln">   303  </span>	_, err := pge.ConfigDb.Exec(context.Background(), sql, pge.ClientName)
-<span id="L304" class="ln">   304  </span>	if err != nil {
-<span id="L305" class="ln">   305  </span>		pge.l.WithError(err).Error(&#34;Cannot finalize database session&#34;)
-<span id="L306" class="ln">   306  </span>	}
-<span id="L307" class="ln">   307  </span>	pge.ConfigDb.Close()
-<span id="L308" class="ln">   308  </span>	pge.ConfigDb = nil
-<span id="L309" class="ln">   309  </span>}
-<span id="L310" class="ln">   310  </span>
+<span id="L244" class="ln">   244  </span>		<span class="comment">// Import YAML chains</span>
+<span id="L245" class="ln">   245  </span>		return pge.LoadYamlChains(ctx, filePath, cmdOpts.Start.Replace)
+<span id="L246" class="ln">   246  </span>
+<span id="L247" class="ln">   247  </span>	case &#34;.sql&#34;:
+<span id="L248" class="ln">   248  </span>		<span class="comment">// Handle SQL script files (existing behavior)</span>
+<span id="L249" class="ln">   249  </span>		return pge.ExecuteCustomScripts(ctx, filePath)
+<span id="L250" class="ln">   250  </span>
+<span id="L251" class="ln">   251  </span>	default:
+<span id="L252" class="ln">   252  </span>		return errors.New(&#34;unsupported file extension: &#34; + fileExt)
+<span id="L253" class="ln">   253  </span>	}
+<span id="L254" class="ln">   254  </span>}
+<span id="L255" class="ln">   255  </span>
+<span id="L256" class="ln">   256  </span><span class="comment">// ExecuteCustomScripts executes SQL scripts in files</span>
+<span id="L257" class="ln">   257  </span>func (pge *PgEngine) ExecuteCustomScripts(ctx context.Context, filename ...string) error {
+<span id="L258" class="ln">   258  </span>	for _, f := range filename {
+<span id="L259" class="ln">   259  </span>		sql, err := os.ReadFile(f)
+<span id="L260" class="ln">   260  </span>		if err != nil {
+<span id="L261" class="ln">   261  </span>			pge.l.WithError(err).Error(&#34;cannot read command file&#34;)
+<span id="L262" class="ln">   262  </span>			return err
+<span id="L263" class="ln">   263  </span>		}
+<span id="L264" class="ln">   264  </span>		pge.l.Info(&#34;Executing script: &#34;, f)
+<span id="L265" class="ln">   265  </span>		if _, err = pge.ConfigDb.Exec(ctx, string(sql)); err != nil {
+<span id="L266" class="ln">   266  </span>			pge.l.WithError(err).Error(&#34;script execution failed&#34;)
+<span id="L267" class="ln">   267  </span>			return err
+<span id="L268" class="ln">   268  </span>		}
+<span id="L269" class="ln">   269  </span>		pge.l.Info(&#34;Script file executed: &#34;, f)
+<span id="L270" class="ln">   270  </span>	}
+<span id="L271" class="ln">   271  </span>	return nil
+<span id="L272" class="ln">   272  </span>}
+<span id="L273" class="ln">   273  </span>
+<span id="L274" class="ln">   274  </span><span class="comment">// ExecuteSchemaScripts executes initial schema scripts</span>
+<span id="L275" class="ln">   275  </span>func (pge *PgEngine) ExecuteSchemaScripts(ctx context.Context) error {
+<span id="L276" class="ln">   276  </span>	var exists bool
+<span id="L277" class="ln">   277  </span>	err := pge.ConfigDb.QueryRow(ctx, &#34;SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = &#39;timetable&#39;)&#34;).Scan(&amp;exists)
+<span id="L278" class="ln">   278  </span>	if err != nil {
+<span id="L279" class="ln">   279  </span>		return err
+<span id="L280" class="ln">   280  </span>	}
+<span id="L281" class="ln">   281  </span>	if !exists {
+<span id="L282" class="ln">   282  </span>		for i, sql := range sqls {
+<span id="L283" class="ln">   283  </span>			sqlName := sqlNames[i]
+<span id="L284" class="ln">   284  </span>			pge.l.Info(&#34;Executing script: &#34;, sqlName)
+<span id="L285" class="ln">   285  </span>			if _, err = pge.ConfigDb.Exec(ctx, sql); err != nil {
+<span id="L286" class="ln">   286  </span>				pge.l.WithError(err).Error(&#34;Script execution failed&#34;)
+<span id="L287" class="ln">   287  </span>				pge.l.Warn(&#34;Dropping \&#34;timetable\&#34; schema...&#34;)
+<span id="L288" class="ln">   288  </span>				_, err = pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
+<span id="L289" class="ln">   289  </span>				if err != nil {
+<span id="L290" class="ln">   290  </span>					pge.l.WithError(err).Error(&#34;Schema dropping failed&#34;)
+<span id="L291" class="ln">   291  </span>				}
+<span id="L292" class="ln">   292  </span>				return err
+<span id="L293" class="ln">   293  </span>			}
+<span id="L294" class="ln">   294  </span>			pge.l.Info(&#34;Schema file executed: &#34; + sqlName)
+<span id="L295" class="ln">   295  </span>		}
+<span id="L296" class="ln">   296  </span>		pge.l.Info(&#34;Configuration schema created...&#34;)
+<span id="L297" class="ln">   297  </span>	}
+<span id="L298" class="ln">   298  </span>	return nil
+<span id="L299" class="ln">   299  </span>}
+<span id="L300" class="ln">   300  </span>
+<span id="L301" class="ln">   301  </span><span class="comment">// Finalize closes session</span>
+<span id="L302" class="ln">   302  </span>func (pge *PgEngine) Finalize() {
+<span id="L303" class="ln">   303  </span>	pge.l.Info(&#34;Closing session&#34;)
+<span id="L304" class="ln">   304  </span>	sql := `WITH del_ch AS (DELETE FROM timetable.active_chain WHERE client_name = $1)
+<span id="L305" class="ln">   305  </span>DELETE FROM timetable.active_session WHERE client_name = $1`
+<span id="L306" class="ln">   306  </span>	_, err := pge.ConfigDb.Exec(context.Background(), sql, pge.ClientName)
+<span id="L307" class="ln">   307  </span>	if err != nil {
+<span id="L308" class="ln">   308  </span>		pge.l.WithError(err).Error(&#34;Cannot finalize database session&#34;)
+<span id="L309" class="ln">   309  </span>	}
+<span id="L310" class="ln">   310  </span>	pge.ConfigDb.Close()
+<span id="L311" class="ln">   311  </span>	pge.ConfigDb = nil
+<span id="L312" class="ln">   312  </span>}
+<span id="L313" class="ln">   313  </span>
 </pre><p></p>
 
 <div id="footer">
