@@ -121,6 +121,9 @@
 				
 				<dd><a href="#eachOption">func eachOption(g *flags.Group, f func(*flags.Group, *flags.Option))</a></dd>
 			
+				
+				<dd><a href="#filterEmpty">func filterEmpty(in []string) []string</a></dd>
+			
 			
 				
 				<dd><a href="#CmdOptions">type CmdOptions</a></dd>
@@ -240,7 +243,7 @@
 		
 			
 			
-			<h2 id="ValidateOTel">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L114">ValidateOTel</a>
+			<h2 id="ValidateOTel">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L131">ValidateOTel</a>
 				<a class="permalink" href="#ValidateOTel">&#xb6;</a>
 				
 				
@@ -254,7 +257,7 @@
 		
 			
 			
-			<h2 id="eachGroup">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L39">eachGroup</a>
+			<h2 id="eachGroup">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L40">eachGroup</a>
 				<a class="permalink" href="#eachGroup">&#xb6;</a>
 				
 				
@@ -267,13 +270,28 @@
 		
 			
 			
-			<h2 id="eachOption">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L46">eachOption</a>
+			<h2 id="eachOption">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L47">eachOption</a>
 				<a class="permalink" href="#eachOption">&#xb6;</a>
 				
 				
 			</h2>
 			<pre>func eachOption(g *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Group">Group</a>, f func(*<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Group">Group</a>, *<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/">flags</a>.<a href="https://pkg.go.dev/github.com/jessevdk/go-flags/#Option">Option</a>))</pre>
 			
+			
+			
+
+		
+			
+			
+			<h2 id="filterEmpty">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L120">filterEmpty</a>
+				<a class="permalink" href="#filterEmpty">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func filterEmpty(in []<a href="https://pkg.go.dev/builtin/#string">string</a>) []<a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			<p>filterEmpty returns a new slice with blank (empty or whitespace-only)
+strings removed and surrounding whitespace trimmed from the rest.
+
 			
 			
 
@@ -325,7 +343,7 @@
 				
 			
 				
-				<h3 id="NewConfig">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L80">NewConfig</a>
+				<h3 id="NewConfig">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L81">NewConfig</a>
 					<a class="permalink" href="#NewConfig">&#xb6;</a>
 					
 					
@@ -520,7 +538,7 @@
 		
 			
 			
-			<h2 id="cmdArg">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L14">cmdArg</a>
+			<h2 id="cmdArg">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L15">cmdArg</a>
 				<a class="permalink" href="#cmdArg">&#xb6;</a>
 				
 				
@@ -544,7 +562,7 @@
 
 			
 				
-				<h3 id="cmdArg.HasChanged">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L19">HasChanged</a>
+				<h3 id="cmdArg.HasChanged">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L20">HasChanged</a>
 					<a class="permalink" href="#cmdArg.HasChanged">&#xb6;</a>
 					
 					
@@ -556,7 +574,7 @@
 				
 			
 				
-				<h3 id="cmdArg.Name">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L23">Name</a>
+				<h3 id="cmdArg.Name">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L24">Name</a>
 					<a class="permalink" href="#cmdArg.Name">&#xb6;</a>
 					
 					
@@ -568,7 +586,7 @@
 				
 			
 				
-				<h3 id="cmdArg.ValueString">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L27">ValueString</a>
+				<h3 id="cmdArg.ValueString">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L28">ValueString</a>
 					<a class="permalink" href="#cmdArg.ValueString">&#xb6;</a>
 					
 					
@@ -580,7 +598,7 @@
 				
 			
 				
-				<h3 id="cmdArg.ValueType">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L31">ValueType</a>
+				<h3 id="cmdArg.ValueType">func (cmdArg) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L32">ValueType</a>
 					<a class="permalink" href="#cmdArg.ValueType">&#xb6;</a>
 					
 					
@@ -594,7 +612,7 @@
 		
 			
 			
-			<h2 id="cmdArgSet">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L35">cmdArgSet</a>
+			<h2 id="cmdArgSet">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L36">cmdArgSet</a>
 				<a class="permalink" href="#cmdArgSet">&#xb6;</a>
 				
 				
@@ -617,7 +635,7 @@
 
 			
 				
-				<h3 id="cmdArgSet.VisitAll">func (cmdArgSet) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L56">VisitAll</a>
+				<h3 id="cmdArgSet.VisitAll">func (cmdArgSet) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L57">VisitAll</a>
 					<a class="permalink" href="#cmdArgSet.VisitAll">&#xb6;</a>
 					
 					
@@ -631,7 +649,7 @@ Since we have only two level of nesting it&apos;s enough to use simplified group
 				
 			
 				
-				<h3 id="cmdArgSet.setDefaults">func (cmdArgSet) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L67">setDefaults</a>
+				<h3 id="cmdArgSet.setDefaults">func (cmdArgSet) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L68">setDefaults</a>
 					<a class="permalink" href="#cmdArgSet.setDefaults">&#xb6;</a>
 					
 					

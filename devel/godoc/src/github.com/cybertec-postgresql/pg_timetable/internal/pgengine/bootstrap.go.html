@@ -166,7 +166,7 @@
 <span id="L109" class="ln">   109  </span>	}
 <span id="L110" class="ln">   110  </span>	pge.AddLogHook(ctx) <span class="comment">//schema exists, we can log now</span>
 <span id="L111" class="ln">   111  </span>	for _, f := range cmdOpts.Start.File {
-<span id="L112" class="ln">   112  </span>		if f == &#34;&#34; {
+<span id="L112" class="ln">   112  </span>		if strings.TrimSpace(f) == &#34;&#34; {
 <span id="L113" class="ln">   113  </span>			continue
 <span id="L114" class="ln">   114  </span>		}
 <span id="L115" class="ln">   115  </span>		if err := pge.ExecuteFileScript(ctx, cmdOpts, f); err != nil {
