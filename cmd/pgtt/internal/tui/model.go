@@ -198,6 +198,8 @@ func (m model) switchTop(name string) (tea.Model, tea.Cmd) {
 	switch name {
 	case "Chains":
 		v = newChainsView(m.client, m.styles)
+	case "Sessions":
+		v = newSessionsView(m.client, m.styles)
 	case "Activity":
 		v = newActivityView(m.client, m.styles, client.LogFilter{})
 	default:

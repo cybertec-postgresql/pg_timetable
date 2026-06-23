@@ -210,12 +210,23 @@ entry and stops cleanly via `closer` on exit/quit. `go build`/`go test
 
 ## Phase T5 — Sessions / active chains
 
-- [ ] **T5-1** Sessions view from `ListSessions` (client_name, pids, started_at)
-      and active chains from `ListActiveChains` (chain_id, client, started_at),
-      shown as two stacked tables or a tabbed pane.
-- [ ] **T5-2** Auto-refresh; this view doubles as the worker picker source.
+- [x] **T5-1** DONE: `sessionsView` (`sessions.go`) — two stacked tables:
+      **Worker sessions** from `client.ListSessions` (CLIENT, CLIENT PID,
+      SERVER PID, STARTED) on top, **Running chains** from
+      `client.ListActiveChains` (CHAIN, CLIENT, STARTED) below. `Tab` switches
+      focus; only the focused pane shows a selection + responds to ↑/↓ (cursors
+      are independent and clamp on reload). Heights split from the body.
+- [x] **T5-2** DONE: auto-refresh + manual `r` re-fetch both lists (each off the
+      UI loop via its own `tea.Cmd`). Status line reports "N sessions · M
+      running". Wired into `switchTop("Sessions")` (`2/s`). This is the source
+      the T6 worker picker will draw from.
+- [x] **T5-3** DONE (tests): `sessions_test.go` — load both lists + body render,
+      focus switch + per-pane move/clamp, refresh re-fetch, error→errMsg for both
+      loads, and status line counts. All green.
 
-**Exit**: operators can see workers + currently running chains at a glance.
+**Exit (MET)**: operators see workers + currently running chains at a glance;
+auto-refreshes. Dev DB confirmed to return session rows. `go build`/`go test
+./cmd/pgtt/...` green; `golangci-lint run ./cmd/pgtt/...` = 0 issues.
 
 ---
 
