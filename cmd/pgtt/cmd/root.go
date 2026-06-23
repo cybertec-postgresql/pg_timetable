@@ -70,6 +70,8 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newSessionCmd())
 	root.AddCommand(newActiveCmd())
 	root.AddCommand(newLogCmd())
+	root.AddCommand(newApplyCmd())
+	root.AddCommand(newExportCmd())
 	return root
 }
 

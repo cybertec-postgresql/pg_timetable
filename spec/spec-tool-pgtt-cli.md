@@ -97,6 +97,13 @@ contributors implementing `pgtt`.
   existing `--replace` behavior.
 - **REQ-010**: `pgtt` SHALL export one or more chains to YAML compatible with the
   import format (`pgengine.YamlConfig`). (Export is net-new; no core function exists yet.)
+  Export is a **best-effort static snapshot**: it captures `timetable.chain`,
+  `timetable.task`, and `timetable.parameter` rows as they currently exist. It does NOT
+  capture imperative chain-construction logic, nor runtime self-modification (e.g. a task
+  that rewrites another task's parameter, or commands embedding literal `task_id`/
+  `chain_id` values). `pgtt` SHALL always produce the export but SHALL prepend a comment
+  header to the YAML and print a warning to stderr stating that the snapshot may not
+  faithfully reproduce self-modifying or programmatically generated chains.
 - **REQ-011**: `pgtt` SHALL list active sessions (`timetable.active_session`) and
   active chains (`timetable.active_chain`) to provide fleet visibility.
 - **REQ-012**: `pgtt` SHALL display log entries from `timetable.log` and
@@ -373,6 +380,15 @@ Edge cases:
 - **Schema absent**: `pgtt` SHALL produce a clear error instructing the user to run a
   pg_timetable instance first (it MUST NOT create the schema itself in v1).
 - **No TTY + destructive command without `--yes`**: fail safe (AC-008).
+- **Non-representable (self-modifying/generated) chains on export (RESOLVED)**: some
+  chains are produced by procedures and/or rewrite their own tasks/parameters at runtime
+  (e.g. Task 1 patching Task 2's `--export-prefix` parameter; commands that `format(...)`
+  a sibling's literal `task_id`). A static YAML snapshot of such a chain captures only the
+  current rows (often a `'PLACEHOLDER'` parameter and a foreign `task_id`), so re-import
+  via `apply` creates a *different, possibly broken* chain. v1 policy: export ALWAYS
+  succeeds, but emits a stderr warning and prepends a YAML comment header marking it a
+  best-effort snapshot. No per-pattern classification is attempted (avoids false
+  confidence). Round-trip fidelity (AC-006) is only guaranteed for static chains.
 
 ## 10. Validation Criteria
 

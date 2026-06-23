@@ -86,4 +86,64 @@ type Client interface {
 	StopChain(ctx context.Context, chainID int, worker string) error
 	PauseChain(ctx context.Context, ref string) error
 	ResumeChain(ctx context.Context, ref string) error
+
+	// --- CRUD & YAML (Phase 4) ---
+	CreateChain(ctx context.Context, spec ChainSpec) (int, error)
+	EditChain(ctx context.Context, ref string, spec ChainEdit) error
+	DeleteChain(ctx context.Context, ref string) error
+	AddTask(ctx context.Context, chainRef string, spec TaskSpec) (int, error)
+	EditTask(ctx context.Context, taskID int, spec TaskEdit) error
+	DeleteTask(ctx context.Context, taskID int) error
+	MoveTask(ctx context.Context, taskID int, up bool) error
+	ApplyYAML(ctx context.Context, path string, replace bool) (int, error)
+	ExportYAML(ctx context.Context, refs []string) ([]byte, []string, error)
+}
+
+// ChainSpec describes a new chain (one initial task) for CreateChain.
+type ChainSpec struct {
+	Name         string
+	Schedule     string
+	Command      string
+	Kind         string
+	ClientName   string
+	MaxInstances int
+	Live         bool
+	SelfDestruct bool
+	Exclusive    bool
+	OnError      string
+}
+
+// ChainEdit holds optional chain attribute updates; nil fields are left unchanged.
+type ChainEdit struct {
+	Schedule     *string
+	ClientName   *string
+	MaxInstances *int
+	Live         *bool
+	SelfDestruct *bool
+	Exclusive    *bool
+	OnError      *string
+}
+
+// TaskSpec describes a new task appended to a chain.
+type TaskSpec struct {
+	Name        string
+	Kind        string
+	Command     string
+	RunAs       string
+	ConnectStr  string
+	IgnoreError bool
+	Autonomous  bool
+	Timeout     int
+}
+
+// TaskEdit holds optional task attribute updates; nil fields are left unchanged.
+type TaskEdit struct {
+	Name        *string
+	Kind        *string
+	Command     *string
+	RunAs       *string
+	ConnectStr  *string
+	IgnoreError *bool
+	Autonomous  *bool
+	Timeout     *int
 }

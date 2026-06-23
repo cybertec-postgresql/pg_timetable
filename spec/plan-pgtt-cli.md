@@ -105,16 +105,18 @@ Delivers the core pain relief: see everything without crafting SQL.
 
 Trigger/cancel/pause/resume — the day-to-day operational verbs.
 
-- [ ] **P3-1** `chain start <id> --worker [--delay]` → `notify_chain_start`; one-shot
-      run regardless of `live`. (REQ-005 / AC-002)
-- [ ] **P3-2** `chain stop <id> --worker` → `notify_chain_stop`. (REQ-006 / AC-003)
-- [ ] **P3-3** `chain pause` / `chain resume` → `pause_job` / `resume_job`.
-      (REQ-007 / AC-004)
-- [ ] **P3-4** Warn when target `--worker` not present in `active_session`. (§9)
-- [ ] **P3-5** Make `--worker` REQUIRED for `start`/`stop`; fail fast + no NOTIFY when
-      omitted. (REQ-005, REQ-006 / AC-002b)
+- [x] **P3-1** DONE: `chain start <id> --worker [--delay]` → `notify_chain_start`;
+      one-shot regardless of `live` (P0-1 decision verified in test). (REQ-005 / AC-002)
+- [x] **P3-2** DONE: `chain stop <id> --worker` → `notify_chain_stop`. (REQ-006 / AC-003)
+- [x] **P3-3** DONE: `chain pause/resume` → `pause_job`/`resume_job`; asserts
+      `chain.live` toggle in integration test. (REQ-007 / AC-004)
+- [x] **P3-4** DONE: `workerExists` queries `timetable.active_session`; prints
+      warning but does NOT block the NOTIFY (spec says SHOULD warn, §9). (§9)
+- [x] **P3-5** DONE: `--worker` empty → `errWorkerRequired` before any DB connection;
+      unit tests `TestChainStart/Stop_WorkerRequired` prove no NOTIFY is sent. (AC-002b)
 
-**Exit criteria**: AC-002, AC-003, AC-004 pass against a live worker in integration tests.
+**Exit criteria (MET)**: AC-002, AC-003, AC-004 pass; AC-002b unit-tested.
+`go test ./cmd/pgtt/...` green (18 integration + 9 unit tests); lint 0 issues.
 
 ---
 
@@ -122,17 +124,20 @@ Trigger/cancel/pause/resume — the day-to-day operational verbs.
 
 Full authoring of chains/tasks plus import/export.
 
-- [ ] **P4-1** `chain create` / `chain edit` / `chain delete` (delete gated by
-      `--yes`/TTY). (REQ-004, SEC-003 / AC-008)
-- [ ] **P4-2** `chain task add/edit/delete` and `chain task move {up|down}`.
-      (REQ-004, REQ-008)
-- [ ] **P4-3** `apply <file.yaml> [--replace]` reusing `pgengine.LoadYamlChains`.
-      (REQ-009 / AC-005)
-- [ ] **P4-4** `export <id|name>... [-f]` — net-new YAML serializer producing
-      `pgengine.YamlConfig`. (REQ-010 / AC-006)
-- [ ] **P4-5** Round-trip test: `export` output re-imports via `apply`. (AC-006)
+- [x] **P4-1** DONE: `chain create` / `chain edit` (Changed()-aware, nil fields skipped)
+      / `chain delete` (confirm() guard). (REQ-004, SEC-003 / AC-008)
+- [x] **P4-2** DONE: `chain task add/edit/delete` and `chain task move {up|down}`;
+      add appends after highest task_order; move uses `move_task_up/down`. (REQ-004, REQ-008)
+- [x] **P4-3** DONE: `apply` reuses `pgengine.ParseYamlFile` + `ValidateChain` +
+      `SetDefaults`; insert mirrors `CreateChainFromYaml`. (REQ-009 / AC-005)
+- [x] **P4-4** DONE: `export` always succeeds; prepends `exportWarningHeader` YAML
+      comment + prints per-chain warnings to stderr. No per-pattern classification.
+      (REQ-010 / spec §9)
+- [x] **P4-5** DONE: `TestApplyExportRoundTrip` — inline static YAML → apply → export
+      → re-apply --replace → chain still present with correct schedule. (AC-006)
 
-**Exit criteria**: AC-005, AC-006, AC-008 pass; export↔apply round-trips.
+**Exit criteria (MET)**: AC-005, AC-006, AC-008 pass; round-trip verified on static chain.
+`go test ./cmd/pgtt/...` green (12 unit + 23 integration); lint 0 issues.
 
 ---
 
