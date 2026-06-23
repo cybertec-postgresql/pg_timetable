@@ -194,6 +194,151 @@ Streaming observability via LISTEN/NOTIFY.
 
 ---
 
+## Phase 7 — Log rendering: restore the lost context & style
+
+> **Problem statement.** `log list` and `log tail` produce flat, contextless output. Every
+> `timetable.log` row renders `CHAIN=0 TASK=0 MS=0 RC=0` — a wall of zeros — even though
+> `timetable.log.message_data` (jsonb) carries the full structured context the scheduler's
+> own formatter shows: `chain` (`{ChainID, ChainName}`), `task`, `sql`, `params`, plus
+> `vxid`, `notice`, `severity`. The richness already lives in the database; `activitySQL`
+> hard-codes `0::bigint AS chain_id/task_id` and never reads `message_data`. There is also
+> no color, no level emphasis, and no column width discipline, so long messages stretch the
+> table while short rows look ragged.
+>
+> **Compare** (both captured from the same run):
+>
+> - `pg_timetable.output` (scheduler, *rich*): `[INFO] [chain:1|notify_every_minute] [task:1] [vxid:21474836598] Starting task`
+> - `pgtt.output` (CLI, *flat*): `log  INFO   0  0  0  demo_worker  Chain executed successfully` ← *which* chain?
+>
+> **Goal.** Make `log list` / `log tail` at least as informative and readable as the
+> scheduler's native logger, by mining `message_data` and applying disciplined,
+> color-aware rendering — **without touching the scheduler or the DB schema** (CON-006).
+>
+> **Scope.** `log list` and `log tail` only (and the shared rendering helpers they use).
+> `log diag`, `chain *`, `session`, `active` are out of scope except where they share the
+> new renderer.
+
+### 7.1 — Mine `message_data` in SQL (data layer)
+
+- [x] **P7-1** DONE: extended `activitySQL` and the `TailActivity` query so the **`log`
+      source no longer hard-codes zeros**. Now reads from `message_data`:
+      `chain_id ← (message_data->'chain'->>'ChainID')::bigint`,
+      `chain_name ← message_data->'chain'->>'ChainName'`,
+      `task_id ← (message_data->'task'->>'TaskID')::bigint`,
+      `vxid ← message_data->>'vxid'` (text). `exec` rows expose `txid::text AS vxid`.
+      All wrapped in `COALESCE(...,0/'')` so rows without a key still render. Key names
+      confirmed: scheduler logs `WithField("chain", chain)`/`WithField("task", task)` and
+      the structs (`pgengine/types.go`) have **no json tags**, so logrus marshals Go field
+      names `ChainID`/`ChainName`/`TaskID`; `vxid` is a top-level int64 field.
+- [x] **P7-2** DONE: added `ChainName string` and `Vxid string` to `client.ActivityEntry`
+      (with `db`/`json` tags) and **replaced** the old `Txid int64` field — virtual xids
+      (`21474836598`/`317827579929`) are not plain ints, so stored as string. `rawRow` in
+      `TailActivity` and the emit mapping updated to match. Build + vet clean; no remaining
+      references to `ActivityEntry.Txid` (the `.Txid` on `RunSummary` is a separate type).
+- [x] **P7-3** DONE: surface notice context for `log` rows. Added `notice`
+      (`message_data->>'notice'`) and `severity` (`message_data->>'severity'`) columns to
+      both activity queries, the `rawRow` struct, the emit mapping, and `ActivityEntry`
+      (`Notice`/`Severity`). The row `level` now uses
+      `COALESCE(NULLIF(message_data->>'severity',''), log_level::text)`, so a captured PG
+      NOTICE/WARNING reads as `NOTICE`/`WARNING` instead of the bare `INFO` the scheduler
+      logs it under (`bootstrap.go` OnNotice: `WithField("severity",…).WithField("notice",…).Info("Notice received")`).
+      Empty for non-notice rows. `exec` rows emit `'' AS notice/severity`.
+- [x] **P7-4** DONE: integration tests in `pgclient_activity_test.go` —
+      `TestListActivity_LogRowContextFromMessageData` (chain id+name, task id, vxid mined
+      from `message_data`, demo_worker fixture mirroring `pgtt.output`),
+      `TestListActivity_LogRowWithoutContext` (plain row → empty/zero, no extraction error),
+      `TestListActivity_FilterByChainMatchesLogRows` (chain filter now matches log rows via
+      `message_data`), `TestListActivity_NoticeSeverity` (PG NOTICE → notice+severity
+      surfaced, severity drives level), `TestListActivity_SeverityFallsBackToLogLevel`
+      (no severity → keeps `log_level`). All green; lint 0 issues.
+
+### 7.2 — A real renderer (presentation layer)
+
+- [x] **P7-5** DONE: added `cmd/pgtt/cmd/logrender.go` with `renderActivityText` — an
+      identity-first format `TS LEVEL [chain:id|name] [task:id] [vxid:…] … message`.
+      Chain renders as `id|name` (just `id` when name empty); **empty context tokens are
+      omitted** (`identityTokens` skips zero/empty chain/task/vxid). `MS`/`RC` tokens are
+      emitted **only for `exec` rows** (and `rc` only when non-zero), so log rows no longer
+      carry `0 0 0`.
+- [x] **P7-6** DONE: dependency-free ANSI helper (`colorize`, `levelColor`) mirroring
+      `getColorByLevel` (INFO/OK/NOTICE green, DEBUG/TRACE/RUNNING blue, WARN/WARNING
+      magenta, ERROR/FATAL/PANIC/FAIL red); level badge bold, timestamp dimmed.
+      `configureLogColor` auto-disables color for `--output json`, `--no-color` (new global
+      flag), the `NO_COLOR` env var, and any non-`*os.File`/non-TTY writer — so buffers and
+      pipes get clean text. No new dependency added (keeps `pgtt` lean per P0).
+- [x] **P7-7** DONE: `clampToWidth` trims the trailing message to terminal width with an
+      `…` ellipsis; `visibleLen` measures ignoring ANSI escapes so clamping reflects what
+      the user sees. Width comes from `terminalWidth` (TTY + `COLUMNS`, dependency-free);
+      returns 0 (no clamping) for pipes, keeping redirected output complete. `--output json`
+      stays full/untruncated.
+- [x] **P7-8** DONE: `log tail` no longer hand-rolls fixed-width `fmt.Fprintf`. Both
+      `log list` (`renderActivityList`) and `log tail` (`newTailEmitter`) go through the
+      same `renderActivityText`. The `# pgtt log tail — press Ctrl-C to stop` banner is
+      kept (text mode).
+
+### 7.3 — Format selection & polish
+
+- [x] **P7-9** DONE: reused `--output` (no new flag) with a third value `text`. Added
+      `outputText` to `parseOutputFormat`; generic `render()` degrades `text`→table so other
+      commands are unaffected. Log commands default to `text` unless `--output` was
+      explicitly set (`cmd.Flags().Changed("output")` via `effectiveLogFormat`). `log tail`
+      honors `text` (live rich) and `json` (NDJSON, one compact object per line); `table`
+      is list-only and degrades to text for tail. `json` remains full/untruncated.
+- [x] **P7-10** DONE: `docs/pgtt.md` updated. Global-flags table now lists `text` for
+      `-o/--output` and the new `--no-color` flag (with a note that `text` falls back to
+      `table` for non-log commands and is the `log` default). Added a **Log output formats**
+      subsection with `pymdownx.tabbed` tabs (text/table/json), a before/after `pgtt.output`
+      comparison, the color palette, empty-token-omission and width-clamp behavior, the
+      NDJSON note for `log tail -o json`, and a tip listing every color-disable trigger
+      (`-o json` / pipe / `--no-color` / `NO_COLOR`). Verified the required markdown
+      extensions (`admonition`, `pymdownx.superfences`, `pymdownx.tabbed`) are enabled in
+      `mkdocs.yml`.
+- [x] **P7-11** DONE: `cmd/pgtt/cmd/logrender_test.go` — `TestRenderActivityText_Golden`
+      (5 cases: log w/ chain+task+vxid, log w/o context, exec OK w/ ms, exec FAIL w/ rc,
+      notice→severity-as-level, exact bytes, color off), `TestRenderActivityText_NoZeros`
+      (guards no `[chain:0]/[task:0]/[ms:0]/[rc:0]`), `TestConfigureLogColor_Gates` (json /
+      --no-color / NO_COLOR / non-TTY), `TestColorize`, `TestClampToWidth`, `TestVisibleLen`,
+      `TestActivityRow`, `TestNewTailEmitter_JSON` (NDJSON), `TestNewTailEmitter_TextBanner`.
+      All green; `golangci-lint` 0 issues.
+- [x] **P7-12** DONE (enhancement): added `tree` output mode (`-o tree`) for `log list`.
+      **Grouping/ordering is done entirely in SQL** (`activityTreeSQL` + `ListActivityTree`),
+      not in Go — window functions are the right tool. Pipeline: `feed` (same UNION as
+      activitySQL, limited to newest $3) → `runseq` (running `sum()` of "Starting chain"
+      per chain+client = a temporal run number; never merges distinct runs, and works
+      despite the start line carrying no vxid) → `runs` (broadcast the run's real vxid onto
+      its vxid-less lines via `max() OVER` partition) → `ranked` (`row_number()=1` ⇒
+      `is_header`, `max(ts) OVER` ⇒ run_last). Final `ORDER BY (chain_id=0), run_last DESC,
+      …, tree_rank, ts` puts newest run first, "Starting chain" first within a run, chain-less
+      rows last. Validated live via psql against the dev DB before coding. `ActivityEntry`
+      gained `IsHeader bool` (`db:"is_header"`, `json:"-"`); flat `activitySQL` emits
+      `false AS is_header`; `run_vxid` wrapped in COALESCE→'' to avoid NULL scan.
+      The renderer (`renderActivityTree`) is now a dumb consumer: blank line + full header on
+      `IsHeader`, else `|- ` child with chain/client/vxid suppressed (`tokenOpts.omitVxid`
+      added). `log tail` degrades `tree`→`text`.
+      `outputTree` added to `parseOutputFormat` (non-log cmds degrade to table). Tests:
+      integration `TestListActivityTree_GroupsRunsInSQL` + `_FilterByChain`; unit
+      `TestRenderActivityTree_HeaderAndChildren`, `_SystemLinesInterleave`,
+      `TestParseOutputFormat_Tree`. Docs: `tree` tab + flags table.
+      All green; lint 0 issues (no more gocyclo — grouping left SQL to handle).
+      REFINEMENTS (each validated live via psql before coding):
+      (a) chain-less system rows **interleave by their own timestamp** between branches
+      (`anchor_ts` = own ts), rendered as standalone `|- ` lines with no `(no chain)`
+      heading; consecutive system lines stay in one block so they can be spotted in place.
+      (b) run grouping switched from a positional `sum()` counter to a **LATERAL lookup of
+      the nearest following vxid**, so runs key on the real transaction id — fixes foreign
+      rows leaking across overlapping runs / ts ties.
+      (c) `tree_rank` forces `Chain executed successfully` LAST (2) and `Starting chain`
+      first (0); within-run order is otherwise strict timestamp, with correct tie-breaking.
+
+**Exit criteria (MET)**: `log list`/`log tail` render chain id+name, task, vxid, and notice
+context sourced from `message_data`; INFO/WARN/ERROR and exec OK/FAIL are color-coded on a
+TTY and plain elsewhere; empty context tokens are omitted (no more `0  0  0` columns);
+`--output json` remains complete and untruncated; scheduler and DB schema unchanged
+(CON-006). `go build ./cmd/pgtt/...` OK; `golangci-lint run ./cmd/pgtt/...` = 0 issues;
+`go test ./cmd/pgtt/cmd/` green; activity integration tests green. All P7-1…P7-11 done.
+
+---
+
 ## Later phase (out of v1 scope) — TUI
 
 - [ ] **L-1** k9s-style TUI (bubbletea/tview) on top of the Phase-1 `Client` interface.
@@ -219,6 +364,7 @@ Streaming observability via LISTEN/NOTIFY.
 | REQ-011          | P2-3 |
 | REQ-012          | P2-4 |
 | REQ-013          | P5-1 |
+| REQ-012 / REQ-013 (log readability) | P7-1…P7-11 |
 | REQ-014          | P1-1, all command tasks |
 | REQ-015 / AC-007 | P1-6, P2-5 |
 | REQ-016 / AC-009 | P1-4 |

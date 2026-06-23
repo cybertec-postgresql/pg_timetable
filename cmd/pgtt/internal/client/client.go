@@ -67,13 +67,26 @@ type ActivityEntry struct {
 	Source     string `db:"source" json:"source"`
 	ClientName string `db:"client_name" json:"client_name"`
 	ChainID    int64  `db:"chain_id" json:"chain_id"`
+	ChainName  string `db:"chain_name" json:"chain_name"`
 	TaskID     int64  `db:"task_id" json:"task_id"`
-	Txid       int64  `db:"txid" json:"txid"`
-	Level      string `db:"level" json:"level"`       // log level or "OK"/"FAIL"
+	// Vxid is the virtual transaction id (e.g. "21474836598"). It is kept as a
+	// string because virtual xids combine a backend id with a local counter and
+	// can exceed the range/meaning of a plain integer.
+	Vxid       string `db:"vxid" json:"vxid"`
+	Level      string `db:"level" json:"level"` // log level / PG severity / "OK"/"FAIL"
 	Returncode int    `db:"returncode" json:"returncode"`
 	DurationMS int64  `db:"duration_ms" json:"duration_ms"`
-	Message    string `db:"message" json:"message"`   // log message or task output
+	Message    string `db:"message" json:"message"` // log message or task output
 	Command    string `db:"command" json:"command"`
+	// Notice/Severity carry PostgreSQL NOTICE/WARNING context captured by the
+	// scheduler's OnNotice handler (message_data->>'notice' / ->>'severity').
+	// They are empty for rows that are not server notices.
+	Notice   string `db:"notice" json:"notice"`
+	Severity string `db:"severity" json:"severity"`
+	// IsHeader is set only by ListActivityTree: it marks the first line of a
+	// chain run (the branch header) so the renderer needs no grouping logic.
+	// Always false for the flat ListActivity feed.
+	IsHeader bool `db:"is_header" json:"-"`
 }
 
 // LogFilter narrows log queries.
@@ -135,6 +148,13 @@ type Client interface {
 	// ListActivity returns a unified chronological feed from timetable.log and
 	// timetable.execution_log, optionally filtered by chain and client.
 	ListActivity(ctx context.Context, f LogFilter) ([]ActivityEntry, error)
+
+	// ListActivityTree returns the unified feed grouped by chain run (chain +
+	// client + virtual transaction id) for the `log list -o tree` view. The SQL
+	// does all grouping/ordering via window functions: rows arrive run-by-run,
+	// each run's "Starting chain" line first (marked IsHeader), runs ordered
+	// newest-first by their latest activity. Rows without a chain sort last.
+	ListActivityTree(ctx context.Context, f LogFilter) ([]ActivityEntry, error)
 
 	// TailActivity streams the unified activity feed live. It blocks until ctx
 	// is cancelled, polling both timetable.log and timetable.execution_log.

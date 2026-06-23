@@ -18,6 +18,8 @@ func TestParseOutputFormat(t *testing.T) {
 		{"table", outputTable, false},
 		{"json", outputJSON, false},
 		{"JSON", outputJSON, false},
+		{"text", outputText, false},
+		{"TEXT", outputText, false},
 		{"yaml", "", true},
 		{"", "", true},
 	} {

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/client"
@@ -99,35 +98,23 @@ func newLogListCmd() *cobra.Command {
 		Short: "List recent activity (execution results + scheduler messages)",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			format := effectiveLogFormat(cmd.Flags().Changed("output"))
 			return withClient(cmd, args, func(ctx context.Context, cl client.Client) error {
-				entries, err := cl.ListActivity(ctx, client.LogFilter{
-					ChainID:    chainID,
-					ClientName: clientName,
-					Limit:      limit,
-				})
+				filter := client.LogFilter{ChainID: chainID, ClientName: clientName, Limit: limit}
+				// Tree view is grouped/ordered entirely in SQL by a dedicated query.
+				var (
+					entries []client.ActivityEntry
+					err     error
+				)
+				if format == outputTree {
+					entries, err = cl.ListActivityTree(ctx, filter)
+				} else {
+					entries, err = cl.ListActivity(ctx, filter)
+				}
 				if err != nil {
 					return err
 				}
-				headers := []string{"TS", "SRC", "LEVEL", "CHAIN", "TASK", "MS", "RC", "CLIENT", "MESSAGE"}
-				rows := make([][]string, 0, len(entries))
-				for _, e := range entries {
-					chainStr := ""
-					if e.ChainID > 0 {
-						chainStr = strconv.FormatInt(e.ChainID, 10)
-					}
-					taskStr := ""
-					if e.TaskID > 0 {
-						taskStr = strconv.FormatInt(e.TaskID, 10)
-					}
-					rows = append(rows, []string{
-						e.TS, e.Source, e.Level,
-						chainStr, taskStr,
-						strconv.FormatInt(e.DurationMS, 10),
-						strconv.Itoa(e.Returncode),
-						e.ClientName, e.Message,
-					})
-				}
-				return render(cmd.OutOrStdout(), entries, headers, rows)
+				return renderActivityList(cmd.OutOrStdout(), entries, format)
 			})
 		},
 	}
@@ -148,27 +135,16 @@ func newLogTailCmd() *cobra.Command {
 		Short: "Stream activity live: execution results + scheduler messages (Ctrl-C to stop)",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprintln(cmd.OutOrStdout(), "# pgtt log tail — press Ctrl-C to stop")
-			fmt.Fprintf(cmd.OutOrStdout(), "%-26s  %-4s  %-7s  %-6s  %-6s  %-7s  %-20s  %s\n",
-				"TS", "SRC", "LEVEL", "CHAIN", "TASK", "MS", "CLIENT", "MESSAGE/OUTPUT")
+			out := cmd.OutOrStdout()
+			format := effectiveLogFormat(cmd.Flags().Changed("output"))
+			// JSON tail streams NDJSON (one object per line); text tail uses the
+			// rich renderer. "table" is list-only, so it degrades to text here.
+			emit := newTailEmitter(out, format)
 			return withClient(cmd, args, func(ctx context.Context, cl client.Client) error {
 				return cl.TailActivity(ctx, client.LogFilter{
 					ChainID:    chainID,
 					ClientName: clientName,
-				}, func(e client.ActivityEntry) {
-					chainStr := ""
-					if e.ChainID > 0 {
-						chainStr = strconv.FormatInt(e.ChainID, 10)
-					}
-					taskStr := ""
-					if e.TaskID > 0 {
-						taskStr = strconv.FormatInt(e.TaskID, 10)
-					}
-					fmt.Fprintf(cmd.OutOrStdout(), "%-26s  %-4s  %-7s  %-6s  %-6s  %-7d  %-20s  %s\n",
-						e.TS, e.Source, e.Level,
-						chainStr, taskStr, e.DurationMS,
-						e.ClientName, e.Message)
-				})
+				}, emit)
 			})
 		},
 	}

@@ -14,6 +14,14 @@ type outputFormat string
 const (
 	outputTable outputFormat = "table"
 	outputJSON  outputFormat = "json"
+	// outputText is the rich, identity-first rendering used by the log commands
+	// (`log list` / `log tail`). For commands that do not implement a dedicated
+	// text view it degrades gracefully to the aligned table (see render).
+	outputText outputFormat = "text"
+	// outputTree groups the activity feed by chain (and by run/vxid within a
+	// chain) so parallel and overlapping chains can be read without untangling
+	// interleaved, time-ordered lines. Log commands only (degrades to table).
+	outputTree outputFormat = "tree"
 )
 
 // parseOutputFormat validates the --output flag value (REQ-015).
@@ -23,8 +31,12 @@ func parseOutputFormat(s string) (outputFormat, error) {
 		return outputTable, nil
 	case outputJSON:
 		return outputJSON, nil
+	case outputText:
+		return outputText, nil
+	case outputTree:
+		return outputTree, nil
 	default:
-		return "", fmt.Errorf("invalid --output %q: expected %q or %q", s, outputTable, outputJSON)
+		return "", fmt.Errorf("invalid --output %q: expected %q, %q, %q or %q", s, outputText, outputTree, outputTable, outputJSON)
 	}
 }
 
@@ -46,6 +58,8 @@ func render(w io.Writer, data any, headers []string, rows [][]string) error {
 	if format == outputJSON {
 		return renderJSON(w, data)
 	}
+	// "text" degrades to the aligned table for generic commands; the log
+	// commands intercept "text" earlier with their dedicated renderer.
 	return renderTable(w, headers, rows)
 }
 

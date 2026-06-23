@@ -34,10 +34,11 @@ var (
 // globalOptions holds flags shared by all subcommands.
 type globalOptions struct {
 	dsn     string // PostgreSQL connection string (positional or --dsn)
-	output  string // "table" | "json" (REQ-015)
+	output  string // "text" | "table" | "json" (REQ-015)
 	assume  bool   // --yes, skip confirmations (SEC-003)
 	config  string // pgtt config file (viper)
 	verbose bool
+	noColor bool // --no-color, disable ANSI output (also honors NO_COLOR env)
 }
 
 var opts globalOptions
@@ -59,10 +60,11 @@ func newRootCmd() *cobra.Command {
 
 	pf := root.PersistentFlags()
 	pf.StringVar(&opts.dsn, "dsn", "", "PostgreSQL connection string (may also be given as a positional arg)")
-	pf.StringVarP(&opts.output, "output", "o", "table", "output format: table|json")
+	pf.StringVarP(&opts.output, "output", "o", "table", "output format: text|tree|table|json")
 	pf.BoolVar(&opts.assume, "yes", false, "skip confirmation prompts for destructive operations")
 	pf.StringVar(&opts.config, "config", "", "pgtt config file")
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "verbose logging")
+	pf.BoolVar(&opts.noColor, "no-color", false, "disable colored output (also honors the NO_COLOR env var)")
 
 	root.AddCommand(newVersionCmd())
 	root.AddCommand(newCheckCmd())
