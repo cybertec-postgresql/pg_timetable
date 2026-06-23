@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
+	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/cybertec-postgresql/pgx-migrator v1.4.0

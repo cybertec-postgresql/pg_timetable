@@ -72,24 +72,36 @@ help, quits on q/Ctrl-C); non-TTY prints a hint. `go build ./cmd/pgtt/...` OK;
 
 ## Phase T1 — App shell, navigation & data plumbing
 
-- [ ] **T1-1** Root `model` (MVU): holds `client.Client`, current view enum,
-      window size, status line, error line, and a generic `views` stack for
-      drill-down/back.
-- [ ] **T1-2** Refresh engine: `tea.Tick` → `refreshMsg`; each list view declares
-      a `fetch` command returning a typed `dataMsg`. Manual `r` triggers the same
-      command immediately. All fetches run as `tea.Cmd` goroutines (never block UI).
-- [ ] **T1-3** Global key map (lipgloss/bubbles `key`): `q` quit, `?` help,
-      `r` refresh, `Esc`/`Backspace` back, arrows/`j`/`k` move, `Enter` drill in,
-      number/letter shortcuts to switch top-level views. Help overlay (`?`).
-- [ ] **T1-4** Shared styles in `styles.go`: reuse the level→color semantics from
-      `logrender.go` (port `levelColor` mapping to lipgloss colors so TUI and CLI
-      agree). Header/footer/selected-row/error styles.
-- [ ] **T1-5** Status/footer bar: shows active view, refresh countdown, last
-      action result, and context help. Error surface for failed commands
-      (redacted DSN already guaranteed by client layer).
+- [x] **T1-1** DONE: `view` interface (`Title/Init/Update/Body/SetSize`) in
+      `view.go`; root `model` (`model.go`) owns a `[]view` stack (last = active),
+      window size, status + error lines. Navigation via messages the model owns:
+      `pushViewMsg`/`popViewMsg`/`replaceRootMsg` (stack ownership in one place).
+      Stack seeded lazily via `seedMsg` to dodge the value-receiver `Init` pitfall.
+- [x] **T1-2** DONE: refresh engine in `messages.go` — `tickCmd`→`tickMsg`
+      reschedules itself and emits `refreshMsg`, routed to the active view. Manual
+      `r` emits the same `refreshMsg`. Views fetch via their own `tea.Cmd`
+      (never block the UI loop). `--refresh<=0` ⇒ ticker disabled (manual only).
+- [x] **T1-3** DONE: `keys.go` global key map via bubbles `key` (Up/Down/Enter/
+      Back/Refresh/Help/Quit + `1/c` `2/s` `3/a` top-level switches), wired in
+      `model.handleKey`. Help overlay (`help.go`, bubbles `help`): `?` toggles the
+      full key grid as the body; `Esc` closes it at root. `ShortHelp`/`FullHelp`
+      drive footer + overlay.
+- [~] **T1-4** PARTIAL: shared style set + palette live in `styles.go`
+      (header/footer/selected-row/error, NoColor strips attrs). The level→lipgloss
+      `levelColor` mapping (mirroring `logrender.go`) is deferred to **T2** where
+      status cells first consume it (kept out now to avoid dead-code lint).
+- [x] **T1-5** DONE: footer shows status (left) / refresh countdown (right)
+      + short-help beneath; `refreshLabel` renders "next refresh in Ns" or
+      "refresh: manual". Errors surface in `statusErr` style (DSN already redacted
+      by the client layer). Header breadcrumb shows the view-stack path.
+- [x] **T1-6** DONE (tests): `model_test.go` exercises seed/stack, quit, top-level
+      switch, push/pop + Esc semantics, help toggle, status/err messages, refresh
+      label, refreshMsg reaching the active view, and tick reschedule. All green.
 
-**Exit**: navigable empty shell with working refresh ticker, help overlay, and
-view switching between placeholder panes.
+**Exit (MET)**: navigable shell with working refresh ticker + countdown, help
+overlay, breadcrumb, and `1/2/3` top-level switching across placeholder panes;
+push/pop drill-down works. `go build`/`go test ./cmd/pgtt/...` green;
+`golangci-lint run ./cmd/pgtt/...` = 0 issues; non-TTY guard intact.
 
 ---
 

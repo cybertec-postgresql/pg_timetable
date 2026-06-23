@@ -1,0 +1,170 @@
+package tui
+
+import (
+	"strings"
+	"testing"
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+// newTestModel builds a model with a nil client (the placeholder views used in
+// T1 never dereference it) and a fixed window size.
+func newTestModel(refresh time.Duration) model {
+	m := newModel(nil, Options{Refresh: refresh, Host: "h:5432/db", SchemaVersion: "00733", NoColor: true})
+	tm, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	return tm.(model)
+}
+
+// seed drives the one-time seedMsg so the stack is populated, mirroring the
+// program loop.
+func seed(t *testing.T, m model) model {
+	t.Helper()
+	tm, _ := m.Update(seedMsg{})
+	return tm.(model)
+}
+
+func TestSeedPopulatesStack(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	if got := len(m.stack); got != 1 {
+		t.Fatalf("stack len = %d, want 1", got)
+	}
+	if got := m.active().Title(); got != "Chains" {
+		t.Fatalf("root title = %q, want Chains", got)
+	}
+}
+
+func TestQuitKey(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	tm, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	if !tm.(model).quitting {
+		t.Fatal("q did not set quitting")
+	}
+	if cmd == nil {
+		t.Fatal("q did not return a quit command")
+	}
+	if msg := cmd(); msg == nil {
+		t.Fatal("quit command produced nil msg")
+	}
+}
+
+func TestSwitchTopReplacesRoot(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	tm, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("2")})
+	m = tm.(model)
+	if got := len(m.stack); got != 1 {
+		t.Fatalf("after switch, stack len = %d, want 1", got)
+	}
+	if got := m.active().Title(); got != "Sessions" {
+		t.Fatalf("active title = %q, want Sessions", got)
+	}
+}
+
+func TestPushPopView(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	child := newPlaceholderView("Detail", nil, m.styles)
+
+	tm, _ := m.Update(pushViewMsg{v: child})
+	m = tm.(model)
+	if got := len(m.stack); got != 2 {
+		t.Fatalf("after push, stack len = %d, want 2", got)
+	}
+	if got := m.active().Title(); got != "Detail" {
+		t.Fatalf("active title = %q, want Detail", got)
+	}
+
+	// Esc pops back to the root.
+	tm, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = tm.(model)
+	if got := len(m.stack); got != 1 {
+		t.Fatalf("after pop, stack len = %d, want 1", got)
+	}
+	if got := m.active().Title(); got != "Chains" {
+		t.Fatalf("active title = %q, want Chains", got)
+	}
+}
+
+func TestEscAtRootDoesNotPop(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	tm, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if got := len(tm.(model).stack); got != 1 {
+		t.Fatalf("esc at root changed stack to %d, want 1", got)
+	}
+}
+
+func TestHelpToggle(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	if m.help.showFull {
+		t.Fatal("help should start collapsed")
+	}
+	tm, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("?")})
+	m = tm.(model)
+	if !m.help.showFull {
+		t.Fatal("? did not open help overlay")
+	}
+	if !strings.Contains(m.bodyView(), "Key bindings") {
+		t.Fatal("help overlay body missing heading")
+	}
+}
+
+func TestStatusAndErrorMessages(t *testing.T) {
+	m := seed(t, newTestModel(0))
+
+	tm, _ := m.Update(statusMsg("done"))
+	m = tm.(model)
+	if m.status != "done" || m.err != nil {
+		t.Fatalf("statusMsg not applied: status=%q err=%v", m.status, m.err)
+	}
+	if !strings.Contains(m.footerView(), "done") {
+		t.Fatal("footer missing status text")
+	}
+
+	tm, _ = m.Update(errMsg{err: errTest("boom")})
+	m = tm.(model)
+	if m.err == nil {
+		t.Fatal("errMsg not applied")
+	}
+	if !strings.Contains(m.footerView(), "boom") {
+		t.Fatal("footer missing error text")
+	}
+}
+
+func TestRefreshLabel(t *testing.T) {
+	if got := newTestModel(0); !strings.Contains(got.refreshLabel(), "manual") {
+		t.Fatalf("refresh=0 label = %q, want manual", got.refreshLabel())
+	}
+	m := newTestModel(5 * time.Second)
+	m.nextTick = time.Now().Add(3 * time.Second)
+	if got := m.refreshLabel(); !strings.Contains(got, "refresh in") {
+		t.Fatalf("auto-refresh label = %q, want countdown", got)
+	}
+}
+
+func TestRefreshMsgReachesActiveView(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	tm, _ := m.Update(refreshMsg{})
+	m = tm.(model)
+	pv, ok := m.active().(*placeholderView)
+	if !ok {
+		t.Fatalf("active view type = %T", m.active())
+	}
+	if pv.refreshes != 1 {
+		t.Fatalf("placeholder refreshes = %d, want 1", pv.refreshes)
+	}
+}
+
+func TestTickReschedulesAndRefreshes(t *testing.T) {
+	m := seed(t, newTestModel(5*time.Second))
+	tm, cmd := m.Update(tickMsg(time.Now()))
+	m = tm.(model)
+	if m.nextTick.IsZero() {
+		t.Fatal("tick did not schedule nextTick")
+	}
+	if cmd == nil {
+		t.Fatal("tick returned no command (expected reschedule + refresh)")
+	}
+}
+
+type errTest string
+
+func (e errTest) Error() string { return string(e) }
