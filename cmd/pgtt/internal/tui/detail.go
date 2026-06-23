@@ -57,12 +57,14 @@ type detailView struct {
 }
 
 type detailKeyMap struct {
-	Switch key.Binding
+	Switch   key.Binding
+	Activity key.Binding
 }
 
 func defaultDetailKeyMap() detailKeyMap {
 	return detailKeyMap{
-		Switch: key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "tasks/runs")),
+		Switch:   key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "tasks/runs")),
+		Activity: key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "activity")),
 	}
 }
 
@@ -140,10 +142,21 @@ func (v *detailView) handleKey(msg tea.KeyMsg) (view, tea.Cmd) {
 		v.move(-1)
 	case key.Matches(msg, defaultKeyMap().Down):
 		v.move(1)
+	case key.Matches(msg, v.keys.Activity):
+		return v, v.openActivity()
 	case key.Matches(msg, defaultKeyMap().Enter):
 		return v, v.openSelectedRun()
 	}
 	return v, nil
+}
+
+// openActivity pushes the live activity stream pre-filtered to this chain.
+func (v *detailView) openActivity() tea.Cmd {
+	id, err := strconv.Atoi(v.ref)
+	if err != nil {
+		return nil
+	}
+	return pushView(newActivityView(v.client, v.styles, client.LogFilter{ChainID: id}))
 }
 
 func (v *detailView) move(d int) {

@@ -157,6 +157,9 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		m.quitting = true
+		for _, v := range m.stack {
+			closeView(v)
+		}
 		return m, tea.Quit
 
 	case key.Matches(msg, m.keys.Help):
@@ -195,6 +198,8 @@ func (m model) switchTop(name string) (tea.Model, tea.Cmd) {
 	switch name {
 	case "Chains":
 		v = newChainsView(m.client, m.styles)
+	case "Activity":
+		v = newActivityView(m.client, m.styles, client.LogFilter{})
 	default:
 		v = newPlaceholderView(name, m.client, m.styles)
 	}
@@ -212,6 +217,7 @@ func (m model) popView() (tea.Model, tea.Cmd) {
 	if len(m.stack) <= 1 {
 		return m, nil
 	}
+	closeView(m.stack[len(m.stack)-1])
 	m.stack = m.stack[:len(m.stack)-1]
 	if v := m.active(); v != nil {
 		w, h := m.bodySize()
@@ -221,6 +227,9 @@ func (m model) popView() (tea.Model, tea.Cmd) {
 }
 
 func (m model) replaceRoot(v view) (tea.Model, tea.Cmd) {
+	for _, old := range m.stack {
+		closeView(old)
+	}
 	w, h := m.bodySize()
 	v.SetSize(w, h)
 	m.stack = []view{v}

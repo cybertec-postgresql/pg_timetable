@@ -171,19 +171,40 @@ remains only for the not-yet-built Sessions/Activity top-level switches.)
 
 ## Phase T4 — Live activity stream
 
-- [ ] **T4-1** Activity view backed by `TailActivity` (+ initial `ListActivity`
-      backfill). Bridge the synchronous `emit` callback → Go channel → `tea.Msg`
-      in a goroutine started as a `tea.Cmd`; cancel via context on view exit.
-- [ ] **T4-2** Render each entry using the same identity-first format as the CLI
-      (`[chain:id|name] [task:id] [vxid:…]`), colored by level. Reuse/port the
-      `identityTokens` model so CLI and TUI stay consistent.
-- [ ] **T4-3** Ring buffer (cap N lines) with autoscroll; `f` to freeze/unfreeze
-      scroll, `g`/`G` top/bottom.
-- [ ] **T4-4** Filters: `--chain`/`--client` style filtering, plus contextual
-      launch (open activity pre-filtered to the selected chain from T3).
+- [x] **T4-0** DONE (lifecycle): added optional `closer` interface (`Close()`) +
+      `closeView` helper in `view.go`. The model calls `Close` on a view when it
+      is popped, when the root is replaced, and on quit — so the tail goroutine's
+      context is always cancelled (no leaks).
+- [x] **T4-1** DONE: `activityView` (`activity.go`) backed by
+      `client.ListActivity` (initial backfill) + `client.TailActivity` (live).
+      The synchronous `emit` callback is bridged onto a buffered channel by a
+      goroutine; `waitForActivity` is a `tea.Cmd` that reads one entry → an
+      `activityStreamMsg` and is re-issued after each receive (the idiomatic
+      Bubble Tea streaming pattern). Cancelled via `context.CancelFunc` in
+      `Close()`.
+- [x] **T4-2** DONE: `activityrender.go` — `styles.renderActivityLine` renders
+      `TS LEVEL [chain:id|name] [task:id] [vxid:…] … message` with lipgloss
+      (tokens blue, level badge colored + bold, timestamp dimmed, message clamped
+      to width). Ported `identityTokens` from `cmd/logrender.go` (same order,
+      same empty-token omission, exec-only ms/rc) so CLI and TUI agree.
+- [x] **T4-3** DONE: ring buffer capped at `activityRingCap` (2000). Autoscroll
+      pins to the newest line; `f` toggles freeze, `↑/↓` scroll back/forward
+      (auto-freezes on scroll-up, unfreezes at bottom), `g`/`G` jump top/bottom.
+      Hint line shows live/frozen state + line count.
+- [x] **T4-4** DONE: filters via `client.LogFilter`. Top-level `Activity`
+      (`3/a`) opens unfiltered; chain detail's new `a` key opens the stream
+      pre-filtered to that chain (`LogFilter{ChainID}`). Title reflects the
+      active filter.
+- [x] **T4-5** DONE (tests): `activity_test.go` — renderer (identity tokens,
+      empty-token omission, exec ms/rc), backfill seeding, stream append + wait
+      re-issue, stream-end stops pumping, freeze/scroll keys, ring cap, title per
+      filter, backfill error, and a **streaming-bridge integration test** with a
+      fake `ListActivity`/`TailActivity` client proving live entries flow through
+      the channel into the view. All green.
 
-**Exit**: live, colored, filterable activity stream that starts/stops cleanly
-with the view lifecycle.
+**Exit (MET)**: live, colored, filterable activity stream that starts on view
+entry and stops cleanly via `closer` on exit/quit. `go build`/`go test
+./cmd/pgtt/...` green; `golangci-lint run ./cmd/pgtt/...` = 0 issues.
 
 ---
 

@@ -60,3 +60,17 @@ func pushView(v view) tea.Cmd { return func() tea.Msg { return pushViewMsg{v} } 
 type inputCapturer interface {
 	CapturingInput() bool
 }
+
+// closer is an optional interface a view may implement to release resources
+// (e.g. cancel a background tail goroutine) when it leaves the stack. The root
+// model calls Close on a view when it is popped, replaced, or on quit.
+type closer interface {
+	Close()
+}
+
+// closeView calls Close on v if it implements closer.
+func closeView(v view) {
+	if c, ok := v.(closer); ok {
+		c.Close()
+	}
+}
