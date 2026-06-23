@@ -13,8 +13,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/client"
+	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/tui"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,7 +42,8 @@ type globalOptions struct {
 	assume  bool   // --yes, skip confirmations (SEC-003)
 	config  string // pgtt config file (viper)
 	verbose bool
-	noColor bool // --no-color, disable ANSI output (also honors NO_COLOR env)
+	noColor bool          // --no-color, disable ANSI output (also honors NO_COLOR env)
+	refresh time.Duration // --refresh, TUI auto-refresh interval (bare `pgtt`)
 }
 
 var opts globalOptions
@@ -53,8 +58,14 @@ func newRootCmd() *cobra.Command {
 			"as the single source of truth. See spec/spec-tool-pgtt-cli.md.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		// Bare `pgtt` (no subcommand) launches the TUI. Subcommands keep their
+		// own RunE and never reach this. Accept an optional positional DSN.
+		Args: cobra.MaximumNArgs(1),
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			return initConfig(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return launchTUI(cmd, args)
 		},
 	}
 
@@ -65,6 +76,7 @@ func newRootCmd() *cobra.Command {
 	pf.StringVar(&opts.config, "config", "", "pgtt config file")
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "verbose logging")
 	pf.BoolVar(&opts.noColor, "no-color", false, "disable colored output (also honors the NO_COLOR env var)")
+	pf.DurationVar(&opts.refresh, "refresh", 5*time.Second, "TUI auto-refresh interval (bare `pgtt` launches the TUI)")
 
 	root.AddCommand(newVersionCmd())
 	root.AddCommand(newCheckCmd())
@@ -114,6 +126,53 @@ func withClient(cmd *cobra.Command, args []string, fn func(context.Context, clie
 		}
 	}
 	return fn(ctx, c)
+}
+
+// launchTUI connects (without creating the schema), verifies schema
+// compatibility, then runs the interactive TUI for the lifetime of the session.
+// Unlike withClient, the client stays open until the TUI exits. Bare `pgtt`
+// (no subcommand) routes here.
+func launchTUI(cmd *cobra.Command, args []string) error {
+	// The TUI requires an interactive terminal on stdout.
+	if !isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()) {
+		return errors.New("pgtt with no subcommand starts an interactive TUI, " +
+			"which requires a terminal; run `pgtt --help` for non-interactive commands")
+	}
+	ctx := cmd.Context()
+	c := client.New(dbSchema)
+	dsn := resolveDSN(args)
+	if err := c.Connect(ctx, dsn); err != nil {
+		return err
+	}
+	defer c.Close()
+	if err := c.CheckSchemaVersion(ctx); err != nil {
+		if errors.Is(err, client.ErrSchemaAbsent) {
+			return fmt.Errorf("%w; run a pg_timetable instance against this database first", err)
+		}
+		return err
+	}
+	return tui.Run(ctx, c, tui.Options{
+		Refresh:       opts.refresh,
+		Host:          tuiTarget(dsn),
+		SchemaVersion: dbSchema,
+		NoColor:       opts.noColor || os.Getenv("NO_COLOR") != "",
+	})
+}
+
+// tuiTarget returns a short, password-free connection label for the TUI header.
+// It never includes credentials (SEC-002). An empty dsn means libpq env vars.
+func tuiTarget(dsn string) string {
+	if dsn == "" {
+		return ""
+	}
+	cfg, err := pgconn.ParseConfig(dsn)
+	if err != nil || cfg.Host == "" {
+		return ""
+	}
+	if cfg.Database != "" {
+		return fmt.Sprintf("%s:%d/%s", cfg.Host, cfg.Port, cfg.Database)
+	}
+	return fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 }
 
 // initConfig wires viper precedence: flags > env (PGTT_*) > config file.

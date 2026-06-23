@@ -313,7 +313,7 @@ Streaming observability via LISTEN/NOTIFY.
       gained `IsHeader bool` (`db:"is_header"`, `json:"-"`); flat `activitySQL` emits
       `false AS is_header`; `run_vxid` wrapped in COALESCE→'' to avoid NULL scan.
       The renderer (`renderActivityTree`) is now a dumb consumer: blank line + full header on
-      `IsHeader`, else `|- ` child with chain/client/vxid suppressed (`tokenOpts.omitVxid`
+      `IsHeader`, else `|-` child with chain/client/vxid suppressed (`tokenOpts.omitVxid`
       added). `log tail` degrades `tree`→`text`.
       `outputTree` added to `parseOutputFormat` (non-log cmds degrade to table). Tests:
       integration `TestListActivityTree_GroupsRunsInSQL` + `_FilterByChain`; unit
@@ -322,7 +322,7 @@ Streaming observability via LISTEN/NOTIFY.
       All green; lint 0 issues (no more gocyclo — grouping left SQL to handle).
       REFINEMENTS (each validated live via psql before coding):
       (a) chain-less system rows **interleave by their own timestamp** between branches
-      (`anchor_ts` = own ts), rendered as standalone `|- ` lines with no `(no chain)`
+      (`anchor_ts` = own ts), rendered as standalone `|-` lines with no `(no chain)`
       heading; consecutive system lines stay in one block so they can be spotted in place.
       (b) run grouping switched from a positional `sum()` counter to a **LATERAL lookup of
       the nearest following vxid**, so runs key on the real transaction id — fixes foreign
@@ -341,8 +341,9 @@ TTY and plain elsewhere; empty context tokens are omitted (no more `0  0  0` col
 
 ## Later phase (out of v1 scope) — TUI
 
-- [ ] **L-1** k9s-style TUI (bubbletea/tview) on top of the Phase-1 `Client` interface.
+- [ ] **L-1** k9s-style TUI (Bubble Tea) on top of the Phase-1 `Client` interface.
       No re-implementation of data access. (PAT-003)
+      **Detailed plan: [`plan-pgtt-tui.md`](./plan-pgtt-tui.md)** (phases T0–T7).
 
 ---
 
