@@ -38,9 +38,9 @@ LEFT JOIN LATERAL (
             WHEN el.returncode = 0   THEN 'success'
             ELSE 'failed'
         END                                                         AS status,
-        to_char(el.last_run, 'YYYY-MM-DD HH24:MI:SS')              AS last_run,
-        EXTRACT(EPOCH FROM (el.finished - el.last_run)) * 1000      AS duration_ms,
-        COALESCE(el.returncode, 0)                                  AS returncode,
+        to_char(el.last_run, 'YYYY-MM-DD HH24:MI:SS')                   AS last_run,
+        (EXTRACT(EPOCH FROM (el.finished - el.last_run)) * 1000)::bigint AS duration_ms,
+        COALESCE(el.returncode, 0)                                       AS returncode,
         el.client_name
     FROM timetable.execution_log el
     WHERE el.chain_id = c.chain_id
@@ -75,10 +75,10 @@ LEFT JOIN LATERAL (
     SELECT
         CASE WHEN el.finished IS NULL THEN 'running'
              WHEN el.returncode = 0   THEN 'success' ELSE 'failed' END AS status,
-        to_char(el.last_run, 'YYYY-MM-DD HH24:MI:SS') AS last_run,
-        EXTRACT(EPOCH FROM (el.finished - el.last_run)) * 1000         AS duration_ms,
-        COALESCE(el.returncode, 0)                                     AS returncode,
-        el.client_name                                                 AS worker
+        to_char(el.last_run, 'YYYY-MM-DD HH24:MI:SS')                    AS last_run,
+        (EXTRACT(EPOCH FROM (el.finished - el.last_run)) * 1000)::bigint  AS duration_ms,
+        COALESCE(el.returncode, 0)                                        AS returncode,
+        el.client_name                                                    AS worker
     FROM timetable.execution_log el WHERE el.chain_id = c.chain_id
     ORDER BY el.last_run DESC LIMIT 1
 ) lr ON TRUE
@@ -236,7 +236,7 @@ SELECT to_char(ts, 'YYYY-MM-DD HH24:MI:SS') AS ts,
        COALESCE(message, '') AS message
 FROM timetable.log
 WHERE ($1 = '' OR client_name = $1)
-  AND ($2 = 0  OR (message_data->>'chain')::bigint = $2)
+  AND ($2 = 0  OR (message_data->'chain'->>'ChainID')::bigint = $2)
 ORDER BY ts DESC
 LIMIT $3`
 	rows, err := c.pool.Query(ctx, q, f.ClientName, f.ChainID, limit)

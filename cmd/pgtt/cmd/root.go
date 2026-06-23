@@ -130,8 +130,11 @@ func initConfig(cmd *cobra.Command) error {
 
 // Execute runs the root command and returns a process exit code.
 func Execute(ctx context.Context) int {
-	if err := newRootCmd().ExecuteContext(ctx); err != nil {
-		fmt.Println("Error:", err)
+	root := newRootCmd()
+	if err := root.ExecuteContext(ctx); err != nil {
+		// Write to stderr, not stdout. Error is already redacted by the client
+		// layer (redactDSNError) so passwords are not present (SEC-002 / AC-010).
+		fmt.Fprintln(root.ErrOrStderr(), "Error:", err)
 		return 1
 	}
 	return 0

@@ -495,6 +495,9 @@ func newChainStartCmd() *cobra.Command {
 				return fmt.Errorf("chain-id must be a number: %w", err)
 			}
 			return withClient(cmd, nil, func(ctx context.Context, c client.Client) error {
+				if !c.WorkerExists(ctx, worker) {
+					fmt.Fprintf(cmd.ErrOrStderr(), "warning: worker %q not found in active_session; NOTIFY sent anyway\n", worker)
+				}
 				if err := c.StartChain(ctx, chainID, worker, delay); err != nil {
 					return err
 				}
@@ -525,6 +528,9 @@ func newChainStopCmd() *cobra.Command {
 				return fmt.Errorf("chain-id must be a number: %w", err)
 			}
 			return withClient(cmd, nil, func(ctx context.Context, c client.Client) error {
+				if !c.WorkerExists(ctx, worker) {
+					fmt.Fprintf(cmd.ErrOrStderr(), "warning: worker %q not found in active_session; NOTIFY sent anyway\n", worker)
+				}
 				if err := c.StopChain(ctx, chainID, worker); err != nil {
 					return err
 				}

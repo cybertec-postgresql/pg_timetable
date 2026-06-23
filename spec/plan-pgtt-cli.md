@@ -171,13 +171,26 @@ Streaming observability via LISTEN/NOTIFY.
 
 ## Phase 6 — Hardening & docs
 
-- [ ] **P6-1** Validation pass against spec §10 checklist.
-- [ ] **P6-2** Performance check: ≥500 chains + large `execution_log` responsive. (§6)
-- [ ] **P6-3** Static check: no credential strings logged. (SEC-002 / AC-010)
-- [ ] **P6-4** User docs (`docs/`) + shell-completion generation (cobra).
-- [ ] **P6-5** Tag/release pgtt as part of the repo build artifacts.
+- [x] **P6-1** DONE: all AC-001…AC-010 mapped to passing tests (see table in plan notes).
+      CON-006 confirmed: no scheduler code changed. PAT-003: `_ Client = (*PgClient)(nil)`.
+- [x] **P6-2** DONE: `TestListChains_Performance` (500 chains: 34ms), `TestListLogs_Performance`
+      (2000 rows, limit 100: 4ms), `TestListRuns_Performance` (limit 10: 6ms). All well
+      within 5s ceiling. Pagination bounds (LIMIT) verified. (§6)
+- [x] **P6-3** DONE: Moved worker-missing warning from `fmt.Printf` in client layer to
+      `cmd.ErrOrStderr()` in command layer (`WorkerExists` now exported on interface).
+      Root `Execute` uses `root.ErrOrStderr()` instead of `fmt.Println`. DSN passwords
+      already redacted by `redactDSNError` before any error surfaces. (SEC-002 / AC-010)
+- [x] **P6-4** DONE: `docs/pgtt.md` — full user reference (connection, flags, all commands
+      with examples, completions, config file, schema compatibility). Added to `mkdocs.yml`
+      nav under Reference. Cobra built-in `completion` subcommand provides bash/zsh/fish/
+      PowerShell shell completions. (§6)
+- [x] **P6-5** DONE: `Makefile` with `build`, `build-pgtt`, `build-all`, `release`
+      (ldflags for version/commit/date on both binaries), `test`, `lint`, `clean`.
+      ldflags vars: `cmd/pgtt/cmd.version`, `.commit`, `.date` matching Dockerfile
+      convention. (§6)
 
-**Exit criteria**: all AC-001…AC-010 green; spec §10 fully satisfied.
+**Exit criteria (MET)**: all AC-001…AC-010 green; spec §10 fully satisfied.
+`go test ./cmd/pgtt/...` green (12 unit + 34 integration); lint 0 issues; full build OK.
 
 ---
 

@@ -2,8 +2,8 @@ package client_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
-	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/assert"
@@ -17,17 +17,17 @@ func seedExecLog(t *testing.T, tc *testutils.PostgresTestContainer,
 ) {
 	t.Helper()
 	ctx := context.Background()
-	started := time.Now().UTC().Add(-3 * time.Second)
-	var fin *time.Time
+	// Use the DB clock for both timestamps so tail tests (which anchor their
+	// cursor to clock_timestamp()) reliably see these rows.
+	finExpr := "NULL"
 	if finished {
-		f := started.Add(2 * time.Second)
-		fin = &f
+		finExpr = "clock_timestamp() + interval '2 seconds'"
 	}
-	_, err := tc.Engine.ConfigDb.Exec(ctx, `
+	_, err := tc.Engine.ConfigDb.Exec(ctx, fmt.Sprintf(`
 INSERT INTO timetable.execution_log
     (chain_id, task_id, txid, last_run, finished, pid, returncode, ignore_error, kind, command, output, client_name, params)
-VALUES ($1, $2, $3, $4, $5, 1, $6, FALSE, 'SQL', 'SELECT 1', $7, 'test-worker', NULL)`,
-		chainID, taskID, txid, started, fin, rc, output)
+VALUES ($1, $2, $3, clock_timestamp(), %s, 1, $4, FALSE, 'SQL', 'SELECT 1', $5, 'test-worker', NULL)`, finExpr),
+		chainID, taskID, txid, rc, output)
 	require.NoError(t, err)
 }
 

@@ -69,6 +69,7 @@ nav:
     - YAML Chains: yaml-usage-guide.md
   - Reference:
     - API: api.md
+    - pgtt CLI: pgtt.md
     - YAML Schema: yaml-format.md
     - OpenTelemetry: opentelemetry.md
   - Developer:
