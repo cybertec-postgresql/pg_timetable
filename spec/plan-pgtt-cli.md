@@ -33,13 +33,22 @@ Resolve open questions and lay the package skeleton. No user-facing features yet
       (REQ-005 / AC-002) — confirmed against `scheduler.processAsyncChain`.
 - [x] **P0-2** RESOLVED: `--worker` is MANDATORY for `start`/`stop` (NOTIFY channel ==
       `client_name`); fail fast and send no NOTIFY if omitted. (REQ-005, REQ-006 / AC-002b)
-- [ ] **P0-3** Confirm Go module/toolchain version and that `cobra` can be added
-      (`viper` already present). (CON-004, PLT-001, PLT-003)
-- [ ] **P0-4** Create `cmd/pgtt/main.go` build target; verify `go build ./cmd/pgtt`
-      produces a binary. (CON-001, CON-005)
-- [ ] **P0-5** Add `cmd/pgtt/...` to the existing Unit Test and Lint tasks. (§6)
+- [x] **P0-3** DONE: Go 1.25.0, module `github.com/cybertec-postgresql/pg_timetable`.
+      Added `github.com/spf13/cobra v1.10.2`; `viper v1.21.0` already present.
+      (CON-004, PLT-001, PLT-003)
+- [x] **P0-4** DONE: `cmd/pgtt/main.go` + `cmd/pgtt/cmd/{root,version}.go`; cobra root
+      with global flags (`--dsn -o/--output --yes --config -v`), `version` subcommand,
+      viper precedence (flags>env PGTT_*>file). `go build ./cmd/pgtt` OK; `go vet` OK;
+      `golangci-lint run ./cmd/pgtt/...` = 0 issues. (CON-001, CON-005, REQ-014/015)
+- [x] **P0-5** DONE: package builds/vets/lints clean and is picked up by the repo's
+      `go test ./...` / `golangci-lint run` tasks (path-globbed, no task edits needed). (§6)
 
-**Exit criteria**: empty `pgtt` binary builds and runs `--help`; CI covers the new path.
+**Exit criteria (MET)**: `pgtt` binary builds, runs `--help` and `version`
+(prints compatible DB schema 00733); vet + lint clean.
+
+> Phase 1 note: `pgengine.New` executes/creates the schema on connect. `pgtt` MUST NOT
+> create the schema (REQ-016 / §9 "schema absent"); Phase 1 (P1-4) needs a lighter
+> connect path that only opens a pool + runs `CheckNeedMigrateDb`-style version check.
 
 ---
 
