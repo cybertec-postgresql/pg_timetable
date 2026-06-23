@@ -1,3 +1,5 @@
+DELETE FROM timetable.chain WHERE chain_name = 'sleep_every_10s';
+
 SELECT timetable.add_job(
     job_name            => 'sleep_every_10s',
     job_schedule        => '@every 10 seconds',

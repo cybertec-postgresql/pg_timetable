@@ -10,6 +10,9 @@ DECLARE
     v_task_id          bigint;
     v_chain_id   bigint;
 BEGIN
+    -- Remove existing chain to make this script idempotent
+    DELETE FROM timetable.chain WHERE chain_name = 'chain_operation';
+
     -- In order to implement chain pperation, we will create a table
     CREATE TABLE IF NOT EXISTS timetable.chain_log (
         chain_log BIGSERIAL,

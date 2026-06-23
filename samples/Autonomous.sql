@@ -21,6 +21,8 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+DELETE FROM timetable.chain WHERE chain_name = 'call_proc_every_10s';
+
 WITH
     cte_chain (v_chain_id) AS (
         INSERT INTO timetable.chain (chain_name, run_at, max_instances, live, self_destruct) 

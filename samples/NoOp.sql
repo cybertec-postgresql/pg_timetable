@@ -1,3 +1,5 @@
+DELETE FROM timetable.chain WHERE chain_name = 'noop_every_minute';
+
 SELECT timetable.add_job(
     job_name            => 'noop_every_minute',
     job_schedule        => '* * * * *',

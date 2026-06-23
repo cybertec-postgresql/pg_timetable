@@ -1,3 +1,5 @@
+DELETE FROM timetable.chain WHERE chain_name = 'fail_with_on_error_notify';
+
 SELECT timetable.add_job(
         job_name            => 'fail_with_on_error_notify',
         job_schedule        => '* * * * *',
@@ -8,4 +10,4 @@ SELECT timetable.add_job(
         job_on_error        => $$SELECT pg_notify('monitoring', 
             format('{"ConfigID": %s, "Message": "Something bad happened"}', 
                 current_setting('pg_timetable.current_chain_id')::bigint))$$
-    )
+    );

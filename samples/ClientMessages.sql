@@ -9,6 +9,8 @@ BEGIN
 END; 
 $BODY$;
 
+DELETE FROM timetable.chain WHERE chain_name = 'raise_client_message_every_minute';
+
 SELECT timetable.add_job(
     job_name            => 'raise_client_message_every_minute',
     job_schedule        => '* * * * *',

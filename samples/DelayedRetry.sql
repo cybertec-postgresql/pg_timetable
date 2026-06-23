@@ -31,6 +31,8 @@ BEGIN
 END
 $$;
 
+DELETE FROM timetable.chain WHERE chain_name = 'retry_on_fail_delayed';
+
 SELECT timetable.add_job(
         job_name            => 'retry_on_fail_delayed',
         job_schedule        => '@every 10 minutes',
@@ -39,8 +41,8 @@ SELECT timetable.add_job(
         job_live            => TRUE,
         job_ignore_errors   => FALSE,
         job_on_error        => $$SELECT retry_chain_on_error(
-            worker_name => 'worker001', 
+            worker_name => 'demo_worker', 
             maximum_retry_count => 3, 
             minimum_retry_timeout => interval '10 seconds', 
             maximum_retry_duration => interval '5 minutes')$$
-    )
+    );

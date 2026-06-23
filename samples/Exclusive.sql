@@ -8,6 +8,8 @@ BEGIN
 END; 
 $BODY$;
 
+DELETE FROM timetable.chain WHERE chain_name IN ('exclusive_sleep_every_10s', 'exclusive_sleep_after_10s');
+
 SELECT timetable.add_job(
     job_name            => 'exclusive_sleep_every_10s',
     job_schedule        => '@every 10 seconds',
