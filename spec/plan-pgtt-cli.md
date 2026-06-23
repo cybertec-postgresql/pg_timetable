@@ -83,15 +83,21 @@ The reusable core that every later phase depends on.
 
 Delivers the core pain relief: see everything without crafting SQL.
 
-- [ ] **P2-1** `chain list` with required columns incl. derived last-status and
-      active-state. (REQ-002 / AC-001)
-- [ ] **P2-2** `chain show <id|name>` with task details. (REQ-003)
-- [ ] **P2-3** `session list` and `active list` for fleet visibility. (REQ-011)
-- [ ] **P2-4** `log list` with `--chain`, `--client`, `--limit` filters + pagination
-      bounds. (REQ-012, performance §6)
-- [ ] **P2-5** JSON output for all the above. (REQ-015 / AC-007)
+- [x] **P2-1** DONE: `chain list` — all required columns incl. derived `active`
+      (timetable.active_chain) + `last_status` (timetable.execution_log). Fixed pgx
+      `RowToStructByName` issue: `db:"-"` tags on derived fields prevented scanning;
+      changed to `db:"active"` / `db:"last_status"`. (REQ-002 / AC-001)
+- [x] **P2-2** DONE: `chain show <id|name>` — resolves by numeric id or name, returns
+      chain + ordered tasks. (REQ-003)
+- [x] **P2-3** DONE: `session list` (timetable.active_session) + `active list`
+      (timetable.active_chain). (REQ-011)
+- [x] **P2-4** DONE: `log list` with `--chain`, `--client`, `--limit` filters;
+      default limit 100 for pagination bounds. (REQ-012)
+- [x] **P2-5** DONE: `-o json` via `render()` dispatcher for all read commands;
+      JSON test in output_test.go. (REQ-015 / AC-007)
 
-**Exit criteria**: AC-001, AC-007 pass; all read commands work table + JSON.
+**Exit criteria (MET)**: AC-001, AC-007 pass; all read commands work in table + JSON.
+`go test ./cmd/pgtt/...` green (11 integration + 7 unit tests); lint 0 issues.
 
 ---
 

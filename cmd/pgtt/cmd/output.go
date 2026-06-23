@@ -35,6 +35,20 @@ func renderJSON(w io.Writer, v any) error {
 	return enc.Encode(v)
 }
 
+// render writes data either as JSON (the whole value) or as a text table built
+// from headers + rows, according to the global --output flag (REQ-015 / AC-007).
+// The caller supplies both representations so each command controls its columns.
+func render(w io.Writer, data any, headers []string, rows [][]string) error {
+	format, err := parseOutputFormat(opts.output)
+	if err != nil {
+		return err
+	}
+	if format == outputJSON {
+		return renderJSON(w, data)
+	}
+	return renderTable(w, headers, rows)
+}
+
 // renderTable writes rows as an aligned text table with the given headers.
 // rows[i] must have the same length as headers.
 func renderTable(w io.Writer, headers []string, rows [][]string) error {

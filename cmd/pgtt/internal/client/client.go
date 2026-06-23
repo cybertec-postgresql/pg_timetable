@@ -40,8 +40,8 @@ type ChainListItem struct {
 	ClientName string `db:"client_name" json:"client_name"`
 	RunAt      string `db:"run_at" json:"run_at"`
 	Live       bool   `db:"live" json:"live"`
-	Active     bool   `db:"-" json:"active"`
-	LastStatus string `db:"-" json:"last_status"`
+	Active     bool   `db:"active" json:"active"`
+	LastStatus string `db:"last_status" json:"last_status"`
 }
 
 // LogEntry is a single log line (timetable.log).

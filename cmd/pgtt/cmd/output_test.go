@@ -51,3 +51,23 @@ func TestReadYes(t *testing.T) {
 	assert.False(t, readYes(strings.NewReader("n\n")))
 	assert.False(t, readYes(strings.NewReader("\n")))
 }
+
+// TestRender_JSONAndTable verifies the --output dispatcher (REQ-015 / AC-007).
+func TestRender_JSONAndTable(t *testing.T) {
+	t.Cleanup(func() { opts.output = "table" })
+	data := []map[string]string{{"name": "backup"}}
+
+	opts.output = "json"
+	var jbuf bytes.Buffer
+	require.NoError(t, render(&jbuf, data, nil, nil))
+	assert.Contains(t, jbuf.String(), `"name": "backup"`)
+
+	opts.output = "table"
+	var tbuf bytes.Buffer
+	require.NoError(t, render(&tbuf, data, []string{"NAME"}, [][]string{{"backup"}}))
+	assert.Contains(t, tbuf.String(), "NAME")
+	assert.Contains(t, tbuf.String(), "backup")
+
+	opts.output = "bogus"
+	require.Error(t, render(&tbuf, data, nil, nil))
+}
