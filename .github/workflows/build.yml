@@ -116,7 +116,7 @@ jobs:
       run: pip install -r docs/requirements-doc.txt
 
     - name: Check if we should push to gh-pages
-      # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
       run: |
         git fetch origin gh-pages --depth=1
         echo "push_opt=--push" >> $GITHUB_ENV 
