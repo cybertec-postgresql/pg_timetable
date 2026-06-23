@@ -10,8 +10,11 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 
+	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -62,7 +65,47 @@ func newRootCmd() *cobra.Command {
 	pf.BoolVarP(&opts.verbose, "verbose", "v", false, "verbose logging")
 
 	root.AddCommand(newVersionCmd())
+	root.AddCommand(newCheckCmd())
 	return root
+}
+
+// resolveDSN picks the connection string from, in order of precedence:
+// --dsn flag, first positional arg, PGTT_CONNSTR env, else "" so that libpq
+// environment variables (PGHOST, PGUSER, ...) are used by pgx.
+func resolveDSN(args []string) string {
+	if opts.dsn != "" {
+		return opts.dsn
+	}
+	if len(args) > 0 && args[0] != "" {
+		return args[0]
+	}
+	if v := os.Getenv("PGTT_CONNSTR"); v != "" {
+		return v
+	}
+	return ""
+}
+
+// withClient validates global flags, connects (without creating the schema),
+// verifies schema compatibility (REQ-016), then runs fn with a ready Client.
+func withClient(cmd *cobra.Command, args []string, fn func(context.Context, client.Client) error) error {
+	if _, err := parseOutputFormat(opts.output); err != nil {
+		return err
+	}
+	ctx := cmd.Context()
+	c := client.New(dbSchema)
+	if err := c.Connect(ctx, resolveDSN(args)); err != nil {
+		return err
+	}
+	defer c.Close()
+	if err := c.CheckSchemaVersion(ctx); err != nil {
+		switch {
+		case errors.Is(err, client.ErrSchemaAbsent):
+			return fmt.Errorf("%w; run a pg_timetable instance against this database first", err)
+		default:
+			return err
+		}
+	}
+	return fn(ctx, c)
 }
 
 // initConfig wires viper precedence: flags > env (PGTT_*) > config file.

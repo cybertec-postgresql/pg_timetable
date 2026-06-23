@@ -56,23 +56,26 @@ Resolve open questions and lay the package skeleton. No user-facing features yet
 
 The reusable core that every later phase depends on.
 
-- [ ] **P1-1** Wire `cobra` root command + `viper` config/precedence
-      (flags > env > file). (CON-004, REQ-015 global flags)
-- [ ] **P1-2** Reuse `internal/pgengine` connection bootstrap + `internal/config` +
-      `internal/log`; no duplication. (CON-002)
-- [ ] **P1-3** Accept DSN as positional arg and via libpq env; never echo passwords.
-      (SEC-001, SEC-002 / AC-010)
-- [ ] **P1-4** Schema-version check on connect; refuse incompatible versions with
-      detected-vs-required message. (REQ-016 / AC-009)
-- [ ] **P1-5** Define the internal `Client` interface (read + control methods) that
-      both CLI and future TUI consume. (GUD-002, PAT-003)
-- [ ] **P1-6** Implement `-o/--output {table|json}` rendering helper + `--yes` and
-      TTY detection for confirmations. (REQ-015, SEC-003)
-- [ ] **P1-7** Integration harness: testcontainers PostgreSQL + embedded schema + seed
-      fixtures + teardown. (§6)
+- [x] **P1-1** DONE: cobra root + viper precedence (flags > env PGTT_* > file) in
+      `root.go`/`initConfig`. (CON-004, REQ-015)
+- [x] **P1-2** DONE: reuses `internal/pgengine` domain types + embedded schema (via
+      testutils) and pgx; light connect path (pgxpool, no schema creation). (CON-002)
+- [x] **P1-3** DONE: DSN from `--dsn` > positional arg > `PGTT_CONNSTR` > libpq env;
+      `redactDSNError` + generic invalid-DSN msg ensure no password leak. (SEC-001/002 / AC-010)
+- [x] **P1-4** DONE: `CheckSchemaVersion` queries `timetable.migration` (latest row),
+      compares leading token to `dbSchema`; sentinel `ErrSchemaAbsent` /
+      `ErrSchemaIncompatible`; absent => "run pg_timetable first". (REQ-016 / AC-009)
+- [x] **P1-5** DONE: `cmd/pgtt/internal/client` `Client` interface (connect/close,
+      version check + Phase 2-5 method signatures); `PgClient` impl; `_ Client =
+      (*PgClient)(nil)`. (GUD-002, PAT-003)
+- [x] **P1-6** DONE: `output.go` (`parseOutputFormat`, `renderTable`/`renderJSON`) +
+      `confirm.go` (`--yes`, TTY detection, non-TTY fail-safe). (REQ-015, SEC-003, AC-008)
+- [x] **P1-7** DONE: client tests use `testutils.SetupPostgresContainer`; AC-009 (3
+      cases) + AC-010 (2 cases) pass; cmd unit tests for output/confirm. (§6)
 
-**Exit criteria**: AC-009, AC-010 pass; `pgtt` connects, validates schema, prints
-nothing sensitive.
+**Exit criteria (MET)**: AC-009 + AC-010 verified by passing integration tests;
+`pgtt check` connects, validates schema, leaks nothing. build+vet+lint clean,
+`go test ./cmd/pgtt/...` green. Added `check` subcommand as the e2e exercise.
 
 ---
 
