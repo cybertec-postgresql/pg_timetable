@@ -121,7 +121,11 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
 	t.Run("check error handler if everything is fine", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+		mock.ExpectExec("SELECT set_config").WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("SELECT", 1))
 		mock.ExpectExec("FOO").WillReturnResult(pgxmock.NewResult("FOO", 1))
+		mock.ExpectCommit()
 		sch.executeOnErrorHandler(context.Background(), c)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -132,8 +136,17 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 		sch.executeOnErrorHandler(ctx, c)
 	})
 
+	t.Run("check error handler if begin fails", func(*testing.T) {
+		mock.ExpectBegin().WillReturnError(errors.New("connection error"))
+		sch.executeOnErrorHandler(context.Background(), c)
+	})
+
 	t.Run("check error handler if error", func(*testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+		mock.ExpectExec("SELECT set_config").WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("SELECT", 1))
 		mock.ExpectExec("FOO").WillReturnError(errors.New("Syntax error near FOO"))
+		mock.ExpectCommit()
 		sch.executeOnErrorHandler(context.Background(), c)
 	})
 

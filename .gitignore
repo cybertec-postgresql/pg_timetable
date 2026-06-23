@@ -1,6 +1,6 @@
 # Binaries
 pg_timetable
-pg_timetable.exe
+*.exe
 
 # Test binary, build with `go test -c`
 *.test
