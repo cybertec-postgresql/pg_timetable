@@ -152,10 +152,9 @@ func launchTUI(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return tui.Run(ctx, c, tui.Options{
-		Refresh:       opts.refresh,
-		Host:          tuiTarget(dsn),
-		SchemaVersion: dbSchema,
-		NoColor:       opts.noColor || os.Getenv("NO_COLOR") != "",
+		Refresh: opts.refresh,
+		Host:    tuiTarget(dsn),
+		NoColor: opts.noColor || os.Getenv("NO_COLOR") != "",
 	})
 }
 

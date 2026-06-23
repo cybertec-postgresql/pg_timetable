@@ -64,8 +64,10 @@ func (m *model) active() view {
 	return m.stack[len(m.stack)-1]
 }
 
-// chromeHeight is the number of lines consumed by header + footer + spacers.
-const chromeHeight = 4
+// chromeHeight is the number of lines consumed by the chrome: header (1) +
+// footer (2: status line + help line). The View joins header/body/footer with
+// single newlines, so these are the only non-body rows.
+const chromeHeight = 3
 
 func (m *model) bodySize() (int, int) {
 	h := m.height - chromeHeight
@@ -239,13 +241,21 @@ func (m model) View() string {
 	if m.quitting {
 		return ""
 	}
-	var b strings.Builder
-	b.WriteString(m.headerView())
-	b.WriteByte('\n')
-	b.WriteString(m.bodyView())
-	b.WriteByte('\n')
-	b.WriteString(m.footerView())
-	return b.String()
+	header := m.headerView()
+	footer := m.footerView()
+	body := m.bodyView()
+
+	// Pin the footer to the bottom: pad the body to exactly fill the space
+	// between the header and footer. Heights are measured so a multi-line footer
+	// (status + help) still lines up flush with the terminal's last row.
+	_, bodyH := m.bodySize()
+	avail := m.height - lipgloss.Height(header) - lipgloss.Height(footer)
+	if avail < 0 {
+		avail = bodyH
+	}
+	body = lipgloss.NewStyle().Height(avail).MaxHeight(avail).Render(body)
+
+	return strings.Join([]string{header, body, footer}, "\n")
 }
 
 func (m model) headerView() string {
@@ -253,13 +263,8 @@ func (m model) headerView() string {
 	if target == "" {
 		target = "(libpq env)"
 	}
-	schema := m.opts.SchemaVersion
-	if schema == "" {
-		schema = "?"
-	}
 	left := m.styles.header.Render("pgtt")
-	info := m.styles.headerKey.Render(target) +
-		m.styles.dim.Render(fmt.Sprintf("  schema %s", schema))
+	info := m.styles.headerKey.Render(target)
 	crumb := m.styles.dim.Render(m.breadcrumb())
 	line := left + "  " + info
 	if crumb != "" {
@@ -304,18 +309,14 @@ func (m model) footerView() string {
 
 	countdown := m.styles.dim.Render(m.refreshLabel())
 
-	// Status (left) … countdown (right) on one line, help beneath.
-	top := status
-	if countdown != "" {
-		gap := m.width - lipgloss.Width(status) - lipgloss.Width(countdown)
-		if gap < 1 {
-			gap = 1
-		}
-		top = status + strings.Repeat(" ", gap) + countdown
+	// Status (left) … countdown (right). The status line is always present
+	// (even when empty) so the footer is a stable two lines high; this keeps the
+	// body height constant and the footer pinned to the bottom row.
+	gap := m.width - lipgloss.Width(status) - lipgloss.Width(countdown)
+	if gap < 1 {
+		gap = 1
 	}
-	if strings.TrimSpace(top) == "" {
-		return help
-	}
+	top := status + strings.Repeat(" ", gap) + countdown
 	return top + "\n" + help
 }
 

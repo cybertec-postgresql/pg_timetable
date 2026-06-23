@@ -22,9 +22,6 @@ type Options struct {
 	// Host is a human-readable connection target shown in the header
 	// (e.g. "localhost:5432/timetable"). Optional.
 	Host string
-	// SchemaVersion is the verified pg_timetable schema version, shown in the
-	// header. Optional.
-	SchemaVersion string
 	// NoColor disables ANSI styling (also honored when stdout is not a TTY).
 	NoColor bool
 }

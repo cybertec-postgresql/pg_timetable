@@ -168,15 +168,13 @@ func (v *chainsView) move(d int) {
 	}
 }
 
-// openSelected pushes the chain detail view for the highlighted row. Until T3
-// lands, this pushes a placeholder titled with the chain name.
+// openSelected pushes the chain detail view for the highlighted row.
 func (v *chainsView) openSelected() tea.Cmd {
 	if v.selected < 0 || v.selected >= len(v.rows) {
 		return nil
 	}
 	ch := v.rows[v.selected]
-	detail := newPlaceholderView(ch.ChainName, v.client, v.styles)
-	return pushView(detail)
+	return pushView(newDetailView(v.client, v.styles, strconv.Itoa(ch.ChainID), ch.ChainName))
 }
 
 // reindex re-applies the current filter + sort and clamps the selection,

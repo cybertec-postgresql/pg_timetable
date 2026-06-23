@@ -138,16 +138,34 @@ refreshes without losing selection, filters + sorts in-memory, and drills in.
 
 ## Phase T3 — Chain detail (tasks + runs)
 
-- [ ] **T3-1** Detail view from `ShowChain(ref)` → chain header + ordered tasks
-      table (task_id, name, kind, command preview, run_as, flags, timeout).
-- [ ] **T3-2** Recent runs panel from `ListRuns(ref, limit)`: txid, started,
-      duration, status (colored), total/failed tasks.
-- [ ] **T3-3** `Enter` on a run → run-detail (`ShowRun(txid)`): per-task command,
-      kind, rc, duration, params, output (scrollable viewport).
-- [ ] **T3-4** Layout: lipgloss split (tasks left/top, runs right/bottom) that
-      reflows on resize; `Esc` returns to chains list.
+- [x] **T3-1** DONE: `detailView` (`detail.go`) from `client.ShowChain(ref)` —
+      header block (id, name, live/running, schedule, max, timeout, on_error,
+      client) + ordered tasks table (ID, NAME, KIND, COMMAND one-lined, RUN AS,
+      FLAGS ign/auto/remote, TIMEOUT). `ref` is the chain id as a string.
+- [x] **T3-2** DONE: recent-runs pane from `client.ListRuns(ref, 20)`: TXID,
+      STARTED, MS, STATUS (colored via `runStatusLevel`→`styles.level`), TASKS,
+      FAILED, CLIENT.
+- [x] **T3-3** DONE: `runDetailView` (`rundetail.go`) from `client.ShowRun(txid)`
+      — per-task table (TASK, KIND, COMMAND, RC colored, MS, STARTED) on top; the
+      selected task's `params` + `output` in a scrollable bubbles `viewport`
+      below. ↑/↓ change the selected task (refilling the viewport); pgup/pgdn/
+      space scroll the output.
+- [x] **T3-4** DONE: stacked split (tasks top / runs bottom) sized from the body
+      height (tasks slightly larger), reflows on resize; `Tab` switches focus
+      between panes (only the focused pane shows a selection + responds to ↑/↓);
+      `Esc` pops back (model-owned stack). `Enter` only opens a run from the runs
+      pane.
+- [x] **T3-5** DONE (tests): `detail_test.go` (load chain+runs, focus switch +
+      per-pane move, Enter opens run-detail only in runs pane with correct txid,
+      error→errMsg, `runStatusLevel`, `oneLine`, `clamp`) and `rundetail_test.go`
+      (load tasks, body render, ↑/↓ refills viewport with the right task output,
+      title, error path). All green.
 
-**Exit**: full read drill-down chains → tasks/runs → run detail.
+**Exit (MET)**: full read drill-down chains → tasks/runs → run detail; statuses
+colored; output scrollable. Dev DB confirmed to return runs for drill-down.
+`go build`/`go test ./cmd/pgtt/...` green; `golangci-lint run ./cmd/pgtt/...`
+= 0 issues. (`chains.go` now pushes the real `detailView`; the placeholder
+remains only for the not-yet-built Sessions/Activity top-level switches.)
 
 ---
 

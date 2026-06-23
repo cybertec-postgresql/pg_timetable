@@ -9,11 +9,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func chainItem(id int, name, client_, status, lastRun string, live, active bool) client.ChainListItem {
+func chainItem(id int, name, clientName, status, lastRun string, live, active bool) client.ChainListItem {
 	var it client.ChainListItem
 	it.ChainID = id
 	it.ChainName = name
-	it.ClientName = client_
+	it.ClientName = clientName
 	it.LastStatus = status
 	it.LastRun = lastRun
 	it.Live = live

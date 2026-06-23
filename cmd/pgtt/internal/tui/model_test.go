@@ -6,12 +6,13 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // newTestModel builds a model with a nil client (the placeholder views used in
 // T1 never dereference it) and a fixed window size.
 func newTestModel(refresh time.Duration) model {
-	m := newModel(nil, Options{Refresh: refresh, Host: "h:5432/db", SchemaVersion: "00733", NoColor: true})
+	m := newModel(nil, Options{Refresh: refresh, Host: "h:5432/db", NoColor: true})
 	tm, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
 	return tm.(model)
 }
@@ -104,6 +105,26 @@ func TestHelpToggle(t *testing.T) {
 	}
 	if !strings.Contains(m.bodyView(), "Key bindings") {
 		t.Fatal("help overlay body missing heading")
+	}
+}
+
+func TestViewFillsTerminalHeight(t *testing.T) {
+	// The footer must be pinned to the last row: the full View() height equals
+	// the terminal height regardless of how little the active view renders.
+	m := seed(t, newTestModel(0))
+	tm, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = tm.(model)
+
+	got := lipgloss.Height(m.View())
+	if got != 24 {
+		t.Fatalf("View height = %d, want 24 (footer not pinned to bottom)", got)
+	}
+
+	// And with a different size.
+	tm, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = tm.(model)
+	if got := lipgloss.Height(m.View()); got != 40 {
+		t.Fatalf("View height = %d, want 40", got)
 	}
 }
 
