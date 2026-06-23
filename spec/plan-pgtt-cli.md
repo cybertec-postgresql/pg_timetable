@@ -1,0 +1,182 @@
+---
+title: pgtt — Phased Implementation Plan
+version: 0.1 (draft)
+date_created: 2026-06-23
+last_updated: 2026-06-23
+owner: pg_timetable maintainers
+tags: [plan, cli, implementation, checklist]
+spec: spec-tool-pgtt-cli.md
+---
+
+# Implementation Plan — pgtt
+
+Companion to [`spec-tool-pgtt-cli.md`](./spec-tool-pgtt-cli.md). Each task references
+the spec requirement (`REQ-`/`SEC-`/`CON-`) and/or acceptance criterion (`AC-`) it
+satisfies, so progress maps directly back to the spec. Check items off as completed.
+
+## Conventions
+
+- **DoD (Definition of Done)** for every phase: code compiles, `golangci-lint run`
+  clean for touched packages, unit/integration tests for the phase's ACs pass, and the
+  spec's relevant requirement IDs are referenced in commits/PR.
+- Keep all data access behind the internal client layer (GUD-002 / PAT-003).
+- Prefer existing `timetable.*` SQL functions over ad-hoc DML (GUD-001).
+
+---
+
+## Phase 0 — Decisions & groundwork
+
+Resolve open questions and lay the package skeleton. No user-facing features yet.
+
+- [x] **P0-1** RESOLVED: `chain start` is a one-shot debug run that executes the chain
+      exactly once regardless of `live`, and does not change schedule/`live`.
+      (REQ-005 / AC-002) — confirmed against `scheduler.processAsyncChain`.
+- [x] **P0-2** RESOLVED: `--worker` is MANDATORY for `start`/`stop` (NOTIFY channel ==
+      `client_name`); fail fast and send no NOTIFY if omitted. (REQ-005, REQ-006 / AC-002b)
+- [ ] **P0-3** Confirm Go module/toolchain version and that `cobra` can be added
+      (`viper` already present). (CON-004, PLT-001, PLT-003)
+- [ ] **P0-4** Create `cmd/pgtt/main.go` build target; verify `go build ./cmd/pgtt`
+      produces a binary. (CON-001, CON-005)
+- [ ] **P0-5** Add `cmd/pgtt/...` to the existing Unit Test and Lint tasks. (§6)
+
+**Exit criteria**: empty `pgtt` binary builds and runs `--help`; CI covers the new path.
+
+---
+
+## Phase 1 — Connection, config & internal client foundation
+
+The reusable core that every later phase depends on.
+
+- [ ] **P1-1** Wire `cobra` root command + `viper` config/precedence
+      (flags > env > file). (CON-004, REQ-015 global flags)
+- [ ] **P1-2** Reuse `internal/pgengine` connection bootstrap + `internal/config` +
+      `internal/log`; no duplication. (CON-002)
+- [ ] **P1-3** Accept DSN as positional arg and via libpq env; never echo passwords.
+      (SEC-001, SEC-002 / AC-010)
+- [ ] **P1-4** Schema-version check on connect; refuse incompatible versions with
+      detected-vs-required message. (REQ-016 / AC-009)
+- [ ] **P1-5** Define the internal `Client` interface (read + control methods) that
+      both CLI and future TUI consume. (GUD-002, PAT-003)
+- [ ] **P1-6** Implement `-o/--output {table|json}` rendering helper + `--yes` and
+      TTY detection for confirmations. (REQ-015, SEC-003)
+- [ ] **P1-7** Integration harness: testcontainers PostgreSQL + embedded schema + seed
+      fixtures + teardown. (§6)
+
+**Exit criteria**: AC-009, AC-010 pass; `pgtt` connects, validates schema, prints
+nothing sensitive.
+
+---
+
+## Phase 2 — Read & observe (highest immediate value over SSH)
+
+Delivers the core pain relief: see everything without crafting SQL.
+
+- [ ] **P2-1** `chain list` with required columns incl. derived last-status and
+      active-state. (REQ-002 / AC-001)
+- [ ] **P2-2** `chain show <id|name>` with task details. (REQ-003)
+- [ ] **P2-3** `session list` and `active list` for fleet visibility. (REQ-011)
+- [ ] **P2-4** `log list` with `--chain`, `--client`, `--limit` filters + pagination
+      bounds. (REQ-012, performance §6)
+- [ ] **P2-5** JSON output for all the above. (REQ-015 / AC-007)
+
+**Exit criteria**: AC-001, AC-007 pass; all read commands work table + JSON.
+
+---
+
+## Phase 3 — Live control
+
+Trigger/cancel/pause/resume — the day-to-day operational verbs.
+
+- [ ] **P3-1** `chain start <id> --worker [--delay]` → `notify_chain_start`; one-shot
+      run regardless of `live`. (REQ-005 / AC-002)
+- [ ] **P3-2** `chain stop <id> --worker` → `notify_chain_stop`. (REQ-006 / AC-003)
+- [ ] **P3-3** `chain pause` / `chain resume` → `pause_job` / `resume_job`.
+      (REQ-007 / AC-004)
+- [ ] **P3-4** Warn when target `--worker` not present in `active_session`. (§9)
+- [ ] **P3-5** Make `--worker` REQUIRED for `start`/`stop`; fail fast + no NOTIFY when
+      omitted. (REQ-005, REQ-006 / AC-002b)
+
+**Exit criteria**: AC-002, AC-003, AC-004 pass against a live worker in integration tests.
+
+---
+
+## Phase 4 — CRUD & YAML
+
+Full authoring of chains/tasks plus import/export.
+
+- [ ] **P4-1** `chain create` / `chain edit` / `chain delete` (delete gated by
+      `--yes`/TTY). (REQ-004, SEC-003 / AC-008)
+- [ ] **P4-2** `chain task add/edit/delete` and `chain task move {up|down}`.
+      (REQ-004, REQ-008)
+- [ ] **P4-3** `apply <file.yaml> [--replace]` reusing `pgengine.LoadYamlChains`.
+      (REQ-009 / AC-005)
+- [ ] **P4-4** `export <id|name>... [-f]` — net-new YAML serializer producing
+      `pgengine.YamlConfig`. (REQ-010 / AC-006)
+- [ ] **P4-5** Round-trip test: `export` output re-imports via `apply`. (AC-006)
+
+**Exit criteria**: AC-005, AC-006, AC-008 pass; export↔apply round-trips.
+
+---
+
+## Phase 5 — Log follow / tail
+
+Streaming observability via LISTEN/NOTIFY.
+
+- [ ] **P5-1** `log tail [--chain] [--client]` using LISTEN/NOTIFY per
+      `internal/pgengine/notification.go`. (REQ-013)
+- [ ] **P5-2** Graceful shutdown (Ctrl-C), dedupe awareness (NotifyTTL). (§9)
+
+**Exit criteria**: `log tail` streams new entries live and exits cleanly.
+
+---
+
+## Phase 6 — Hardening & docs
+
+- [ ] **P6-1** Validation pass against spec §10 checklist.
+- [ ] **P6-2** Performance check: ≥500 chains + large `execution_log` responsive. (§6)
+- [ ] **P6-3** Static check: no credential strings logged. (SEC-002 / AC-010)
+- [ ] **P6-4** User docs (`docs/`) + shell-completion generation (cobra).
+- [ ] **P6-5** Tag/release pgtt as part of the repo build artifacts.
+
+**Exit criteria**: all AC-001…AC-010 green; spec §10 fully satisfied.
+
+---
+
+## Later phase (out of v1 scope) — TUI
+
+- [ ] **L-1** k9s-style TUI (bubbletea/tview) on top of the Phase-1 `Client` interface.
+      No re-implementation of data access. (PAT-003)
+
+---
+
+## Traceability matrix
+
+| Requirement / AC | Phase / Task |
+|------------------|--------------|
+| REQ-001          | P1-2 |
+| REQ-002 / AC-001 | P2-1 |
+| REQ-003          | P2-2 |
+| REQ-004          | P4-1, P4-2 |
+| REQ-005 / AC-002 | P3-1 |
+| AC-002b           | P3-5 |
+| REQ-006 / AC-003 | P3-2 |
+| REQ-007 / AC-004 | P3-3 |
+| REQ-008          | P4-2 |
+| REQ-009 / AC-005 | P4-3 |
+| REQ-010 / AC-006 | P4-4, P4-5 |
+| REQ-011          | P2-3 |
+| REQ-012          | P2-4 |
+| REQ-013          | P5-1 |
+| REQ-014          | P1-1, all command tasks |
+| REQ-015 / AC-007 | P1-6, P2-5 |
+| REQ-016 / AC-009 | P1-4 |
+| SEC-001/002 / AC-010 | P1-3, P6-3 |
+| SEC-003 / AC-008 | P1-6, P4-1 |
+| CON-001/005      | P0-4 |
+| CON-002          | P1-2 |
+| CON-004          | P0-3, P1-1 |
+| PAT-003          | P1-5, L-1 |
+
+## Related
+
+- Spec: [`spec-tool-pgtt-cli.md`](./spec-tool-pgtt-cli.md)
