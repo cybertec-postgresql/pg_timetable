@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS timetable.dummy_log (
 -- │ └────────── hour (0 - 23)
 -- └──────────── minute (0 - 59)
 
+DELETE FROM timetable.chain WHERE chain_name = 'cron_insert_every_2h_on_27th';
+
 SELECT timetable.add_job (
     job_name     => 'cron_insert_every_2h_on_27th',
     job_schedule => '40 */2 27 * *',

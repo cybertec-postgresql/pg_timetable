@@ -1,3 +1,5 @@
+DELETE FROM timetable.chain WHERE chain_name = 'builtin_log_every_minute';
+
 SELECT timetable.add_job(
     job_name            => 'builtin_log_every_minute',
     job_schedule        => NULL, -- same as '* * * * *'
