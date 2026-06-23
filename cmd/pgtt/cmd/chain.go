@@ -29,7 +29,85 @@ func newChainCmd() *cobra.Command {
 	c.AddCommand(newChainEditCmd())
 	c.AddCommand(newChainDeleteCmd())
 	c.AddCommand(newChainTaskCmd())
+	c.AddCommand(newChainRunsCmd())
+	c.AddCommand(newChainRunDetailCmd())
 	return c
+}
+
+// newChainRunsCmd implements `chain runs <id|name>` (P5-4 / REQ-012).
+func newChainRunsCmd() *cobra.Command {
+	var limit int
+	cmd := &cobra.Command{
+		Use:   "runs <chain-id|name>",
+		Short: "Show recent execution runs for a chain",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return withClient(cmd, nil, func(ctx context.Context, c client.Client) error {
+				runs, err := c.ListRuns(ctx, args[0], limit)
+				if err != nil {
+					return err
+				}
+				headers := []string{"TXID", "STARTED", "FINISHED", "DURATION_MS", "STATUS", "WORKER", "TASKS", "FAILED"}
+				rows := make([][]string, 0, len(runs))
+				for _, r := range runs {
+					rows = append(rows, []string{
+						strconv.FormatInt(r.Txid, 10),
+						r.StartedAt,
+						r.FinishedAt,
+						strconv.FormatInt(r.DurationMS, 10),
+						r.Status,
+						r.ClientName,
+						strconv.Itoa(r.TotalTasks),
+						strconv.Itoa(r.FailedTasks),
+					})
+				}
+				return render(cmd.OutOrStdout(), runs, headers, rows)
+			})
+		},
+	}
+	cmd.Flags().IntVar(&limit, "limit", 20, "number of recent runs to show")
+	return cmd
+}
+
+// newChainRunDetailCmd implements `chain run-detail <txid>` (P5-5 / REQ-012).
+func newChainRunDetailCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "run-detail <txid>",
+		Short: "Show per-task detail for a single chain run",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txid, err := strconv.ParseInt(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("txid must be a number: %w", err)
+			}
+			return withClient(cmd, nil, func(ctx context.Context, c client.Client) error {
+				tasks, err := c.ShowRun(ctx, txid)
+				if err != nil {
+					return err
+				}
+				if len(tasks) == 0 {
+					return fmt.Errorf("no execution log found for txid %d", txid)
+				}
+				headers := []string{"TASK_ID", "KIND", "STARTED", "FINISHED", "MS", "RC", "IGN", "PARAMS", "OUTPUT", "COMMAND"}
+				rows := make([][]string, 0, len(tasks))
+				for _, t := range tasks {
+					rows = append(rows, []string{
+						strconv.FormatInt(t.TaskID, 10),
+						t.Kind,
+						t.StartedAt,
+						t.FinishedAt,
+						strconv.FormatInt(t.DurationMS, 10),
+						strconv.Itoa(t.Returncode),
+						boolStr(t.IgnoreError),
+						t.Params,
+						t.Output,
+						t.Command,
+					})
+				}
+				return render(cmd.OutOrStdout(), tasks, headers, rows)
+			})
+		},
+	}
 }
 
 // newChainCreateCmd implements `chain create` (REQ-004).
@@ -320,11 +398,11 @@ func boolStr(b bool) string {
 	return "no"
 }
 
-// newChainListCmd implements `chain list` (REQ-002 / AC-001).
+// newChainListCmd implements `chain list` (REQ-002 / AC-001 / P5-3).
 func newChainListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list [connstring]",
-		Short: "List chains",
+		Short: "List chains with last-run summary",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return withClient(cmd, args, func(ctx context.Context, c client.Client) error {
@@ -332,7 +410,8 @@ func newChainListCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				headers := []string{"ID", "NAME", "RUN_AT", "LIVE", "CLIENT", "ACTIVE", "LAST_STATUS"}
+				headers := []string{"ID", "NAME", "RUN_AT", "LIVE", "ACTIVE", "CLIENT",
+					"LAST_RUN", "DURATION_MS", "RC", "STATUS", "LAST_WORKER"}
 				rows := make([][]string, 0, len(chains))
 				for _, ch := range chains {
 					rows = append(rows, []string{
@@ -340,9 +419,13 @@ func newChainListCmd() *cobra.Command {
 						ch.ChainName,
 						ch.RunAt,
 						boolStr(ch.Live),
-						ch.ClientName,
 						boolStr(ch.Active),
+						ch.ClientName,
+						ch.LastRun,
+						strconv.FormatInt(ch.LastDurationMS, 10),
+						strconv.Itoa(ch.LastReturncode),
 						ch.LastStatus,
+						ch.LastWorker,
 					})
 				}
 				return render(cmd.OutOrStdout(), chains, headers, rows)

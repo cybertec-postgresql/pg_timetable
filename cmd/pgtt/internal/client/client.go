@@ -37,11 +37,15 @@ type ActiveChain struct {
 // ChainListItem is a chain row enriched with derived status for `chain list`.
 type ChainListItem struct {
 	Chain
-	ClientName string `db:"client_name" json:"client_name"`
-	RunAt      string `db:"run_at" json:"run_at"`
-	Live       bool   `db:"live" json:"live"`
-	Active     bool   `db:"active" json:"active"`
-	LastStatus string `db:"last_status" json:"last_status"`
+	ClientName      string `db:"client_name" json:"client_name"`
+	RunAt           string `db:"run_at" json:"run_at"`
+	Live            bool   `db:"live" json:"live"`
+	Active          bool   `db:"active" json:"active"`
+	LastStatus      string `db:"last_status" json:"last_status"`
+	LastRun         string `db:"last_run" json:"last_run"`
+	LastDurationMS  int64  `db:"last_duration_ms" json:"last_duration_ms"`
+	LastReturncode  int    `db:"last_returncode" json:"last_returncode"`
+	LastWorker      string `db:"last_worker" json:"last_worker"`
 }
 
 // LogEntry is a single log line (timetable.log).
@@ -97,6 +101,45 @@ type Client interface {
 	MoveTask(ctx context.Context, taskID int, up bool) error
 	ApplyYAML(ctx context.Context, path string, replace bool) (int, error)
 	ExportYAML(ctx context.Context, refs []string) ([]byte, []string, error)
+
+	// --- Log tail (Phase 5) ---
+
+	// TailLogs streams log entries to out as they appear in timetable.log,
+	// filtered by f.ChainID and f.ClientName. It blocks until ctx is cancelled.
+	// Each new entry is passed to the emit callback; the caller formats/prints it.
+	// (REQ-013 / P5-1)
+	TailLogs(ctx context.Context, f LogFilter, emit func(LogEntry)) error
+
+	// ListRuns returns recent execution runs for a chain (one row per txid) (P5-4).
+	ListRuns(ctx context.Context, ref string, limit int) ([]RunSummary, error)
+	// ShowRun returns per-task detail rows for a single txid (P5-5).
+	ShowRun(ctx context.Context, txid int64) ([]RunTaskDetail, error)
+}
+
+// RunSummary is one chain execution (one txid) from timetable.execution_log (P5-4).
+type RunSummary struct {
+	Txid       int64  `db:"txid" json:"txid"`
+	StartedAt  string `db:"started_at" json:"started_at"`
+	FinishedAt string `db:"finished_at" json:"finished_at"`
+	DurationMS int64  `db:"duration_ms" json:"duration_ms"`
+	Status     string `db:"status" json:"status"`
+	ClientName string `db:"client_name" json:"client_name"`
+	TotalTasks int    `db:"total_tasks" json:"total_tasks"`
+	FailedTasks int   `db:"failed_tasks" json:"failed_tasks"`
+}
+
+// RunTaskDetail is one task row within a single txid (P5-5).
+type RunTaskDetail struct {
+	TaskID     int64  `db:"task_id" json:"task_id"`
+	Kind       string `db:"kind" json:"kind"`
+	Command    string `db:"command" json:"command"`
+	StartedAt  string `db:"started_at" json:"started_at"`
+	FinishedAt string `db:"finished_at" json:"finished_at"`
+	DurationMS int64  `db:"duration_ms" json:"duration_ms"`
+	Returncode int    `db:"returncode" json:"returncode"`
+	IgnoreError bool  `db:"ignore_error" json:"ignore_error"`
+	Params     string `db:"params" json:"params"`
+	Output     string `db:"output" json:"output"`
 }
 
 // ChainSpec describes a new chain (one initial task) for CreateChain.

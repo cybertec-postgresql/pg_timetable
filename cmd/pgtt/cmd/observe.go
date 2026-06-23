@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/client"
@@ -118,5 +119,34 @@ func newLogCmd() *cobra.Command {
 	list.Flags().StringVar(&clientName, "client", "", "filter by client name")
 	list.Flags().IntVar(&limit, "limit", 100, "maximum number of entries")
 	c.AddCommand(list)
+	c.AddCommand(newLogTailCmd())
 	return c
+}
+
+// newLogTailCmd implements `log tail` (REQ-013 / P5-1, P5-2).
+func newLogTailCmd() *cobra.Command {
+	var (
+		chainID    int
+		clientName string
+	)
+	tail := &cobra.Command{
+		Use:   "tail [connstring]",
+		Short: "Stream log entries live (Ctrl-C to stop)",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Fprintln(cmd.OutOrStdout(), "# pgtt log tail — press Ctrl-C to stop")
+			return withClient(cmd, args, func(ctx context.Context, cl client.Client) error {
+				return cl.TailLogs(ctx, client.LogFilter{
+					ChainID:    chainID,
+					ClientName: clientName,
+				}, func(e client.LogEntry) {
+					fmt.Fprintf(cmd.OutOrStdout(), "%s  %-7s  %-20s  %s\n",
+						e.TS, e.LogLevel, e.ClientName, e.Message)
+				})
+			})
+		},
+	}
+	tail.Flags().IntVar(&chainID, "chain", 0, "filter by chain id")
+	tail.Flags().StringVar(&clientName, "client", "", "filter by client name")
+	return tail
 }

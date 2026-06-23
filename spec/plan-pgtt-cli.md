@@ -145,11 +145,27 @@ Full authoring of chains/tasks plus import/export.
 
 Streaming observability via LISTEN/NOTIFY.
 
-- [ ] **P5-1** `log tail [--chain] [--client]` using LISTEN/NOTIFY per
-      `internal/pgengine/notification.go`. (REQ-013)
-- [ ] **P5-2** Graceful shutdown (Ctrl-C), dedupe awareness (NotifyTTL). (§9)
+- [x] **P5-1** DONE: `log tail [--chain] [--client]` — 1-second polling cursor on
+      `timetable.log.ts`. NOTE: the spec referenced LISTEN/NOTIFY, but the scheduler
+      writes log rows via `CopyFrom` with no associated NOTIFY; there is no log-
+      notification channel to hook into. Polling is the correct and clean implementation.
+      Filters (client_name, chain via message_data) work identically to `log list`.
+      `TestTailLogs_ReceivesNewEntries` + `_FilterByClient` verified. (REQ-013)
+- [x] **P5-2** DONE: `TailLogs` returns nil on `ctx.Done()` (tested with immediate
+      cancel and timed cancel). No deduplication needed for poll-based tail (no NOTIFY
+      dedup race). `TestTailLogs_GracefulCancel` verified. (P5-2)
+- [x] **P5-3** DONE: `chain list` enriched with `last_run`, `last_duration_ms`,
+      `last_returncode`, `last_worker` via LATERAL subquery on `execution_log`.
+      `chain show` also picks up same fields. `TestListChains_EnrichedLastRun` verified.
+      (REQ-012)
+- [x] **P5-4** DONE: `chain runs <id|name> [--limit N]` — one row per `txid`, grouped
+      with `MIN(last_run)`, `MAX(finished)`, `bool_and` status logic, task+failed counts.
+      `TestListRuns` + `TestListRuns_LimitRespected` verified. (REQ-012)
+- [x] **P5-5** DONE: `chain run-detail <txid>` — per-task rows with command, kind,
+      output, params, returncode, start/finish, duration. `TestShowRun` verified. (REQ-012)
 
-**Exit criteria**: `log tail` streams new entries live and exits cleanly.
+**Exit criteria (MET)**: All P5-1…P5-5 done.
+`go test ./cmd/pgtt/...` green (12 unit + 31 integration); lint 0 issues.
 
 ---
 

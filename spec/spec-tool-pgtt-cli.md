@@ -108,6 +108,13 @@ contributors implementing `pgtt`.
   active chains (`timetable.active_chain`) to provide fleet visibility.
 - **REQ-012**: `pgtt` SHALL display log entries from `timetable.log` and
   `timetable.execution_log`, filterable by chain and by `client_name`.
+  This includes:
+  - `chain list` enriched with last-run time, duration, returncode, and worker from the
+    most recent `txid` group in `timetable.execution_log`.
+  - `chain runs <id|name> [--limit N]` showing recent run history, one row per distinct
+    `txid` (chain run), with start time, finish time, status, worker, and task counts.
+  - `chain run-detail <txid>` showing per-task output, command, params, and returncode
+    for a single chain execution — the primary debugging view.
 - **REQ-013**: `pgtt` SHALL support a follow/tail mode for logs using PostgreSQL
   `LISTEN/NOTIFY`, consistent with the mechanism in `internal/pgengine/notification.go`.
 - **REQ-014**: Every mutating command SHALL be expressible non-interactively (flags
