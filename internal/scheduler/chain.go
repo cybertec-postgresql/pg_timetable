@@ -184,7 +184,15 @@ func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 	}
 	l := sch.l.WithField("chain", chain)
 	l.Info("Starting error handling")
-	if _, err := sch.pgengine.ConfigDb.Exec(ctx, chain.OnError); err != nil {
+	tx, _, err := sch.pgengine.StartTransaction(ctx)
+	if err != nil {
+		l.WithError(err).Info("Error handler failed")
+		return
+	}
+	sch.pgengine.SetCurrentTaskContext(ctx, tx, chain.ChainID, 0)
+	_, err = tx.Exec(ctx, chain.OnError)
+	sch.pgengine.CommitTransaction(ctx, tx)
+	if err != nil {
 		l.Info("Error handler failed")
 		return
 	}
