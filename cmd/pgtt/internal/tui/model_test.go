@@ -142,7 +142,24 @@ func TestRefreshLabel(t *testing.T) {
 
 func TestRefreshMsgReachesActiveView(t *testing.T) {
 	m := seed(t, newTestModel(0))
-	tm, _ := m.Update(refreshMsg{})
+	if _, ok := m.active().(*chainsView); !ok {
+		t.Fatalf("root view type = %T, want *chainsView", m.active())
+	}
+	// refreshMsg routed to the chains view yields a fetch command.
+	_, cmd := m.Update(refreshMsg{})
+	if cmd == nil {
+		t.Fatal("refreshMsg to chains view returned no fetch command")
+	}
+}
+
+// TestRefreshMsgReachesPlaceholder verifies routing still drives non-root
+// placeholder views (used for Sessions/Activity until later phases).
+func TestRefreshMsgReachesPlaceholder(t *testing.T) {
+	m := seed(t, newTestModel(0))
+	child := newPlaceholderView("Detail", nil, m.styles)
+	tm, _ := m.Update(pushViewMsg{v: child})
+	m = tm.(model)
+	tm, _ = m.Update(refreshMsg{})
 	m = tm.(model)
 	pv, ok := m.active().(*placeholderView)
 	if !ok {

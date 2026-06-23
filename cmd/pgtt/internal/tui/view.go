@@ -48,5 +48,15 @@ type popViewMsg struct{}
 // view. Used by top-level view switches (chains/sessions/activity).
 type replaceRootMsg struct{ v view }
 
-// Command wrappers for the navigation messages (used by views from T2+) are
-// added alongside their first caller to keep the package free of dead code.
+// pushView returns a command that asks the model to push v onto the stack
+// (used by views to drill into a detail screen).
+func pushView(v view) tea.Cmd { return func() tea.Msg { return pushViewMsg{v} } }
+
+// inputCapturer is an optional interface a view may implement to signal that it
+// is currently capturing free text (e.g. a filter box). While capturing, the
+// root model forwards all key messages to the view instead of interpreting its
+// global bindings, so typing letters like 'q' or 'r' edits the text rather than
+// quitting or refreshing.
+type inputCapturer interface {
+	CapturingInput() bool
+}

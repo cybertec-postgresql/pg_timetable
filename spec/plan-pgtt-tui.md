@@ -86,10 +86,10 @@ help, quits on q/Ctrl-C); non-TTY prints a hint. `go build ./cmd/pgtt/...` OK;
       `model.handleKey`. Help overlay (`help.go`, bubbles `help`): `?` toggles the
       full key grid as the body; `Esc` closes it at root. `ShortHelp`/`FullHelp`
       drive footer + overlay.
-- [~] **T1-4** PARTIAL: shared style set + palette live in `styles.go`
+- [x] **T1-4** DONE: shared style set + palette in `styles.go`
       (header/footer/selected-row/error, NoColor strips attrs). The level→lipgloss
-      `levelColor` mapping (mirroring `logrender.go`) is deferred to **T2** where
-      status cells first consume it (kept out now to avoid dead-code lint).
+      `levelColor` mapping + `styles.level()` (mirroring `logrender.go`) landed
+      with T2, where the chains status cell consumes it.
 - [x] **T1-5** DONE: footer shows status (left) / refresh countdown (right)
       + short-help beneath; `refreshLabel` renders "next refresh in Ns" or
       "refresh: manual". Errors surface in `statusErr` style (DSN already redacted
@@ -107,15 +107,32 @@ push/pop drill-down works. `go build`/`go test ./cmd/pgtt/...` green;
 
 ## Phase T2 — Chains list (home)
 
-- [ ] **T2-1** Chains table view backed by `ListChains`. Columns: id, name,
-      live, active, schedule (run_at), last_status, last_run, last_worker.
-      Color the status cell via the shared level palette.
-- [ ] **T2-2** Sorting (by id/name/last_run) and an incremental filter box
-      (`/`) filtering on name/client in-memory.
-- [ ] **T2-3** `Enter` on a row pushes the Chain detail view (T3).
-- [ ] **T2-4** Auto-refresh + manual `r` repopulate without losing selection.
+- [x] **T2-1** DONE: `chainsView` (`chains.go`) backed by `client.ListChains`
+      (fetched off the UI loop via a `tea.Cmd`). Columns: ID, NAME, LIVE, ACTIVE,
+      SCHEDULE (run_at), LAST (status, colored via `styles.level`), LAST RUN,
+      WORKER. Generic column-based renderer in `table.go` (flex widths, ellipsis
+      truncation, selection highlight + vertical scroll). Status cell uses the
+      shared level palette (T1-4 completed: `levelColor`/`styles.level` added).
+- [x] **T2-2** DONE: sort cycles id→name→last run (`o`); last-run sorts newest
+      first with never-run rows last. Incremental filter box (`/`) matches
+      name/client case-insensitively; `inputCapturer` interface routes raw keys
+      to the box while active so letters like `q`/`r` edit text instead of
+      triggering global bindings. Esc clears.
+- [x] **T2-3** DONE: `Enter` pushes a detail view via `pushView`. Until T3, this
+      is a placeholder titled with the chain name (swapped for the real detail in
+      T3).
+- [x] **T2-4** DONE: auto-refresh + manual `r` re-fetch and `reindex`; selection
+      is preserved by **chain id** across refreshes (re-sorts/re-filters then
+      re-locates the previously selected chain). Verified by unit test.
+- [x] **T2-5** DONE (tests): `chains_test.go` covers sort (id/name/last-run),
+      filter (name/client/no-match), selection preservation across reorder,
+      move-clamping, filter input capture (letter not swallowed as quit), body
+      render smoke, and the error→`errMsg` path. All green.
 
-**Exit**: home screen lists chains, refreshes, filters, and drills in.
+**Exit (MET)**: home screen lists chains (live dev DB verified to return data),
+refreshes without losing selection, filters + sorts in-memory, and drills in.
+`go build`/`go test ./cmd/pgtt/...` green; `golangci-lint run ./cmd/pgtt/...`
+= 0 issues. (Interactive render needs a real TTY; logic is unit-tested.)
 
 ---
 

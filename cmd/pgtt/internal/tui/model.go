@@ -87,62 +87,68 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case seedMsg:
-		if len(m.stack) == 0 {
-			root := newPlaceholderView("Chains", m.client, m.styles)
-			m.stack = []view{root}
-			w, h := m.bodySize()
-			root.SetSize(w, h)
-			if m.refresh > 0 {
-				m.nextTick = time.Now().Add(m.refresh)
-			}
-			return m, tea.Batch(root.Init(), func() tea.Msg { return refreshMsg{} })
-		}
-		return m, nil
-
+		return m.handleSeed()
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.help.setWidth(msg.Width)
-		if v := m.active(); v != nil {
-			w, h := m.bodySize()
-			v.SetSize(w, h)
-		}
-		return m, nil
-
+		return m.handleResize(msg)
 	case tickMsg:
-		m.lastTick = time.Time(msg)
-		var cmds []tea.Cmd
-		if m.refresh > 0 {
-			m.nextTick = m.lastTick.Add(m.refresh)
-			cmds = append(cmds, tickCmd(m.refresh))
-		}
-		cmds = append(cmds, func() tea.Msg { return refreshMsg{} })
-		return m, tea.Batch(cmds...)
-
+		return m.handleTick(msg)
 	case statusMsg:
-		m.status = string(msg)
-		m.err = nil
+		m.status, m.err = string(msg), nil
 		return m, nil
-
 	case errMsg:
 		m.err = msg.err
 		return m, nil
-
 	case pushViewMsg:
 		return m.pushView(msg.v)
-
 	case popViewMsg:
 		return m.popView()
-
 	case replaceRootMsg:
 		return m.replaceRoot(msg.v)
-
 	case tea.KeyMsg:
+		// While the active view captures free text (e.g. a filter box), forward
+		// keys to it rather than interpreting global bindings.
+		if c, ok := m.active().(inputCapturer); ok && c.CapturingInput() {
+			return m.routeToActive(msg)
+		}
 		return m.handleKey(msg)
 	}
-
 	// Route everything else (refreshMsg, data messages) to the active view.
 	return m.routeToActive(msg)
+}
+
+func (m model) handleSeed() (tea.Model, tea.Cmd) {
+	if len(m.stack) > 0 {
+		return m, nil
+	}
+	root := newChainsView(m.client, m.styles)
+	m.stack = []view{root}
+	w, h := m.bodySize()
+	root.SetSize(w, h)
+	if m.refresh > 0 {
+		m.nextTick = time.Now().Add(m.refresh)
+	}
+	return m, root.Init()
+}
+
+func (m model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
+	m.width, m.height = msg.Width, msg.Height
+	m.help.setWidth(msg.Width)
+	if v := m.active(); v != nil {
+		w, h := m.bodySize()
+		v.SetSize(w, h)
+	}
+	return m, nil
+}
+
+func (m model) handleTick(msg tickMsg) (tea.Model, tea.Cmd) {
+	m.lastTick = time.Time(msg)
+	var cmds []tea.Cmd
+	if m.refresh > 0 {
+		m.nextTick = m.lastTick.Add(m.refresh)
+		cmds = append(cmds, tickCmd(m.refresh))
+	}
+	cmds = append(cmds, func() tea.Msg { return refreshMsg{} })
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -181,16 +187,23 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 // switchTop replaces the stack with a fresh top-level view by name. Later
-// phases swap the placeholder constructors for the real views.
+// phases swap the remaining placeholder constructors for the real views.
 func (m model) switchTop(name string) (tea.Model, tea.Cmd) {
-	return m.replaceRoot(newPlaceholderView(name, m.client, m.styles))
+	var v view
+	switch name {
+	case "Chains":
+		v = newChainsView(m.client, m.styles)
+	default:
+		v = newPlaceholderView(name, m.client, m.styles)
+	}
+	return m.replaceRoot(v)
 }
 
 func (m model) pushView(v view) (tea.Model, tea.Cmd) {
 	w, h := m.bodySize()
 	v.SetSize(w, h)
 	m.stack = append(m.stack, v)
-	return m, tea.Batch(v.Init(), func() tea.Msg { return refreshMsg{} })
+	return m, v.Init()
 }
 
 func (m model) popView() (tea.Model, tea.Cmd) {
@@ -202,14 +215,14 @@ func (m model) popView() (tea.Model, tea.Cmd) {
 		w, h := m.bodySize()
 		v.SetSize(w, h)
 	}
-	return m, func() tea.Msg { return refreshMsg{} }
+	return m, nil
 }
 
 func (m model) replaceRoot(v view) (tea.Model, tea.Cmd) {
 	w, h := m.bodySize()
 	v.SetSize(w, h)
 	m.stack = []view{v}
-	return m, tea.Batch(v.Init(), func() tea.Msg { return refreshMsg{} })
+	return m, v.Init()
 }
 
 func (m model) routeToActive(msg tea.Msg) (tea.Model, tea.Cmd) {

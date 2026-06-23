@@ -1,19 +1,37 @@
 package tui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
 // Color palette. These mirror the CLI's logrender.go level→color semantics so
 // that the TUI and `pgtt log` agree on what INFO/WARN/ERROR/OK/FAIL look like.
-// Level-aware coloring of status cells arrives with the chains/activity views
-// (phase T2+); the palette lives here so both stay in one place.
 var (
-	colorRed   = lipgloss.Color("1")
-	colorGreen = lipgloss.Color("2")
-	colorBlue  = lipgloss.Color("6")
-	colorGray  = lipgloss.Color("7")
+	colorRed     = lipgloss.Color("1")
+	colorGreen   = lipgloss.Color("2")
+	colorBlue    = lipgloss.Color("6")
+	colorGray    = lipgloss.Color("7")
+	colorMagenta = lipgloss.Color("5")
 )
+
+// levelColor maps a log level / PG severity / OK|FAIL status to a palette
+// color, matching cmd/pgtt/cmd.logrender.levelColor so the TUI and CLI agree.
+func levelColor(level string) lipgloss.Color {
+	switch strings.ToUpper(level) {
+	case "DEBUG", "TRACE", "RUNNING":
+		return colorBlue
+	case "WARN", "WARNING":
+		return colorMagenta
+	case "ERROR", "FATAL", "PANIC", "FAIL":
+		return colorRed
+	case "OK", "INFO", "NOTICE", "LOG":
+		return colorGreen
+	default:
+		return colorGreen
+	}
+}
 
 // styles holds the lipgloss styles used across views. Built once per model so
 // color can be globally disabled (NoColor / non-TTY).
@@ -64,4 +82,14 @@ func newStyles(enabled bool) styles {
 		s.title = lipgloss.NewStyle().Bold(true)
 	}
 	return s
+}
+
+// level returns a style colored for the given log level / status, used to
+// emphasise status cells (e.g. OK/FAIL, INFO/WARN/ERROR). When color is
+// disabled it returns a plain style so the text is unchanged.
+func (s styles) level(level string) lipgloss.Style {
+	if !s.enabled {
+		return lipgloss.NewStyle()
+	}
+	return lipgloss.NewStyle().Foreground(levelColor(level))
 }
