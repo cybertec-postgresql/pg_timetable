@@ -1,0 +1,30 @@
+version: 2
+
+# Minimal snapshot config for CI - linux/amd64 only for speed
+# Full release uses .goreleaser.yml
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+archives:
+  - name_template: >-
+        {{ .ProjectName }}_
+        {{- title .Os }}_
+        {{- if eq .Arch "amd64" }}x86_64
+        {{- else }}{{ .Arch }}{{ end }}
+    wrap_in_directory: true
+
+checksum:
+  disable: true
+
+changelog:
+  disable: true

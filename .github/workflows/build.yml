@@ -60,7 +60,7 @@ jobs:
       uses: goreleaser/goreleaser-action@v7
       with:
         version: latest
-        args: release --snapshot --skip=publish --clean
+        args: release --snapshot --skip=publish --clean --config .goreleaser.ci.yml
 
   coverage:
     if: true # false to skip job during debug
