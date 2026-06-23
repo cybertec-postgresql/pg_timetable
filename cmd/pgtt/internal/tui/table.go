@@ -34,9 +34,11 @@ func (s styles) renderTable(cols []column, rows [][]cell, selected, width, heigh
 	}
 	widths := computeWidths(cols, width)
 
+	sep := " " + s.colSep + " " // " │ "
+
 	var b strings.Builder
 	// Header.
-	b.WriteString(s.tableHeader.Render(layoutRow(cols, widths, headerCells(cols))))
+	b.WriteString(s.tableHeader.Render(layoutRow(cols, widths, headerCells(cols), sep)))
 
 	if len(rows) == 0 {
 		b.WriteByte('\n')
@@ -56,17 +58,21 @@ func (s styles) renderTable(cols []column, rows [][]cell, selected, width, heigh
 		end = len(rows)
 	}
 
+	rowWidth := sum(widths) + visibleLenTUI(sep)*(len(widths)-1)
 	for i := start; i < end; i++ {
 		b.WriteByte('\n')
-		line := layoutRow(cols, widths, rows[i])
+		line := layoutRow(cols, widths, rows[i], sep)
 		if i == selected {
 			// Selection highlight spans the full row width.
-			line = s.rowSelected.Width(sum(widths) + len(widths) - 1).Render(stripStyles(cols, widths, rows[i]))
+			line = s.rowSelected.Width(rowWidth).Render(stripStyles(cols, widths, rows[i], sep))
 		}
 		b.WriteString(line)
 	}
 	return b.String()
 }
+
+// visibleLenTUI returns the rune length of a (style-free) separator string.
+func visibleLenTUI(s string) int { return len([]rune(s)) }
 
 func headerCells(cols []column) []cell {
 	cs := make([]cell, len(cols))
@@ -76,11 +82,14 @@ func headerCells(cols []column) []cell {
 	return cs
 }
 
+// sepWidth is the visible width of the column separator " │ ".
+const sepWidth = 3
+
 // computeWidths distributes width across columns: fixed columns take their min,
 // flex columns split the remainder by weight (never below their min).
 func computeWidths(cols []column, width int) []int {
 	widths := make([]int, len(cols))
-	gaps := len(cols) - 1 // one space between columns
+	gaps := (len(cols) - 1) * sepWidth // " │ " between columns
 	avail := width - gaps
 	if avail < 0 {
 		avail = 0
@@ -117,9 +126,9 @@ func computeWidths(cols []column, width int) []int {
 	return widths
 }
 
-// layoutRow renders cells into fixed-width columns separated by single spaces,
-// truncating overlong content with an ellipsis and padding short content.
-func layoutRow(cols []column, widths []int, cells []cell) string {
+// layoutRow renders cells into fixed-width columns joined by sep, truncating
+// overlong content with an ellipsis and padding short content.
+func layoutRow(cols []column, widths []int, cells []cell, sep string) string {
 	parts := make([]string, len(cols))
 	for i := range cols {
 		w := widths[i]
@@ -133,17 +142,17 @@ func layoutRow(cols []column, widths []int, cells []cell) string {
 		}
 		parts[i] = txt
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(parts, sep)
 }
 
 // stripStyles renders a row's cells without per-cell coloring (used under a
 // selection highlight, where the reverse-video background owns the look).
-func stripStyles(cols []column, widths []int, cells []cell) string {
+func stripStyles(cols []column, widths []int, cells []cell, sep string) string {
 	plain := make([]cell, len(cells))
 	for i, c := range cells {
 		plain[i] = plainCell(c.text)
 	}
-	return layoutRow(cols, widths, plain)
+	return layoutRow(cols, widths, plain, sep)
 }
 
 // fit pads or truncates s to exactly w display cells (ASCII-oriented; the data

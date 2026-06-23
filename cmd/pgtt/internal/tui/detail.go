@@ -186,29 +186,23 @@ func (v *detailView) Body(width, height int) string {
 	b.WriteString(v.headerBlock(width))
 	b.WriteByte('\n')
 
-	// Split the remaining height between the two panes (tasks slightly larger).
-	remaining := height - 4 // header block (3 lines) + spacer
-	if remaining < 4 {
-		remaining = 4
+	// Split the remaining height between the two bordered panes.
+	remaining := height - 3 // header block (2 lines) + spacer
+	if remaining < 6 {
+		remaining = 6
 	}
 	tasksH := remaining/2 + remaining%2
 	runsH := remaining - tasksH
 
-	b.WriteString(v.paneTitle("Tasks", v.focus == paneTasks))
-	b.WriteByte('\n')
-	b.WriteString(v.tasksTable(width, tasksH))
-	b.WriteByte('\n')
-	b.WriteString(v.paneTitle("Recent runs", v.focus == paneRuns))
-	b.WriteByte('\n')
-	b.WriteString(v.runsTable(width, runsH))
-	return b.String()
-}
+	tW, tH := v.styles.innerSize(width, tasksH)
+	rW, rH := v.styles.innerSize(width, runsH)
+	tasksTitle := fmt.Sprintf("Tasks [%d]", len(v.tasks))
+	runsTitle := fmt.Sprintf("Recent runs [%d]", len(v.runs))
 
-func (v *detailView) paneTitle(label string, focused bool) string {
-	if focused {
-		return v.styles.title.Render("▌ " + label)
-	}
-	return v.styles.dim.Render("  " + label)
+	b.WriteString(v.styles.panel(tasksTitle, v.focus == paneTasks, width, tasksH, v.tasksTable(tW, tH)))
+	b.WriteByte('\n')
+	b.WriteString(v.styles.panel(runsTitle, v.focus == paneRuns, width, runsH, v.runsTable(rW, rH)))
+	return b.String()
 }
 
 func (v *detailView) headerBlock(_ int) string {

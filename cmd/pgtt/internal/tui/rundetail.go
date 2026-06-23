@@ -58,27 +58,28 @@ func (v *runDetailView) fetch() tea.Cmd {
 	}
 }
 
-// outputHeight is the share of the body the output viewport occupies.
+// layoutViewport sizes the output viewport to the inner area of its bordered
+// panel (mirroring the geometry computed in Body).
 func (v *runDetailView) layoutViewport() {
 	if v.width <= 0 || v.hght <= 0 {
 		return
 	}
-	// header(2) + tasks title(1) + tasks table(taskRows+1) + output title(1).
 	taskRows := len(v.tasks)
 	if taskRows > 6 {
 		taskRows = 6
 	}
-	top := 2 + 1 + (taskRows + 1) + 1
-	h := v.hght - top
-	if h < 3 {
-		h = 3
+	tasksOuterH := (taskRows + 1) + 2
+	outOuterH := v.hght - 1 /*header*/ - 1 /*spacer*/ - tasksOuterH - 1 /*spacer*/
+	if outOuterH < 3 {
+		outOuterH = 3
 	}
+	innerW, innerH := v.styles.innerSize(v.width, outOuterH)
 	if !v.vpReady {
-		v.vp = viewport.New(v.width, h)
+		v.vp = viewport.New(innerW, innerH)
 		v.vpReady = true
 	} else {
-		v.vp.Width = v.width
-		v.vp.Height = h
+		v.vp.Width = innerW
+		v.vp.Height = innerH
 	}
 	v.refreshViewport()
 }
@@ -160,16 +161,27 @@ func (v *runDetailView) Body(width, height int) string {
 	b.WriteString(v.headerBlock())
 	b.WriteByte('\n')
 
-	b.WriteString(v.styles.title.Render("▌ Tasks"))
-	b.WriteByte('\n')
-	b.WriteString(v.tasksTable(width))
+	// Tasks panel: fixed-ish height (cap 6 rows + header).
+	taskRows := len(v.tasks)
+	if taskRows > 6 {
+		taskRows = 6
+	}
+	tasksOuterH := (taskRows + 1) + 2 // rows+header + border
+	tW, tH := v.styles.innerSize(width, tasksOuterH)
+	tasksTitle := fmt.Sprintf("Tasks [%d]", len(v.tasks))
+	b.WriteString(v.styles.panel(tasksTitle, true, width, tasksOuterH, v.tasksTable(tW, tH)))
 	b.WriteByte('\n')
 
-	b.WriteString(v.styles.dim.Render("  Output (↑/↓ task · pgup/pgdn scroll)"))
-	b.WriteByte('\n')
-	if v.vpReady {
-		b.WriteString(v.vp.View())
+	// Output panel fills the remaining height.
+	outOuterH := height - 1 /*header*/ - 1 /*spacer*/ - tasksOuterH - 1 /*spacer*/
+	if outOuterH < 3 {
+		outOuterH = 3
 	}
+	var content string
+	if v.vpReady {
+		content = v.vp.View()
+	}
+	b.WriteString(v.styles.panel("Output (↑/↓ task · pgup/pgdn scroll)", false, width, outOuterH, content))
 	return b.String()
 }
 
@@ -182,7 +194,7 @@ func (v *runDetailView) headerBlock() string {
 		v.styles.dim.Render(fmt.Sprintf(" · %d tasks, %d failed", r.TotalTasks, r.FailedTasks))
 }
 
-func (v *runDetailView) tasksTable(width int) string {
+func (v *runDetailView) tasksTable(width, height int) string {
 	cols := []column{
 		{title: "TASK", min: 6},
 		{title: "KIND", min: 6},
@@ -207,11 +219,5 @@ func (v *runDetailView) tasksTable(width int) string {
 			plainCell(orDash(t.StartedAt)),
 		}
 	}
-	// Show at most 6 task rows in the table; the rest are reachable by scrolling
-	// the cursor (the viewport shows the selected one's full output).
-	h := len(v.tasks) + 1
-	if h > 7 {
-		h = 7
-	}
-	return v.styles.renderTable(cols, rows, v.cursor, width, h)
+	return v.styles.renderTable(cols, rows, v.cursor, width, height)
 }

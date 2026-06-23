@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/client"
 
@@ -32,10 +31,16 @@ type activeLoadedMsg struct {
 	err    error
 }
 
-// sessionsView shows the scheduler's active worker sessions (top) and the
-// currently running chains (bottom), each in its own table. It is the
-// operator's "who's connected / what's running" screen and the source the
-// control verbs (T6) draw their worker list from.
+// sessionsView shows, top, the live database connections each running
+// pg_timetable instance holds (timetable.active_session — one row per backend,
+// so a single worker appears once per pooled connection) and, bottom, the
+// chains currently executing (timetable.active_chain). It is the operator's
+// "which instances are connected / what's running now" screen and the source
+// the control verbs (T6) draw their worker list from.
+//
+// Note: an active_session row is a *connection*, not an instance run. The
+// running instance is identified by its client_name (worker); a worker holds
+// several connections, hence several rows.
 type sessionsView struct {
 	client client.Client
 	styles styles
@@ -57,7 +62,7 @@ type sessionsKeyMap struct {
 
 func defaultSessionsKeyMap() sessionsKeyMap {
 	return sessionsKeyMap{
-		Switch: key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "sessions/active")),
+		Switch: key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "connections/running")),
 	}
 }
 
@@ -141,37 +146,34 @@ func (v *sessionsView) move(d int) {
 }
 
 func (v *sessionsView) Body(width, height int) string {
-	remaining := height - 2 // two pane titles
-	if remaining < 4 {
-		remaining = 4
+	sessH := height/2 + height%2
+	activeH := height - sessH
+	if sessH < 3 {
+		sessH = 3
 	}
-	sessH := remaining/2 + remaining%2
-	activeH := remaining - sessH
-
-	var b strings.Builder
-	b.WriteString(v.paneTitle("Worker sessions", v.focus == paneSessions))
-	b.WriteByte('\n')
-	b.WriteString(v.sessionsTable(width, sessH))
-	b.WriteByte('\n')
-	b.WriteString(v.paneTitle("Running chains", v.focus == paneActive))
-	b.WriteByte('\n')
-	b.WriteString(v.activeTable(width, activeH))
-	return b.String()
-}
-
-func (v *sessionsView) paneTitle(label string, focused bool) string {
-	if focused {
-		return v.styles.title.Render("▌ " + label)
+	if activeH < 3 {
+		activeH = 3
 	}
-	return v.styles.dim.Render("  " + label)
+
+	sessInnerW, sessInnerH := v.styles.innerSize(width, sessH)
+	activeInnerW, activeInnerH := v.styles.innerSize(width, activeH)
+
+	sessTitle := fmt.Sprintf("Connections [%d]", len(v.sessions))
+	activeTitle := fmt.Sprintf("Running chains [%d]", len(v.active))
+
+	top := v.styles.panel(sessTitle, v.focus == paneSessions, width, sessH,
+		v.sessionsTable(sessInnerW, sessInnerH))
+	bottom := v.styles.panel(activeTitle, v.focus == paneActive, width, activeH,
+		v.activeTable(activeInnerW, activeInnerH))
+	return top + "\n" + bottom
 }
 
 func (v *sessionsView) sessionsTable(width, height int) string {
 	cols := []column{
-		{title: "CLIENT", min: 12, flex: 2},
-		{title: "CLIENT PID", min: 10},
-		{title: "SERVER PID", min: 10},
-		{title: "STARTED", min: 19, flex: 1},
+		{title: "WORKER", min: 12, flex: 2}, // client_name = instance/worker name
+		{title: "SCHED PID", min: 10},       // client_pid = scheduler process PID
+		{title: "BACKEND PID", min: 11},     // server_pid = PostgreSQL backend PID
+		{title: "CONNECTED", min: 19, flex: 1},
 	}
 	rows := make([][]cell, len(v.sessions))
 	for i, s := range v.sessions {
@@ -192,7 +194,7 @@ func (v *sessionsView) sessionsTable(width, height int) string {
 func (v *sessionsView) activeTable(width, height int) string {
 	cols := []column{
 		{title: "CHAIN", min: 8},
-		{title: "CLIENT", min: 12, flex: 2},
+		{title: "WORKER", min: 12, flex: 2},
 		{title: "STARTED", min: 19, flex: 1},
 	}
 	rows := make([][]cell, len(v.active))

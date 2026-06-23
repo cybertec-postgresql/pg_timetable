@@ -208,38 +208,40 @@ func trimRing(entries []client.ActivityEntry) []client.ActivityEntry {
 }
 
 func (v *activityView) Body(width, height int) string {
-	visible := height - 1 // reserve one line for the status/help hint
-	if visible < 1 {
-		visible = 1
+	panelH := height - 1 // reserve one line for the status/help hint below
+	if panelH < 3 {
+		panelH = 3
 	}
+	innerW, innerH := v.styles.innerSize(width, panelH)
 
+	var content string
 	if len(v.entries) == 0 {
-		return v.hint() + "\n" + v.styles.dim.Render("  (waiting for activity…)")
+		content = v.styles.dim.Render("(waiting for activity…)")
+	} else {
+		// The window ends at len-offset and shows up to innerH lines.
+		end := len(v.entries) - v.offset
+		if end < 1 {
+			end = 1
+		}
+		start := maxInt(0, end-innerH)
+		var lines []string
+		for i := start; i < end; i++ {
+			lines = append(lines, v.styles.renderActivityLine(v.entries[i], innerW))
+		}
+		content = strings.Join(lines, "\n")
 	}
 
-	// The window ends at len-offset and shows up to `visible` lines.
-	end := len(v.entries) - v.offset
-	if end < 1 {
-		end = 1
-	}
-	start := maxInt(0, end-visible)
-
-	var b strings.Builder
-	b.WriteString(v.hint())
-	for i := start; i < end; i++ {
-		b.WriteByte('\n')
-		b.WriteString(v.styles.renderActivityLine(v.entries[i], width))
-	}
-	return b.String()
-}
-
-func (v *activityView) hint() string {
 	state := "live"
 	if v.frozen {
 		state = fmt.Sprintf("frozen ↑%d", v.offset)
 	}
-	return v.styles.dim.Render(fmt.Sprintf(
-		"  %s · f freeze · g/G top/bottom · ↑/↓ scroll · %d lines", state, len(v.entries)))
+	title := fmt.Sprintf("Activity · %s [%d]", state, len(v.entries))
+	return v.styles.panel(title, true, width, panelH, content) + "\n" + v.hint()
+}
+
+func (v *activityView) hint() string {
+	return v.styles.dim.Render(
+		"  f freeze · g/G top/bottom · ↑/↓ scroll · esc back")
 }
 
 func minInt(a, b int) int {

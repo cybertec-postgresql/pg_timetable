@@ -264,8 +264,12 @@ func (v *chainsView) Body(width, height int) string {
 		}
 	}
 
-	tbl := v.styles.renderTable(cols, rows, v.selected, width, height-1)
-	return v.filterLine(width) + "\n" + tbl
+	// One bordered panel containing the table; filter line below.
+	panelH := height - 1
+	innerW, innerH := v.styles.innerSize(width, panelH)
+	tbl := v.styles.renderTable(cols, rows, v.selected, innerW, innerH)
+	title := fmt.Sprintf("Chains [%d]", len(v.rows))
+	return v.styles.panel(title, true, width, panelH, tbl) + "\n" + v.filterLine(width)
 }
 
 // filterLine renders the incremental filter prompt (active or hint).

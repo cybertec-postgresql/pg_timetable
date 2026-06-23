@@ -37,7 +37,7 @@ func TestSessionsLoad(t *testing.T) {
 		t.Fatalf("sessions=%d active=%d, want 2/1", len(v.sessions), len(v.active))
 	}
 	out := v.Body(120, 18)
-	for _, want := range []string{"Worker sessions", "Running chains", "w1", "w2", "CLIENT PID", "CHAIN"} {
+	for _, want := range []string{"Connections", "Running chains", "w1", "w2", "BACKEND PID", "CHAIN"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("body missing %q", want)
 		}

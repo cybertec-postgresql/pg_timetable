@@ -50,6 +50,10 @@ type styles struct {
 	rowNormal   lipgloss.Style
 	dim         lipgloss.Style
 	title       lipgloss.Style
+
+	border        lipgloss.Style // unfocused panel border
+	borderFocused lipgloss.Style // focused panel border (accent)
+	colSep        string         // column separator glyph
 }
 
 func newStyles(enabled bool) styles {
@@ -65,6 +69,9 @@ func newStyles(enabled bool) styles {
 	s.rowNormal = lipgloss.NewStyle()
 	s.dim = lipgloss.NewStyle().Faint(true)
 	s.title = lipgloss.NewStyle().Bold(true)
+	s.border = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorGray)
+	s.borderFocused = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorBlue)
+	s.colSep = "│"
 
 	if !enabled {
 		// Strip all coloring/attributes when disabled.
@@ -80,8 +87,70 @@ func newStyles(enabled bool) styles {
 		s.rowNormal = plain
 		s.dim = plain
 		s.title = lipgloss.NewStyle().Bold(true)
+		s.border = lipgloss.NewStyle().Border(lipgloss.RoundedBorder())
+		s.borderFocused = lipgloss.NewStyle().Border(lipgloss.RoundedBorder())
 	}
 	return s
+}
+
+// panel wraps content in a rounded box with the title embedded in the top
+// border (k9s style). It produces a block exactly outerW wide and outerH tall
+// (including the 1-cell border on each side). Use innerSize to compute the
+// content area to pass to the table/body renderer.
+func (s styles) panel(title string, focused bool, outerW, outerH int, content string) string {
+	bs := s.border
+	if focused {
+		bs = s.borderFocused
+	}
+	innerW, innerH := s.innerSize(outerW, outerH)
+	// Fix the content box to the inner size so the border is flush and stable.
+	body := lipgloss.NewStyle().Width(innerW).Height(innerH).MaxHeight(innerH).Render(content)
+	box := bs.Render(body)
+	return s.overlayTitle(box, title, focused)
+}
+
+// innerSize returns the content width/height available inside a panel of the
+// given outer dimensions (subtracting the 1-cell border on each edge).
+func (s styles) innerSize(outerW, outerH int) (int, int) {
+	w := outerW - 2
+	h := outerH - 2
+	if w < 1 {
+		w = 1
+	}
+	if h < 1 {
+		h = 1
+	}
+	return w, h
+}
+
+// overlayTitle writes a " title " label into the top border line of a rendered
+// box, just after the top-left corner.
+func (s styles) overlayTitle(box, title string, focused bool) string {
+	if title == "" {
+		return box
+	}
+	lines := strings.Split(box, "\n")
+	if len(lines) == 0 {
+		return box
+	}
+	top := []rune(lines[0])
+	label := " " + title + " "
+	titleStyle := s.dim
+	if focused {
+		titleStyle = lipgloss.NewStyle().Foreground(colorBlue).Bold(s.enabled)
+	}
+	styled := titleStyle.Render(label)
+	// Insert after the corner rune (index 0). Replace the plain border runes the
+	// label covers so total visible width is unchanged.
+	labelLen := len([]rune(label))
+	if labelLen+2 > len(top) {
+		return box // too narrow to host a title
+	}
+	// Rebuild: corner + styled label + remaining border (from labelLen+1).
+	prefix := string(top[0])
+	suffix := string(top[1+labelLen:])
+	lines[0] = prefix + styled + suffix
+	return strings.Join(lines, "\n")
 }
 
 // level returns a style colored for the given log level / status, used to
