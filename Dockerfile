@@ -3,16 +3,13 @@
 #     --build-arg COMMIT=`git show -s --format=%H HEAD` \
 #     --build-arg VERSION=`git describe --tags --abbrev=0` \
 #     --build-arg DATE=`git show -s --format=%cI HEAD` .
-FROM golang:alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 ARG COMMIT
 ARG VERSION
 ARG DATE
-# Set necessary environmet variables needed for our image
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+# Set necessary environment variables needed for our image
+ENV CGO_ENABLED=0
 
 # Move to working directory /build
 WORKDIR /build
