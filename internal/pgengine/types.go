@@ -67,7 +67,6 @@ type ChainTask struct {
 	ConnectString string    `db:"database_connection" yaml:"connect_string,omitempty"`
 	Timeout       int       `db:"timeout" yaml:"timeout,omitempty"` // in milliseconds
 	StartedAt     time.Time `db:"-" yaml:"-"`
-	Duration      int64     `db:"-" yaml:"-"` // in microseconds
 	Vxid          int64     `db:"-" yaml:"-"`
 }
 

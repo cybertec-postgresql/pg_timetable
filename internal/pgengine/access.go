@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -41,7 +42,7 @@ func (pge *PgEngine) LogTaskExecution(ctx context.Context, task *ChainTask, retC
 chain_id, task_id, command, kind, last_run, finished, returncode, pid, output, client_name, txid, ignore_error, params) 
 VALUES ($1, $2, $3, $4, clock_timestamp() - $5 :: interval, clock_timestamp(), $6, $7, NULLIF($8, ''), $9, $10, $11, $12)`,
 		task.ChainID, task.TaskID, task.Command, task.Kind,
-		fmt.Sprintf("%f seconds", float64(task.Duration)/1000000),
+		fmt.Sprintf("%f seconds", time.Since(task.StartedAt).Seconds()),
 		retCode, pge.Getsid(), strings.TrimSpace(output), pge.ClientName, task.Vxid,
 		task.IgnoreError, params)
 	if err != nil {
