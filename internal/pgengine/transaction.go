@@ -123,7 +123,9 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 		return errors.New("SQL command cannot be empty")
 	}
 	if len(paramValues) == 0 { //mimic empty param
+		task.MarkStart()
 		ct, e := executor.Exec(ctx, task.Command)
+		task.MarkDone()
 		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), "")
 		return e
 	}
@@ -135,8 +137,10 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", val, parseErr))
 			return
 		}
+		task.MarkStart()
 		ct, e := executor.Exec(ctx, task.Command, params...)
 		err = errors.Join(err, e)
+		task.MarkDone()
 		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), val)
 	}
 	return

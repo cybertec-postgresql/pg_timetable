@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -18,16 +19,24 @@ func TestExecuteTask(t *testing.T) {
 	a.NoError(err)
 	pge := pgengine.NewDB(mock, "--log-database-level=none")
 	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
+	task := &pgengine.ChainTask{}
 
-	et := func(task string, params []string) (err error) {
-		err = mocksch.executeBuiltinTask(context.TODO(), &pgengine.ChainTask{Command: task}, params)
+	et := func(command string, params []string) (err error) {
+		task.Command = command
+		err = mocksch.executeBuiltinTask(context.TODO(), task, params)
 		return
 	}
 
-	a.Error(et("foo", []string{}))
+	// Tests the len(param) == 0 case
+	a.NoError(et("NoOp", []string{}))
+	a.False(task.StartedAt.IsZero())
 
+	a.NoError(et("Sleep", []string{"2"}))
+	a.GreaterOrEqual(time.Duration(task.Duration * int64(time.Microsecond)), 2 * time.Second)
+	a.LessOrEqual(task.StartedAt, time.Now().Add(-2 * time.Second))
+
+	a.Error(et("foo", []string{}))
 	a.Error(et("Sleep", []string{"foo"}))
-	a.NoError(et("Sleep", []string{"1"}))
 
 	a.NoError(et("NoOp", []string{}))
 	a.NoError(et("NoOp", []string{"foo", "bar"}))

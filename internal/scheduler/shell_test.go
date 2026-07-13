@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -17,6 +18,23 @@ import (
 	"github.com/pashagolub/pgxmock/v5"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestShellCommandDuration(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	assert.NoError(t, err)
+	pge := pgengine.NewDB(mock, "--log-database-level=none")
+	sch := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
+	ctx := context.Background()
+
+	task := &pgengine.ChainTask{Command: "sleep"}
+
+	err = sch.ExecuteProgramCommand(ctx, task, []string{`["2"]`})
+	assert.NoError(t, err, "sleep command should succeed")
+
+	assert.False(t, task.StartedAt.IsZero())
+	assert.GreaterOrEqual(t, time.Duration(task.Duration * int64(time.Microsecond)), 1 * time.Second)
+	assert.LessOrEqual(t, task.StartedAt, time.Now().Add(-2 * time.Second))
+}
 
 type testCommander struct{}
 

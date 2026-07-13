@@ -37,12 +37,16 @@ func (sch *Scheduler) executeBuiltinTask(ctx context.Context, task *pgengine.Cha
 	l := log.GetLogger(ctx)
 	l.WithField("name", name).Debugf("Executing builtin task with parameters %+q", paramValues)
 	if len(paramValues) == 0 {
+		task.MarkStart()
 		stdout, err = f(ctx, sch, "")
+		task.MarkDone()
 		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, "")
 		return err
 	}
 	for _, val := range paramValues {
+		task.MarkStart()
 		stdout, err = f(ctx, sch, val)
+		task.MarkDone()
 		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, val)
 		if err != nil {
 			return

@@ -75,6 +75,16 @@ func (task *ChainTask) IsRemote() bool {
 	return strings.TrimSpace(task.ConnectString) != ""
 }
 
+// MarkStart records the moment command execution begins.
+func (task *ChainTask) MarkStart() {
+	task.StartedAt = time.Now()
+}
+
+// MarkDone records the command execution duration (in microseconds) since the last MarkStart.
+func (task *ChainTask) MarkDone() {
+	task.Duration = time.Since(task.StartedAt).Microseconds()
+}
+
 // String returns a log-friendly identifier, e.g. "49|Check_if_file_exist".
 func (task ChainTask) String() string {
 	return logIdent(task.TaskID, task.TaskName)

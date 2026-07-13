@@ -45,6 +45,7 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.
 				return err
 			}
 		}
+		task.MarkStart()
 		out, e := Cmd.CombinedOutput(ctx, command, params...) // #nosec
 		if e != nil {
 			exitCode = -1
@@ -53,6 +54,7 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.
 				exitCode = exitError.ExitCode()
 			}
 		}
+		task.MarkDone()
 		sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
 	}
 	return err
