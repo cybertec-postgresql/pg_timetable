@@ -185,12 +185,15 @@ func TestExecuteSQLCommand(t *testing.T) {
 	assert.Error(t, err)
 
 	mockPool.ExpectExec("correct json").WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-	err = pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{Command: "correct json"}, []string{})
+	taskEmptyArgs := &pgengine.ChainTask{Command: "correct json"}
+	err = pge.ExecuteSQLCommand(ctx, mockPool, taskEmptyArgs, []string{})
 	assert.NoError(t, err)
 
 	mockPool.ExpectExec("correct json").WithArgs("John", 30.0, nil).WillReturnResult(pgxmock.NewResult("EXECUTE", 0))
-	err = pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{Command: "correct json"}, []string{`["John", 30, null]`})
+	taskWithArgs := &pgengine.ChainTask{Command: "correct json"}
+	err = pge.ExecuteSQLCommand(ctx, mockPool, taskWithArgs, []string{`["John", 30, null]`})
 	assert.NoError(t, err)
+	assert.False(t, taskWithArgs.StartedAt.IsZero()) // must be set to current time for every new parameter
 
 	mockPool.ExpectExec("incorrect json").WillReturnError(json.Unmarshal([]byte("foo"), &struct{}{}))
 	err = pge.ExecuteSQLCommand(ctx, mockPool, &pgengine.ChainTask{Command: "incorrect json"}, []string{"foo"})

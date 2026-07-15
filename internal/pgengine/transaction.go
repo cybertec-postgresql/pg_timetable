@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	pgx "github.com/jackc/pgx/v5"
@@ -131,6 +132,7 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 		if val == "" {
 			continue
 		}
+		task.StartedAt = time.Now() // reset start time for each parameter set execution
 		if parseErr := json.Unmarshal([]byte(val), &params); parseErr != nil {
 			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", val, parseErr))
 			return

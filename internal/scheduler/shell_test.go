@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -26,6 +27,22 @@ func (c testCommander) CombinedOutput(_ context.Context, command string, args ..
 		return []byte(fmt.Sprint(command, args)), nil
 	}
 	return []byte(fmt.Sprintf("Command %s not found", command)), &exec.Error{Name: command, Err: exec.ErrNotFound}
+}
+
+func TestShellCommandDuration(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	assert.NoError(t, err)
+	pge := pgengine.NewDB(mock, "--log-database-level=none")
+	sch := scheduler.New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
+	ctx := context.Background()
+
+	task := &pgengine.ChainTask{Command: "sleep"}
+
+	err = sch.ExecuteProgramCommand(ctx, task, []string{`["2"]`})
+	assert.NoError(t, err, "sleep command should succeed")
+
+	assert.False(t, task.StartedAt.IsZero())
+	assert.LessOrEqual(t, task.StartedAt, time.Now().Add(-2*time.Second))
 }
 
 func TestShellCommand(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
@@ -38,6 +39,7 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.
 		paramValues = []string{""}
 	}
 	for _, val := range paramValues {
+		task.StartedAt = time.Now() // reset start time for each parameter set execution
 		exitCode = 0
 		params := []string{}
 		if val > "" {

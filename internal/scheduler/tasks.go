@@ -42,6 +42,7 @@ func (sch *Scheduler) executeBuiltinTask(ctx context.Context, task *pgengine.Cha
 		return err
 	}
 	for _, val := range paramValues {
+		task.StartedAt = time.Now() // reset start time for each parameter set execution
 		stdout, err = f(ctx, sch, val)
 		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, val)
 		if err != nil {
