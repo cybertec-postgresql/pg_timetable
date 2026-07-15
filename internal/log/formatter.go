@@ -128,11 +128,11 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 func trimFilename(s string) string {
 	const sub = "pg_timetable/internal/"
-	idx := strings.Index(s, sub)
-	if idx == -1 {
+	_, after, ok := strings.Cut(s, sub)
+	if !ok {
 		return s
 	}
-	return s[idx+len(sub):]
+	return after
 }
 
 func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry) {

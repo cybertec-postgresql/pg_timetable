@@ -67,7 +67,7 @@ func TestSelectChains(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 	defer mockPool.Close()
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		mockPool.ExpectQuery("SELECT.+chain_id").WithArgs(pgxmock.AnyArg()).WillReturnError(errors.New("error"))
 		mockPool.ExpectQuery("SELECT.+chain_id").WithArgs(pgxmock.AnyArg()).WillReturnRows(pgxmock.NewRows([]string{"foo"}).AddRow("baz"))
 	}
