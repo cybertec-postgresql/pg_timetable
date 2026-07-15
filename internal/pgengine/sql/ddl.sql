@@ -41,7 +41,8 @@ CREATE TABLE timetable.task (
     database_connection TEXT,
     ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
     autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE,
-    timeout             INTEGER                 DEFAULT 0
+    timeout             INTEGER                 DEFAULT 0,
+    live                BOOLEAN                 NOT NULL DEFAULT TRUE
 );          
 
 COMMENT ON TABLE timetable.task IS
@@ -62,6 +63,8 @@ COMMENT ON COLUMN timetable.task.timeout IS
     'Abort any task within a chain that takes more than the specified number of milliseconds';
 COMMENT ON COLUMN timetable.task.autonomous IS
     'Specify if the task should be executed out of the chain transaction. Useful for VACUUM, CREATE DATABASE, CALL etc.';
+COMMENT ON COLUMN timetable.task.live IS
+    'Indication that the task is ready to run, set to FALSE to skip execution';
 
 -- parameter passing for a chain task
 CREATE TABLE timetable.parameter(

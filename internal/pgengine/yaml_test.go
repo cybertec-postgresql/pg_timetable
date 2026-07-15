@@ -108,6 +108,35 @@ func TestLoadYamlChainsIntegration(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "0 1 * * *", schedule)
 	})
+
+	t.Run("Task live flag", func(t *testing.T) {
+		yamlContent := `chains:
+  - name: test-task-live
+    schedule: "0 0 * * *"
+    tasks:
+      - name: enabled-by-default
+        command: SELECT 1
+      - name: explicitly-enabled
+        command: SELECT 2
+        live: true
+      - name: disabled
+        command: SELECT 3
+        live: false`
+
+		tempFile := createTempYamlFile(t, yamlContent)
+		defer removeTempFile(t, tempFile)
+
+		err := pge.LoadYamlChains(ctx, tempFile, false)
+		require.NoError(t, err)
+
+		rows, err := pge.ConfigDb.Query(ctx,
+			`SELECT t.live FROM timetable.task t JOIN timetable.chain c ON c.chain_id = t.chain_id
+			 WHERE c.chain_name = $1 ORDER BY t.task_order`, "test-task-live")
+		require.NoError(t, err)
+		lives, err := pgx.CollectRows(rows, pgx.RowTo[bool])
+		require.NoError(t, err)
+		assert.Equal(t, []bool{true, true, false}, lives)
+	})
 }
 
 func TestYamlParameterHandling(t *testing.T) {
@@ -521,6 +550,9 @@ func TestYamlChainSetDefaults(t *testing.T) {
 		chain.SetDefaults()
 		assert.Equal(t, "* * * * *", chain.Schedule)
 		assert.Equal(t, "SQL", chain.Tasks[0].Kind)
+		if assert.NotNil(t, chain.Tasks[0].Live) {
+			assert.True(t, *chain.Tasks[0].Live, "Task should be live by default")
+		}
 	})
 
 	t.Run("Keep existing values", func(t *testing.T) {
@@ -542,6 +574,28 @@ func TestYamlChainSetDefaults(t *testing.T) {
 		chain.SetDefaults()
 		assert.Equal(t, "0 0 * * *", chain.Schedule)
 		assert.Equal(t, "PROGRAM", chain.Tasks[0].Kind)
+	})
+
+	t.Run("Keep disabled task", func(t *testing.T) {
+		disabled := false
+		chain := &pgengine.YamlChain{
+			Chain: pgengine.Chain{
+				ChainName: "test-chain",
+			},
+			Tasks: []pgengine.YamlTask{
+				{
+					ChainTask: pgengine.ChainTask{
+						Command: "SELECT 1",
+					},
+					Live: &disabled,
+				},
+			},
+		}
+
+		chain.SetDefaults()
+		if assert.NotNil(t, chain.Tasks[0].Live) {
+			assert.False(t, *chain.Tasks[0].Live, "Task should stay disabled")
+		}
 	})
 }
 
@@ -713,7 +767,7 @@ func TestNullString(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
@@ -769,7 +823,7 @@ func TestLoadYamlChainsMultiTask(t *testing.T) {
 
 		// Mock first task creation
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		// Mock first task parameters (2 parameters)
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
@@ -779,7 +833,7 @@ func TestLoadYamlChainsMultiTask(t *testing.T) {
 
 		// Mock second task creation
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(2))
 		// Mock second task parameters (2 parameters)
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
@@ -891,11 +945,11 @@ func TestCreateChainFromYamlEdgeCases(t *testing.T) {
 
 		// Mock first task creation (no parameters)
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		// Mock second task creation (empty parameters)
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(2))
 
 		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
@@ -925,7 +979,7 @@ func TestCreateChainFromYamlEdgeCases(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		// Mock parameter insertion
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
@@ -969,7 +1023,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 
 		// Mock first task with complex parameter
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
@@ -977,7 +1031,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 
 		// Mock second task (no parameters)
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(2))
 
 		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
@@ -1035,7 +1089,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 
 		// Mock sql-task creation with 2 parameters
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
@@ -1044,7 +1098,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 
 		// Mock program-task creation with 2 parameters
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(2))
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
@@ -1053,7 +1107,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 
 		// Mock builtin-task creation with 1 parameter
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(3))
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
@@ -1096,7 +1150,7 @@ func TestNullStringFunction(t *testing.T) {
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		// Mock task creation with NULL fields
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
@@ -1129,7 +1183,7 @@ func TestNullStringFunction(t *testing.T) {
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		// Mock task creation with mixed NULL/non-NULL fields
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
@@ -1157,7 +1211,7 @@ func TestCreateChainFromYamlErrors(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnError(fmt.Errorf("simulated DB error on task"))
 
 		_, err := mockpge.CreateChainFromYaml(ctx, &pgengine.YamlChain{
@@ -1176,7 +1230,7 @@ func TestCreateChainFromYamlErrors(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		_, err := mockpge.CreateChainFromYaml(ctx, &pgengine.YamlChain{
@@ -1198,7 +1252,7 @@ func TestCreateChainFromYamlErrors(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		mockPool.ExpectExec(`INSERT INTO timetable.parameter`).
 			WithArgs(anyArgs(3)...).

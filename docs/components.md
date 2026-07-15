@@ -62,6 +62,7 @@ The next building block is a **task**, which simply represents a step in a list 
 | `ignore_error` | `boolean` | Specify if the next task should proceed after encountering an error (default: `false`) |
 | `autonomous` | `boolean` | Specify if the task should be executed out of the chain transaction. Useful for `VACUUM`, `CREATE DATABASE`, `CALL` etc. |
 | `timeout` | `integer` | Abort any task within a chain that takes more than the specified number of milliseconds |
+| `live` | `boolean` | Indication that the task is ready to run, set to `false` to skip execution (default: `true`) |
 
 !!! warning
 

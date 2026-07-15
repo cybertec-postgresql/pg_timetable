@@ -112,6 +112,22 @@ func TestSchedulerFunctions(t *testing.T) {
 		pge.CommitTransaction(ctx, tx)
 	})
 
+	t.Run("Check GetChainElements returns only live tasks", func(t *testing.T) {
+		var chainID int
+		err := pge.ConfigDb.QueryRow(ctx,
+			`INSERT INTO timetable.chain (chain_name, run_at) VALUES ('live_flag_chain', '@reboot') RETURNING chain_id`).Scan(&chainID)
+		assert.NoError(t, err, "Should insert chain")
+		_, err = pge.ConfigDb.Exec(ctx,
+			`INSERT INTO timetable.task (chain_id, task_order, command, live) VALUES ($1, 10, 'SELECT 1', TRUE), ($1, 20, 'SELECT 2', FALSE)`, chainID)
+		assert.NoError(t, err, "Should insert tasks")
+		var tasks []pgengine.ChainTask
+		assert.NoError(t, pge.GetChainElements(ctx, &tasks, chainID), "Should return tasks")
+		assert.Len(t, tasks, 1, "Disabled task should be filtered out")
+		assert.Equal(t, "SELECT 1", tasks[0].Command, "Only the live task should be returned")
+		_, err = pge.ConfigDb.Exec(ctx, `DELETE FROM timetable.chain WHERE chain_id = $1`, chainID)
+		assert.NoError(t, err)
+	})
+
 	t.Run("Check GetChainParamValues function", func(t *testing.T) {
 		var paramVals []string
 		tx, txid, err := pge.StartTransaction(ctx)

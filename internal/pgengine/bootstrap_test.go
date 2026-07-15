@@ -255,7 +255,7 @@ func TestExecuteFileScript(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery("INSERT INTO timetable\\.task").
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
@@ -333,7 +333,7 @@ func TestExecuteFileScript(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 		mockPool.ExpectQuery("INSERT INTO timetable\\.task").
-			WithArgs(anyArgs(10)...).
+			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)

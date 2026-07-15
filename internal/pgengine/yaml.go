@@ -23,6 +23,7 @@ type YamlChain struct {
 type YamlTask struct {
 	ChainTask  `yaml:",inline"`
 	TaskName   string `db:"task_name" yaml:"name,omitempty"`
+	Live       *bool  `yaml:"live,omitempty"`
 	Parameters []any  `yaml:"parameters,omitempty"`
 }
 
@@ -100,8 +101,8 @@ func (pge *PgEngine) CreateChainFromYaml(ctx context.Context, yamlChain *YamlCha
 		err := pge.ConfigDb.QueryRow(ctx, `
 			INSERT INTO timetable.task (
 				chain_id, task_order, task_name, kind, command, 
-				run_as, database_connection, ignore_error, autonomous, timeout
-			) VALUES ($1, $2, $3, $4::timetable.command_kind, $5, $6, $7, $8, $9, $10) 
+				run_as, database_connection, ignore_error, autonomous, timeout, live
+			) VALUES ($1, $2, $3, $4::timetable.command_kind, $5, $6, $7, $8, $9, $10, $11) 
 			RETURNING task_id`,
 			chainID,
 			taskOrder,
@@ -112,7 +113,8 @@ func (pge *PgEngine) CreateChainFromYaml(ctx context.Context, yamlChain *YamlCha
 			nullString(task.ConnectString),
 			task.IgnoreError,
 			task.Autonomous,
-			task.Timeout).Scan(&taskID)
+			task.Timeout,
+			task.Live == nil || *task.Live).Scan(&taskID)
 		if err != nil {
 			return 0, fmt.Errorf("failed to insert task %d: %w", i+1, err)
 		}
@@ -224,6 +226,11 @@ func (c *YamlChain) SetDefaults() {
 		task := &c.Tasks[i]
 		if task.Kind == "" {
 			task.Kind = "SQL"
+		}
+		// Tasks are live by default, unlike chains
+		if task.Live == nil {
+			live := true
+			task.Live = &live
 		}
 	}
 }

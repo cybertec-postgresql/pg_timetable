@@ -142,7 +142,7 @@ func (pge *PgEngine) GetChainElements(ctx context.Context, chainTasks *[]ChainTa
 	autonomous,
 	COALESCE(database_connection, '') as database_connection,
 	timeout
-FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
+FROM timetable.task WHERE chain_id = $1 AND live ORDER BY task_order ASC`
 	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
 	if err != nil {
 		return err
