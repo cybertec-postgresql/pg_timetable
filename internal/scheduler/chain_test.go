@@ -108,9 +108,11 @@ func TestExecuteChainElement(t *testing.T) {
 	assert.NoError(t, err)
 	pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test", "--password=somestrong")
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
+	task := &pgengine.ChainTask{Timeout: 1}
 
-	mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow("foo"))
-	_ = sch.executeTask(t.Context(), mock, &pgengine.ChainTask{Timeout: 1})
+	mock.ExpectQuery("SELECT").WithArgs(pgxmock.AnyArg()).WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow("foo"))
+	_ = sch.executeTask(t.Context(), mock, task)
+	assert.False(t, task.StartedAt.IsZero())
 }
 
 func TestExecuteOnErrorHandler(t *testing.T) {

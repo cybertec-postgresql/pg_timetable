@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -31,6 +32,7 @@ func TestExecuteTask(t *testing.T) {
 	a.Error(et("Sleep", []string{"foo"}))
 	a.False(task.StartedAt.IsZero()) // must be set to current time for every new parameter
 	a.NoError(et("Sleep", []string{"1"}))
+	a.GreaterOrEqual(time.Since(task.StartedAt), time.Second)
 
 	a.NoError(et("NoOp", []string{}))
 	a.NoError(et("NoOp", []string{"foo", "bar"}))
