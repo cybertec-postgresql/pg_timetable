@@ -776,7 +776,6 @@ e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is re
 <span id="ChainTask.ConnectString"></span>    ConnectString <a href="https://pkg.go.dev/builtin/#string">string</a>    `db:&#34;database_connection&#34; yaml:&#34;connect_string,omitempty&#34;`
 <span id="ChainTask.Timeout"></span>    Timeout       <a href="https://pkg.go.dev/builtin/#int">int</a>       `db:&#34;timeout&#34; yaml:&#34;timeout,omitempty&#34;` <span class="comment">// in milliseconds</span>
 <span id="ChainTask.StartedAt"></span>    StartedAt     <a href="https://pkg.go.dev/time/">time</a>.<a href="https://pkg.go.dev/time/#Time">Time</a> `db:&#34;-&#34; yaml:&#34;-&#34;`
-<span id="ChainTask.Duration"></span>    Duration      <a href="https://pkg.go.dev/builtin/#int64">int64</a>     `db:&#34;-&#34; yaml:&#34;-&#34;` <span class="comment">// in microseconds</span>
 <span id="ChainTask.Vxid"></span>    Vxid          <a href="https://pkg.go.dev/builtin/#int64">int64</a>     `db:&#34;-&#34; yaml:&#34;-&#34;`
 }
 </pre>
@@ -793,7 +792,7 @@ e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is re
 
 			
 				
-				<h3 id="ChainTask.IsRemote">func (*ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L74">IsRemote</a>
+				<h3 id="ChainTask.IsRemote">func (*ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L73">IsRemote</a>
 					<a class="permalink" href="#ChainTask.IsRemote">&#xb6;</a>
 					
 					
@@ -805,7 +804,7 @@ e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is re
 				
 			
 				
-				<h3 id="ChainTask.String">func (ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L79">String</a>
+				<h3 id="ChainTask.String">func (ChainTask) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L78">String</a>
 					<a class="permalink" href="#ChainTask.String">&#xb6;</a>
 					
 					
@@ -1041,7 +1040,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.CommitTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L28">CommitTransaction</a>
+				<h3 id="PgEngine.CommitTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L29">CommitTransaction</a>
 					<a class="permalink" href="#PgEngine.CommitTransaction">&#xb6;</a>
 					
 					
@@ -1119,7 +1118,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.DeleteChain">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L15">DeleteChain</a>
+				<h3 id="PgEngine.DeleteChain">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L16">DeleteChain</a>
 					<a class="permalink" href="#PgEngine.DeleteChain">&#xb6;</a>
 					
 					
@@ -1132,7 +1131,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L111">ExecAutonomousSQLTask</a>
+				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L112">ExecAutonomousSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecAutonomousSQLTask">&#xb6;</a>
 					
 					
@@ -1145,7 +1144,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecLocalSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L70">ExecLocalSQLTask</a>
+				<h3 id="PgEngine.ExecLocalSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L71">ExecLocalSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecLocalSQLTask">&#xb6;</a>
 					
 					
@@ -1158,7 +1157,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L103">ExecRemoteSQLTask</a>
+				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L104">ExecRemoteSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecRemoteSQLTask">&#xb6;</a>
 					
 					
@@ -1171,7 +1170,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecStandaloneTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L89">ExecStandaloneTask</a>
+				<h3 id="PgEngine.ExecStandaloneTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L90">ExecStandaloneTask</a>
 					<a class="permalink" href="#PgEngine.ExecStandaloneTask">&#xb6;</a>
 					
 					
@@ -1210,7 +1209,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L119">ExecuteSQLCommand</a>
+				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L120">ExecuteSQLCommand</a>
 					<a class="permalink" href="#PgEngine.ExecuteSQLCommand">&#xb6;</a>
 					
 					
@@ -1223,7 +1222,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L58">ExecuteSQLTask</a>
+				<h3 id="PgEngine.ExecuteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L59">ExecuteSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecuteSQLTask">&#xb6;</a>
 					
 					
@@ -1262,7 +1261,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L165">FinalizeDBConnection</a>
+				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L167">FinalizeDBConnection</a>
 					<a class="permalink" href="#PgEngine.FinalizeDBConnection">&#xb6;</a>
 					
 					
@@ -1275,7 +1274,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetChainElements">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L133">GetChainElements</a>
+				<h3 id="PgEngine.GetChainElements">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L134">GetChainElements</a>
 					<a class="permalink" href="#PgEngine.GetChainElements">&#xb6;</a>
 					
 					
@@ -1288,7 +1287,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetChainParamValues">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L154">GetChainParamValues</a>
+				<h3 id="PgEngine.GetChainParamValues">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L155">GetChainParamValues</a>
 					<a class="permalink" href="#PgEngine.GetChainParamValues">&#xb6;</a>
 					
 					
@@ -1301,7 +1300,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L146">GetLocalDBConnection</a>
+				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L148">GetLocalDBConnection</a>
 					<a class="permalink" href="#PgEngine.GetLocalDBConnection">&#xb6;</a>
 					
 					
@@ -1314,7 +1313,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L155">GetRemoteDBConnection</a>
+				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L157">GetRemoteDBConnection</a>
 					<a class="permalink" href="#PgEngine.GetRemoteDBConnection">&#xb6;</a>
 					
 					
@@ -1355,7 +1354,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.InsertChainRunStatus">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L53">InsertChainRunStatus</a>
+				<h3 id="PgEngine.InsertChainRunStatus">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L54">InsertChainRunStatus</a>
 					<a class="permalink" href="#PgEngine.InsertChainRunStatus">&#xb6;</a>
 					
 					
@@ -1368,7 +1367,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.IsAlive">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L26">IsAlive</a>
+				<h3 id="PgEngine.IsAlive">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L27">IsAlive</a>
 					<a class="permalink" href="#PgEngine.IsAlive">&#xb6;</a>
 					
 					
@@ -1394,7 +1393,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.LogTaskExecution">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L31">LogTaskExecution</a>
+				<h3 id="PgEngine.LogTaskExecution">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L32">LogTaskExecution</a>
 					<a class="permalink" href="#PgEngine.LogTaskExecution">&#xb6;</a>
 					
 					
@@ -1420,7 +1419,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.MustRollbackToSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L51">MustRollbackToSavepoint</a>
+				<h3 id="PgEngine.MustRollbackToSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L52">MustRollbackToSavepoint</a>
 					<a class="permalink" href="#PgEngine.MustRollbackToSavepoint">&#xb6;</a>
 					
 					
@@ -1433,7 +1432,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.MustSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L44">MustSavepoint</a>
+				<h3 id="PgEngine.MustSavepoint">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L45">MustSavepoint</a>
 					<a class="permalink" href="#PgEngine.MustSavepoint">&#xb6;</a>
 					
 					
@@ -1459,7 +1458,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.RemoveChainRunStatus">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L68">RemoveChainRunStatus</a>
+				<h3 id="PgEngine.RemoveChainRunStatus">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L69">RemoveChainRunStatus</a>
 					<a class="permalink" href="#PgEngine.RemoveChainRunStatus">&#xb6;</a>
 					
 					
@@ -1471,7 +1470,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L185">ResetRole</a>
+				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L187">ResetRole</a>
 					<a class="permalink" href="#PgEngine.ResetRole">&#xb6;</a>
 					
 					
@@ -1484,7 +1483,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.RollbackTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L36">RollbackTransaction</a>
+				<h3 id="PgEngine.RollbackTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L37">RollbackTransaction</a>
 					<a class="permalink" href="#PgEngine.RollbackTransaction">&#xb6;</a>
 					
 					
@@ -1497,7 +1496,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SelectChain">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L119">SelectChain</a>
+				<h3 id="PgEngine.SelectChain">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L120">SelectChain</a>
 					<a class="permalink" href="#PgEngine.SelectChain">&#xb6;</a>
 					
 					
@@ -1510,7 +1509,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SelectChains">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L93">SelectChains</a>
+				<h3 id="PgEngine.SelectChains">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L94">SelectChains</a>
 					<a class="permalink" href="#PgEngine.SelectChains">&#xb6;</a>
 					
 					
@@ -1523,7 +1522,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SelectIntervalChains">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L104">SelectIntervalChains</a>
+				<h3 id="PgEngine.SelectIntervalChains">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L105">SelectIntervalChains</a>
 					<a class="permalink" href="#PgEngine.SelectIntervalChains">&#xb6;</a>
 					
 					
@@ -1536,7 +1535,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SelectRebootChains">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L82">SelectRebootChains</a>
+				<h3 id="PgEngine.SelectRebootChains">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/access.go.html#L83">SelectRebootChains</a>
 					<a class="permalink" href="#PgEngine.SelectRebootChains">&#xb6;</a>
 					
 					
@@ -1549,7 +1548,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L195">SetCurrentTaskContext</a>
+				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L197">SetCurrentTaskContext</a>
 					<a class="permalink" href="#PgEngine.SetCurrentTaskContext">&#xb6;</a>
 					
 					
@@ -1562,7 +1561,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L175">SetRole</a>
+				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L177">SetRole</a>
 					<a class="permalink" href="#PgEngine.SetRole">&#xb6;</a>
 					
 					
@@ -1575,7 +1574,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.StartTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L16">StartTransaction</a>
+				<h3 id="PgEngine.StartTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L17">StartTransaction</a>
 					<a class="permalink" href="#PgEngine.StartTransaction">&#xb6;</a>
 					
 					

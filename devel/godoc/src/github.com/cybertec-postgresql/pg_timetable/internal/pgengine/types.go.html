@@ -124,19 +124,18 @@
 <span id="L67" class="ln">    67  </span>	ConnectString string    `db:&#34;database_connection&#34; yaml:&#34;connect_string,omitempty&#34;`
 <span id="L68" class="ln">    68  </span>	Timeout       int       `db:&#34;timeout&#34; yaml:&#34;timeout,omitempty&#34;` <span class="comment">// in milliseconds</span>
 <span id="L69" class="ln">    69  </span>	StartedAt     time.Time `db:&#34;-&#34; yaml:&#34;-&#34;`
-<span id="L70" class="ln">    70  </span>	Duration      int64     `db:&#34;-&#34; yaml:&#34;-&#34;` <span class="comment">// in microseconds</span>
-<span id="L71" class="ln">    71  </span>	Vxid          int64     `db:&#34;-&#34; yaml:&#34;-&#34;`
-<span id="L72" class="ln">    72  </span>}
-<span id="L73" class="ln">    73  </span>
-<span id="L74" class="ln">    74  </span>func (task *ChainTask) IsRemote() bool {
-<span id="L75" class="ln">    75  </span>	return strings.TrimSpace(task.ConnectString) != &#34;&#34;
-<span id="L76" class="ln">    76  </span>}
-<span id="L77" class="ln">    77  </span>
-<span id="L78" class="ln">    78  </span><span class="comment">// String returns a log-friendly identifier, e.g. &#34;49|Check_if_file_exist&#34;.</span>
-<span id="L79" class="ln">    79  </span>func (task ChainTask) String() string {
-<span id="L80" class="ln">    80  </span>	return logIdent(task.TaskID, task.TaskName)
-<span id="L81" class="ln">    81  </span>}
-<span id="L82" class="ln">    82  </span>
+<span id="L70" class="ln">    70  </span>	Vxid          int64     `db:&#34;-&#34; yaml:&#34;-&#34;`
+<span id="L71" class="ln">    71  </span>}
+<span id="L72" class="ln">    72  </span>
+<span id="L73" class="ln">    73  </span>func (task *ChainTask) IsRemote() bool {
+<span id="L74" class="ln">    74  </span>	return strings.TrimSpace(task.ConnectString) != &#34;&#34;
+<span id="L75" class="ln">    75  </span>}
+<span id="L76" class="ln">    76  </span>
+<span id="L77" class="ln">    77  </span><span class="comment">// String returns a log-friendly identifier, e.g. &#34;49|Check_if_file_exist&#34;.</span>
+<span id="L78" class="ln">    78  </span>func (task ChainTask) String() string {
+<span id="L79" class="ln">    79  </span>	return logIdent(task.TaskID, task.TaskName)
+<span id="L80" class="ln">    80  </span>}
+<span id="L81" class="ln">    81  </span>
 </pre><p></p>
 
 <div id="footer">

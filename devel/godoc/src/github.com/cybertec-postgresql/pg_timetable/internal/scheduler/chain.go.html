@@ -379,18 +379,17 @@
 <span id="L322" class="ln">   322  </span>	case &#34;BUILTIN&#34;:
 <span id="L323" class="ln">   323  </span>		err = sch.executeBuiltinTask(ctx, task, paramValues)
 <span id="L324" class="ln">   324  </span>	}
-<span id="L325" class="ln">   325  </span>	task.Duration = time.Since(task.StartedAt).Microseconds()
-<span id="L326" class="ln">   326  </span>	returnCode := 0
-<span id="L327" class="ln">   327  </span>	if err != nil {
-<span id="L328" class="ln">   328  </span>		returnCode = -1
-<span id="L329" class="ln">   329  </span>		taskSpan.RecordError(err)
-<span id="L330" class="ln">   330  </span>		taskSpan.SetStatus(codes.Error, err.Error())
-<span id="L331" class="ln">   331  </span>	}
-<span id="L332" class="ln">   332  </span>	taskSpan.SetAttributes(attribute.Int(&#34;task.return_code&#34;, returnCode))
-<span id="L333" class="ln">   333  </span>	sch.provider.RecordTaskExecuted(ctx, sch.Config().ClientName, task.Kind)
-<span id="L334" class="ln">   334  </span>	return err
-<span id="L335" class="ln">   335  </span>}
-<span id="L336" class="ln">   336  </span>
+<span id="L325" class="ln">   325  </span>	returnCode := 0
+<span id="L326" class="ln">   326  </span>	if err != nil {
+<span id="L327" class="ln">   327  </span>		returnCode = -1
+<span id="L328" class="ln">   328  </span>		taskSpan.RecordError(err)
+<span id="L329" class="ln">   329  </span>		taskSpan.SetStatus(codes.Error, err.Error())
+<span id="L330" class="ln">   330  </span>	}
+<span id="L331" class="ln">   331  </span>	taskSpan.SetAttributes(attribute.Int(&#34;task.return_code&#34;, returnCode))
+<span id="L332" class="ln">   332  </span>	sch.provider.RecordTaskExecuted(ctx, sch.Config().ClientName, task.Kind)
+<span id="L333" class="ln">   333  </span>	return err
+<span id="L334" class="ln">   334  </span>}
+<span id="L335" class="ln">   335  </span>
 </pre><p></p>
 
 <div id="footer">

@@ -242,57 +242,60 @@
 <span id="L185" class="ln">   185  </span>	assert.Error(t, err)
 <span id="L186" class="ln">   186  </span>
 <span id="L187" class="ln">   187  </span>	mockPool.ExpectExec(&#34;correct json&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 0))
-<span id="L188" class="ln">   188  </span>	err = pge.ExecuteSQLCommand(ctx, mockPool, &amp;pgengine.ChainTask{Command: &#34;correct json&#34;}, []string{})
-<span id="L189" class="ln">   189  </span>	assert.NoError(t, err)
-<span id="L190" class="ln">   190  </span>
-<span id="L191" class="ln">   191  </span>	mockPool.ExpectExec(&#34;correct json&#34;).WithArgs(&#34;John&#34;, 30.0, nil).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 0))
-<span id="L192" class="ln">   192  </span>	err = pge.ExecuteSQLCommand(ctx, mockPool, &amp;pgengine.ChainTask{Command: &#34;correct json&#34;}, []string{`[&#34;John&#34;, 30, null]`})
-<span id="L193" class="ln">   193  </span>	assert.NoError(t, err)
-<span id="L194" class="ln">   194  </span>
-<span id="L195" class="ln">   195  </span>	mockPool.ExpectExec(&#34;incorrect json&#34;).WillReturnError(json.Unmarshal([]byte(&#34;foo&#34;), &amp;struct{}{}))
-<span id="L196" class="ln">   196  </span>	err = pge.ExecuteSQLCommand(ctx, mockPool, &amp;pgengine.ChainTask{Command: &#34;incorrect json&#34;}, []string{&#34;foo&#34;})
-<span id="L197" class="ln">   197  </span>	assert.Error(t, err)
-<span id="L198" class="ln">   198  </span>}
-<span id="L199" class="ln">   199  </span>
-<span id="L200" class="ln">   200  </span>func TestGetChainElements(t *testing.T) {
-<span id="L201" class="ln">   201  </span>	initmockdb(t)
+<span id="L188" class="ln">   188  </span>	taskEmptyArgs := &amp;pgengine.ChainTask{Command: &#34;correct json&#34;}
+<span id="L189" class="ln">   189  </span>	err = pge.ExecuteSQLCommand(ctx, mockPool, taskEmptyArgs, []string{})
+<span id="L190" class="ln">   190  </span>	assert.NoError(t, err)
+<span id="L191" class="ln">   191  </span>
+<span id="L192" class="ln">   192  </span>	mockPool.ExpectExec(&#34;correct json&#34;).WithArgs(&#34;John&#34;, 30.0, nil).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 0))
+<span id="L193" class="ln">   193  </span>	taskWithArgs := &amp;pgengine.ChainTask{Command: &#34;correct json&#34;}
+<span id="L194" class="ln">   194  </span>	err = pge.ExecuteSQLCommand(ctx, mockPool, taskWithArgs, []string{`[&#34;John&#34;, 30, null]`})
+<span id="L195" class="ln">   195  </span>	assert.NoError(t, err)
+<span id="L196" class="ln">   196  </span>	assert.False(t, taskWithArgs.StartedAt.IsZero()) <span class="comment">// must be set to current time for every new parameter</span>
+<span id="L197" class="ln">   197  </span>
+<span id="L198" class="ln">   198  </span>	mockPool.ExpectExec(&#34;incorrect json&#34;).WillReturnError(json.Unmarshal([]byte(&#34;foo&#34;), &amp;struct{}{}))
+<span id="L199" class="ln">   199  </span>	err = pge.ExecuteSQLCommand(ctx, mockPool, &amp;pgengine.ChainTask{Command: &#34;incorrect json&#34;}, []string{&#34;foo&#34;})
+<span id="L200" class="ln">   200  </span>	assert.Error(t, err)
+<span id="L201" class="ln">   201  </span>}
 <span id="L202" class="ln">   202  </span>
-<span id="L203" class="ln">   203  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L204" class="ln">   204  </span>
-<span id="L205" class="ln">   205  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnError(errors.New(&#34;error&#34;))
-<span id="L206" class="ln">   206  </span>	assert.Error(t, pge.GetChainElements(ctx, &amp;[]pgengine.ChainTask{}, 0))
+<span id="L203" class="ln">   203  </span>func TestGetChainElements(t *testing.T) {
+<span id="L204" class="ln">   204  </span>	initmockdb(t)
+<span id="L205" class="ln">   205  </span>
+<span id="L206" class="ln">   206  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
 <span id="L207" class="ln">   207  </span>
-<span id="L208" class="ln">   208  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnRows(
-<span id="L209" class="ln">   209  </span>		pgxmock.NewRows([]string{&#34;task_id&#34;, &#34;task_name&#34;, &#34;command&#34;, &#34;kind&#34;, &#34;run_as&#34;,
-<span id="L210" class="ln">   210  </span>			&#34;ignore_error&#34;, &#34;autonomous&#34;, &#34;database_connection&#34;, &#34;timeout&#34;}).
-<span id="L211" class="ln">   211  </span>			AddRow(24, &#34;task1&#34;, &#34;foo&#34;, &#34;sql&#34;, &#34;user&#34;, false, false, &#34;postgres://foo@boo/bar&#34;, 0))
-<span id="L212" class="ln">   212  </span>	assert.NoError(t, pge.GetChainElements(ctx, &amp;[]pgengine.ChainTask{}, 0))
-<span id="L213" class="ln">   213  </span>
-<span id="L214" class="ln">   214  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnError(errors.New(&#34;error&#34;))
-<span id="L215" class="ln">   215  </span>	assert.Error(t, pge.GetChainParamValues(ctx, &amp;[]string{}, &amp;pgengine.ChainTask{}))
+<span id="L208" class="ln">   208  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L209" class="ln">   209  </span>	assert.Error(t, pge.GetChainElements(ctx, &amp;[]pgengine.ChainTask{}, 0))
+<span id="L210" class="ln">   210  </span>
+<span id="L211" class="ln">   211  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnRows(
+<span id="L212" class="ln">   212  </span>		pgxmock.NewRows([]string{&#34;task_id&#34;, &#34;task_name&#34;, &#34;command&#34;, &#34;kind&#34;, &#34;run_as&#34;,
+<span id="L213" class="ln">   213  </span>			&#34;ignore_error&#34;, &#34;autonomous&#34;, &#34;database_connection&#34;, &#34;timeout&#34;}).
+<span id="L214" class="ln">   214  </span>			AddRow(24, &#34;task1&#34;, &#34;foo&#34;, &#34;sql&#34;, &#34;user&#34;, false, false, &#34;postgres://foo@boo/bar&#34;, 0))
+<span id="L215" class="ln">   215  </span>	assert.NoError(t, pge.GetChainElements(ctx, &amp;[]pgengine.ChainTask{}, 0))
 <span id="L216" class="ln">   216  </span>
-<span id="L217" class="ln">   217  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{&#34;s&#34;}).AddRow(&#34;foo&#34;))
-<span id="L218" class="ln">   218  </span>	assert.NoError(t, pge.GetChainParamValues(ctx, &amp;[]string{}, &amp;pgengine.ChainTask{}))
-<span id="L219" class="ln">   219  </span>}
-<span id="L220" class="ln">   220  </span>
-<span id="L221" class="ln">   221  </span>func TestSetRole(t *testing.T) {
-<span id="L222" class="ln">   222  </span>	initmockdb(t)
+<span id="L217" class="ln">   217  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L218" class="ln">   218  </span>	assert.Error(t, pge.GetChainParamValues(ctx, &amp;[]string{}, &amp;pgengine.ChainTask{}))
+<span id="L219" class="ln">   219  </span>
+<span id="L220" class="ln">   220  </span>	mockPool.ExpectQuery(&#34;SELECT&#34;).WithArgs(0).WillReturnRows(pgxmock.NewRows([]string{&#34;s&#34;}).AddRow(&#34;foo&#34;))
+<span id="L221" class="ln">   221  </span>	assert.NoError(t, pge.GetChainParamValues(ctx, &amp;[]string{}, &amp;pgengine.ChainTask{}))
+<span id="L222" class="ln">   222  </span>}
 <span id="L223" class="ln">   223  </span>
-<span id="L224" class="ln">   224  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L225" class="ln">   225  </span>	mockPool.ExpectBegin()
-<span id="L226" class="ln">   226  </span>	mockPool.ExpectExec(&#34;SET ROLE&#34;).WillReturnError(errors.New(&#34;error&#34;))
-<span id="L227" class="ln">   227  </span>	tx, err := mockPool.Begin(ctx)
-<span id="L228" class="ln">   228  </span>	assert.NoError(t, err)
-<span id="L229" class="ln">   229  </span>	assert.Error(t, pge.SetRole(ctx, tx, &#34;foo&#34;))
-<span id="L230" class="ln">   230  </span>	assert.NoError(t, pge.SetRole(ctx, tx, &#34;&#34;), &#34;Should ignore empty run_as&#34;)
-<span id="L231" class="ln">   231  </span>
-<span id="L232" class="ln">   232  </span>	mockPool.ExpectBegin()
-<span id="L233" class="ln">   233  </span>	mockPool.ExpectExec(&#34;RESET ROLE&#34;).WillReturnError(errors.New(&#34;error&#34;))
-<span id="L234" class="ln">   234  </span>	tx, err = mockPool.Begin(ctx)
-<span id="L235" class="ln">   235  </span>	assert.NoError(t, err)
-<span id="L236" class="ln">   236  </span>	pge.ResetRole(ctx, tx)
-<span id="L237" class="ln">   237  </span>}
-<span id="L238" class="ln">   238  </span>
+<span id="L224" class="ln">   224  </span>func TestSetRole(t *testing.T) {
+<span id="L225" class="ln">   225  </span>	initmockdb(t)
+<span id="L226" class="ln">   226  </span>
+<span id="L227" class="ln">   227  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L228" class="ln">   228  </span>	mockPool.ExpectBegin()
+<span id="L229" class="ln">   229  </span>	mockPool.ExpectExec(&#34;SET ROLE&#34;).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L230" class="ln">   230  </span>	tx, err := mockPool.Begin(ctx)
+<span id="L231" class="ln">   231  </span>	assert.NoError(t, err)
+<span id="L232" class="ln">   232  </span>	assert.Error(t, pge.SetRole(ctx, tx, &#34;foo&#34;))
+<span id="L233" class="ln">   233  </span>	assert.NoError(t, pge.SetRole(ctx, tx, &#34;&#34;), &#34;Should ignore empty run_as&#34;)
+<span id="L234" class="ln">   234  </span>
+<span id="L235" class="ln">   235  </span>	mockPool.ExpectBegin()
+<span id="L236" class="ln">   236  </span>	mockPool.ExpectExec(&#34;RESET ROLE&#34;).WillReturnError(errors.New(&#34;error&#34;))
+<span id="L237" class="ln">   237  </span>	tx, err = mockPool.Begin(ctx)
+<span id="L238" class="ln">   238  </span>	assert.NoError(t, err)
+<span id="L239" class="ln">   239  </span>	pge.ResetRole(ctx, tx)
+<span id="L240" class="ln">   240  </span>}
+<span id="L241" class="ln">   241  </span>
 </pre><p></p>
 
 <div id="footer">
