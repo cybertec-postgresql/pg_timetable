@@ -252,8 +252,10 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 			l.Info("Task executed successfully")
 		}
 
-		// we use background context here because current one (chainCtx) might be cancelled
-		bctx = log.WithLogger(ctx, l)
+		// we detach the context from cancellation here because the current one
+		// (chainCtx and its parent ctx) might be cancelled, e.g. by notify_chain_stop().
+		// Cleanup operations below must still run to keep timetable.active_chain consistent.
+		bctx = log.WithLogger(context.WithoutCancel(ctx), l)
 		if err != nil {
 			if !task.IgnoreError {
 				chainL.Error("Chain failed")
@@ -267,7 +269,7 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 			l.Info("Ignoring task failure")
 		}
 	}
-	bctx = log.WithLogger(chainCtx, chainL)
+	bctx = log.WithLogger(context.WithoutCancel(chainCtx), chainL)
 	sch.pgengine.CommitTransaction(bctx, tx)
 	sch.provider.RecordChainDuration(ctx, time.Since(chainStart).Seconds(), sch.Config().ClientName)
 	chainL.Info("Chain executed successfully")
