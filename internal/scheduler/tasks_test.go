@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
@@ -19,15 +20,19 @@ func TestExecuteTask(t *testing.T) {
 	pge := pgengine.NewDB(mock, "--log-database-level=none")
 	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
-	et := func(task string, params []string) (err error) {
-		err = mocksch.executeBuiltinTask(context.TODO(), &pgengine.ChainTask{Command: task}, params)
+	task := &pgengine.ChainTask{Command: "NoOp"}
+	et := func(cmd string, params []string) (err error) {
+		task.Command = cmd
+		err = mocksch.executeBuiltinTask(context.TODO(), task, params)
 		return
 	}
 
 	a.Error(et("foo", []string{}))
 
 	a.Error(et("Sleep", []string{"foo"}))
+	a.False(task.StartedAt.IsZero()) // must be set to current time for every new parameter
 	a.NoError(et("Sleep", []string{"1"}))
+	a.GreaterOrEqual(time.Since(task.StartedAt), time.Second)
 
 	a.NoError(et("NoOp", []string{}))
 	a.NoError(et("NoOp", []string{"foo", "bar"}))

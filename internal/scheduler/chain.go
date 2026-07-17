@@ -322,7 +322,6 @@ func (sch *Scheduler) executeTask(ctx context.Context, tx pgx.Tx, task *pgengine
 	case "BUILTIN":
 		err = sch.executeBuiltinTask(ctx, task, paramValues)
 	}
-	task.Duration = time.Since(task.StartedAt).Microseconds()
 	returnCode := 0
 	if err != nil {
 		returnCode = -1
