@@ -24,9 +24,9 @@ type testCommander struct{}
 // overwrite CombinedOutput function of os/exec so only parameter syntax and return codes are checked...
 func (c testCommander) CombinedOutput(_ context.Context, command string, args ...string) ([]byte, error) {
 	if strings.HasPrefix(command, "ping") {
-		return []byte(fmt.Sprint(command, args)), nil
+		return fmt.Append(nil, command, args), nil
 	}
-	return []byte(fmt.Sprintf("Command %s not found", command)), &exec.Error{Name: command, Err: exec.ErrNotFound}
+	return fmt.Appendf(nil, "Command %s not found", command), &exec.Error{Name: command, Err: exec.ErrNotFound}
 }
 
 func TestShellCommandDuration(t *testing.T) {

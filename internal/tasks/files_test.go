@@ -19,7 +19,7 @@ var ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http
 	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=\"%s\"", "test.txt"))
 	bw := bufio.NewWriterSize(w, 4096)
-	for i := 0; i < 4096; i++ {
+	for i := range 4096 {
 		_, _ = bw.Write([]byte{byte(i)})
 	}
 	_ = bw.Flush()

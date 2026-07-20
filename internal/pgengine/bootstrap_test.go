@@ -50,7 +50,7 @@ func TestExecuteSchemaScripts(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		mockPool.ExpectQuery("SELECT EXISTS").WillReturnRows(pgxmock.NewRows([]string{"exists"}).AddRow(false))
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			mockPool.ExpectExec(".*").WillReturnResult(pgxmock.NewResult("EXECUTE", 1))
 		}
 		assert.NoError(t, mockpge.ExecuteSchemaScripts(ctx))

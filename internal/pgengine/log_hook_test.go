@@ -59,8 +59,7 @@ func TestCancelledContext(t *testing.T) {
 }
 
 func TestFireError(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	h := NewHook(ctx, &PgEngine{}, "debug")
 	err := errors.New("fire error")
 	go func() { h.lastError <- err }()
