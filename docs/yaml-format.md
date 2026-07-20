@@ -29,6 +29,7 @@ chains:
         ignore_error: false                               # Optional: ignore_error (BOOLEAN), default: false
         autonomous: false                                 # Optional: autonomous (BOOLEAN), default: false
         timeout: 5000                                     # Optional: timeout in milliseconds (INTEGER)
+        live: true                                        # Optional: live (BOOLEAN), default: true; set false to skip the task
         
       - name: "task-2"
         kind: "PROGRAM"
@@ -66,6 +67,7 @@ chains:
 | `ignore_error` | `ignore_error` | BOOLEAN | `false` | Continue on error |
 | `autonomous` | `autonomous` | BOOLEAN | `false` | Execute outside transaction |
 | `timeout` | `timeout` | INTEGER | `0` | Task timeout (ms) |
+| `live` | `live` | BOOLEAN | `true` | Whether task is executed; disabled tasks are skipped |
 
 ## Task Ordering
 

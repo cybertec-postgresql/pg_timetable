@@ -74,6 +74,7 @@ Stores individual tasks within chains.
 | `ignore_error` | BOOLEAN | Continue chain even if task fails |
 | `autonomous` | BOOLEAN | Execute outside chain transaction |
 | `timeout` | INTEGER | Task timeout in milliseconds (0 = no timeout) |
+| `live` | BOOLEAN | Task is executed only when TRUE (default), set FALSE to skip |
 
 #### Table: timetable.parameter
 

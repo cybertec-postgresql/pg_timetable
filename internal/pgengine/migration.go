@@ -153,6 +153,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00733.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00792 Add ability to enable and disable tasks",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00792.sql")
+			},
+		},
 		// adding new migration here, update "timetable"."migration" in "sql/init.sql"
 		// and "dbapi" variable in main.go!
 
