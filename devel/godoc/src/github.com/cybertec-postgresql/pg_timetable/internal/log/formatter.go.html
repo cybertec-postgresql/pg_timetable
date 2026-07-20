@@ -185,11 +185,11 @@
 <span id="L128" class="ln">   128  </span>
 <span id="L129" class="ln">   129  </span>func trimFilename(s string) string {
 <span id="L130" class="ln">   130  </span>	const sub = &#34;pg_timetable/internal/&#34;
-<span id="L131" class="ln">   131  </span>	idx := strings.Index(s, sub)
-<span id="L132" class="ln">   132  </span>	if idx == -1 {
+<span id="L131" class="ln">   131  </span>	_, after, ok := strings.Cut(s, sub)
+<span id="L132" class="ln">   132  </span>	if !ok {
 <span id="L133" class="ln">   133  </span>		return s
 <span id="L134" class="ln">   134  </span>	}
-<span id="L135" class="ln">   135  </span>	return s[idx+len(sub):]
+<span id="L135" class="ln">   135  </span>	return after
 <span id="L136" class="ln">   136  </span>}
 <span id="L137" class="ln">   137  </span>
 <span id="L138" class="ln">   138  </span>func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry) {

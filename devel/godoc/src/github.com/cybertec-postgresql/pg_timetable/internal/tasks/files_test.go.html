@@ -76,7 +76,7 @@
 <span id="L19" class="ln">    19  </span>	}
 <span id="L20" class="ln">    20  </span>	w.Header().Set(&#34;Content-Disposition&#34;, fmt.Sprintf(&#34;attachment;filename=\&#34;%s\&#34;&#34;, &#34;test.txt&#34;))
 <span id="L21" class="ln">    21  </span>	bw := bufio.NewWriterSize(w, 4096)
-<span id="L22" class="ln">    22  </span>	for i := 0; i &lt; 4096; i++ {
+<span id="L22" class="ln">    22  </span>	for i := range 4096 {
 <span id="L23" class="ln">    23  </span>		_, _ = bw.Write([]byte{byte(i)})
 <span id="L24" class="ln">    24  </span>	}
 <span id="L25" class="ln">    25  </span>	_ = bw.Flush()

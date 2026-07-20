@@ -107,7 +107,7 @@
 <span id="L50" class="ln">    50  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 <span id="L51" class="ln">    51  </span>		defer cancel()
 <span id="L52" class="ln">    52  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L53" class="ln">    53  </span>		for i := 0; i &lt; 5; i++ {
+<span id="L53" class="ln">    53  </span>		for range 5 {
 <span id="L54" class="ln">    54  </span>			mockPool.ExpectExec(&#34;.*&#34;).WillReturnResult(pgxmock.NewResult(&#34;EXECUTE&#34;, 1))
 <span id="L55" class="ln">    55  </span>		}
 <span id="L56" class="ln">    56  </span>		assert.NoError(t, mockpge.ExecuteSchemaScripts(ctx))
@@ -312,7 +312,7 @@
 <span id="L255" class="ln">   255  </span>			WithArgs(anyArgs(9)...).
 <span id="L256" class="ln">   256  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
 <span id="L257" class="ln">   257  </span>		mockPool.ExpectQuery(&#34;INSERT INTO timetable\\.task&#34;).
-<span id="L258" class="ln">   258  </span>			WithArgs(anyArgs(10)...).
+<span id="L258" class="ln">   258  </span>			WithArgs(anyArgs(11)...).
 <span id="L259" class="ln">   259  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
 <span id="L260" class="ln">   260  </span>
 <span id="L261" class="ln">   261  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)
@@ -390,7 +390,7 @@
 <span id="L333" class="ln">   333  </span>			WithArgs(anyArgs(9)...).
 <span id="L334" class="ln">   334  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
 <span id="L335" class="ln">   335  </span>		mockPool.ExpectQuery(&#34;INSERT INTO timetable\\.task&#34;).
-<span id="L336" class="ln">   336  </span>			WithArgs(anyArgs(10)...).
+<span id="L336" class="ln">   336  </span>			WithArgs(anyArgs(11)...).
 <span id="L337" class="ln">   337  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
 <span id="L338" class="ln">   338  </span>
 <span id="L339" class="ln">   339  </span>		err = mockpge.ExecuteFileScript(context.Background(), cmdOpts, yamlFile)

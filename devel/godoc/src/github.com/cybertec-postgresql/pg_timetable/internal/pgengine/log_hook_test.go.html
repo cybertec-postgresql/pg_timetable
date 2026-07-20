@@ -116,15 +116,14 @@
 <span id="L59" class="ln">    59  </span>}
 <span id="L60" class="ln">    60  </span>
 <span id="L61" class="ln">    61  </span>func TestFireError(t *testing.T) {
-<span id="L62" class="ln">    62  </span>	ctx, cancel := context.WithCancel(context.Background())
-<span id="L63" class="ln">    63  </span>	defer cancel()
-<span id="L64" class="ln">    64  </span>	h := NewHook(ctx, &amp;PgEngine{}, &#34;debug&#34;)
-<span id="L65" class="ln">    65  </span>	err := errors.New(&#34;fire error&#34;)
-<span id="L66" class="ln">    66  </span>	go func() { h.lastError &lt;- err }()
-<span id="L67" class="ln">    67  </span>	&lt;-time.After(time.Second)
-<span id="L68" class="ln">    68  </span>	assert.Equal(t, err, h.Fire(&amp;logrus.Entry{}))
-<span id="L69" class="ln">    69  </span>}
-<span id="L70" class="ln">    70  </span>
+<span id="L62" class="ln">    62  </span>	ctx := t.Context()
+<span id="L63" class="ln">    63  </span>	h := NewHook(ctx, &amp;PgEngine{}, &#34;debug&#34;)
+<span id="L64" class="ln">    64  </span>	err := errors.New(&#34;fire error&#34;)
+<span id="L65" class="ln">    65  </span>	go func() { h.lastError &lt;- err }()
+<span id="L66" class="ln">    66  </span>	&lt;-time.After(time.Second)
+<span id="L67" class="ln">    67  </span>	assert.Equal(t, err, h.Fire(&amp;logrus.Entry{}))
+<span id="L68" class="ln">    68  </span>}
+<span id="L69" class="ln">    69  </span>
 </pre><p></p>
 
 <div id="footer">

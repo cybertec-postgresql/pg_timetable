@@ -165,1117 +165,1171 @@
 <span id="L108" class="ln">   108  </span>		require.NoError(t, err)
 <span id="L109" class="ln">   109  </span>		assert.Equal(t, &#34;0 1 * * *&#34;, schedule)
 <span id="L110" class="ln">   110  </span>	})
-<span id="L111" class="ln">   111  </span>}
-<span id="L112" class="ln">   112  </span>
-<span id="L113" class="ln">   113  </span>func TestYamlParameterHandling(t *testing.T) {
-<span id="L114" class="ln">   114  </span>	<span class="comment">// Test parsing and validation of different parameter formats</span>
-<span id="L115" class="ln">   115  </span>	yamlContent := `chains:
-<span id="L116" class="ln">   116  </span>  - name: &#34;test-parameters&#34;
-<span id="L117" class="ln">   117  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L118" class="ln">   118  </span>    tasks:
-<span id="L119" class="ln">   119  </span>      - name: &#34;sql-test&#34;
-<span id="L120" class="ln">   120  </span>        kind: &#34;SQL&#34;
-<span id="L121" class="ln">   121  </span>        command: &#34;SELECT $1, $2, $3&#34;
-<span id="L122" class="ln">   122  </span>        parameters:
-<span id="L123" class="ln">   123  </span>          - [&#34;value1&#34;, 42, true]
-<span id="L124" class="ln">   124  </span>          - [&#34;value2&#34;, 99, false]
-<span id="L125" class="ln">   125  </span>      
-<span id="L126" class="ln">   126  </span>      - name: &#34;program-test&#34;
-<span id="L127" class="ln">   127  </span>        kind: &#34;PROGRAM&#34;
-<span id="L128" class="ln">   128  </span>        command: &#34;echo&#34;
-<span id="L129" class="ln">   129  </span>        parameters:
-<span id="L130" class="ln">   130  </span>          - [&#34;-n&#34;, &#34;hello world&#34;]
-<span id="L131" class="ln">   131  </span>          - [&#34;goodbye&#34;]
-<span id="L132" class="ln">   132  </span>      
-<span id="L133" class="ln">   133  </span>      - name: &#34;sleep-test&#34;
-<span id="L134" class="ln">   134  </span>        kind: &#34;BUILTIN&#34;
-<span id="L135" class="ln">   135  </span>        command: &#34;Sleep&#34;
-<span id="L136" class="ln">   136  </span>        parameters:
-<span id="L137" class="ln">   137  </span>          - 5
-<span id="L138" class="ln">   138  </span>          - 10
-<span id="L139" class="ln">   139  </span>      
-<span id="L140" class="ln">   140  </span>      - name: &#34;log-test&#34;
-<span id="L141" class="ln">   141  </span>        kind: &#34;BUILTIN&#34;
-<span id="L142" class="ln">   142  </span>        command: &#34;Log&#34;
-<span id="L143" class="ln">   143  </span>        parameters:
-<span id="L144" class="ln">   144  </span>          - &#34;warning message&#34;
-<span id="L145" class="ln">   145  </span>          - {&#34;level&#34;: &#34;WARNING&#34;, &#34;message&#34;: &#34;test&#34;}
-<span id="L146" class="ln">   146  </span>`
-<span id="L147" class="ln">   147  </span>
-<span id="L148" class="ln">   148  </span>	<span class="comment">// Create temporary file with content</span>
-<span id="L149" class="ln">   149  </span>	tmpfile, err := os.CreateTemp(&#34;&#34;, &#34;test-*.yaml&#34;)
-<span id="L150" class="ln">   150  </span>	require.NoError(t, err)
-<span id="L151" class="ln">   151  </span>	defer os.Remove(tmpfile.Name())
-<span id="L152" class="ln">   152  </span>
-<span id="L153" class="ln">   153  </span>	_, err = tmpfile.Write([]byte(yamlContent))
-<span id="L154" class="ln">   154  </span>	require.NoError(t, err)
-<span id="L155" class="ln">   155  </span>	err = tmpfile.Close()
-<span id="L156" class="ln">   156  </span>	require.NoError(t, err)
-<span id="L157" class="ln">   157  </span>
-<span id="L158" class="ln">   158  </span>	<span class="comment">// Parse the YAML</span>
-<span id="L159" class="ln">   159  </span>	yamlConfig, err := pgengine.ParseYamlFile(tmpfile.Name())
-<span id="L160" class="ln">   160  </span>	require.NoError(t, err)
-<span id="L161" class="ln">   161  </span>
-<span id="L162" class="ln">   162  </span>	<span class="comment">// Check parsed content</span>
-<span id="L163" class="ln">   163  </span>	require.Equal(t, 1, len(yamlConfig.Chains))
-<span id="L164" class="ln">   164  </span>	chain := yamlConfig.Chains[0]
-<span id="L165" class="ln">   165  </span>	require.Equal(t, &#34;test-parameters&#34;, chain.ChainName)
-<span id="L166" class="ln">   166  </span>	require.Equal(t, 4, len(chain.Tasks))
-<span id="L167" class="ln">   167  </span>
-<span id="L168" class="ln">   168  </span>	<span class="comment">// Check SQL task parameters</span>
-<span id="L169" class="ln">   169  </span>	sqlTask := chain.Tasks[0]
-<span id="L170" class="ln">   170  </span>	require.Equal(t, &#34;SQL&#34;, sqlTask.Kind)
-<span id="L171" class="ln">   171  </span>	require.Equal(t, 2, len(sqlTask.Parameters))
-<span id="L172" class="ln">   172  </span>	sqlParam1, ok := sqlTask.Parameters[0].([]any)
-<span id="L173" class="ln">   173  </span>	require.True(t, ok, &#34;SQL parameter should be an array&#34;)
-<span id="L174" class="ln">   174  </span>	assert.Equal(t, 3, len(sqlParam1))
-<span id="L175" class="ln">   175  </span>
-<span id="L176" class="ln">   176  </span>	<span class="comment">// Check PROGRAM task parameters</span>
-<span id="L177" class="ln">   177  </span>	programTask := chain.Tasks[1]
-<span id="L178" class="ln">   178  </span>	require.Equal(t, &#34;PROGRAM&#34;, programTask.Kind)
-<span id="L179" class="ln">   179  </span>	require.Equal(t, 2, len(programTask.Parameters))
-<span id="L180" class="ln">   180  </span>
-<span id="L181" class="ln">   181  </span>	<span class="comment">// Check BUILTIN Sleep task parameters</span>
-<span id="L182" class="ln">   182  </span>	sleepTask := chain.Tasks[2]
-<span id="L183" class="ln">   183  </span>	require.Equal(t, &#34;BUILTIN&#34;, sleepTask.Kind)
-<span id="L184" class="ln">   184  </span>	require.Equal(t, &#34;Sleep&#34;, sleepTask.Command)
-<span id="L185" class="ln">   185  </span>	require.Equal(t, 2, len(sleepTask.Parameters))
-<span id="L186" class="ln">   186  </span>	sleepParam1, ok := sleepTask.Parameters[0].(int)
-<span id="L187" class="ln">   187  </span>	require.True(t, ok, &#34;Sleep parameter should be an integer&#34;)
-<span id="L188" class="ln">   188  </span>	assert.Equal(t, 5, sleepParam1)
-<span id="L189" class="ln">   189  </span>
-<span id="L190" class="ln">   190  </span>	<span class="comment">// Check BUILTIN Log task parameters</span>
-<span id="L191" class="ln">   191  </span>	logTask := chain.Tasks[3]
-<span id="L192" class="ln">   192  </span>	require.Equal(t, &#34;BUILTIN&#34;, logTask.Kind)
-<span id="L193" class="ln">   193  </span>	require.Equal(t, &#34;Log&#34;, logTask.Command)
-<span id="L194" class="ln">   194  </span>	require.Equal(t, 2, len(logTask.Parameters))
-<span id="L195" class="ln">   195  </span>	logParam1, ok := logTask.Parameters[0].(string)
-<span id="L196" class="ln">   196  </span>	require.True(t, ok, &#34;Log parameter can be a string&#34;)
-<span id="L197" class="ln">   197  </span>	assert.Equal(t, &#34;warning message&#34;, logParam1)
-<span id="L198" class="ln">   198  </span>}
-<span id="L199" class="ln">   199  </span>
-<span id="L200" class="ln">   200  </span>func TestParseYamlFile(t *testing.T) {
-<span id="L201" class="ln">   201  </span>	t.Run(&#34;Valid YAML file&#34;, func(t *testing.T) {
-<span id="L202" class="ln">   202  </span>		yamlContent := `chains:
-<span id="L203" class="ln">   203  </span>  - name: &#34;test-chain&#34;
-<span id="L204" class="ln">   204  </span>    schedule: &#34;0 * * * *&#34;
-<span id="L205" class="ln">   205  </span>    live: true
-<span id="L206" class="ln">   206  </span>    max_instances: 2
-<span id="L207" class="ln">   207  </span>    timeout: 300
-<span id="L208" class="ln">   208  </span>    self_destruct: true
-<span id="L209" class="ln">   209  </span>    exclusive: true
-<span id="L210" class="ln">   210  </span>    client_name: &#34;test-client&#34;
-<span id="L211" class="ln">   211  </span>    on_error: &#34;RETRY&#34;
-<span id="L212" class="ln">   212  </span>    tasks:
-<span id="L213" class="ln">   213  </span>      - name: &#34;test-task&#34;
-<span id="L214" class="ln">   214  </span>        kind: &#34;SQL&#34;
-<span id="L215" class="ln">   215  </span>        command: &#34;SELECT 1&#34;
-<span id="L216" class="ln">   216  </span>        parameters: [&#34;param1&#34;, 42, true]
-<span id="L217" class="ln">   217  </span>        ignore_error: false
-<span id="L218" class="ln">   218  </span>        autonomous: false
-<span id="L219" class="ln">   219  </span>        timeout: 60
-<span id="L220" class="ln">   220  </span>        run_as: &#34;postgres&#34;
-<span id="L221" class="ln">   221  </span>        connect_string: &#34;test-db&#34;`
-<span id="L222" class="ln">   222  </span>
-<span id="L223" class="ln">   223  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L224" class="ln">   224  </span>		defer removeTempFile(t, tmpfile)
-<span id="L225" class="ln">   225  </span>
-<span id="L226" class="ln">   226  </span>		config, err := pgengine.ParseYamlFile(tmpfile)
-<span id="L227" class="ln">   227  </span>		require.NoError(t, err)
-<span id="L228" class="ln">   228  </span>		require.Len(t, config.Chains, 1)
-<span id="L229" class="ln">   229  </span>
-<span id="L230" class="ln">   230  </span>		chain := config.Chains[0]
-<span id="L231" class="ln">   231  </span>		assert.Equal(t, &#34;test-chain&#34;, chain.ChainName)
-<span id="L232" class="ln">   232  </span>		assert.Equal(t, &#34;0 * * * *&#34;, chain.Schedule)
-<span id="L233" class="ln">   233  </span>		assert.True(t, chain.Live)
-<span id="L234" class="ln">   234  </span>		assert.Equal(t, 2, chain.MaxInstances)
-<span id="L235" class="ln">   235  </span>		assert.Equal(t, 300, chain.Timeout)
-<span id="L236" class="ln">   236  </span>		assert.True(t, chain.SelfDestruct)
-<span id="L237" class="ln">   237  </span>		assert.True(t, chain.ExclusiveExecution)
-<span id="L238" class="ln">   238  </span>		assert.Equal(t, &#34;test-client&#34;, chain.ClientName)
-<span id="L239" class="ln">   239  </span>		assert.Equal(t, &#34;RETRY&#34;, chain.OnError)
-<span id="L240" class="ln">   240  </span>
-<span id="L241" class="ln">   241  </span>		require.Len(t, chain.Tasks, 1)
-<span id="L242" class="ln">   242  </span>		task := chain.Tasks[0]
-<span id="L243" class="ln">   243  </span>		assert.Equal(t, &#34;test-task&#34;, task.TaskName)
-<span id="L244" class="ln">   244  </span>		assert.Equal(t, &#34;SQL&#34;, task.Kind)
-<span id="L245" class="ln">   245  </span>		assert.Equal(t, &#34;SELECT 1&#34;, task.Command)
-<span id="L246" class="ln">   246  </span>		assert.False(t, task.IgnoreError)
-<span id="L247" class="ln">   247  </span>		assert.False(t, task.Autonomous)
-<span id="L248" class="ln">   248  </span>		assert.Equal(t, 60, task.Timeout)
-<span id="L249" class="ln">   249  </span>		assert.Equal(t, &#34;postgres&#34;, task.RunAs)
-<span id="L250" class="ln">   250  </span>		assert.Equal(t, &#34;test-db&#34;, task.ConnectString)
-<span id="L251" class="ln">   251  </span>	})
-<span id="L252" class="ln">   252  </span>
-<span id="L253" class="ln">   253  </span>	t.Run(&#34;File not found&#34;, func(t *testing.T) {
-<span id="L254" class="ln">   254  </span>		_, err := pgengine.ParseYamlFile(&#34;/non/existent/file.yaml&#34;)
-<span id="L255" class="ln">   255  </span>		assert.Error(t, err)
-<span id="L256" class="ln">   256  </span>		assert.Contains(t, err.Error(), &#34;file not found&#34;)
-<span id="L257" class="ln">   257  </span>	})
+<span id="L111" class="ln">   111  </span>
+<span id="L112" class="ln">   112  </span>	t.Run(&#34;Task live flag&#34;, func(t *testing.T) {
+<span id="L113" class="ln">   113  </span>		yamlContent := `chains:
+<span id="L114" class="ln">   114  </span>  - name: test-task-live
+<span id="L115" class="ln">   115  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L116" class="ln">   116  </span>    tasks:
+<span id="L117" class="ln">   117  </span>      - name: enabled-by-default
+<span id="L118" class="ln">   118  </span>        command: SELECT 1
+<span id="L119" class="ln">   119  </span>      - name: explicitly-enabled
+<span id="L120" class="ln">   120  </span>        command: SELECT 2
+<span id="L121" class="ln">   121  </span>        live: true
+<span id="L122" class="ln">   122  </span>      - name: disabled
+<span id="L123" class="ln">   123  </span>        command: SELECT 3
+<span id="L124" class="ln">   124  </span>        live: false`
+<span id="L125" class="ln">   125  </span>
+<span id="L126" class="ln">   126  </span>		tempFile := createTempYamlFile(t, yamlContent)
+<span id="L127" class="ln">   127  </span>		defer removeTempFile(t, tempFile)
+<span id="L128" class="ln">   128  </span>
+<span id="L129" class="ln">   129  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
+<span id="L130" class="ln">   130  </span>		require.NoError(t, err)
+<span id="L131" class="ln">   131  </span>
+<span id="L132" class="ln">   132  </span>		rows, err := pge.ConfigDb.Query(ctx,
+<span id="L133" class="ln">   133  </span>			`SELECT t.live FROM timetable.task t JOIN timetable.chain c ON c.chain_id = t.chain_id
+<span id="L134" class="ln">   134  </span>			 WHERE c.chain_name = $1 ORDER BY t.task_order`, &#34;test-task-live&#34;)
+<span id="L135" class="ln">   135  </span>		require.NoError(t, err)
+<span id="L136" class="ln">   136  </span>		lives, err := pgx.CollectRows(rows, pgx.RowTo[bool])
+<span id="L137" class="ln">   137  </span>		require.NoError(t, err)
+<span id="L138" class="ln">   138  </span>		assert.Equal(t, []bool{true, true, false}, lives)
+<span id="L139" class="ln">   139  </span>	})
+<span id="L140" class="ln">   140  </span>}
+<span id="L141" class="ln">   141  </span>
+<span id="L142" class="ln">   142  </span>func TestYamlParameterHandling(t *testing.T) {
+<span id="L143" class="ln">   143  </span>	<span class="comment">// Test parsing and validation of different parameter formats</span>
+<span id="L144" class="ln">   144  </span>	yamlContent := `chains:
+<span id="L145" class="ln">   145  </span>  - name: &#34;test-parameters&#34;
+<span id="L146" class="ln">   146  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L147" class="ln">   147  </span>    tasks:
+<span id="L148" class="ln">   148  </span>      - name: &#34;sql-test&#34;
+<span id="L149" class="ln">   149  </span>        kind: &#34;SQL&#34;
+<span id="L150" class="ln">   150  </span>        command: &#34;SELECT $1, $2, $3&#34;
+<span id="L151" class="ln">   151  </span>        parameters:
+<span id="L152" class="ln">   152  </span>          - [&#34;value1&#34;, 42, true]
+<span id="L153" class="ln">   153  </span>          - [&#34;value2&#34;, 99, false]
+<span id="L154" class="ln">   154  </span>      
+<span id="L155" class="ln">   155  </span>      - name: &#34;program-test&#34;
+<span id="L156" class="ln">   156  </span>        kind: &#34;PROGRAM&#34;
+<span id="L157" class="ln">   157  </span>        command: &#34;echo&#34;
+<span id="L158" class="ln">   158  </span>        parameters:
+<span id="L159" class="ln">   159  </span>          - [&#34;-n&#34;, &#34;hello world&#34;]
+<span id="L160" class="ln">   160  </span>          - [&#34;goodbye&#34;]
+<span id="L161" class="ln">   161  </span>      
+<span id="L162" class="ln">   162  </span>      - name: &#34;sleep-test&#34;
+<span id="L163" class="ln">   163  </span>        kind: &#34;BUILTIN&#34;
+<span id="L164" class="ln">   164  </span>        command: &#34;Sleep&#34;
+<span id="L165" class="ln">   165  </span>        parameters:
+<span id="L166" class="ln">   166  </span>          - 5
+<span id="L167" class="ln">   167  </span>          - 10
+<span id="L168" class="ln">   168  </span>      
+<span id="L169" class="ln">   169  </span>      - name: &#34;log-test&#34;
+<span id="L170" class="ln">   170  </span>        kind: &#34;BUILTIN&#34;
+<span id="L171" class="ln">   171  </span>        command: &#34;Log&#34;
+<span id="L172" class="ln">   172  </span>        parameters:
+<span id="L173" class="ln">   173  </span>          - &#34;warning message&#34;
+<span id="L174" class="ln">   174  </span>          - {&#34;level&#34;: &#34;WARNING&#34;, &#34;message&#34;: &#34;test&#34;}
+<span id="L175" class="ln">   175  </span>`
+<span id="L176" class="ln">   176  </span>
+<span id="L177" class="ln">   177  </span>	<span class="comment">// Create temporary file with content</span>
+<span id="L178" class="ln">   178  </span>	tmpfile, err := os.CreateTemp(&#34;&#34;, &#34;test-*.yaml&#34;)
+<span id="L179" class="ln">   179  </span>	require.NoError(t, err)
+<span id="L180" class="ln">   180  </span>	defer os.Remove(tmpfile.Name())
+<span id="L181" class="ln">   181  </span>
+<span id="L182" class="ln">   182  </span>	_, err = tmpfile.Write([]byte(yamlContent))
+<span id="L183" class="ln">   183  </span>	require.NoError(t, err)
+<span id="L184" class="ln">   184  </span>	err = tmpfile.Close()
+<span id="L185" class="ln">   185  </span>	require.NoError(t, err)
+<span id="L186" class="ln">   186  </span>
+<span id="L187" class="ln">   187  </span>	<span class="comment">// Parse the YAML</span>
+<span id="L188" class="ln">   188  </span>	yamlConfig, err := pgengine.ParseYamlFile(tmpfile.Name())
+<span id="L189" class="ln">   189  </span>	require.NoError(t, err)
+<span id="L190" class="ln">   190  </span>
+<span id="L191" class="ln">   191  </span>	<span class="comment">// Check parsed content</span>
+<span id="L192" class="ln">   192  </span>	require.Equal(t, 1, len(yamlConfig.Chains))
+<span id="L193" class="ln">   193  </span>	chain := yamlConfig.Chains[0]
+<span id="L194" class="ln">   194  </span>	require.Equal(t, &#34;test-parameters&#34;, chain.ChainName)
+<span id="L195" class="ln">   195  </span>	require.Equal(t, 4, len(chain.Tasks))
+<span id="L196" class="ln">   196  </span>
+<span id="L197" class="ln">   197  </span>	<span class="comment">// Check SQL task parameters</span>
+<span id="L198" class="ln">   198  </span>	sqlTask := chain.Tasks[0]
+<span id="L199" class="ln">   199  </span>	require.Equal(t, &#34;SQL&#34;, sqlTask.Kind)
+<span id="L200" class="ln">   200  </span>	require.Equal(t, 2, len(sqlTask.Parameters))
+<span id="L201" class="ln">   201  </span>	sqlParam1, ok := sqlTask.Parameters[0].([]any)
+<span id="L202" class="ln">   202  </span>	require.True(t, ok, &#34;SQL parameter should be an array&#34;)
+<span id="L203" class="ln">   203  </span>	assert.Equal(t, 3, len(sqlParam1))
+<span id="L204" class="ln">   204  </span>
+<span id="L205" class="ln">   205  </span>	<span class="comment">// Check PROGRAM task parameters</span>
+<span id="L206" class="ln">   206  </span>	programTask := chain.Tasks[1]
+<span id="L207" class="ln">   207  </span>	require.Equal(t, &#34;PROGRAM&#34;, programTask.Kind)
+<span id="L208" class="ln">   208  </span>	require.Equal(t, 2, len(programTask.Parameters))
+<span id="L209" class="ln">   209  </span>
+<span id="L210" class="ln">   210  </span>	<span class="comment">// Check BUILTIN Sleep task parameters</span>
+<span id="L211" class="ln">   211  </span>	sleepTask := chain.Tasks[2]
+<span id="L212" class="ln">   212  </span>	require.Equal(t, &#34;BUILTIN&#34;, sleepTask.Kind)
+<span id="L213" class="ln">   213  </span>	require.Equal(t, &#34;Sleep&#34;, sleepTask.Command)
+<span id="L214" class="ln">   214  </span>	require.Equal(t, 2, len(sleepTask.Parameters))
+<span id="L215" class="ln">   215  </span>	sleepParam1, ok := sleepTask.Parameters[0].(int)
+<span id="L216" class="ln">   216  </span>	require.True(t, ok, &#34;Sleep parameter should be an integer&#34;)
+<span id="L217" class="ln">   217  </span>	assert.Equal(t, 5, sleepParam1)
+<span id="L218" class="ln">   218  </span>
+<span id="L219" class="ln">   219  </span>	<span class="comment">// Check BUILTIN Log task parameters</span>
+<span id="L220" class="ln">   220  </span>	logTask := chain.Tasks[3]
+<span id="L221" class="ln">   221  </span>	require.Equal(t, &#34;BUILTIN&#34;, logTask.Kind)
+<span id="L222" class="ln">   222  </span>	require.Equal(t, &#34;Log&#34;, logTask.Command)
+<span id="L223" class="ln">   223  </span>	require.Equal(t, 2, len(logTask.Parameters))
+<span id="L224" class="ln">   224  </span>	logParam1, ok := logTask.Parameters[0].(string)
+<span id="L225" class="ln">   225  </span>	require.True(t, ok, &#34;Log parameter can be a string&#34;)
+<span id="L226" class="ln">   226  </span>	assert.Equal(t, &#34;warning message&#34;, logParam1)
+<span id="L227" class="ln">   227  </span>}
+<span id="L228" class="ln">   228  </span>
+<span id="L229" class="ln">   229  </span>func TestParseYamlFile(t *testing.T) {
+<span id="L230" class="ln">   230  </span>	t.Run(&#34;Valid YAML file&#34;, func(t *testing.T) {
+<span id="L231" class="ln">   231  </span>		yamlContent := `chains:
+<span id="L232" class="ln">   232  </span>  - name: &#34;test-chain&#34;
+<span id="L233" class="ln">   233  </span>    schedule: &#34;0 * * * *&#34;
+<span id="L234" class="ln">   234  </span>    live: true
+<span id="L235" class="ln">   235  </span>    max_instances: 2
+<span id="L236" class="ln">   236  </span>    timeout: 300
+<span id="L237" class="ln">   237  </span>    self_destruct: true
+<span id="L238" class="ln">   238  </span>    exclusive: true
+<span id="L239" class="ln">   239  </span>    client_name: &#34;test-client&#34;
+<span id="L240" class="ln">   240  </span>    on_error: &#34;RETRY&#34;
+<span id="L241" class="ln">   241  </span>    tasks:
+<span id="L242" class="ln">   242  </span>      - name: &#34;test-task&#34;
+<span id="L243" class="ln">   243  </span>        kind: &#34;SQL&#34;
+<span id="L244" class="ln">   244  </span>        command: &#34;SELECT 1&#34;
+<span id="L245" class="ln">   245  </span>        parameters: [&#34;param1&#34;, 42, true]
+<span id="L246" class="ln">   246  </span>        ignore_error: false
+<span id="L247" class="ln">   247  </span>        autonomous: false
+<span id="L248" class="ln">   248  </span>        timeout: 60
+<span id="L249" class="ln">   249  </span>        run_as: &#34;postgres&#34;
+<span id="L250" class="ln">   250  </span>        connect_string: &#34;test-db&#34;`
+<span id="L251" class="ln">   251  </span>
+<span id="L252" class="ln">   252  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L253" class="ln">   253  </span>		defer removeTempFile(t, tmpfile)
+<span id="L254" class="ln">   254  </span>
+<span id="L255" class="ln">   255  </span>		config, err := pgengine.ParseYamlFile(tmpfile)
+<span id="L256" class="ln">   256  </span>		require.NoError(t, err)
+<span id="L257" class="ln">   257  </span>		require.Len(t, config.Chains, 1)
 <span id="L258" class="ln">   258  </span>
-<span id="L259" class="ln">   259  </span>	t.Run(&#34;File cannot be read&#34;, func(t *testing.T) {
-<span id="L260" class="ln">   260  </span>		_, err := pgengine.ParseYamlFile(&#34;.&#34;)
-<span id="L261" class="ln">   261  </span>		assert.Error(t, err)
-<span id="L262" class="ln">   262  </span>	})
-<span id="L263" class="ln">   263  </span>
-<span id="L264" class="ln">   264  </span>	t.Run(&#34;Invalid YAML syntax&#34;, func(t *testing.T) {
-<span id="L265" class="ln">   265  </span>		invalidYaml := `chains:
-<span id="L266" class="ln">   266  </span>  - name: &#34;test&#34;
-<span id="L267" class="ln">   267  </span>    schedule: &#34;* * * * *&#34;
-<span id="L268" class="ln">   268  </span>    tasks:
-<span id="L269" class="ln">   269  </span>      - name: &#34;task1&#34;
-<span id="L270" class="ln">   270  </span>        kind: &#34;SQL
-<span id="L271" class="ln">   271  </span>        command: SELECT 1`
-<span id="L272" class="ln">   272  </span>
-<span id="L273" class="ln">   273  </span>		tmpfile := createTempYamlFile(t, invalidYaml)
-<span id="L274" class="ln">   274  </span>		defer removeTempFile(t, tmpfile)
-<span id="L275" class="ln">   275  </span>
-<span id="L276" class="ln">   276  </span>		_, err := pgengine.ParseYamlFile(tmpfile)
-<span id="L277" class="ln">   277  </span>		assert.Error(t, err)
-<span id="L278" class="ln">   278  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML&#34;)
-<span id="L279" class="ln">   279  </span>	})
-<span id="L280" class="ln">   280  </span>
-<span id="L281" class="ln">   281  </span>	t.Run(&#34;Validation errors&#34;, func(t *testing.T) {
-<span id="L282" class="ln">   282  </span>		invalidChain := `chains:
-<span id="L283" class="ln">   283  </span>  - name: &#34;&#34;
-<span id="L284" class="ln">   284  </span>    schedule: &#34;* * * * *&#34;
-<span id="L285" class="ln">   285  </span>    tasks:
-<span id="L286" class="ln">   286  </span>      - command: &#34;SELECT 1&#34;`
+<span id="L259" class="ln">   259  </span>		chain := config.Chains[0]
+<span id="L260" class="ln">   260  </span>		assert.Equal(t, &#34;test-chain&#34;, chain.ChainName)
+<span id="L261" class="ln">   261  </span>		assert.Equal(t, &#34;0 * * * *&#34;, chain.Schedule)
+<span id="L262" class="ln">   262  </span>		assert.True(t, chain.Live)
+<span id="L263" class="ln">   263  </span>		assert.Equal(t, 2, chain.MaxInstances)
+<span id="L264" class="ln">   264  </span>		assert.Equal(t, 300, chain.Timeout)
+<span id="L265" class="ln">   265  </span>		assert.True(t, chain.SelfDestruct)
+<span id="L266" class="ln">   266  </span>		assert.True(t, chain.ExclusiveExecution)
+<span id="L267" class="ln">   267  </span>		assert.Equal(t, &#34;test-client&#34;, chain.ClientName)
+<span id="L268" class="ln">   268  </span>		assert.Equal(t, &#34;RETRY&#34;, chain.OnError)
+<span id="L269" class="ln">   269  </span>
+<span id="L270" class="ln">   270  </span>		require.Len(t, chain.Tasks, 1)
+<span id="L271" class="ln">   271  </span>		task := chain.Tasks[0]
+<span id="L272" class="ln">   272  </span>		assert.Equal(t, &#34;test-task&#34;, task.TaskName)
+<span id="L273" class="ln">   273  </span>		assert.Equal(t, &#34;SQL&#34;, task.Kind)
+<span id="L274" class="ln">   274  </span>		assert.Equal(t, &#34;SELECT 1&#34;, task.Command)
+<span id="L275" class="ln">   275  </span>		assert.False(t, task.IgnoreError)
+<span id="L276" class="ln">   276  </span>		assert.False(t, task.Autonomous)
+<span id="L277" class="ln">   277  </span>		assert.Equal(t, 60, task.Timeout)
+<span id="L278" class="ln">   278  </span>		assert.Equal(t, &#34;postgres&#34;, task.RunAs)
+<span id="L279" class="ln">   279  </span>		assert.Equal(t, &#34;test-db&#34;, task.ConnectString)
+<span id="L280" class="ln">   280  </span>	})
+<span id="L281" class="ln">   281  </span>
+<span id="L282" class="ln">   282  </span>	t.Run(&#34;File not found&#34;, func(t *testing.T) {
+<span id="L283" class="ln">   283  </span>		_, err := pgengine.ParseYamlFile(&#34;/non/existent/file.yaml&#34;)
+<span id="L284" class="ln">   284  </span>		assert.Error(t, err)
+<span id="L285" class="ln">   285  </span>		assert.Contains(t, err.Error(), &#34;file not found&#34;)
+<span id="L286" class="ln">   286  </span>	})
 <span id="L287" class="ln">   287  </span>
-<span id="L288" class="ln">   288  </span>		tmpfile := createTempYamlFile(t, invalidChain)
-<span id="L289" class="ln">   289  </span>		defer removeTempFile(t, tmpfile)
-<span id="L290" class="ln">   290  </span>
-<span id="L291" class="ln">   291  </span>		_, err := pgengine.ParseYamlFile(tmpfile)
-<span id="L292" class="ln">   292  </span>		assert.Error(t, err)
-<span id="L293" class="ln">   293  </span>		assert.Contains(t, err.Error(), &#34;chain name is required&#34;)
-<span id="L294" class="ln">   294  </span>	})
-<span id="L295" class="ln">   295  </span>}
-<span id="L296" class="ln">   296  </span>
-<span id="L297" class="ln">   297  </span>func TestYamlChainValidation(t *testing.T) {
-<span id="L298" class="ln">   298  </span>	t.Run(&#34;Valid chain&#34;, func(t *testing.T) {
-<span id="L299" class="ln">   299  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L300" class="ln">   300  </span>			Chain: pgengine.Chain{
-<span id="L301" class="ln">   301  </span>				ChainName: &#34;test-chain&#34;,
-<span id="L302" class="ln">   302  </span>			},
-<span id="L303" class="ln">   303  </span>			Schedule: &#34;0 * * * *&#34;,
-<span id="L304" class="ln">   304  </span>			Tasks: []pgengine.YamlTask{
-<span id="L305" class="ln">   305  </span>				{
-<span id="L306" class="ln">   306  </span>					ChainTask: pgengine.ChainTask{
-<span id="L307" class="ln">   307  </span>						Command: &#34;SELECT 1&#34;,
-<span id="L308" class="ln">   308  </span>						Kind:    &#34;SQL&#34;,
-<span id="L309" class="ln">   309  </span>					},
-<span id="L310" class="ln">   310  </span>				},
-<span id="L311" class="ln">   311  </span>			},
-<span id="L312" class="ln">   312  </span>		}
-<span id="L313" class="ln">   313  </span>
-<span id="L314" class="ln">   314  </span>		err := chain.ValidateChain()
-<span id="L315" class="ln">   315  </span>		assert.NoError(t, err)
-<span id="L316" class="ln">   316  </span>	})
-<span id="L317" class="ln">   317  </span>
-<span id="L318" class="ln">   318  </span>	t.Run(&#34;Missing chain name&#34;, func(t *testing.T) {
-<span id="L319" class="ln">   319  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L320" class="ln">   320  </span>			Schedule: &#34;0 * * * *&#34;,
-<span id="L321" class="ln">   321  </span>			Tasks: []pgengine.YamlTask{
-<span id="L322" class="ln">   322  </span>				{
-<span id="L323" class="ln">   323  </span>					ChainTask: pgengine.ChainTask{
-<span id="L324" class="ln">   324  </span>						Command: &#34;SELECT 1&#34;,
-<span id="L325" class="ln">   325  </span>						Kind:    &#34;SQL&#34;,
-<span id="L326" class="ln">   326  </span>					},
-<span id="L327" class="ln">   327  </span>				},
-<span id="L328" class="ln">   328  </span>			},
-<span id="L329" class="ln">   329  </span>		}
-<span id="L330" class="ln">   330  </span>
-<span id="L331" class="ln">   331  </span>		err := chain.ValidateChain()
-<span id="L332" class="ln">   332  </span>		assert.Error(t, err)
-<span id="L333" class="ln">   333  </span>		assert.Contains(t, err.Error(), &#34;chain name is required&#34;)
-<span id="L334" class="ln">   334  </span>	})
-<span id="L335" class="ln">   335  </span>
-<span id="L336" class="ln">   336  </span>	t.Run(&#34;Missing schedule&#34;, func(t *testing.T) {
-<span id="L337" class="ln">   337  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L338" class="ln">   338  </span>			Chain: pgengine.Chain{
-<span id="L339" class="ln">   339  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L288" class="ln">   288  </span>	t.Run(&#34;File cannot be read&#34;, func(t *testing.T) {
+<span id="L289" class="ln">   289  </span>		_, err := pgengine.ParseYamlFile(&#34;.&#34;)
+<span id="L290" class="ln">   290  </span>		assert.Error(t, err)
+<span id="L291" class="ln">   291  </span>	})
+<span id="L292" class="ln">   292  </span>
+<span id="L293" class="ln">   293  </span>	t.Run(&#34;Invalid YAML syntax&#34;, func(t *testing.T) {
+<span id="L294" class="ln">   294  </span>		invalidYaml := `chains:
+<span id="L295" class="ln">   295  </span>  - name: &#34;test&#34;
+<span id="L296" class="ln">   296  </span>    schedule: &#34;* * * * *&#34;
+<span id="L297" class="ln">   297  </span>    tasks:
+<span id="L298" class="ln">   298  </span>      - name: &#34;task1&#34;
+<span id="L299" class="ln">   299  </span>        kind: &#34;SQL
+<span id="L300" class="ln">   300  </span>        command: SELECT 1`
+<span id="L301" class="ln">   301  </span>
+<span id="L302" class="ln">   302  </span>		tmpfile := createTempYamlFile(t, invalidYaml)
+<span id="L303" class="ln">   303  </span>		defer removeTempFile(t, tmpfile)
+<span id="L304" class="ln">   304  </span>
+<span id="L305" class="ln">   305  </span>		_, err := pgengine.ParseYamlFile(tmpfile)
+<span id="L306" class="ln">   306  </span>		assert.Error(t, err)
+<span id="L307" class="ln">   307  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML&#34;)
+<span id="L308" class="ln">   308  </span>	})
+<span id="L309" class="ln">   309  </span>
+<span id="L310" class="ln">   310  </span>	t.Run(&#34;Validation errors&#34;, func(t *testing.T) {
+<span id="L311" class="ln">   311  </span>		invalidChain := `chains:
+<span id="L312" class="ln">   312  </span>  - name: &#34;&#34;
+<span id="L313" class="ln">   313  </span>    schedule: &#34;* * * * *&#34;
+<span id="L314" class="ln">   314  </span>    tasks:
+<span id="L315" class="ln">   315  </span>      - command: &#34;SELECT 1&#34;`
+<span id="L316" class="ln">   316  </span>
+<span id="L317" class="ln">   317  </span>		tmpfile := createTempYamlFile(t, invalidChain)
+<span id="L318" class="ln">   318  </span>		defer removeTempFile(t, tmpfile)
+<span id="L319" class="ln">   319  </span>
+<span id="L320" class="ln">   320  </span>		_, err := pgengine.ParseYamlFile(tmpfile)
+<span id="L321" class="ln">   321  </span>		assert.Error(t, err)
+<span id="L322" class="ln">   322  </span>		assert.Contains(t, err.Error(), &#34;chain name is required&#34;)
+<span id="L323" class="ln">   323  </span>	})
+<span id="L324" class="ln">   324  </span>}
+<span id="L325" class="ln">   325  </span>
+<span id="L326" class="ln">   326  </span>func TestYamlChainValidation(t *testing.T) {
+<span id="L327" class="ln">   327  </span>	t.Run(&#34;Valid chain&#34;, func(t *testing.T) {
+<span id="L328" class="ln">   328  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L329" class="ln">   329  </span>			Chain: pgengine.Chain{
+<span id="L330" class="ln">   330  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L331" class="ln">   331  </span>			},
+<span id="L332" class="ln">   332  </span>			Schedule: &#34;0 * * * *&#34;,
+<span id="L333" class="ln">   333  </span>			Tasks: []pgengine.YamlTask{
+<span id="L334" class="ln">   334  </span>				{
+<span id="L335" class="ln">   335  </span>					ChainTask: pgengine.ChainTask{
+<span id="L336" class="ln">   336  </span>						Command: &#34;SELECT 1&#34;,
+<span id="L337" class="ln">   337  </span>						Kind:    &#34;SQL&#34;,
+<span id="L338" class="ln">   338  </span>					},
+<span id="L339" class="ln">   339  </span>				},
 <span id="L340" class="ln">   340  </span>			},
-<span id="L341" class="ln">   341  </span>			Tasks: []pgengine.YamlTask{
-<span id="L342" class="ln">   342  </span>				{
-<span id="L343" class="ln">   343  </span>					ChainTask: pgengine.ChainTask{
-<span id="L344" class="ln">   344  </span>						Command: &#34;SELECT 1&#34;,
-<span id="L345" class="ln">   345  </span>						Kind:    &#34;SQL&#34;,
-<span id="L346" class="ln">   346  </span>					},
-<span id="L347" class="ln">   347  </span>				},
-<span id="L348" class="ln">   348  </span>			},
-<span id="L349" class="ln">   349  </span>		}
-<span id="L350" class="ln">   350  </span>
-<span id="L351" class="ln">   351  </span>		err := chain.ValidateChain()
-<span id="L352" class="ln">   352  </span>		assert.Error(t, err)
-<span id="L353" class="ln">   353  </span>		assert.Contains(t, err.Error(), &#34;chain schedule is required&#34;)
-<span id="L354" class="ln">   354  </span>	})
-<span id="L355" class="ln">   355  </span>
-<span id="L356" class="ln">   356  </span>	t.Run(&#34;Invalid cron format&#34;, func(t *testing.T) {
-<span id="L357" class="ln">   357  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L358" class="ln">   358  </span>			Chain: pgengine.Chain{
-<span id="L359" class="ln">   359  </span>				ChainName: &#34;test-chain&#34;,
-<span id="L360" class="ln">   360  </span>			},
-<span id="L361" class="ln">   361  </span>			Schedule: &#34;invalid cron&#34;,
-<span id="L362" class="ln">   362  </span>			Tasks: []pgengine.YamlTask{
-<span id="L363" class="ln">   363  </span>				{
-<span id="L364" class="ln">   364  </span>					ChainTask: pgengine.ChainTask{
-<span id="L365" class="ln">   365  </span>						Command: &#34;SELECT 1&#34;,
-<span id="L366" class="ln">   366  </span>						Kind:    &#34;SQL&#34;,
-<span id="L367" class="ln">   367  </span>					},
-<span id="L368" class="ln">   368  </span>				},
+<span id="L341" class="ln">   341  </span>		}
+<span id="L342" class="ln">   342  </span>
+<span id="L343" class="ln">   343  </span>		err := chain.ValidateChain()
+<span id="L344" class="ln">   344  </span>		assert.NoError(t, err)
+<span id="L345" class="ln">   345  </span>	})
+<span id="L346" class="ln">   346  </span>
+<span id="L347" class="ln">   347  </span>	t.Run(&#34;Missing chain name&#34;, func(t *testing.T) {
+<span id="L348" class="ln">   348  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L349" class="ln">   349  </span>			Schedule: &#34;0 * * * *&#34;,
+<span id="L350" class="ln">   350  </span>			Tasks: []pgengine.YamlTask{
+<span id="L351" class="ln">   351  </span>				{
+<span id="L352" class="ln">   352  </span>					ChainTask: pgengine.ChainTask{
+<span id="L353" class="ln">   353  </span>						Command: &#34;SELECT 1&#34;,
+<span id="L354" class="ln">   354  </span>						Kind:    &#34;SQL&#34;,
+<span id="L355" class="ln">   355  </span>					},
+<span id="L356" class="ln">   356  </span>				},
+<span id="L357" class="ln">   357  </span>			},
+<span id="L358" class="ln">   358  </span>		}
+<span id="L359" class="ln">   359  </span>
+<span id="L360" class="ln">   360  </span>		err := chain.ValidateChain()
+<span id="L361" class="ln">   361  </span>		assert.Error(t, err)
+<span id="L362" class="ln">   362  </span>		assert.Contains(t, err.Error(), &#34;chain name is required&#34;)
+<span id="L363" class="ln">   363  </span>	})
+<span id="L364" class="ln">   364  </span>
+<span id="L365" class="ln">   365  </span>	t.Run(&#34;Missing schedule&#34;, func(t *testing.T) {
+<span id="L366" class="ln">   366  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L367" class="ln">   367  </span>			Chain: pgengine.Chain{
+<span id="L368" class="ln">   368  </span>				ChainName: &#34;test-chain&#34;,
 <span id="L369" class="ln">   369  </span>			},
-<span id="L370" class="ln">   370  </span>		}
-<span id="L371" class="ln">   371  </span>
-<span id="L372" class="ln">   372  </span>		err := chain.ValidateChain()
-<span id="L373" class="ln">   373  </span>		assert.Error(t, err)
-<span id="L374" class="ln">   374  </span>		assert.Contains(t, err.Error(), &#34;invalid cron format&#34;)
-<span id="L375" class="ln">   375  </span>	})
-<span id="L376" class="ln">   376  </span>
-<span id="L377" class="ln">   377  </span>	t.Run(&#34;Special schedules&#34;, func(t *testing.T) {
-<span id="L378" class="ln">   378  </span>		specialSchedules := []string{&#34;@reboot&#34;, &#34;@after&#34;, &#34;@every&#34;}
-<span id="L379" class="ln">   379  </span>		for _, schedule := range specialSchedules {
-<span id="L380" class="ln">   380  </span>			chain := &amp;pgengine.YamlChain{
-<span id="L381" class="ln">   381  </span>				Chain: pgengine.Chain{
-<span id="L382" class="ln">   382  </span>					ChainName: &#34;test-chain&#34;,
-<span id="L383" class="ln">   383  </span>				},
-<span id="L384" class="ln">   384  </span>				Schedule: schedule,
-<span id="L385" class="ln">   385  </span>				Tasks: []pgengine.YamlTask{
-<span id="L386" class="ln">   386  </span>					{
-<span id="L387" class="ln">   387  </span>						ChainTask: pgengine.ChainTask{
-<span id="L388" class="ln">   388  </span>							Command: &#34;SELECT 1&#34;,
-<span id="L389" class="ln">   389  </span>							Kind:    &#34;SQL&#34;,
-<span id="L390" class="ln">   390  </span>						},
-<span id="L391" class="ln">   391  </span>					},
-<span id="L392" class="ln">   392  </span>				},
-<span id="L393" class="ln">   393  </span>			}
-<span id="L394" class="ln">   394  </span>
-<span id="L395" class="ln">   395  </span>			err := chain.ValidateChain()
-<span id="L396" class="ln">   396  </span>			assert.NoError(t, err, &#34;Schedule %s should be valid&#34;, schedule)
-<span id="L397" class="ln">   397  </span>		}
-<span id="L398" class="ln">   398  </span>	})
-<span id="L399" class="ln">   399  </span>
-<span id="L400" class="ln">   400  </span>	t.Run(&#34;No tasks&#34;, func(t *testing.T) {
-<span id="L401" class="ln">   401  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L402" class="ln">   402  </span>			Chain: pgengine.Chain{
-<span id="L403" class="ln">   403  </span>				ChainName: &#34;test-chain&#34;,
-<span id="L404" class="ln">   404  </span>			},
-<span id="L405" class="ln">   405  </span>			Schedule: &#34;0 * * * *&#34;,
-<span id="L406" class="ln">   406  </span>			Tasks:    []pgengine.YamlTask{},
-<span id="L407" class="ln">   407  </span>		}
-<span id="L408" class="ln">   408  </span>
-<span id="L409" class="ln">   409  </span>		err := chain.ValidateChain()
-<span id="L410" class="ln">   410  </span>		assert.Error(t, err)
-<span id="L411" class="ln">   411  </span>		assert.Contains(t, err.Error(), &#34;chain must have at least one task&#34;)
-<span id="L412" class="ln">   412  </span>	})
-<span id="L413" class="ln">   413  </span>
-<span id="L414" class="ln">   414  </span>	t.Run(&#34;Task validation error&#34;, func(t *testing.T) {
-<span id="L415" class="ln">   415  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L416" class="ln">   416  </span>			Chain: pgengine.Chain{
-<span id="L417" class="ln">   417  </span>				ChainName: &#34;test-chain&#34;,
-<span id="L418" class="ln">   418  </span>			},
-<span id="L419" class="ln">   419  </span>			Schedule: &#34;0 * * * *&#34;,
-<span id="L420" class="ln">   420  </span>			Tasks: []pgengine.YamlTask{
-<span id="L421" class="ln">   421  </span>				{
-<span id="L422" class="ln">   422  </span>					ChainTask: pgengine.ChainTask{
-<span id="L423" class="ln">   423  </span>						Command: &#34;&#34;, <span class="comment">// Invalid empty command</span>
-<span id="L424" class="ln">   424  </span>						Kind:    &#34;SQL&#34;,
-<span id="L425" class="ln">   425  </span>					},
-<span id="L426" class="ln">   426  </span>				},
-<span id="L427" class="ln">   427  </span>			},
-<span id="L428" class="ln">   428  </span>		}
-<span id="L429" class="ln">   429  </span>
-<span id="L430" class="ln">   430  </span>		err := chain.ValidateChain()
-<span id="L431" class="ln">   431  </span>		assert.Error(t, err)
-<span id="L432" class="ln">   432  </span>		assert.Contains(t, err.Error(), &#34;task 1:&#34;)
-<span id="L433" class="ln">   433  </span>		assert.Contains(t, err.Error(), &#34;task command is required&#34;)
-<span id="L434" class="ln">   434  </span>	})
-<span id="L435" class="ln">   435  </span>}
-<span id="L436" class="ln">   436  </span>
-<span id="L437" class="ln">   437  </span>func TestYamlTaskValidation(t *testing.T) {
-<span id="L438" class="ln">   438  </span>	t.Run(&#34;Valid task&#34;, func(t *testing.T) {
-<span id="L439" class="ln">   439  </span>		task := &amp;pgengine.YamlTask{
-<span id="L440" class="ln">   440  </span>			ChainTask: pgengine.ChainTask{
-<span id="L441" class="ln">   441  </span>				Command: &#34;SELECT 1&#34;,
-<span id="L442" class="ln">   442  </span>				Kind:    &#34;SQL&#34;,
-<span id="L443" class="ln">   443  </span>				Timeout: 60,
-<span id="L444" class="ln">   444  </span>			},
-<span id="L445" class="ln">   445  </span>		}
-<span id="L446" class="ln">   446  </span>
-<span id="L447" class="ln">   447  </span>		err := task.ValidateTask()
-<span id="L448" class="ln">   448  </span>		assert.NoError(t, err)
-<span id="L449" class="ln">   449  </span>	})
-<span id="L450" class="ln">   450  </span>
-<span id="L451" class="ln">   451  </span>	t.Run(&#34;Missing command&#34;, func(t *testing.T) {
-<span id="L452" class="ln">   452  </span>		task := &amp;pgengine.YamlTask{
-<span id="L453" class="ln">   453  </span>			ChainTask: pgengine.ChainTask{
-<span id="L454" class="ln">   454  </span>				Kind: &#34;SQL&#34;,
-<span id="L455" class="ln">   455  </span>			},
-<span id="L456" class="ln">   456  </span>		}
-<span id="L457" class="ln">   457  </span>
-<span id="L458" class="ln">   458  </span>		err := task.ValidateTask()
-<span id="L459" class="ln">   459  </span>		assert.Error(t, err)
-<span id="L460" class="ln">   460  </span>		assert.Contains(t, err.Error(), &#34;task command is required&#34;)
-<span id="L461" class="ln">   461  </span>	})
-<span id="L462" class="ln">   462  </span>
-<span id="L463" class="ln">   463  </span>	t.Run(&#34;Valid kinds&#34;, func(t *testing.T) {
-<span id="L464" class="ln">   464  </span>		validKinds := []string{&#34;&#34;, &#34;SQL&#34;, &#34;PROGRAM&#34;, &#34;BUILTIN&#34;, &#34;sql&#34;, &#34;program&#34;, &#34;builtin&#34;}
-<span id="L465" class="ln">   465  </span>		for _, kind := range validKinds {
-<span id="L466" class="ln">   466  </span>			task := &amp;pgengine.YamlTask{
-<span id="L467" class="ln">   467  </span>				ChainTask: pgengine.ChainTask{
-<span id="L468" class="ln">   468  </span>					Command: &#34;SELECT 1&#34;,
-<span id="L469" class="ln">   469  </span>					Kind:    kind,
-<span id="L470" class="ln">   470  </span>				},
-<span id="L471" class="ln">   471  </span>			}
-<span id="L472" class="ln">   472  </span>
-<span id="L473" class="ln">   473  </span>			err := task.ValidateTask()
-<span id="L474" class="ln">   474  </span>			assert.NoError(t, err, &#34;Kind %s should be valid&#34;, kind)
-<span id="L475" class="ln">   475  </span>		}
-<span id="L476" class="ln">   476  </span>	})
-<span id="L477" class="ln">   477  </span>
-<span id="L478" class="ln">   478  </span>	t.Run(&#34;Invalid kind&#34;, func(t *testing.T) {
-<span id="L479" class="ln">   479  </span>		task := &amp;pgengine.YamlTask{
-<span id="L480" class="ln">   480  </span>			ChainTask: pgengine.ChainTask{
-<span id="L481" class="ln">   481  </span>				Command: &#34;SELECT 1&#34;,
-<span id="L482" class="ln">   482  </span>				Kind:    &#34;INVALID&#34;,
-<span id="L483" class="ln">   483  </span>			},
-<span id="L484" class="ln">   484  </span>		}
-<span id="L485" class="ln">   485  </span>
-<span id="L486" class="ln">   486  </span>		err := task.ValidateTask()
-<span id="L487" class="ln">   487  </span>		assert.Error(t, err)
-<span id="L488" class="ln">   488  </span>		assert.Contains(t, err.Error(), &#34;invalid task kind: INVALID&#34;)
-<span id="L489" class="ln">   489  </span>	})
-<span id="L490" class="ln">   490  </span>
-<span id="L491" class="ln">   491  </span>	t.Run(&#34;Negative timeout&#34;, func(t *testing.T) {
-<span id="L492" class="ln">   492  </span>		task := &amp;pgengine.YamlTask{
-<span id="L493" class="ln">   493  </span>			ChainTask: pgengine.ChainTask{
-<span id="L494" class="ln">   494  </span>				Command: &#34;SELECT 1&#34;,
-<span id="L495" class="ln">   495  </span>				Kind:    &#34;SQL&#34;,
-<span id="L496" class="ln">   496  </span>				Timeout: -1,
-<span id="L497" class="ln">   497  </span>			},
-<span id="L498" class="ln">   498  </span>		}
-<span id="L499" class="ln">   499  </span>
-<span id="L500" class="ln">   500  </span>		err := task.ValidateTask()
-<span id="L501" class="ln">   501  </span>		assert.Error(t, err)
-<span id="L502" class="ln">   502  </span>		assert.Contains(t, err.Error(), &#34;task timeout must be non-negative&#34;)
-<span id="L503" class="ln">   503  </span>	})
-<span id="L504" class="ln">   504  </span>}
-<span id="L505" class="ln">   505  </span>
-<span id="L506" class="ln">   506  </span>func TestYamlChainSetDefaults(t *testing.T) {
-<span id="L507" class="ln">   507  </span>	t.Run(&#34;Set default schedule&#34;, func(t *testing.T) {
-<span id="L508" class="ln">   508  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L509" class="ln">   509  </span>			Chain: pgengine.Chain{
-<span id="L510" class="ln">   510  </span>				ChainName: &#34;test-chain&#34;,
-<span id="L511" class="ln">   511  </span>			},
-<span id="L512" class="ln">   512  </span>			Tasks: []pgengine.YamlTask{
-<span id="L513" class="ln">   513  </span>				{
-<span id="L514" class="ln">   514  </span>					ChainTask: pgengine.ChainTask{
-<span id="L515" class="ln">   515  </span>						Command: &#34;SELECT 1&#34;,
-<span id="L516" class="ln">   516  </span>					},
-<span id="L517" class="ln">   517  </span>				},
-<span id="L518" class="ln">   518  </span>			},
-<span id="L519" class="ln">   519  </span>		}
-<span id="L520" class="ln">   520  </span>
-<span id="L521" class="ln">   521  </span>		chain.SetDefaults()
-<span id="L522" class="ln">   522  </span>		assert.Equal(t, &#34;* * * * *&#34;, chain.Schedule)
-<span id="L523" class="ln">   523  </span>		assert.Equal(t, &#34;SQL&#34;, chain.Tasks[0].Kind)
-<span id="L524" class="ln">   524  </span>	})
-<span id="L525" class="ln">   525  </span>
-<span id="L526" class="ln">   526  </span>	t.Run(&#34;Keep existing values&#34;, func(t *testing.T) {
-<span id="L527" class="ln">   527  </span>		chain := &amp;pgengine.YamlChain{
-<span id="L528" class="ln">   528  </span>			Chain: pgengine.Chain{
-<span id="L529" class="ln">   529  </span>				ChainName: &#34;test-chain&#34;,
-<span id="L530" class="ln">   530  </span>			},
-<span id="L531" class="ln">   531  </span>			Schedule: &#34;0 0 * * *&#34;,
-<span id="L532" class="ln">   532  </span>			Tasks: []pgengine.YamlTask{
-<span id="L533" class="ln">   533  </span>				{
-<span id="L534" class="ln">   534  </span>					ChainTask: pgengine.ChainTask{
-<span id="L535" class="ln">   535  </span>						Command: &#34;echo hello&#34;,
-<span id="L536" class="ln">   536  </span>						Kind:    &#34;PROGRAM&#34;,
-<span id="L537" class="ln">   537  </span>					},
-<span id="L538" class="ln">   538  </span>				},
-<span id="L539" class="ln">   539  </span>			},
-<span id="L540" class="ln">   540  </span>		}
-<span id="L541" class="ln">   541  </span>
-<span id="L542" class="ln">   542  </span>		chain.SetDefaults()
-<span id="L543" class="ln">   543  </span>		assert.Equal(t, &#34;0 0 * * *&#34;, chain.Schedule)
-<span id="L544" class="ln">   544  </span>		assert.Equal(t, &#34;PROGRAM&#34;, chain.Tasks[0].Kind)
-<span id="L545" class="ln">   545  </span>	})
-<span id="L546" class="ln">   546  </span>}
-<span id="L547" class="ln">   547  </span>
-<span id="L548" class="ln">   548  </span>func TestParameterStorageIntegration(t *testing.T) {
-<span id="L549" class="ln">   549  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L550" class="ln">   550  </span>	defer cleanup()
-<span id="L551" class="ln">   551  </span>
-<span id="L552" class="ln">   552  </span>	ctx := context.Background()
-<span id="L553" class="ln">   553  </span>	pge := container.Engine
-<span id="L554" class="ln">   554  </span>
-<span id="L555" class="ln">   555  </span>	t.Run(&#34;Parameters stored as separate rows with correct order_id&#34;, func(t *testing.T) {
-<span id="L556" class="ln">   556  </span>		yamlContent := `chains:
-<span id="L557" class="ln">   557  </span>  - name: &#34;test-parameters&#34;
-<span id="L558" class="ln">   558  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L559" class="ln">   559  </span>    tasks:
-<span id="L560" class="ln">   560  </span>      - name: &#34;mixed-params&#34;
-<span id="L561" class="ln">   561  </span>        kind: &#34;SQL&#34;
-<span id="L562" class="ln">   562  </span>        command: &#34;SELECT $1, $2, $3, $4, $5&#34;
-<span id="L563" class="ln">   563  </span>        parameters:
-<span id="L564" class="ln">   564  </span>          - &#34;hello world&#34;
-<span id="L565" class="ln">   565  </span>          - 42
-<span id="L566" class="ln">   566  </span>          - 3.14
-<span id="L567" class="ln">   567  </span>          - true
-<span id="L568" class="ln">   568  </span>          - [&#34;array&#34;, &#34;value&#34;]`
-<span id="L569" class="ln">   569  </span>
-<span id="L570" class="ln">   570  </span>		tempFile := createTempYamlFile(t, yamlContent)
-<span id="L571" class="ln">   571  </span>		defer removeTempFile(t, tempFile)
-<span id="L572" class="ln">   572  </span>
-<span id="L573" class="ln">   573  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
-<span id="L574" class="ln">   574  </span>		require.NoError(t, err)
-<span id="L575" class="ln">   575  </span>
-<span id="L576" class="ln">   576  </span>		<span class="comment">// Get the task ID</span>
-<span id="L577" class="ln">   577  </span>		var taskID int64
-<span id="L578" class="ln">   578  </span>		err = pge.ConfigDb.QueryRow(ctx,
-<span id="L579" class="ln">   579  </span>			&#34;SELECT task_id FROM timetable.task t JOIN timetable.chain c ON t.chain_id = c.chain_id WHERE c.chain_name = $1&#34;,
-<span id="L580" class="ln">   580  </span>			&#34;test-parameters&#34;).Scan(&amp;taskID)
-<span id="L581" class="ln">   581  </span>		require.NoError(t, err)
-<span id="L582" class="ln">   582  </span>
-<span id="L583" class="ln">   583  </span>		<span class="comment">// Verify parameters are stored as separate rows</span>
-<span id="L584" class="ln">   584  </span>		type paramRow struct {
-<span id="L585" class="ln">   585  </span>			OrderID int    `db:&#34;order_id&#34;`
-<span id="L586" class="ln">   586  </span>			Value   string `db:&#34;value&#34;`
-<span id="L587" class="ln">   587  </span>		}
-<span id="L588" class="ln">   588  </span>
-<span id="L589" class="ln">   589  </span>		rows, err := pge.ConfigDb.Query(ctx,
-<span id="L590" class="ln">   590  </span>			&#34;SELECT order_id, value::text FROM timetable.parameter WHERE task_id = $1 ORDER BY order_id&#34;,
-<span id="L591" class="ln">   591  </span>			taskID)
-<span id="L592" class="ln">   592  </span>		require.NoError(t, err)
-<span id="L593" class="ln">   593  </span>
-<span id="L594" class="ln">   594  </span>		params, err := pgx.CollectRows(rows, pgx.RowToStructByName[paramRow])
-<span id="L595" class="ln">   595  </span>		require.NoError(t, err)
-<span id="L596" class="ln">   596  </span>
-<span id="L597" class="ln">   597  </span>		<span class="comment">// Should have 5 parameters</span>
-<span id="L598" class="ln">   598  </span>		assert.Equal(t, 5, len(params))
-<span id="L599" class="ln">   599  </span>
-<span id="L600" class="ln">   600  </span>		<span class="comment">// Check each parameter</span>
-<span id="L601" class="ln">   601  </span>		assert.Equal(t, 1, params[0].OrderID)
-<span id="L602" class="ln">   602  </span>		assert.Equal(t, `&#34;hello world&#34;`, params[0].Value)
-<span id="L603" class="ln">   603  </span>
-<span id="L604" class="ln">   604  </span>		assert.Equal(t, 2, params[1].OrderID)
-<span id="L605" class="ln">   605  </span>		assert.Equal(t, `42`, params[1].Value)
-<span id="L606" class="ln">   606  </span>
-<span id="L607" class="ln">   607  </span>		assert.Equal(t, 3, params[2].OrderID)
-<span id="L608" class="ln">   608  </span>		assert.Equal(t, `3.14`, params[2].Value)
-<span id="L609" class="ln">   609  </span>
-<span id="L610" class="ln">   610  </span>		assert.Equal(t, 4, params[3].OrderID)
-<span id="L611" class="ln">   611  </span>		assert.Equal(t, `true`, params[3].Value)
-<span id="L612" class="ln">   612  </span>
-<span id="L613" class="ln">   613  </span>		assert.Equal(t, 5, params[4].OrderID)
-<span id="L614" class="ln">   614  </span>		assert.Contains(t, params[4].Value, `[&#34;array&#34;, &#34;value&#34;]`)
-<span id="L615" class="ln">   615  </span>	})
-<span id="L616" class="ln">   616  </span>
-<span id="L617" class="ln">   617  </span>	t.Run(&#34;Object parameters stored as JSONB objects&#34;, func(t *testing.T) {
-<span id="L618" class="ln">   618  </span>		yamlContent := `chains:
-<span id="L619" class="ln">   619  </span>  - name: &#34;test-object-params&#34;
-<span id="L620" class="ln">   620  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L621" class="ln">   621  </span>    tasks:
-<span id="L622" class="ln">   622  </span>      - name: &#34;object-param&#34;
-<span id="L623" class="ln">   623  </span>        kind: &#34;BUILTIN&#34;
-<span id="L624" class="ln">   624  </span>        command: &#34;Log&#34;
-<span id="L625" class="ln">   625  </span>        parameters:
-<span id="L626" class="ln">   626  </span>          - {&#34;level&#34;: &#34;WARNING&#34;, &#34;message&#34;: &#34;test&#34;, &#34;count&#34;: 123}`
-<span id="L627" class="ln">   627  </span>
-<span id="L628" class="ln">   628  </span>		tempFile := createTempYamlFile(t, yamlContent)
-<span id="L629" class="ln">   629  </span>		defer removeTempFile(t, tempFile)
-<span id="L630" class="ln">   630  </span>
-<span id="L631" class="ln">   631  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
-<span id="L632" class="ln">   632  </span>		require.NoError(t, err)
-<span id="L633" class="ln">   633  </span>
-<span id="L634" class="ln">   634  </span>		<span class="comment">// Get the task ID</span>
-<span id="L635" class="ln">   635  </span>		var taskID int64
-<span id="L636" class="ln">   636  </span>		err = pge.ConfigDb.QueryRow(ctx,
-<span id="L637" class="ln">   637  </span>			&#34;SELECT task_id FROM timetable.task t JOIN timetable.chain c ON t.chain_id = c.chain_id WHERE c.chain_name = $1&#34;,
-<span id="L638" class="ln">   638  </span>			&#34;test-object-params&#34;).Scan(&amp;taskID)
-<span id="L639" class="ln">   639  </span>		require.NoError(t, err)
-<span id="L640" class="ln">   640  </span>
-<span id="L641" class="ln">   641  </span>		<span class="comment">// Verify object parameter</span>
-<span id="L642" class="ln">   642  </span>		var value string
-<span id="L643" class="ln">   643  </span>		err = pge.ConfigDb.QueryRow(ctx,
-<span id="L644" class="ln">   644  </span>			&#34;SELECT value::text FROM timetable.parameter WHERE task_id = $1 AND order_id = 1&#34;,
-<span id="L645" class="ln">   645  </span>			taskID).Scan(&amp;value)
+<span id="L370" class="ln">   370  </span>			Tasks: []pgengine.YamlTask{
+<span id="L371" class="ln">   371  </span>				{
+<span id="L372" class="ln">   372  </span>					ChainTask: pgengine.ChainTask{
+<span id="L373" class="ln">   373  </span>						Command: &#34;SELECT 1&#34;,
+<span id="L374" class="ln">   374  </span>						Kind:    &#34;SQL&#34;,
+<span id="L375" class="ln">   375  </span>					},
+<span id="L376" class="ln">   376  </span>				},
+<span id="L377" class="ln">   377  </span>			},
+<span id="L378" class="ln">   378  </span>		}
+<span id="L379" class="ln">   379  </span>
+<span id="L380" class="ln">   380  </span>		err := chain.ValidateChain()
+<span id="L381" class="ln">   381  </span>		assert.Error(t, err)
+<span id="L382" class="ln">   382  </span>		assert.Contains(t, err.Error(), &#34;chain schedule is required&#34;)
+<span id="L383" class="ln">   383  </span>	})
+<span id="L384" class="ln">   384  </span>
+<span id="L385" class="ln">   385  </span>	t.Run(&#34;Invalid cron format&#34;, func(t *testing.T) {
+<span id="L386" class="ln">   386  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L387" class="ln">   387  </span>			Chain: pgengine.Chain{
+<span id="L388" class="ln">   388  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L389" class="ln">   389  </span>			},
+<span id="L390" class="ln">   390  </span>			Schedule: &#34;invalid cron&#34;,
+<span id="L391" class="ln">   391  </span>			Tasks: []pgengine.YamlTask{
+<span id="L392" class="ln">   392  </span>				{
+<span id="L393" class="ln">   393  </span>					ChainTask: pgengine.ChainTask{
+<span id="L394" class="ln">   394  </span>						Command: &#34;SELECT 1&#34;,
+<span id="L395" class="ln">   395  </span>						Kind:    &#34;SQL&#34;,
+<span id="L396" class="ln">   396  </span>					},
+<span id="L397" class="ln">   397  </span>				},
+<span id="L398" class="ln">   398  </span>			},
+<span id="L399" class="ln">   399  </span>		}
+<span id="L400" class="ln">   400  </span>
+<span id="L401" class="ln">   401  </span>		err := chain.ValidateChain()
+<span id="L402" class="ln">   402  </span>		assert.Error(t, err)
+<span id="L403" class="ln">   403  </span>		assert.Contains(t, err.Error(), &#34;invalid cron format&#34;)
+<span id="L404" class="ln">   404  </span>	})
+<span id="L405" class="ln">   405  </span>
+<span id="L406" class="ln">   406  </span>	t.Run(&#34;Special schedules&#34;, func(t *testing.T) {
+<span id="L407" class="ln">   407  </span>		specialSchedules := []string{&#34;@reboot&#34;, &#34;@after&#34;, &#34;@every&#34;}
+<span id="L408" class="ln">   408  </span>		for _, schedule := range specialSchedules {
+<span id="L409" class="ln">   409  </span>			chain := &amp;pgengine.YamlChain{
+<span id="L410" class="ln">   410  </span>				Chain: pgengine.Chain{
+<span id="L411" class="ln">   411  </span>					ChainName: &#34;test-chain&#34;,
+<span id="L412" class="ln">   412  </span>				},
+<span id="L413" class="ln">   413  </span>				Schedule: schedule,
+<span id="L414" class="ln">   414  </span>				Tasks: []pgengine.YamlTask{
+<span id="L415" class="ln">   415  </span>					{
+<span id="L416" class="ln">   416  </span>						ChainTask: pgengine.ChainTask{
+<span id="L417" class="ln">   417  </span>							Command: &#34;SELECT 1&#34;,
+<span id="L418" class="ln">   418  </span>							Kind:    &#34;SQL&#34;,
+<span id="L419" class="ln">   419  </span>						},
+<span id="L420" class="ln">   420  </span>					},
+<span id="L421" class="ln">   421  </span>				},
+<span id="L422" class="ln">   422  </span>			}
+<span id="L423" class="ln">   423  </span>
+<span id="L424" class="ln">   424  </span>			err := chain.ValidateChain()
+<span id="L425" class="ln">   425  </span>			assert.NoError(t, err, &#34;Schedule %s should be valid&#34;, schedule)
+<span id="L426" class="ln">   426  </span>		}
+<span id="L427" class="ln">   427  </span>	})
+<span id="L428" class="ln">   428  </span>
+<span id="L429" class="ln">   429  </span>	t.Run(&#34;No tasks&#34;, func(t *testing.T) {
+<span id="L430" class="ln">   430  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L431" class="ln">   431  </span>			Chain: pgengine.Chain{
+<span id="L432" class="ln">   432  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L433" class="ln">   433  </span>			},
+<span id="L434" class="ln">   434  </span>			Schedule: &#34;0 * * * *&#34;,
+<span id="L435" class="ln">   435  </span>			Tasks:    []pgengine.YamlTask{},
+<span id="L436" class="ln">   436  </span>		}
+<span id="L437" class="ln">   437  </span>
+<span id="L438" class="ln">   438  </span>		err := chain.ValidateChain()
+<span id="L439" class="ln">   439  </span>		assert.Error(t, err)
+<span id="L440" class="ln">   440  </span>		assert.Contains(t, err.Error(), &#34;chain must have at least one task&#34;)
+<span id="L441" class="ln">   441  </span>	})
+<span id="L442" class="ln">   442  </span>
+<span id="L443" class="ln">   443  </span>	t.Run(&#34;Task validation error&#34;, func(t *testing.T) {
+<span id="L444" class="ln">   444  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L445" class="ln">   445  </span>			Chain: pgengine.Chain{
+<span id="L446" class="ln">   446  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L447" class="ln">   447  </span>			},
+<span id="L448" class="ln">   448  </span>			Schedule: &#34;0 * * * *&#34;,
+<span id="L449" class="ln">   449  </span>			Tasks: []pgengine.YamlTask{
+<span id="L450" class="ln">   450  </span>				{
+<span id="L451" class="ln">   451  </span>					ChainTask: pgengine.ChainTask{
+<span id="L452" class="ln">   452  </span>						Command: &#34;&#34;, <span class="comment">// Invalid empty command</span>
+<span id="L453" class="ln">   453  </span>						Kind:    &#34;SQL&#34;,
+<span id="L454" class="ln">   454  </span>					},
+<span id="L455" class="ln">   455  </span>				},
+<span id="L456" class="ln">   456  </span>			},
+<span id="L457" class="ln">   457  </span>		}
+<span id="L458" class="ln">   458  </span>
+<span id="L459" class="ln">   459  </span>		err := chain.ValidateChain()
+<span id="L460" class="ln">   460  </span>		assert.Error(t, err)
+<span id="L461" class="ln">   461  </span>		assert.Contains(t, err.Error(), &#34;task 1:&#34;)
+<span id="L462" class="ln">   462  </span>		assert.Contains(t, err.Error(), &#34;task command is required&#34;)
+<span id="L463" class="ln">   463  </span>	})
+<span id="L464" class="ln">   464  </span>}
+<span id="L465" class="ln">   465  </span>
+<span id="L466" class="ln">   466  </span>func TestYamlTaskValidation(t *testing.T) {
+<span id="L467" class="ln">   467  </span>	t.Run(&#34;Valid task&#34;, func(t *testing.T) {
+<span id="L468" class="ln">   468  </span>		task := &amp;pgengine.YamlTask{
+<span id="L469" class="ln">   469  </span>			ChainTask: pgengine.ChainTask{
+<span id="L470" class="ln">   470  </span>				Command: &#34;SELECT 1&#34;,
+<span id="L471" class="ln">   471  </span>				Kind:    &#34;SQL&#34;,
+<span id="L472" class="ln">   472  </span>				Timeout: 60,
+<span id="L473" class="ln">   473  </span>			},
+<span id="L474" class="ln">   474  </span>		}
+<span id="L475" class="ln">   475  </span>
+<span id="L476" class="ln">   476  </span>		err := task.ValidateTask()
+<span id="L477" class="ln">   477  </span>		assert.NoError(t, err)
+<span id="L478" class="ln">   478  </span>	})
+<span id="L479" class="ln">   479  </span>
+<span id="L480" class="ln">   480  </span>	t.Run(&#34;Missing command&#34;, func(t *testing.T) {
+<span id="L481" class="ln">   481  </span>		task := &amp;pgengine.YamlTask{
+<span id="L482" class="ln">   482  </span>			ChainTask: pgengine.ChainTask{
+<span id="L483" class="ln">   483  </span>				Kind: &#34;SQL&#34;,
+<span id="L484" class="ln">   484  </span>			},
+<span id="L485" class="ln">   485  </span>		}
+<span id="L486" class="ln">   486  </span>
+<span id="L487" class="ln">   487  </span>		err := task.ValidateTask()
+<span id="L488" class="ln">   488  </span>		assert.Error(t, err)
+<span id="L489" class="ln">   489  </span>		assert.Contains(t, err.Error(), &#34;task command is required&#34;)
+<span id="L490" class="ln">   490  </span>	})
+<span id="L491" class="ln">   491  </span>
+<span id="L492" class="ln">   492  </span>	t.Run(&#34;Valid kinds&#34;, func(t *testing.T) {
+<span id="L493" class="ln">   493  </span>		validKinds := []string{&#34;&#34;, &#34;SQL&#34;, &#34;PROGRAM&#34;, &#34;BUILTIN&#34;, &#34;sql&#34;, &#34;program&#34;, &#34;builtin&#34;}
+<span id="L494" class="ln">   494  </span>		for _, kind := range validKinds {
+<span id="L495" class="ln">   495  </span>			task := &amp;pgengine.YamlTask{
+<span id="L496" class="ln">   496  </span>				ChainTask: pgengine.ChainTask{
+<span id="L497" class="ln">   497  </span>					Command: &#34;SELECT 1&#34;,
+<span id="L498" class="ln">   498  </span>					Kind:    kind,
+<span id="L499" class="ln">   499  </span>				},
+<span id="L500" class="ln">   500  </span>			}
+<span id="L501" class="ln">   501  </span>
+<span id="L502" class="ln">   502  </span>			err := task.ValidateTask()
+<span id="L503" class="ln">   503  </span>			assert.NoError(t, err, &#34;Kind %s should be valid&#34;, kind)
+<span id="L504" class="ln">   504  </span>		}
+<span id="L505" class="ln">   505  </span>	})
+<span id="L506" class="ln">   506  </span>
+<span id="L507" class="ln">   507  </span>	t.Run(&#34;Invalid kind&#34;, func(t *testing.T) {
+<span id="L508" class="ln">   508  </span>		task := &amp;pgengine.YamlTask{
+<span id="L509" class="ln">   509  </span>			ChainTask: pgengine.ChainTask{
+<span id="L510" class="ln">   510  </span>				Command: &#34;SELECT 1&#34;,
+<span id="L511" class="ln">   511  </span>				Kind:    &#34;INVALID&#34;,
+<span id="L512" class="ln">   512  </span>			},
+<span id="L513" class="ln">   513  </span>		}
+<span id="L514" class="ln">   514  </span>
+<span id="L515" class="ln">   515  </span>		err := task.ValidateTask()
+<span id="L516" class="ln">   516  </span>		assert.Error(t, err)
+<span id="L517" class="ln">   517  </span>		assert.Contains(t, err.Error(), &#34;invalid task kind: INVALID&#34;)
+<span id="L518" class="ln">   518  </span>	})
+<span id="L519" class="ln">   519  </span>
+<span id="L520" class="ln">   520  </span>	t.Run(&#34;Negative timeout&#34;, func(t *testing.T) {
+<span id="L521" class="ln">   521  </span>		task := &amp;pgengine.YamlTask{
+<span id="L522" class="ln">   522  </span>			ChainTask: pgengine.ChainTask{
+<span id="L523" class="ln">   523  </span>				Command: &#34;SELECT 1&#34;,
+<span id="L524" class="ln">   524  </span>				Kind:    &#34;SQL&#34;,
+<span id="L525" class="ln">   525  </span>				Timeout: -1,
+<span id="L526" class="ln">   526  </span>			},
+<span id="L527" class="ln">   527  </span>		}
+<span id="L528" class="ln">   528  </span>
+<span id="L529" class="ln">   529  </span>		err := task.ValidateTask()
+<span id="L530" class="ln">   530  </span>		assert.Error(t, err)
+<span id="L531" class="ln">   531  </span>		assert.Contains(t, err.Error(), &#34;task timeout must be non-negative&#34;)
+<span id="L532" class="ln">   532  </span>	})
+<span id="L533" class="ln">   533  </span>}
+<span id="L534" class="ln">   534  </span>
+<span id="L535" class="ln">   535  </span>func TestYamlChainSetDefaults(t *testing.T) {
+<span id="L536" class="ln">   536  </span>	t.Run(&#34;Set default schedule&#34;, func(t *testing.T) {
+<span id="L537" class="ln">   537  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L538" class="ln">   538  </span>			Chain: pgengine.Chain{
+<span id="L539" class="ln">   539  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L540" class="ln">   540  </span>			},
+<span id="L541" class="ln">   541  </span>			Tasks: []pgengine.YamlTask{
+<span id="L542" class="ln">   542  </span>				{
+<span id="L543" class="ln">   543  </span>					ChainTask: pgengine.ChainTask{
+<span id="L544" class="ln">   544  </span>						Command: &#34;SELECT 1&#34;,
+<span id="L545" class="ln">   545  </span>					},
+<span id="L546" class="ln">   546  </span>				},
+<span id="L547" class="ln">   547  </span>			},
+<span id="L548" class="ln">   548  </span>		}
+<span id="L549" class="ln">   549  </span>
+<span id="L550" class="ln">   550  </span>		chain.SetDefaults()
+<span id="L551" class="ln">   551  </span>		assert.Equal(t, &#34;* * * * *&#34;, chain.Schedule)
+<span id="L552" class="ln">   552  </span>		assert.Equal(t, &#34;SQL&#34;, chain.Tasks[0].Kind)
+<span id="L553" class="ln">   553  </span>		if assert.NotNil(t, chain.Tasks[0].Live) {
+<span id="L554" class="ln">   554  </span>			assert.True(t, *chain.Tasks[0].Live, &#34;Task should be live by default&#34;)
+<span id="L555" class="ln">   555  </span>		}
+<span id="L556" class="ln">   556  </span>	})
+<span id="L557" class="ln">   557  </span>
+<span id="L558" class="ln">   558  </span>	t.Run(&#34;Keep existing values&#34;, func(t *testing.T) {
+<span id="L559" class="ln">   559  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L560" class="ln">   560  </span>			Chain: pgengine.Chain{
+<span id="L561" class="ln">   561  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L562" class="ln">   562  </span>			},
+<span id="L563" class="ln">   563  </span>			Schedule: &#34;0 0 * * *&#34;,
+<span id="L564" class="ln">   564  </span>			Tasks: []pgengine.YamlTask{
+<span id="L565" class="ln">   565  </span>				{
+<span id="L566" class="ln">   566  </span>					ChainTask: pgengine.ChainTask{
+<span id="L567" class="ln">   567  </span>						Command: &#34;echo hello&#34;,
+<span id="L568" class="ln">   568  </span>						Kind:    &#34;PROGRAM&#34;,
+<span id="L569" class="ln">   569  </span>					},
+<span id="L570" class="ln">   570  </span>				},
+<span id="L571" class="ln">   571  </span>			},
+<span id="L572" class="ln">   572  </span>		}
+<span id="L573" class="ln">   573  </span>
+<span id="L574" class="ln">   574  </span>		chain.SetDefaults()
+<span id="L575" class="ln">   575  </span>		assert.Equal(t, &#34;0 0 * * *&#34;, chain.Schedule)
+<span id="L576" class="ln">   576  </span>		assert.Equal(t, &#34;PROGRAM&#34;, chain.Tasks[0].Kind)
+<span id="L577" class="ln">   577  </span>	})
+<span id="L578" class="ln">   578  </span>
+<span id="L579" class="ln">   579  </span>	t.Run(&#34;Keep disabled task&#34;, func(t *testing.T) {
+<span id="L580" class="ln">   580  </span>		disabled := false
+<span id="L581" class="ln">   581  </span>		chain := &amp;pgengine.YamlChain{
+<span id="L582" class="ln">   582  </span>			Chain: pgengine.Chain{
+<span id="L583" class="ln">   583  </span>				ChainName: &#34;test-chain&#34;,
+<span id="L584" class="ln">   584  </span>			},
+<span id="L585" class="ln">   585  </span>			Tasks: []pgengine.YamlTask{
+<span id="L586" class="ln">   586  </span>				{
+<span id="L587" class="ln">   587  </span>					ChainTask: pgengine.ChainTask{
+<span id="L588" class="ln">   588  </span>						Command: &#34;SELECT 1&#34;,
+<span id="L589" class="ln">   589  </span>					},
+<span id="L590" class="ln">   590  </span>					Live: &amp;disabled,
+<span id="L591" class="ln">   591  </span>				},
+<span id="L592" class="ln">   592  </span>			},
+<span id="L593" class="ln">   593  </span>		}
+<span id="L594" class="ln">   594  </span>
+<span id="L595" class="ln">   595  </span>		chain.SetDefaults()
+<span id="L596" class="ln">   596  </span>		if assert.NotNil(t, chain.Tasks[0].Live) {
+<span id="L597" class="ln">   597  </span>			assert.False(t, *chain.Tasks[0].Live, &#34;Task should stay disabled&#34;)
+<span id="L598" class="ln">   598  </span>		}
+<span id="L599" class="ln">   599  </span>	})
+<span id="L600" class="ln">   600  </span>}
+<span id="L601" class="ln">   601  </span>
+<span id="L602" class="ln">   602  </span>func TestParameterStorageIntegration(t *testing.T) {
+<span id="L603" class="ln">   603  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L604" class="ln">   604  </span>	defer cleanup()
+<span id="L605" class="ln">   605  </span>
+<span id="L606" class="ln">   606  </span>	ctx := context.Background()
+<span id="L607" class="ln">   607  </span>	pge := container.Engine
+<span id="L608" class="ln">   608  </span>
+<span id="L609" class="ln">   609  </span>	t.Run(&#34;Parameters stored as separate rows with correct order_id&#34;, func(t *testing.T) {
+<span id="L610" class="ln">   610  </span>		yamlContent := `chains:
+<span id="L611" class="ln">   611  </span>  - name: &#34;test-parameters&#34;
+<span id="L612" class="ln">   612  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L613" class="ln">   613  </span>    tasks:
+<span id="L614" class="ln">   614  </span>      - name: &#34;mixed-params&#34;
+<span id="L615" class="ln">   615  </span>        kind: &#34;SQL&#34;
+<span id="L616" class="ln">   616  </span>        command: &#34;SELECT $1, $2, $3, $4, $5&#34;
+<span id="L617" class="ln">   617  </span>        parameters:
+<span id="L618" class="ln">   618  </span>          - &#34;hello world&#34;
+<span id="L619" class="ln">   619  </span>          - 42
+<span id="L620" class="ln">   620  </span>          - 3.14
+<span id="L621" class="ln">   621  </span>          - true
+<span id="L622" class="ln">   622  </span>          - [&#34;array&#34;, &#34;value&#34;]`
+<span id="L623" class="ln">   623  </span>
+<span id="L624" class="ln">   624  </span>		tempFile := createTempYamlFile(t, yamlContent)
+<span id="L625" class="ln">   625  </span>		defer removeTempFile(t, tempFile)
+<span id="L626" class="ln">   626  </span>
+<span id="L627" class="ln">   627  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
+<span id="L628" class="ln">   628  </span>		require.NoError(t, err)
+<span id="L629" class="ln">   629  </span>
+<span id="L630" class="ln">   630  </span>		<span class="comment">// Get the task ID</span>
+<span id="L631" class="ln">   631  </span>		var taskID int64
+<span id="L632" class="ln">   632  </span>		err = pge.ConfigDb.QueryRow(ctx,
+<span id="L633" class="ln">   633  </span>			&#34;SELECT task_id FROM timetable.task t JOIN timetable.chain c ON t.chain_id = c.chain_id WHERE c.chain_name = $1&#34;,
+<span id="L634" class="ln">   634  </span>			&#34;test-parameters&#34;).Scan(&amp;taskID)
+<span id="L635" class="ln">   635  </span>		require.NoError(t, err)
+<span id="L636" class="ln">   636  </span>
+<span id="L637" class="ln">   637  </span>		<span class="comment">// Verify parameters are stored as separate rows</span>
+<span id="L638" class="ln">   638  </span>		type paramRow struct {
+<span id="L639" class="ln">   639  </span>			OrderID int    `db:&#34;order_id&#34;`
+<span id="L640" class="ln">   640  </span>			Value   string `db:&#34;value&#34;`
+<span id="L641" class="ln">   641  </span>		}
+<span id="L642" class="ln">   642  </span>
+<span id="L643" class="ln">   643  </span>		rows, err := pge.ConfigDb.Query(ctx,
+<span id="L644" class="ln">   644  </span>			&#34;SELECT order_id, value::text FROM timetable.parameter WHERE task_id = $1 ORDER BY order_id&#34;,
+<span id="L645" class="ln">   645  </span>			taskID)
 <span id="L646" class="ln">   646  </span>		require.NoError(t, err)
 <span id="L647" class="ln">   647  </span>
-<span id="L648" class="ln">   648  </span>		<span class="comment">// Should be a valid JSON object</span>
-<span id="L649" class="ln">   649  </span>		assert.Contains(t, value, `&#34;level&#34;`)
-<span id="L650" class="ln">   650  </span>		assert.Contains(t, value, `&#34;WARNING&#34;`)
-<span id="L651" class="ln">   651  </span>		assert.Contains(t, value, `&#34;message&#34;`)
-<span id="L652" class="ln">   652  </span>		assert.Contains(t, value, `&#34;test&#34;`)
-<span id="L653" class="ln">   653  </span>		assert.Contains(t, value, `&#34;count&#34;`)
-<span id="L654" class="ln">   654  </span>		assert.Contains(t, value, `123`)
-<span id="L655" class="ln">   655  </span>	})
-<span id="L656" class="ln">   656  </span>
-<span id="L657" class="ln">   657  </span>	t.Run(&#34;No parameters creates no parameter rows&#34;, func(t *testing.T) {
-<span id="L658" class="ln">   658  </span>		yamlContent := `chains:
-<span id="L659" class="ln">   659  </span>  - name: &#34;test-no-params&#34;
-<span id="L660" class="ln">   660  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L661" class="ln">   661  </span>    tasks:
-<span id="L662" class="ln">   662  </span>      - name: &#34;no-param&#34;
-<span id="L663" class="ln">   663  </span>        kind: &#34;SQL&#34;
-<span id="L664" class="ln">   664  </span>        command: &#34;SELECT 1&#34;`
-<span id="L665" class="ln">   665  </span>
-<span id="L666" class="ln">   666  </span>		tempFile := createTempYamlFile(t, yamlContent)
-<span id="L667" class="ln">   667  </span>		defer removeTempFile(t, tempFile)
-<span id="L668" class="ln">   668  </span>
-<span id="L669" class="ln">   669  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
-<span id="L670" class="ln">   670  </span>		require.NoError(t, err)
-<span id="L671" class="ln">   671  </span>
-<span id="L672" class="ln">   672  </span>		<span class="comment">// Get the task ID</span>
-<span id="L673" class="ln">   673  </span>		var count int
-<span id="L674" class="ln">   674  </span>		err = pge.ConfigDb.QueryRow(ctx, `
-<span id="L675" class="ln">   675  </span>SELECT COUNT(*)
-<span id="L676" class="ln">   676  </span>FROM timetable.task t
-<span id="L677" class="ln">   677  </span>	JOIN timetable.chain c ON t.chain_id = c.chain_id 
-<span id="L678" class="ln">   678  </span>	JOIN timetable.parameter p ON t.task_id = p.task_id
-<span id="L679" class="ln">   679  </span>	WHERE c.chain_name = $1`,
-<span id="L680" class="ln">   680  </span>			&#34;test-no-params&#34;).Scan(&amp;count)
-<span id="L681" class="ln">   681  </span>		require.NoError(t, err)
-<span id="L682" class="ln">   682  </span>		assert.Equal(t, 0, count)
-<span id="L683" class="ln">   683  </span>	})
-<span id="L684" class="ln">   684  </span>}
-<span id="L685" class="ln">   685  </span>
-<span id="L686" class="ln">   686  </span>func TestNullString(t *testing.T) {
-<span id="L687" class="ln">   687  </span>	<span class="comment">// Note: nullString is not exported, so we test it indirectly through chain creation</span>
-<span id="L688" class="ln">   688  </span>	t.Run(&#34;Indirect test via chain creation&#34;, func(t *testing.T) {
-<span id="L689" class="ln">   689  </span>		initmockdb(t)
-<span id="L690" class="ln">   690  </span>		defer mockPool.Close()
-<span id="L691" class="ln">   691  </span>		mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L692" class="ln">   692  </span>
-<span id="L693" class="ln">   693  </span>		yamlContent := `chains:
-<span id="L694" class="ln">   694  </span>  - name: &#34;test-null-strings&#34;
-<span id="L695" class="ln">   695  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L696" class="ln">   696  </span>    client_name: &#34;&#34;  # Should become NULL in database
-<span id="L697" class="ln">   697  </span>    on_error: &#34;&#34;     # Should become NULL in database
-<span id="L698" class="ln">   698  </span>    tasks:
-<span id="L699" class="ln">   699  </span>      - name: &#34;test-task&#34;
-<span id="L700" class="ln">   700  </span>        command: &#34;SELECT 1&#34;
-<span id="L701" class="ln">   701  </span>        kind: &#34;SQL&#34;
-<span id="L702" class="ln">   702  </span>        run_as: &#34;&#34;              # Should become NULL
-<span id="L703" class="ln">   703  </span>        database_connection: &#34;&#34; # Should become NULL`
-<span id="L704" class="ln">   704  </span>
-<span id="L705" class="ln">   705  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L706" class="ln">   706  </span>		defer removeTempFile(t, tmpfile)
-<span id="L707" class="ln">   707  </span>
-<span id="L708" class="ln">   708  </span>		<span class="comment">// Mock chain and task creation with empty strings converted to NULL</span>
-<span id="L709" class="ln">   709  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L710" class="ln">   710  </span>			WithArgs(&#34;test-null-strings&#34;).
-<span id="L711" class="ln">   711  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L712" class="ln">   712  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L713" class="ln">   713  </span>			WithArgs(anyArgs(9)...).
-<span id="L714" class="ln">   714  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L715" class="ln">   715  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L716" class="ln">   716  </span>			WithArgs(anyArgs(10)...).
-<span id="L717" class="ln">   717  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L718" class="ln">   718  </span>
-<span id="L719" class="ln">   719  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L720" class="ln">   720  </span>		require.NoError(t, err)
-<span id="L721" class="ln">   721  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L722" class="ln">   722  </span>	})
-<span id="L723" class="ln">   723  </span>}
-<span id="L724" class="ln">   724  </span>
-<span id="L725" class="ln">   725  </span>func TestLoadYamlChainsMultiTask(t *testing.T) {
-<span id="L726" class="ln">   726  </span>	initmockdb(t)
-<span id="L727" class="ln">   727  </span>	defer mockPool.Close()
-<span id="L728" class="ln">   728  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L729" class="ln">   729  </span>
-<span id="L730" class="ln">   730  </span>	t.Run(&#34;Multi-task chain creation&#34;, func(t *testing.T) {
-<span id="L731" class="ln">   731  </span>		yamlContent := `chains:
-<span id="L732" class="ln">   732  </span>  - name: &#34;multi-task-chain&#34;
-<span id="L733" class="ln">   733  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L734" class="ln">   734  </span>    live: true
-<span id="L735" class="ln">   735  </span>    max_instances: 2
-<span id="L736" class="ln">   736  </span>    timeout: 300
-<span id="L737" class="ln">   737  </span>    self_destruct: false
-<span id="L738" class="ln">   738  </span>    exclusive: true
-<span id="L739" class="ln">   739  </span>    client_name: &#34;test-client&#34;
-<span id="L740" class="ln">   740  </span>    on_error: &#34;CONTINUE&#34;
-<span id="L741" class="ln">   741  </span>    tasks:
-<span id="L742" class="ln">   742  </span>      - name: &#34;first-task&#34;
-<span id="L743" class="ln">   743  </span>        kind: &#34;SQL&#34;
-<span id="L744" class="ln">   744  </span>        command: &#34;SELECT 1&#34;
-<span id="L745" class="ln">   745  </span>        ignore_error: false
-<span id="L746" class="ln">   746  </span>        autonomous: false
-<span id="L747" class="ln">   747  </span>        timeout: 60
-<span id="L748" class="ln">   748  </span>        run_as: &#34;postgres&#34;
-<span id="L749" class="ln">   749  </span>        database_connection: &#34;main&#34;
-<span id="L750" class="ln">   750  </span>        parameters: [&#34;param1&#34;, 42]
-<span id="L751" class="ln">   751  </span>      - name: &#34;second-task&#34;
-<span id="L752" class="ln">   752  </span>        kind: &#34;PROGRAM&#34;
-<span id="L753" class="ln">   753  </span>        command: &#34;echo&#34;
-<span id="L754" class="ln">   754  </span>        ignore_error: true
-<span id="L755" class="ln">   755  </span>        autonomous: true
-<span id="L756" class="ln">   756  </span>        timeout: 30
-<span id="L757" class="ln">   757  </span>        parameters: [&#34;hello&#34;, &#34;world&#34;]`
+<span id="L648" class="ln">   648  </span>		params, err := pgx.CollectRows(rows, pgx.RowToStructByName[paramRow])
+<span id="L649" class="ln">   649  </span>		require.NoError(t, err)
+<span id="L650" class="ln">   650  </span>
+<span id="L651" class="ln">   651  </span>		<span class="comment">// Should have 5 parameters</span>
+<span id="L652" class="ln">   652  </span>		assert.Equal(t, 5, len(params))
+<span id="L653" class="ln">   653  </span>
+<span id="L654" class="ln">   654  </span>		<span class="comment">// Check each parameter</span>
+<span id="L655" class="ln">   655  </span>		assert.Equal(t, 1, params[0].OrderID)
+<span id="L656" class="ln">   656  </span>		assert.Equal(t, `&#34;hello world&#34;`, params[0].Value)
+<span id="L657" class="ln">   657  </span>
+<span id="L658" class="ln">   658  </span>		assert.Equal(t, 2, params[1].OrderID)
+<span id="L659" class="ln">   659  </span>		assert.Equal(t, `42`, params[1].Value)
+<span id="L660" class="ln">   660  </span>
+<span id="L661" class="ln">   661  </span>		assert.Equal(t, 3, params[2].OrderID)
+<span id="L662" class="ln">   662  </span>		assert.Equal(t, `3.14`, params[2].Value)
+<span id="L663" class="ln">   663  </span>
+<span id="L664" class="ln">   664  </span>		assert.Equal(t, 4, params[3].OrderID)
+<span id="L665" class="ln">   665  </span>		assert.Equal(t, `true`, params[3].Value)
+<span id="L666" class="ln">   666  </span>
+<span id="L667" class="ln">   667  </span>		assert.Equal(t, 5, params[4].OrderID)
+<span id="L668" class="ln">   668  </span>		assert.Contains(t, params[4].Value, `[&#34;array&#34;, &#34;value&#34;]`)
+<span id="L669" class="ln">   669  </span>	})
+<span id="L670" class="ln">   670  </span>
+<span id="L671" class="ln">   671  </span>	t.Run(&#34;Object parameters stored as JSONB objects&#34;, func(t *testing.T) {
+<span id="L672" class="ln">   672  </span>		yamlContent := `chains:
+<span id="L673" class="ln">   673  </span>  - name: &#34;test-object-params&#34;
+<span id="L674" class="ln">   674  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L675" class="ln">   675  </span>    tasks:
+<span id="L676" class="ln">   676  </span>      - name: &#34;object-param&#34;
+<span id="L677" class="ln">   677  </span>        kind: &#34;BUILTIN&#34;
+<span id="L678" class="ln">   678  </span>        command: &#34;Log&#34;
+<span id="L679" class="ln">   679  </span>        parameters:
+<span id="L680" class="ln">   680  </span>          - {&#34;level&#34;: &#34;WARNING&#34;, &#34;message&#34;: &#34;test&#34;, &#34;count&#34;: 123}`
+<span id="L681" class="ln">   681  </span>
+<span id="L682" class="ln">   682  </span>		tempFile := createTempYamlFile(t, yamlContent)
+<span id="L683" class="ln">   683  </span>		defer removeTempFile(t, tempFile)
+<span id="L684" class="ln">   684  </span>
+<span id="L685" class="ln">   685  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
+<span id="L686" class="ln">   686  </span>		require.NoError(t, err)
+<span id="L687" class="ln">   687  </span>
+<span id="L688" class="ln">   688  </span>		<span class="comment">// Get the task ID</span>
+<span id="L689" class="ln">   689  </span>		var taskID int64
+<span id="L690" class="ln">   690  </span>		err = pge.ConfigDb.QueryRow(ctx,
+<span id="L691" class="ln">   691  </span>			&#34;SELECT task_id FROM timetable.task t JOIN timetable.chain c ON t.chain_id = c.chain_id WHERE c.chain_name = $1&#34;,
+<span id="L692" class="ln">   692  </span>			&#34;test-object-params&#34;).Scan(&amp;taskID)
+<span id="L693" class="ln">   693  </span>		require.NoError(t, err)
+<span id="L694" class="ln">   694  </span>
+<span id="L695" class="ln">   695  </span>		<span class="comment">// Verify object parameter</span>
+<span id="L696" class="ln">   696  </span>		var value string
+<span id="L697" class="ln">   697  </span>		err = pge.ConfigDb.QueryRow(ctx,
+<span id="L698" class="ln">   698  </span>			&#34;SELECT value::text FROM timetable.parameter WHERE task_id = $1 AND order_id = 1&#34;,
+<span id="L699" class="ln">   699  </span>			taskID).Scan(&amp;value)
+<span id="L700" class="ln">   700  </span>		require.NoError(t, err)
+<span id="L701" class="ln">   701  </span>
+<span id="L702" class="ln">   702  </span>		<span class="comment">// Should be a valid JSON object</span>
+<span id="L703" class="ln">   703  </span>		assert.Contains(t, value, `&#34;level&#34;`)
+<span id="L704" class="ln">   704  </span>		assert.Contains(t, value, `&#34;WARNING&#34;`)
+<span id="L705" class="ln">   705  </span>		assert.Contains(t, value, `&#34;message&#34;`)
+<span id="L706" class="ln">   706  </span>		assert.Contains(t, value, `&#34;test&#34;`)
+<span id="L707" class="ln">   707  </span>		assert.Contains(t, value, `&#34;count&#34;`)
+<span id="L708" class="ln">   708  </span>		assert.Contains(t, value, `123`)
+<span id="L709" class="ln">   709  </span>	})
+<span id="L710" class="ln">   710  </span>
+<span id="L711" class="ln">   711  </span>	t.Run(&#34;No parameters creates no parameter rows&#34;, func(t *testing.T) {
+<span id="L712" class="ln">   712  </span>		yamlContent := `chains:
+<span id="L713" class="ln">   713  </span>  - name: &#34;test-no-params&#34;
+<span id="L714" class="ln">   714  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L715" class="ln">   715  </span>    tasks:
+<span id="L716" class="ln">   716  </span>      - name: &#34;no-param&#34;
+<span id="L717" class="ln">   717  </span>        kind: &#34;SQL&#34;
+<span id="L718" class="ln">   718  </span>        command: &#34;SELECT 1&#34;`
+<span id="L719" class="ln">   719  </span>
+<span id="L720" class="ln">   720  </span>		tempFile := createTempYamlFile(t, yamlContent)
+<span id="L721" class="ln">   721  </span>		defer removeTempFile(t, tempFile)
+<span id="L722" class="ln">   722  </span>
+<span id="L723" class="ln">   723  </span>		err := pge.LoadYamlChains(ctx, tempFile, false)
+<span id="L724" class="ln">   724  </span>		require.NoError(t, err)
+<span id="L725" class="ln">   725  </span>
+<span id="L726" class="ln">   726  </span>		<span class="comment">// Get the task ID</span>
+<span id="L727" class="ln">   727  </span>		var count int
+<span id="L728" class="ln">   728  </span>		err = pge.ConfigDb.QueryRow(ctx, `
+<span id="L729" class="ln">   729  </span>SELECT COUNT(*)
+<span id="L730" class="ln">   730  </span>FROM timetable.task t
+<span id="L731" class="ln">   731  </span>	JOIN timetable.chain c ON t.chain_id = c.chain_id 
+<span id="L732" class="ln">   732  </span>	JOIN timetable.parameter p ON t.task_id = p.task_id
+<span id="L733" class="ln">   733  </span>	WHERE c.chain_name = $1`,
+<span id="L734" class="ln">   734  </span>			&#34;test-no-params&#34;).Scan(&amp;count)
+<span id="L735" class="ln">   735  </span>		require.NoError(t, err)
+<span id="L736" class="ln">   736  </span>		assert.Equal(t, 0, count)
+<span id="L737" class="ln">   737  </span>	})
+<span id="L738" class="ln">   738  </span>}
+<span id="L739" class="ln">   739  </span>
+<span id="L740" class="ln">   740  </span>func TestNullString(t *testing.T) {
+<span id="L741" class="ln">   741  </span>	<span class="comment">// Note: nullString is not exported, so we test it indirectly through chain creation</span>
+<span id="L742" class="ln">   742  </span>	t.Run(&#34;Indirect test via chain creation&#34;, func(t *testing.T) {
+<span id="L743" class="ln">   743  </span>		initmockdb(t)
+<span id="L744" class="ln">   744  </span>		defer mockPool.Close()
+<span id="L745" class="ln">   745  </span>		mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L746" class="ln">   746  </span>
+<span id="L747" class="ln">   747  </span>		yamlContent := `chains:
+<span id="L748" class="ln">   748  </span>  - name: &#34;test-null-strings&#34;
+<span id="L749" class="ln">   749  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L750" class="ln">   750  </span>    client_name: &#34;&#34;  # Should become NULL in database
+<span id="L751" class="ln">   751  </span>    on_error: &#34;&#34;     # Should become NULL in database
+<span id="L752" class="ln">   752  </span>    tasks:
+<span id="L753" class="ln">   753  </span>      - name: &#34;test-task&#34;
+<span id="L754" class="ln">   754  </span>        command: &#34;SELECT 1&#34;
+<span id="L755" class="ln">   755  </span>        kind: &#34;SQL&#34;
+<span id="L756" class="ln">   756  </span>        run_as: &#34;&#34;              # Should become NULL
+<span id="L757" class="ln">   757  </span>        database_connection: &#34;&#34; # Should become NULL`
 <span id="L758" class="ln">   758  </span>
 <span id="L759" class="ln">   759  </span>		tmpfile := createTempYamlFile(t, yamlContent)
 <span id="L760" class="ln">   760  </span>		defer removeTempFile(t, tmpfile)
 <span id="L761" class="ln">   761  </span>
-<span id="L762" class="ln">   762  </span>		<span class="comment">// Mock chain creation</span>
+<span id="L762" class="ln">   762  </span>		<span class="comment">// Mock chain and task creation with empty strings converted to NULL</span>
 <span id="L763" class="ln">   763  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L764" class="ln">   764  </span>			WithArgs(&#34;multi-task-chain&#34;).
+<span id="L764" class="ln">   764  </span>			WithArgs(&#34;test-null-strings&#34;).
 <span id="L765" class="ln">   765  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
 <span id="L766" class="ln">   766  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
 <span id="L767" class="ln">   767  </span>			WithArgs(anyArgs(9)...).
 <span id="L768" class="ln">   768  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L769" class="ln">   769  </span>
-<span id="L770" class="ln">   770  </span>		<span class="comment">// Mock first task creation</span>
-<span id="L771" class="ln">   771  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L772" class="ln">   772  </span>			WithArgs(anyArgs(10)...).
-<span id="L773" class="ln">   773  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L774" class="ln">   774  </span>		<span class="comment">// Mock first task parameters (2 parameters)</span>
-<span id="L775" class="ln">   775  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L776" class="ln">   776  </span>			WithArgs(anyArgs(3)...).
-<span id="L777" class="ln">   777  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
-<span id="L778" class="ln">   778  </span>			Times(2)
-<span id="L779" class="ln">   779  </span>
-<span id="L780" class="ln">   780  </span>		<span class="comment">// Mock second task creation</span>
-<span id="L781" class="ln">   781  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L782" class="ln">   782  </span>			WithArgs(anyArgs(10)...).
-<span id="L783" class="ln">   783  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
-<span id="L784" class="ln">   784  </span>		<span class="comment">// Mock second task parameters (2 parameters)</span>
-<span id="L785" class="ln">   785  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L786" class="ln">   786  </span>			WithArgs(anyArgs(3)...).
-<span id="L787" class="ln">   787  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
-<span id="L788" class="ln">   788  </span>			Times(2)
-<span id="L789" class="ln">   789  </span>
-<span id="L790" class="ln">   790  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L791" class="ln">   791  </span>		require.NoError(t, err)
-<span id="L792" class="ln">   792  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L793" class="ln">   793  </span>	})
-<span id="L794" class="ln">   794  </span>
-<span id="L795" class="ln">   795  </span>	t.Run(&#34;Chain already exists without replace&#34;, func(t *testing.T) {
-<span id="L796" class="ln">   796  </span>		yamlContent := `chains:
-<span id="L797" class="ln">   797  </span>  - name: &#34;existing-chain&#34;
-<span id="L798" class="ln">   798  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L799" class="ln">   799  </span>    tasks:
-<span id="L800" class="ln">   800  </span>      - command: &#34;SELECT 1&#34;
-<span id="L801" class="ln">   801  </span>        kind: &#34;SQL&#34;`
-<span id="L802" class="ln">   802  </span>
-<span id="L803" class="ln">   803  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L804" class="ln">   804  </span>		defer removeTempFile(t, tmpfile)
-<span id="L805" class="ln">   805  </span>
-<span id="L806" class="ln">   806  </span>		<span class="comment">// Mock chain already exists</span>
-<span id="L807" class="ln">   807  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L808" class="ln">   808  </span>			WithArgs(&#34;existing-chain&#34;).
-<span id="L809" class="ln">   809  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(true))
-<span id="L810" class="ln">   810  </span>
-<span id="L811" class="ln">   811  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L812" class="ln">   812  </span>		assert.Error(t, err)
-<span id="L813" class="ln">   813  </span>		assert.Contains(t, err.Error(), &#34;already exists&#34;)
-<span id="L814" class="ln">   814  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L815" class="ln">   815  </span>	})
-<span id="L816" class="ln">   816  </span>
-<span id="L817" class="ln">   817  </span>	t.Run(&#34;Database error during chain creation&#34;, func(t *testing.T) {
-<span id="L818" class="ln">   818  </span>		<span class="comment">// Test with invalid schedule that fails YAML validation</span>
-<span id="L819" class="ln">   819  </span>		yamlContent := `chains:
-<span id="L820" class="ln">   820  </span>  - name: &#34;invalid-schedule-chain&#34;
-<span id="L821" class="ln">   821  </span>    schedule: &#34;invalid cron expression that passes validation but fails in DB&#34;
-<span id="L822" class="ln">   822  </span>    tasks:
-<span id="L823" class="ln">   823  </span>      - command: &#34;SELECT 1&#34;
-<span id="L824" class="ln">   824  </span>        kind: &#34;SQL&#34;`
-<span id="L825" class="ln">   825  </span>
-<span id="L826" class="ln">   826  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L827" class="ln">   827  </span>		defer removeTempFile(t, tmpfile)
-<span id="L828" class="ln">   828  </span>
-<span id="L829" class="ln">   829  </span>		<span class="comment">// This should fail at YAML validation level due to invalid cron format</span>
-<span id="L830" class="ln">   830  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L831" class="ln">   831  </span>		assert.Error(t, err)
-<span id="L832" class="ln">   832  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML file&#34;)
-<span id="L833" class="ln">   833  </span>	})
-<span id="L834" class="ln">   834  </span>}
-<span id="L835" class="ln">   835  </span>
-<span id="L836" class="ln">   836  </span>func TestLoadYamlChainsErrorCases(t *testing.T) {
-<span id="L837" class="ln">   837  </span>	initmockdb(t)
-<span id="L838" class="ln">   838  </span>	defer mockPool.Close()
-<span id="L839" class="ln">   839  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L840" class="ln">   840  </span>
-<span id="L841" class="ln">   841  </span>	t.Run(&#34;Invalid YAML file&#34;, func(t *testing.T) {
-<span id="L842" class="ln">   842  </span>		err := mockpge.LoadYamlChains(context.Background(), &#34;/non/existent/file.yaml&#34;, false)
-<span id="L843" class="ln">   843  </span>		assert.Error(t, err)
-<span id="L844" class="ln">   844  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML file&#34;)
-<span id="L845" class="ln">   845  </span>	})
-<span id="L846" class="ln">   846  </span>
-<span id="L847" class="ln">   847  </span>	t.Run(&#34;Invalid YAML content&#34;, func(t *testing.T) {
-<span id="L848" class="ln">   848  </span>		invalidYaml := `chains:
-<span id="L849" class="ln">   849  </span>  - name: &#34;&#34;  # Invalid: empty name
-<span id="L850" class="ln">   850  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L851" class="ln">   851  </span>    tasks:
-<span id="L852" class="ln">   852  </span>      - command: &#34;SELECT 1&#34;`
-<span id="L853" class="ln">   853  </span>
-<span id="L854" class="ln">   854  </span>		tmpfile := createTempYamlFile(t, invalidYaml)
-<span id="L855" class="ln">   855  </span>		defer removeTempFile(t, tmpfile)
+<span id="L769" class="ln">   769  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L770" class="ln">   770  </span>			WithArgs(anyArgs(11)...).
+<span id="L771" class="ln">   771  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L772" class="ln">   772  </span>
+<span id="L773" class="ln">   773  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L774" class="ln">   774  </span>		require.NoError(t, err)
+<span id="L775" class="ln">   775  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L776" class="ln">   776  </span>	})
+<span id="L777" class="ln">   777  </span>}
+<span id="L778" class="ln">   778  </span>
+<span id="L779" class="ln">   779  </span>func TestLoadYamlChainsMultiTask(t *testing.T) {
+<span id="L780" class="ln">   780  </span>	initmockdb(t)
+<span id="L781" class="ln">   781  </span>	defer mockPool.Close()
+<span id="L782" class="ln">   782  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L783" class="ln">   783  </span>
+<span id="L784" class="ln">   784  </span>	t.Run(&#34;Multi-task chain creation&#34;, func(t *testing.T) {
+<span id="L785" class="ln">   785  </span>		yamlContent := `chains:
+<span id="L786" class="ln">   786  </span>  - name: &#34;multi-task-chain&#34;
+<span id="L787" class="ln">   787  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L788" class="ln">   788  </span>    live: true
+<span id="L789" class="ln">   789  </span>    max_instances: 2
+<span id="L790" class="ln">   790  </span>    timeout: 300
+<span id="L791" class="ln">   791  </span>    self_destruct: false
+<span id="L792" class="ln">   792  </span>    exclusive: true
+<span id="L793" class="ln">   793  </span>    client_name: &#34;test-client&#34;
+<span id="L794" class="ln">   794  </span>    on_error: &#34;CONTINUE&#34;
+<span id="L795" class="ln">   795  </span>    tasks:
+<span id="L796" class="ln">   796  </span>      - name: &#34;first-task&#34;
+<span id="L797" class="ln">   797  </span>        kind: &#34;SQL&#34;
+<span id="L798" class="ln">   798  </span>        command: &#34;SELECT 1&#34;
+<span id="L799" class="ln">   799  </span>        ignore_error: false
+<span id="L800" class="ln">   800  </span>        autonomous: false
+<span id="L801" class="ln">   801  </span>        timeout: 60
+<span id="L802" class="ln">   802  </span>        run_as: &#34;postgres&#34;
+<span id="L803" class="ln">   803  </span>        database_connection: &#34;main&#34;
+<span id="L804" class="ln">   804  </span>        parameters: [&#34;param1&#34;, 42]
+<span id="L805" class="ln">   805  </span>      - name: &#34;second-task&#34;
+<span id="L806" class="ln">   806  </span>        kind: &#34;PROGRAM&#34;
+<span id="L807" class="ln">   807  </span>        command: &#34;echo&#34;
+<span id="L808" class="ln">   808  </span>        ignore_error: true
+<span id="L809" class="ln">   809  </span>        autonomous: true
+<span id="L810" class="ln">   810  </span>        timeout: 30
+<span id="L811" class="ln">   811  </span>        parameters: [&#34;hello&#34;, &#34;world&#34;]`
+<span id="L812" class="ln">   812  </span>
+<span id="L813" class="ln">   813  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L814" class="ln">   814  </span>		defer removeTempFile(t, tmpfile)
+<span id="L815" class="ln">   815  </span>
+<span id="L816" class="ln">   816  </span>		<span class="comment">// Mock chain creation</span>
+<span id="L817" class="ln">   817  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L818" class="ln">   818  </span>			WithArgs(&#34;multi-task-chain&#34;).
+<span id="L819" class="ln">   819  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L820" class="ln">   820  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L821" class="ln">   821  </span>			WithArgs(anyArgs(9)...).
+<span id="L822" class="ln">   822  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L823" class="ln">   823  </span>
+<span id="L824" class="ln">   824  </span>		<span class="comment">// Mock first task creation</span>
+<span id="L825" class="ln">   825  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L826" class="ln">   826  </span>			WithArgs(anyArgs(11)...).
+<span id="L827" class="ln">   827  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L828" class="ln">   828  </span>		<span class="comment">// Mock first task parameters (2 parameters)</span>
+<span id="L829" class="ln">   829  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L830" class="ln">   830  </span>			WithArgs(anyArgs(3)...).
+<span id="L831" class="ln">   831  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
+<span id="L832" class="ln">   832  </span>			Times(2)
+<span id="L833" class="ln">   833  </span>
+<span id="L834" class="ln">   834  </span>		<span class="comment">// Mock second task creation</span>
+<span id="L835" class="ln">   835  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L836" class="ln">   836  </span>			WithArgs(anyArgs(11)...).
+<span id="L837" class="ln">   837  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
+<span id="L838" class="ln">   838  </span>		<span class="comment">// Mock second task parameters (2 parameters)</span>
+<span id="L839" class="ln">   839  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L840" class="ln">   840  </span>			WithArgs(anyArgs(3)...).
+<span id="L841" class="ln">   841  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
+<span id="L842" class="ln">   842  </span>			Times(2)
+<span id="L843" class="ln">   843  </span>
+<span id="L844" class="ln">   844  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L845" class="ln">   845  </span>		require.NoError(t, err)
+<span id="L846" class="ln">   846  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L847" class="ln">   847  </span>	})
+<span id="L848" class="ln">   848  </span>
+<span id="L849" class="ln">   849  </span>	t.Run(&#34;Chain already exists without replace&#34;, func(t *testing.T) {
+<span id="L850" class="ln">   850  </span>		yamlContent := `chains:
+<span id="L851" class="ln">   851  </span>  - name: &#34;existing-chain&#34;
+<span id="L852" class="ln">   852  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L853" class="ln">   853  </span>    tasks:
+<span id="L854" class="ln">   854  </span>      - command: &#34;SELECT 1&#34;
+<span id="L855" class="ln">   855  </span>        kind: &#34;SQL&#34;`
 <span id="L856" class="ln">   856  </span>
-<span id="L857" class="ln">   857  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L858" class="ln">   858  </span>		assert.Error(t, err)
-<span id="L859" class="ln">   859  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML file&#34;)
-<span id="L860" class="ln">   860  </span>	})
-<span id="L861" class="ln">   861  </span>}
-<span id="L862" class="ln">   862  </span>
-<span id="L863" class="ln">   863  </span>func TestCreateChainFromYamlEdgeCases(t *testing.T) {
-<span id="L864" class="ln">   864  </span>	initmockdb(t)
-<span id="L865" class="ln">   865  </span>	defer mockPool.Close()
-<span id="L866" class="ln">   866  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L867" class="ln">   867  </span>
-<span id="L868" class="ln">   868  </span>	t.Run(&#34;Task with no parameters&#34;, func(t *testing.T) {
-<span id="L869" class="ln">   869  </span>		yamlContent := `chains:
-<span id="L870" class="ln">   870  </span>  - name: &#34;no-params-chain&#34;
-<span id="L871" class="ln">   871  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L872" class="ln">   872  </span>    tasks:
-<span id="L873" class="ln">   873  </span>      - name: &#34;no-param-task&#34;
-<span id="L874" class="ln">   874  </span>        kind: &#34;SQL&#34;
-<span id="L875" class="ln">   875  </span>        command: &#34;SELECT CURRENT_TIMESTAMP&#34;
-<span id="L876" class="ln">   876  </span>      - name: &#34;empty-param-task&#34;
-<span id="L877" class="ln">   877  </span>        kind: &#34;SQL&#34;
-<span id="L878" class="ln">   878  </span>        command: &#34;SELECT 1&#34;
-<span id="L879" class="ln">   879  </span>        parameters: []`
-<span id="L880" class="ln">   880  </span>
-<span id="L881" class="ln">   881  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L882" class="ln">   882  </span>		defer removeTempFile(t, tmpfile)
-<span id="L883" class="ln">   883  </span>
-<span id="L884" class="ln">   884  </span>		<span class="comment">// Mock chain creation and tasks without parameters</span>
-<span id="L885" class="ln">   885  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L886" class="ln">   886  </span>			WithArgs(&#34;no-params-chain&#34;).
-<span id="L887" class="ln">   887  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L888" class="ln">   888  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L889" class="ln">   889  </span>			WithArgs(anyArgs(9)...).
-<span id="L890" class="ln">   890  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L891" class="ln">   891  </span>
-<span id="L892" class="ln">   892  </span>		<span class="comment">// Mock first task creation (no parameters)</span>
-<span id="L893" class="ln">   893  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L894" class="ln">   894  </span>			WithArgs(anyArgs(10)...).
-<span id="L895" class="ln">   895  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L896" class="ln">   896  </span>		<span class="comment">// Mock second task creation (empty parameters)</span>
-<span id="L897" class="ln">   897  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L898" class="ln">   898  </span>			WithArgs(anyArgs(10)...).
-<span id="L899" class="ln">   899  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
+<span id="L857" class="ln">   857  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L858" class="ln">   858  </span>		defer removeTempFile(t, tmpfile)
+<span id="L859" class="ln">   859  </span>
+<span id="L860" class="ln">   860  </span>		<span class="comment">// Mock chain already exists</span>
+<span id="L861" class="ln">   861  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L862" class="ln">   862  </span>			WithArgs(&#34;existing-chain&#34;).
+<span id="L863" class="ln">   863  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(true))
+<span id="L864" class="ln">   864  </span>
+<span id="L865" class="ln">   865  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L866" class="ln">   866  </span>		assert.Error(t, err)
+<span id="L867" class="ln">   867  </span>		assert.Contains(t, err.Error(), &#34;already exists&#34;)
+<span id="L868" class="ln">   868  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L869" class="ln">   869  </span>	})
+<span id="L870" class="ln">   870  </span>
+<span id="L871" class="ln">   871  </span>	t.Run(&#34;Database error during chain creation&#34;, func(t *testing.T) {
+<span id="L872" class="ln">   872  </span>		<span class="comment">// Test with invalid schedule that fails YAML validation</span>
+<span id="L873" class="ln">   873  </span>		yamlContent := `chains:
+<span id="L874" class="ln">   874  </span>  - name: &#34;invalid-schedule-chain&#34;
+<span id="L875" class="ln">   875  </span>    schedule: &#34;invalid cron expression that passes validation but fails in DB&#34;
+<span id="L876" class="ln">   876  </span>    tasks:
+<span id="L877" class="ln">   877  </span>      - command: &#34;SELECT 1&#34;
+<span id="L878" class="ln">   878  </span>        kind: &#34;SQL&#34;`
+<span id="L879" class="ln">   879  </span>
+<span id="L880" class="ln">   880  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L881" class="ln">   881  </span>		defer removeTempFile(t, tmpfile)
+<span id="L882" class="ln">   882  </span>
+<span id="L883" class="ln">   883  </span>		<span class="comment">// This should fail at YAML validation level due to invalid cron format</span>
+<span id="L884" class="ln">   884  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L885" class="ln">   885  </span>		assert.Error(t, err)
+<span id="L886" class="ln">   886  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML file&#34;)
+<span id="L887" class="ln">   887  </span>	})
+<span id="L888" class="ln">   888  </span>}
+<span id="L889" class="ln">   889  </span>
+<span id="L890" class="ln">   890  </span>func TestLoadYamlChainsErrorCases(t *testing.T) {
+<span id="L891" class="ln">   891  </span>	initmockdb(t)
+<span id="L892" class="ln">   892  </span>	defer mockPool.Close()
+<span id="L893" class="ln">   893  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L894" class="ln">   894  </span>
+<span id="L895" class="ln">   895  </span>	t.Run(&#34;Invalid YAML file&#34;, func(t *testing.T) {
+<span id="L896" class="ln">   896  </span>		err := mockpge.LoadYamlChains(context.Background(), &#34;/non/existent/file.yaml&#34;, false)
+<span id="L897" class="ln">   897  </span>		assert.Error(t, err)
+<span id="L898" class="ln">   898  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML file&#34;)
+<span id="L899" class="ln">   899  </span>	})
 <span id="L900" class="ln">   900  </span>
-<span id="L901" class="ln">   901  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L902" class="ln">   902  </span>		require.NoError(t, err)
-<span id="L903" class="ln">   903  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L904" class="ln">   904  </span>	})
-<span id="L905" class="ln">   905  </span>
-<span id="L906" class="ln">   906  </span>	t.Run(&#34;Complex parameter types&#34;, func(t *testing.T) {
-<span id="L907" class="ln">   907  </span>		yamlContent := `chains:
-<span id="L908" class="ln">   908  </span>  - name: &#34;complex-params-chain&#34;
-<span id="L909" class="ln">   909  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L910" class="ln">   910  </span>    tasks:
-<span id="L911" class="ln">   911  </span>      - name: &#34;complex-task&#34;
-<span id="L912" class="ln">   912  </span>        kind: &#34;SQL&#34;
-<span id="L913" class="ln">   913  </span>        command: &#34;SELECT $1::jsonb&#34;
-<span id="L914" class="ln">   914  </span>        parameters:
-<span id="L915" class="ln">   915  </span>          - {&#34;key&#34;: &#34;value&#34;, &#34;number&#34;: 42, &#34;nested&#34;: {&#34;inner&#34;: true}}`
+<span id="L901" class="ln">   901  </span>	t.Run(&#34;Invalid YAML content&#34;, func(t *testing.T) {
+<span id="L902" class="ln">   902  </span>		invalidYaml := `chains:
+<span id="L903" class="ln">   903  </span>  - name: &#34;&#34;  # Invalid: empty name
+<span id="L904" class="ln">   904  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L905" class="ln">   905  </span>    tasks:
+<span id="L906" class="ln">   906  </span>      - command: &#34;SELECT 1&#34;`
+<span id="L907" class="ln">   907  </span>
+<span id="L908" class="ln">   908  </span>		tmpfile := createTempYamlFile(t, invalidYaml)
+<span id="L909" class="ln">   909  </span>		defer removeTempFile(t, tmpfile)
+<span id="L910" class="ln">   910  </span>
+<span id="L911" class="ln">   911  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L912" class="ln">   912  </span>		assert.Error(t, err)
+<span id="L913" class="ln">   913  </span>		assert.Contains(t, err.Error(), &#34;failed to parse YAML file&#34;)
+<span id="L914" class="ln">   914  </span>	})
+<span id="L915" class="ln">   915  </span>}
 <span id="L916" class="ln">   916  </span>
-<span id="L917" class="ln">   917  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L918" class="ln">   918  </span>		defer removeTempFile(t, tmpfile)
-<span id="L919" class="ln">   919  </span>
-<span id="L920" class="ln">   920  </span>		<span class="comment">// Mock chain and task creation</span>
-<span id="L921" class="ln">   921  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L922" class="ln">   922  </span>			WithArgs(&#34;complex-params-chain&#34;).
-<span id="L923" class="ln">   923  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L924" class="ln">   924  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L925" class="ln">   925  </span>			WithArgs(anyArgs(9)...).
-<span id="L926" class="ln">   926  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L927" class="ln">   927  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L928" class="ln">   928  </span>			WithArgs(anyArgs(10)...).
-<span id="L929" class="ln">   929  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L930" class="ln">   930  </span>		<span class="comment">// Mock parameter insertion</span>
-<span id="L931" class="ln">   931  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L932" class="ln">   932  </span>			WithArgs(anyArgs(3)...).
-<span id="L933" class="ln">   933  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L917" class="ln">   917  </span>func TestCreateChainFromYamlEdgeCases(t *testing.T) {
+<span id="L918" class="ln">   918  </span>	initmockdb(t)
+<span id="L919" class="ln">   919  </span>	defer mockPool.Close()
+<span id="L920" class="ln">   920  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L921" class="ln">   921  </span>
+<span id="L922" class="ln">   922  </span>	t.Run(&#34;Task with no parameters&#34;, func(t *testing.T) {
+<span id="L923" class="ln">   923  </span>		yamlContent := `chains:
+<span id="L924" class="ln">   924  </span>  - name: &#34;no-params-chain&#34;
+<span id="L925" class="ln">   925  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L926" class="ln">   926  </span>    tasks:
+<span id="L927" class="ln">   927  </span>      - name: &#34;no-param-task&#34;
+<span id="L928" class="ln">   928  </span>        kind: &#34;SQL&#34;
+<span id="L929" class="ln">   929  </span>        command: &#34;SELECT CURRENT_TIMESTAMP&#34;
+<span id="L930" class="ln">   930  </span>      - name: &#34;empty-param-task&#34;
+<span id="L931" class="ln">   931  </span>        kind: &#34;SQL&#34;
+<span id="L932" class="ln">   932  </span>        command: &#34;SELECT 1&#34;
+<span id="L933" class="ln">   933  </span>        parameters: []`
 <span id="L934" class="ln">   934  </span>
-<span id="L935" class="ln">   935  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L936" class="ln">   936  </span>		require.NoError(t, err)
-<span id="L937" class="ln">   937  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L938" class="ln">   938  </span>	})
-<span id="L939" class="ln">   939  </span>}
-<span id="L940" class="ln">   940  </span>
-<span id="L941" class="ln">   941  </span>func TestCreateChainFromYamlErrorHandling(t *testing.T) {
-<span id="L942" class="ln">   942  </span>	initmockdb(t)
-<span id="L943" class="ln">   943  </span>	defer mockPool.Close()
-<span id="L944" class="ln">   944  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L935" class="ln">   935  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L936" class="ln">   936  </span>		defer removeTempFile(t, tmpfile)
+<span id="L937" class="ln">   937  </span>
+<span id="L938" class="ln">   938  </span>		<span class="comment">// Mock chain creation and tasks without parameters</span>
+<span id="L939" class="ln">   939  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L940" class="ln">   940  </span>			WithArgs(&#34;no-params-chain&#34;).
+<span id="L941" class="ln">   941  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L942" class="ln">   942  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L943" class="ln">   943  </span>			WithArgs(anyArgs(9)...).
+<span id="L944" class="ln">   944  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
 <span id="L945" class="ln">   945  </span>
-<span id="L946" class="ln">   946  </span>	t.Run(&#34;Multi-task chain with invalid parameter conversion&#34;, func(t *testing.T) {
-<span id="L947" class="ln">   947  </span>		yamlContent := `chains:
-<span id="L948" class="ln">   948  </span>  - name: &#34;param-error-chain&#34;
-<span id="L949" class="ln">   949  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L950" class="ln">   950  </span>    tasks:
-<span id="L951" class="ln">   951  </span>      - name: &#34;first-task&#34;
-<span id="L952" class="ln">   952  </span>        kind: &#34;SQL&#34;
-<span id="L953" class="ln">   953  </span>        command: &#34;SELECT 1&#34;
-<span id="L954" class="ln">   954  </span>        parameters: [{&#34;invalid&#34;: {&#34;deeply&#34;: {&#34;nested&#34;: &#34;value&#34;}}}]
-<span id="L955" class="ln">   955  </span>      - name: &#34;second-task&#34;
-<span id="L956" class="ln">   956  </span>        kind: &#34;SQL&#34;
-<span id="L957" class="ln">   957  </span>        command: &#34;SELECT 2&#34;`
-<span id="L958" class="ln">   958  </span>
-<span id="L959" class="ln">   959  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L960" class="ln">   960  </span>		defer removeTempFile(t, tmpfile)
-<span id="L961" class="ln">   961  </span>
-<span id="L962" class="ln">   962  </span>		<span class="comment">// Mock chain creation</span>
-<span id="L963" class="ln">   963  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L964" class="ln">   964  </span>			WithArgs(&#34;param-error-chain&#34;).
-<span id="L965" class="ln">   965  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L966" class="ln">   966  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L967" class="ln">   967  </span>			WithArgs(anyArgs(9)...).
-<span id="L968" class="ln">   968  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L969" class="ln">   969  </span>
-<span id="L970" class="ln">   970  </span>		<span class="comment">// Mock first task with complex parameter</span>
-<span id="L971" class="ln">   971  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L972" class="ln">   972  </span>			WithArgs(anyArgs(10)...).
-<span id="L973" class="ln">   973  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L974" class="ln">   974  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L975" class="ln">   975  </span>			WithArgs(anyArgs(3)...).
-<span id="L976" class="ln">   976  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
-<span id="L977" class="ln">   977  </span>
-<span id="L978" class="ln">   978  </span>		<span class="comment">// Mock second task (no parameters)</span>
-<span id="L979" class="ln">   979  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L980" class="ln">   980  </span>			WithArgs(anyArgs(10)...).
-<span id="L981" class="ln">   981  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
-<span id="L982" class="ln">   982  </span>
-<span id="L983" class="ln">   983  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L984" class="ln">   984  </span>		<span class="comment">// Should succeed even with complex parameters</span>
-<span id="L985" class="ln">   985  </span>		require.NoError(t, err)
-<span id="L986" class="ln">   986  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L987" class="ln">   987  </span>	})
+<span id="L946" class="ln">   946  </span>		<span class="comment">// Mock first task creation (no parameters)</span>
+<span id="L947" class="ln">   947  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L948" class="ln">   948  </span>			WithArgs(anyArgs(11)...).
+<span id="L949" class="ln">   949  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L950" class="ln">   950  </span>		<span class="comment">// Mock second task creation (empty parameters)</span>
+<span id="L951" class="ln">   951  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L952" class="ln">   952  </span>			WithArgs(anyArgs(11)...).
+<span id="L953" class="ln">   953  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
+<span id="L954" class="ln">   954  </span>
+<span id="L955" class="ln">   955  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L956" class="ln">   956  </span>		require.NoError(t, err)
+<span id="L957" class="ln">   957  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L958" class="ln">   958  </span>	})
+<span id="L959" class="ln">   959  </span>
+<span id="L960" class="ln">   960  </span>	t.Run(&#34;Complex parameter types&#34;, func(t *testing.T) {
+<span id="L961" class="ln">   961  </span>		yamlContent := `chains:
+<span id="L962" class="ln">   962  </span>  - name: &#34;complex-params-chain&#34;
+<span id="L963" class="ln">   963  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L964" class="ln">   964  </span>    tasks:
+<span id="L965" class="ln">   965  </span>      - name: &#34;complex-task&#34;
+<span id="L966" class="ln">   966  </span>        kind: &#34;SQL&#34;
+<span id="L967" class="ln">   967  </span>        command: &#34;SELECT $1::jsonb&#34;
+<span id="L968" class="ln">   968  </span>        parameters:
+<span id="L969" class="ln">   969  </span>          - {&#34;key&#34;: &#34;value&#34;, &#34;number&#34;: 42, &#34;nested&#34;: {&#34;inner&#34;: true}}`
+<span id="L970" class="ln">   970  </span>
+<span id="L971" class="ln">   971  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L972" class="ln">   972  </span>		defer removeTempFile(t, tmpfile)
+<span id="L973" class="ln">   973  </span>
+<span id="L974" class="ln">   974  </span>		<span class="comment">// Mock chain and task creation</span>
+<span id="L975" class="ln">   975  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L976" class="ln">   976  </span>			WithArgs(&#34;complex-params-chain&#34;).
+<span id="L977" class="ln">   977  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L978" class="ln">   978  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L979" class="ln">   979  </span>			WithArgs(anyArgs(9)...).
+<span id="L980" class="ln">   980  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L981" class="ln">   981  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L982" class="ln">   982  </span>			WithArgs(anyArgs(11)...).
+<span id="L983" class="ln">   983  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L984" class="ln">   984  </span>		<span class="comment">// Mock parameter insertion</span>
+<span id="L985" class="ln">   985  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L986" class="ln">   986  </span>			WithArgs(anyArgs(3)...).
+<span id="L987" class="ln">   987  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
 <span id="L988" class="ln">   988  </span>
-<span id="L989" class="ln">   989  </span>	t.Run(&#34;Multi-task chain with various field types&#34;, func(t *testing.T) {
-<span id="L990" class="ln">   990  </span>		yamlContent := `chains:
-<span id="L991" class="ln">   991  </span>  - name: &#34;comprehensive-multi-task&#34;
-<span id="L992" class="ln">   992  </span>    schedule: &#34;@every 1h&#34;
-<span id="L993" class="ln">   993  </span>    live: false
-<span id="L994" class="ln">   994  </span>    max_instances: 3
-<span id="L995" class="ln">   995  </span>    timeout: 600
-<span id="L996" class="ln">   996  </span>    self_destruct: true
-<span id="L997" class="ln">   997  </span>    exclusive: false
-<span id="L998" class="ln">   998  </span>    client_name: &#34;test-client-multi&#34;
-<span id="L999" class="ln">   999  </span>    on_error: &#34;IGNORE&#34;
-<span id="L1000" class="ln">  1000  </span>    tasks:
-<span id="L1001" class="ln">  1001  </span>      - name: &#34;sql-task&#34;
-<span id="L1002" class="ln">  1002  </span>        kind: &#34;SQL&#34;
-<span id="L1003" class="ln">  1003  </span>        command: &#34;SELECT $1, $2&#34;
-<span id="L1004" class="ln">  1004  </span>        parameters: [&#34;string&#34;, 123]
-<span id="L1005" class="ln">  1005  </span>        ignore_error: true
-<span id="L1006" class="ln">  1006  </span>        autonomous: false
-<span id="L1007" class="ln">  1007  </span>        timeout: 120
-<span id="L1008" class="ln">  1008  </span>        run_as: &#34;test_user&#34;
-<span id="L1009" class="ln">  1009  </span>        connect_string: &#34;dbname=test&#34;
-<span id="L1010" class="ln">  1010  </span>      - name: &#34;program-task&#34;  
-<span id="L1011" class="ln">  1011  </span>        kind: &#34;PROGRAM&#34;
-<span id="L1012" class="ln">  1012  </span>        command: &#34;echo&#34;
-<span id="L1013" class="ln">  1013  </span>        parameters: [&#34;hello&#34;, &#34;world&#34;]
-<span id="L1014" class="ln">  1014  </span>        ignore_error: false
-<span id="L1015" class="ln">  1015  </span>        autonomous: true
-<span id="L1016" class="ln">  1016  </span>        timeout: 60
-<span id="L1017" class="ln">  1017  </span>      - name: &#34;builtin-task&#34;
-<span id="L1018" class="ln">  1018  </span>        kind: &#34;BUILTIN&#34; 
-<span id="L1019" class="ln">  1019  </span>        command: &#34;Sleep&#34;
-<span id="L1020" class="ln">  1020  </span>        parameters: [5]
-<span id="L1021" class="ln">  1021  </span>        ignore_error: false
-<span id="L1022" class="ln">  1022  </span>        autonomous: false
-<span id="L1023" class="ln">  1023  </span>        timeout: 10`
-<span id="L1024" class="ln">  1024  </span>
-<span id="L1025" class="ln">  1025  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L1026" class="ln">  1026  </span>		defer removeTempFile(t, tmpfile)
-<span id="L1027" class="ln">  1027  </span>
-<span id="L1028" class="ln">  1028  </span>		<span class="comment">// Mock comprehensive chain creation</span>
-<span id="L1029" class="ln">  1029  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L1030" class="ln">  1030  </span>			WithArgs(&#34;comprehensive-multi-task&#34;).
-<span id="L1031" class="ln">  1031  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L1032" class="ln">  1032  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L1033" class="ln">  1033  </span>			WithArgs(anyArgs(9)...).
-<span id="L1034" class="ln">  1034  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L1035" class="ln">  1035  </span>
-<span id="L1036" class="ln">  1036  </span>		<span class="comment">// Mock sql-task creation with 2 parameters</span>
-<span id="L1037" class="ln">  1037  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L1038" class="ln">  1038  </span>			WithArgs(anyArgs(10)...).
-<span id="L1039" class="ln">  1039  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L1040" class="ln">  1040  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L1041" class="ln">  1041  </span>			WithArgs(anyArgs(3)...).
-<span id="L1042" class="ln">  1042  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
-<span id="L1043" class="ln">  1043  </span>			Times(2)
-<span id="L1044" class="ln">  1044  </span>
-<span id="L1045" class="ln">  1045  </span>		<span class="comment">// Mock program-task creation with 2 parameters</span>
-<span id="L1046" class="ln">  1046  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L1047" class="ln">  1047  </span>			WithArgs(anyArgs(10)...).
-<span id="L1048" class="ln">  1048  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
-<span id="L1049" class="ln">  1049  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L1050" class="ln">  1050  </span>			WithArgs(anyArgs(3)...).
-<span id="L1051" class="ln">  1051  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
-<span id="L1052" class="ln">  1052  </span>			Times(2)
-<span id="L1053" class="ln">  1053  </span>
-<span id="L1054" class="ln">  1054  </span>		<span class="comment">// Mock builtin-task creation with 1 parameter</span>
-<span id="L1055" class="ln">  1055  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L1056" class="ln">  1056  </span>			WithArgs(anyArgs(10)...).
-<span id="L1057" class="ln">  1057  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(3))
-<span id="L1058" class="ln">  1058  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
-<span id="L1059" class="ln">  1059  </span>			WithArgs(anyArgs(3)...).
-<span id="L1060" class="ln">  1060  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
-<span id="L1061" class="ln">  1061  </span>
-<span id="L1062" class="ln">  1062  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L1063" class="ln">  1063  </span>		require.NoError(t, err)
-<span id="L1064" class="ln">  1064  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1065" class="ln">  1065  </span>	})
-<span id="L1066" class="ln">  1066  </span>}
-<span id="L1067" class="ln">  1067  </span>
-<span id="L1068" class="ln">  1068  </span>func TestNullStringFunction(t *testing.T) {
-<span id="L1069" class="ln">  1069  </span>	<span class="comment">// Testing nullString indirectly through database operations</span>
-<span id="L1070" class="ln">  1070  </span>	initmockdb(t)
-<span id="L1071" class="ln">  1071  </span>	defer mockPool.Close()
-<span id="L1072" class="ln">  1072  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L1073" class="ln">  1073  </span>
-<span id="L1074" class="ln">  1074  </span>	t.Run(&#34;All null fields&#34;, func(t *testing.T) {
-<span id="L1075" class="ln">  1075  </span>		yamlContent := `chains:
-<span id="L1076" class="ln">  1076  </span>  - name: &#34;all-nulls-chain&#34;
-<span id="L1077" class="ln">  1077  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L1078" class="ln">  1078  </span>    # client_name: &#34;&#34;     # Should be NULL
-<span id="L1079" class="ln">  1079  </span>    # on_error: &#34;&#34;        # Should be NULL  
-<span id="L1080" class="ln">  1080  </span>    tasks:
-<span id="L1081" class="ln">  1081  </span>      - name: &#34;null-task&#34;
-<span id="L1082" class="ln">  1082  </span>        command: &#34;SELECT 1&#34;
-<span id="L1083" class="ln">  1083  </span>        kind: &#34;SQL&#34;
-<span id="L1084" class="ln">  1084  </span>        # run_as: &#34;&#34;              # Should be NULL
-<span id="L1085" class="ln">  1085  </span>        # connect_string: &#34;&#34;      # Should be NULL`
-<span id="L1086" class="ln">  1086  </span>
-<span id="L1087" class="ln">  1087  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L1088" class="ln">  1088  </span>		defer removeTempFile(t, tmpfile)
+<span id="L989" class="ln">   989  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L990" class="ln">   990  </span>		require.NoError(t, err)
+<span id="L991" class="ln">   991  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L992" class="ln">   992  </span>	})
+<span id="L993" class="ln">   993  </span>}
+<span id="L994" class="ln">   994  </span>
+<span id="L995" class="ln">   995  </span>func TestCreateChainFromYamlErrorHandling(t *testing.T) {
+<span id="L996" class="ln">   996  </span>	initmockdb(t)
+<span id="L997" class="ln">   997  </span>	defer mockPool.Close()
+<span id="L998" class="ln">   998  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L999" class="ln">   999  </span>
+<span id="L1000" class="ln">  1000  </span>	t.Run(&#34;Multi-task chain with invalid parameter conversion&#34;, func(t *testing.T) {
+<span id="L1001" class="ln">  1001  </span>		yamlContent := `chains:
+<span id="L1002" class="ln">  1002  </span>  - name: &#34;param-error-chain&#34;
+<span id="L1003" class="ln">  1003  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L1004" class="ln">  1004  </span>    tasks:
+<span id="L1005" class="ln">  1005  </span>      - name: &#34;first-task&#34;
+<span id="L1006" class="ln">  1006  </span>        kind: &#34;SQL&#34;
+<span id="L1007" class="ln">  1007  </span>        command: &#34;SELECT 1&#34;
+<span id="L1008" class="ln">  1008  </span>        parameters: [{&#34;invalid&#34;: {&#34;deeply&#34;: {&#34;nested&#34;: &#34;value&#34;}}}]
+<span id="L1009" class="ln">  1009  </span>      - name: &#34;second-task&#34;
+<span id="L1010" class="ln">  1010  </span>        kind: &#34;SQL&#34;
+<span id="L1011" class="ln">  1011  </span>        command: &#34;SELECT 2&#34;`
+<span id="L1012" class="ln">  1012  </span>
+<span id="L1013" class="ln">  1013  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L1014" class="ln">  1014  </span>		defer removeTempFile(t, tmpfile)
+<span id="L1015" class="ln">  1015  </span>
+<span id="L1016" class="ln">  1016  </span>		<span class="comment">// Mock chain creation</span>
+<span id="L1017" class="ln">  1017  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L1018" class="ln">  1018  </span>			WithArgs(&#34;param-error-chain&#34;).
+<span id="L1019" class="ln">  1019  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L1020" class="ln">  1020  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L1021" class="ln">  1021  </span>			WithArgs(anyArgs(9)...).
+<span id="L1022" class="ln">  1022  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L1023" class="ln">  1023  </span>
+<span id="L1024" class="ln">  1024  </span>		<span class="comment">// Mock first task with complex parameter</span>
+<span id="L1025" class="ln">  1025  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1026" class="ln">  1026  </span>			WithArgs(anyArgs(11)...).
+<span id="L1027" class="ln">  1027  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L1028" class="ln">  1028  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L1029" class="ln">  1029  </span>			WithArgs(anyArgs(3)...).
+<span id="L1030" class="ln">  1030  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L1031" class="ln">  1031  </span>
+<span id="L1032" class="ln">  1032  </span>		<span class="comment">// Mock second task (no parameters)</span>
+<span id="L1033" class="ln">  1033  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1034" class="ln">  1034  </span>			WithArgs(anyArgs(11)...).
+<span id="L1035" class="ln">  1035  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
+<span id="L1036" class="ln">  1036  </span>
+<span id="L1037" class="ln">  1037  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L1038" class="ln">  1038  </span>		<span class="comment">// Should succeed even with complex parameters</span>
+<span id="L1039" class="ln">  1039  </span>		require.NoError(t, err)
+<span id="L1040" class="ln">  1040  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1041" class="ln">  1041  </span>	})
+<span id="L1042" class="ln">  1042  </span>
+<span id="L1043" class="ln">  1043  </span>	t.Run(&#34;Multi-task chain with various field types&#34;, func(t *testing.T) {
+<span id="L1044" class="ln">  1044  </span>		yamlContent := `chains:
+<span id="L1045" class="ln">  1045  </span>  - name: &#34;comprehensive-multi-task&#34;
+<span id="L1046" class="ln">  1046  </span>    schedule: &#34;@every 1h&#34;
+<span id="L1047" class="ln">  1047  </span>    live: false
+<span id="L1048" class="ln">  1048  </span>    max_instances: 3
+<span id="L1049" class="ln">  1049  </span>    timeout: 600
+<span id="L1050" class="ln">  1050  </span>    self_destruct: true
+<span id="L1051" class="ln">  1051  </span>    exclusive: false
+<span id="L1052" class="ln">  1052  </span>    client_name: &#34;test-client-multi&#34;
+<span id="L1053" class="ln">  1053  </span>    on_error: &#34;IGNORE&#34;
+<span id="L1054" class="ln">  1054  </span>    tasks:
+<span id="L1055" class="ln">  1055  </span>      - name: &#34;sql-task&#34;
+<span id="L1056" class="ln">  1056  </span>        kind: &#34;SQL&#34;
+<span id="L1057" class="ln">  1057  </span>        command: &#34;SELECT $1, $2&#34;
+<span id="L1058" class="ln">  1058  </span>        parameters: [&#34;string&#34;, 123]
+<span id="L1059" class="ln">  1059  </span>        ignore_error: true
+<span id="L1060" class="ln">  1060  </span>        autonomous: false
+<span id="L1061" class="ln">  1061  </span>        timeout: 120
+<span id="L1062" class="ln">  1062  </span>        run_as: &#34;test_user&#34;
+<span id="L1063" class="ln">  1063  </span>        connect_string: &#34;dbname=test&#34;
+<span id="L1064" class="ln">  1064  </span>      - name: &#34;program-task&#34;  
+<span id="L1065" class="ln">  1065  </span>        kind: &#34;PROGRAM&#34;
+<span id="L1066" class="ln">  1066  </span>        command: &#34;echo&#34;
+<span id="L1067" class="ln">  1067  </span>        parameters: [&#34;hello&#34;, &#34;world&#34;]
+<span id="L1068" class="ln">  1068  </span>        ignore_error: false
+<span id="L1069" class="ln">  1069  </span>        autonomous: true
+<span id="L1070" class="ln">  1070  </span>        timeout: 60
+<span id="L1071" class="ln">  1071  </span>      - name: &#34;builtin-task&#34;
+<span id="L1072" class="ln">  1072  </span>        kind: &#34;BUILTIN&#34; 
+<span id="L1073" class="ln">  1073  </span>        command: &#34;Sleep&#34;
+<span id="L1074" class="ln">  1074  </span>        parameters: [5]
+<span id="L1075" class="ln">  1075  </span>        ignore_error: false
+<span id="L1076" class="ln">  1076  </span>        autonomous: false
+<span id="L1077" class="ln">  1077  </span>        timeout: 10`
+<span id="L1078" class="ln">  1078  </span>
+<span id="L1079" class="ln">  1079  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L1080" class="ln">  1080  </span>		defer removeTempFile(t, tmpfile)
+<span id="L1081" class="ln">  1081  </span>
+<span id="L1082" class="ln">  1082  </span>		<span class="comment">// Mock comprehensive chain creation</span>
+<span id="L1083" class="ln">  1083  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L1084" class="ln">  1084  </span>			WithArgs(&#34;comprehensive-multi-task&#34;).
+<span id="L1085" class="ln">  1085  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L1086" class="ln">  1086  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L1087" class="ln">  1087  </span>			WithArgs(anyArgs(9)...).
+<span id="L1088" class="ln">  1088  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
 <span id="L1089" class="ln">  1089  </span>
-<span id="L1090" class="ln">  1090  </span>		<span class="comment">// Mock chain creation with NULL fields</span>
-<span id="L1091" class="ln">  1091  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L1092" class="ln">  1092  </span>			WithArgs(&#34;all-nulls-chain&#34;).
-<span id="L1093" class="ln">  1093  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L1094" class="ln">  1094  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L1095" class="ln">  1095  </span>			WithArgs(anyArgs(9)...).
-<span id="L1096" class="ln">  1096  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L1097" class="ln">  1097  </span>		<span class="comment">// Mock task creation with NULL fields</span>
-<span id="L1098" class="ln">  1098  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L1099" class="ln">  1099  </span>			WithArgs(anyArgs(10)...).
-<span id="L1100" class="ln">  1100  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L1101" class="ln">  1101  </span>
-<span id="L1102" class="ln">  1102  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L1103" class="ln">  1103  </span>		require.NoError(t, err)
-<span id="L1104" class="ln">  1104  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1105" class="ln">  1105  </span>	})
-<span id="L1106" class="ln">  1106  </span>
-<span id="L1107" class="ln">  1107  </span>	t.Run(&#34;Mixed null and non-null fields&#34;, func(t *testing.T) {
-<span id="L1108" class="ln">  1108  </span>		yamlContent := `chains:
-<span id="L1109" class="ln">  1109  </span>  - name: &#34;mixed-nulls-chain&#34;
-<span id="L1110" class="ln">  1110  </span>    schedule: &#34;0 0 * * *&#34;
-<span id="L1111" class="ln">  1111  </span>    client_name: &#34;real-client&#34;
-<span id="L1112" class="ln">  1112  </span>    # on_error not specified - should be NULL
-<span id="L1113" class="ln">  1113  </span>    tasks:
-<span id="L1114" class="ln">  1114  </span>      - name: &#34;mixed-task&#34;
-<span id="L1115" class="ln">  1115  </span>        command: &#34;SELECT 1&#34;
-<span id="L1116" class="ln">  1116  </span>        kind: &#34;SQL&#34;
-<span id="L1117" class="ln">  1117  </span>        run_as: &#34;real-user&#34;
-<span id="L1118" class="ln">  1118  </span>        # connect_string not specified - should be NULL`
-<span id="L1119" class="ln">  1119  </span>
-<span id="L1120" class="ln">  1120  </span>		tmpfile := createTempYamlFile(t, yamlContent)
-<span id="L1121" class="ln">  1121  </span>		defer removeTempFile(t, tmpfile)
-<span id="L1122" class="ln">  1122  </span>
-<span id="L1123" class="ln">  1123  </span>		<span class="comment">// Mock chain creation with mixed NULL/non-NULL fields</span>
-<span id="L1124" class="ln">  1124  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
-<span id="L1125" class="ln">  1125  </span>			WithArgs(&#34;mixed-nulls-chain&#34;).
-<span id="L1126" class="ln">  1126  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
-<span id="L1127" class="ln">  1127  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
-<span id="L1128" class="ln">  1128  </span>			WithArgs(anyArgs(9)...).
-<span id="L1129" class="ln">  1129  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L1130" class="ln">  1130  </span>		<span class="comment">// Mock task creation with mixed NULL/non-NULL fields</span>
-<span id="L1131" class="ln">  1131  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
-<span id="L1132" class="ln">  1132  </span>			WithArgs(anyArgs(10)...).
-<span id="L1133" class="ln">  1133  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L1134" class="ln">  1134  </span>
-<span id="L1135" class="ln">  1135  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
-<span id="L1136" class="ln">  1136  </span>		require.NoError(t, err)
-<span id="L1137" class="ln">  1137  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1138" class="ln">  1138  </span>	})
-<span id="L1139" class="ln">  1139  </span>}
+<span id="L1090" class="ln">  1090  </span>		<span class="comment">// Mock sql-task creation with 2 parameters</span>
+<span id="L1091" class="ln">  1091  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1092" class="ln">  1092  </span>			WithArgs(anyArgs(11)...).
+<span id="L1093" class="ln">  1093  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L1094" class="ln">  1094  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L1095" class="ln">  1095  </span>			WithArgs(anyArgs(3)...).
+<span id="L1096" class="ln">  1096  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
+<span id="L1097" class="ln">  1097  </span>			Times(2)
+<span id="L1098" class="ln">  1098  </span>
+<span id="L1099" class="ln">  1099  </span>		<span class="comment">// Mock program-task creation with 2 parameters</span>
+<span id="L1100" class="ln">  1100  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1101" class="ln">  1101  </span>			WithArgs(anyArgs(11)...).
+<span id="L1102" class="ln">  1102  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(2))
+<span id="L1103" class="ln">  1103  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L1104" class="ln">  1104  </span>			WithArgs(anyArgs(3)...).
+<span id="L1105" class="ln">  1105  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1)).
+<span id="L1106" class="ln">  1106  </span>			Times(2)
+<span id="L1107" class="ln">  1107  </span>
+<span id="L1108" class="ln">  1108  </span>		<span class="comment">// Mock builtin-task creation with 1 parameter</span>
+<span id="L1109" class="ln">  1109  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1110" class="ln">  1110  </span>			WithArgs(anyArgs(11)...).
+<span id="L1111" class="ln">  1111  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(3))
+<span id="L1112" class="ln">  1112  </span>		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
+<span id="L1113" class="ln">  1113  </span>			WithArgs(anyArgs(3)...).
+<span id="L1114" class="ln">  1114  </span>			WillReturnResult(pgxmock.NewResult(&#34;INSERT&#34;, 1))
+<span id="L1115" class="ln">  1115  </span>
+<span id="L1116" class="ln">  1116  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L1117" class="ln">  1117  </span>		require.NoError(t, err)
+<span id="L1118" class="ln">  1118  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1119" class="ln">  1119  </span>	})
+<span id="L1120" class="ln">  1120  </span>}
+<span id="L1121" class="ln">  1121  </span>
+<span id="L1122" class="ln">  1122  </span>func TestNullStringFunction(t *testing.T) {
+<span id="L1123" class="ln">  1123  </span>	<span class="comment">// Testing nullString indirectly through database operations</span>
+<span id="L1124" class="ln">  1124  </span>	initmockdb(t)
+<span id="L1125" class="ln">  1125  </span>	defer mockPool.Close()
+<span id="L1126" class="ln">  1126  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L1127" class="ln">  1127  </span>
+<span id="L1128" class="ln">  1128  </span>	t.Run(&#34;All null fields&#34;, func(t *testing.T) {
+<span id="L1129" class="ln">  1129  </span>		yamlContent := `chains:
+<span id="L1130" class="ln">  1130  </span>  - name: &#34;all-nulls-chain&#34;
+<span id="L1131" class="ln">  1131  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L1132" class="ln">  1132  </span>    # client_name: &#34;&#34;     # Should be NULL
+<span id="L1133" class="ln">  1133  </span>    # on_error: &#34;&#34;        # Should be NULL  
+<span id="L1134" class="ln">  1134  </span>    tasks:
+<span id="L1135" class="ln">  1135  </span>      - name: &#34;null-task&#34;
+<span id="L1136" class="ln">  1136  </span>        command: &#34;SELECT 1&#34;
+<span id="L1137" class="ln">  1137  </span>        kind: &#34;SQL&#34;
+<span id="L1138" class="ln">  1138  </span>        # run_as: &#34;&#34;              # Should be NULL
+<span id="L1139" class="ln">  1139  </span>        # connect_string: &#34;&#34;      # Should be NULL`
 <span id="L1140" class="ln">  1140  </span>
-<span id="L1141" class="ln">  1141  </span>func TestCreateChainFromYamlErrors(t *testing.T) {
-<span id="L1142" class="ln">  1142  </span>	initmockdb(t)
-<span id="L1143" class="ln">  1143  </span>	defer mockPool.Close()
-<span id="L1144" class="ln">  1144  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
-<span id="L1145" class="ln">  1145  </span>
-<span id="L1146" class="ln">  1146  </span>	t.Run(&#34;Database error during chain creation&#34;, func(t *testing.T) {
-<span id="L1147" class="ln">  1147  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
-<span id="L1148" class="ln">  1148  </span>			WithArgs(anyArgs(9)...).
-<span id="L1149" class="ln">  1149  </span>			WillReturnError(fmt.Errorf(&#34;simulated DB error&#34;))
-<span id="L1150" class="ln">  1150  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{})
-<span id="L1151" class="ln">  1151  </span>		assert.Error(t, err)
-<span id="L1152" class="ln">  1152  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1153" class="ln">  1153  </span>	})
-<span id="L1154" class="ln">  1154  </span>
-<span id="L1155" class="ln">  1155  </span>	t.Run(&#34;Database error during task creation&#34;, func(t *testing.T) {
-<span id="L1156" class="ln">  1156  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
-<span id="L1157" class="ln">  1157  </span>			WithArgs(anyArgs(9)...).
-<span id="L1158" class="ln">  1158  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L1159" class="ln">  1159  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
-<span id="L1160" class="ln">  1160  </span>			WithArgs(anyArgs(10)...).
-<span id="L1161" class="ln">  1161  </span>			WillReturnError(fmt.Errorf(&#34;simulated DB error on task&#34;))
-<span id="L1162" class="ln">  1162  </span>
-<span id="L1163" class="ln">  1163  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{
-<span id="L1164" class="ln">  1164  </span>			Chain:    pgengine.Chain{ChainName: &#34;test-chain&#34;},
-<span id="L1165" class="ln">  1165  </span>			Schedule: &#34;0 0 * * *&#34;,
-<span id="L1166" class="ln">  1166  </span>			Tasks: []pgengine.YamlTask{
-<span id="L1167" class="ln">  1167  </span>				{ChainTask: pgengine.ChainTask{Command: &#34;SELECT 1&#34;, Kind: &#34;SQL&#34;}},
-<span id="L1168" class="ln">  1168  </span>			},
-<span id="L1169" class="ln">  1169  </span>		})
-<span id="L1170" class="ln">  1170  </span>		assert.Error(t, err)
-<span id="L1171" class="ln">  1171  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1172" class="ln">  1172  </span>	})
+<span id="L1141" class="ln">  1141  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L1142" class="ln">  1142  </span>		defer removeTempFile(t, tmpfile)
+<span id="L1143" class="ln">  1143  </span>
+<span id="L1144" class="ln">  1144  </span>		<span class="comment">// Mock chain creation with NULL fields</span>
+<span id="L1145" class="ln">  1145  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L1146" class="ln">  1146  </span>			WithArgs(&#34;all-nulls-chain&#34;).
+<span id="L1147" class="ln">  1147  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L1148" class="ln">  1148  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L1149" class="ln">  1149  </span>			WithArgs(anyArgs(9)...).
+<span id="L1150" class="ln">  1150  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L1151" class="ln">  1151  </span>		<span class="comment">// Mock task creation with NULL fields</span>
+<span id="L1152" class="ln">  1152  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1153" class="ln">  1153  </span>			WithArgs(anyArgs(11)...).
+<span id="L1154" class="ln">  1154  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L1155" class="ln">  1155  </span>
+<span id="L1156" class="ln">  1156  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L1157" class="ln">  1157  </span>		require.NoError(t, err)
+<span id="L1158" class="ln">  1158  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1159" class="ln">  1159  </span>	})
+<span id="L1160" class="ln">  1160  </span>
+<span id="L1161" class="ln">  1161  </span>	t.Run(&#34;Mixed null and non-null fields&#34;, func(t *testing.T) {
+<span id="L1162" class="ln">  1162  </span>		yamlContent := `chains:
+<span id="L1163" class="ln">  1163  </span>  - name: &#34;mixed-nulls-chain&#34;
+<span id="L1164" class="ln">  1164  </span>    schedule: &#34;0 0 * * *&#34;
+<span id="L1165" class="ln">  1165  </span>    client_name: &#34;real-client&#34;
+<span id="L1166" class="ln">  1166  </span>    # on_error not specified - should be NULL
+<span id="L1167" class="ln">  1167  </span>    tasks:
+<span id="L1168" class="ln">  1168  </span>      - name: &#34;mixed-task&#34;
+<span id="L1169" class="ln">  1169  </span>        command: &#34;SELECT 1&#34;
+<span id="L1170" class="ln">  1170  </span>        kind: &#34;SQL&#34;
+<span id="L1171" class="ln">  1171  </span>        run_as: &#34;real-user&#34;
+<span id="L1172" class="ln">  1172  </span>        # connect_string not specified - should be NULL`
 <span id="L1173" class="ln">  1173  </span>
-<span id="L1174" class="ln">  1174  </span>	t.Run(&#34;Database error during parameter unmarshalling&#34;, func(t *testing.T) {
-<span id="L1175" class="ln">  1175  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
-<span id="L1176" class="ln">  1176  </span>			WithArgs(anyArgs(9)...).
-<span id="L1177" class="ln">  1177  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L1178" class="ln">  1178  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
-<span id="L1179" class="ln">  1179  </span>			WithArgs(anyArgs(10)...).
-<span id="L1180" class="ln">  1180  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L1181" class="ln">  1181  </span>
-<span id="L1182" class="ln">  1182  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{
-<span id="L1183" class="ln">  1183  </span>			Chain:    pgengine.Chain{ChainName: &#34;test-chain&#34;},
-<span id="L1184" class="ln">  1184  </span>			Schedule: &#34;0 0 * * *&#34;,
-<span id="L1185" class="ln">  1185  </span>			Tasks: []pgengine.YamlTask{
-<span id="L1186" class="ln">  1186  </span>				{
-<span id="L1187" class="ln">  1187  </span>					ChainTask:  pgengine.ChainTask{Command: &#34;SELECT 1&#34;, Kind: &#34;SQL&#34;},
-<span id="L1188" class="ln">  1188  </span>					Parameters: []any{func() {}}, <span class="comment">// functions cannot be marshalled to JSON</span>
-<span id="L1189" class="ln">  1189  </span>				},
-<span id="L1190" class="ln">  1190  </span>			},
-<span id="L1191" class="ln">  1191  </span>		})
-<span id="L1192" class="ln">  1192  </span>		assert.Error(t, err)
-<span id="L1193" class="ln">  1193  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1194" class="ln">  1194  </span>	})
-<span id="L1195" class="ln">  1195  </span>
-<span id="L1196" class="ln">  1196  </span>	t.Run(&#34;Database error during parameter creation&#34;, func(t *testing.T) {
-<span id="L1197" class="ln">  1197  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
-<span id="L1198" class="ln">  1198  </span>			WithArgs(anyArgs(9)...).
-<span id="L1199" class="ln">  1199  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
-<span id="L1200" class="ln">  1200  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
-<span id="L1201" class="ln">  1201  </span>			WithArgs(anyArgs(10)...).
-<span id="L1202" class="ln">  1202  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
-<span id="L1203" class="ln">  1203  </span>		mockPool.ExpectExec(`INSERT INTO timetable.parameter`).
-<span id="L1204" class="ln">  1204  </span>			WithArgs(anyArgs(3)...).
-<span id="L1205" class="ln">  1205  </span>			WillReturnError(fmt.Errorf(&#34;simulated DB error on parameter&#34;))
-<span id="L1206" class="ln">  1206  </span>
-<span id="L1207" class="ln">  1207  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{
-<span id="L1208" class="ln">  1208  </span>			Chain:    pgengine.Chain{ChainName: &#34;test-chain&#34;},
-<span id="L1209" class="ln">  1209  </span>			Schedule: &#34;0 0 * * *&#34;,
-<span id="L1210" class="ln">  1210  </span>			Tasks: []pgengine.YamlTask{
-<span id="L1211" class="ln">  1211  </span>				{
-<span id="L1212" class="ln">  1212  </span>					ChainTask:  pgengine.ChainTask{Command: &#34;SELECT 1&#34;, Kind: &#34;SQL&#34;},
-<span id="L1213" class="ln">  1213  </span>					Parameters: []any{&#34;foo&#34;},
-<span id="L1214" class="ln">  1214  </span>				},
-<span id="L1215" class="ln">  1215  </span>			},
-<span id="L1216" class="ln">  1216  </span>		})
-<span id="L1217" class="ln">  1217  </span>		assert.Error(t, err)
-<span id="L1218" class="ln">  1218  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
-<span id="L1219" class="ln">  1219  </span>	})
-<span id="L1220" class="ln">  1220  </span>}
-<span id="L1221" class="ln">  1221  </span>
+<span id="L1174" class="ln">  1174  </span>		tmpfile := createTempYamlFile(t, yamlContent)
+<span id="L1175" class="ln">  1175  </span>		defer removeTempFile(t, tmpfile)
+<span id="L1176" class="ln">  1176  </span>
+<span id="L1177" class="ln">  1177  </span>		<span class="comment">// Mock chain creation with mixed NULL/non-NULL fields</span>
+<span id="L1178" class="ln">  1178  </span>		mockPool.ExpectQuery(&#34;SELECT EXISTS&#34;).
+<span id="L1179" class="ln">  1179  </span>			WithArgs(&#34;mixed-nulls-chain&#34;).
+<span id="L1180" class="ln">  1180  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;exists&#34;}).AddRow(false))
+<span id="L1181" class="ln">  1181  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.chain`).
+<span id="L1182" class="ln">  1182  </span>			WithArgs(anyArgs(9)...).
+<span id="L1183" class="ln">  1183  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L1184" class="ln">  1184  </span>		<span class="comment">// Mock task creation with mixed NULL/non-NULL fields</span>
+<span id="L1185" class="ln">  1185  </span>		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
+<span id="L1186" class="ln">  1186  </span>			WithArgs(anyArgs(11)...).
+<span id="L1187" class="ln">  1187  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L1188" class="ln">  1188  </span>
+<span id="L1189" class="ln">  1189  </span>		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
+<span id="L1190" class="ln">  1190  </span>		require.NoError(t, err)
+<span id="L1191" class="ln">  1191  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1192" class="ln">  1192  </span>	})
+<span id="L1193" class="ln">  1193  </span>}
+<span id="L1194" class="ln">  1194  </span>
+<span id="L1195" class="ln">  1195  </span>func TestCreateChainFromYamlErrors(t *testing.T) {
+<span id="L1196" class="ln">  1196  </span>	initmockdb(t)
+<span id="L1197" class="ln">  1197  </span>	defer mockPool.Close()
+<span id="L1198" class="ln">  1198  </span>	mockpge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
+<span id="L1199" class="ln">  1199  </span>
+<span id="L1200" class="ln">  1200  </span>	t.Run(&#34;Database error during chain creation&#34;, func(t *testing.T) {
+<span id="L1201" class="ln">  1201  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
+<span id="L1202" class="ln">  1202  </span>			WithArgs(anyArgs(9)...).
+<span id="L1203" class="ln">  1203  </span>			WillReturnError(fmt.Errorf(&#34;simulated DB error&#34;))
+<span id="L1204" class="ln">  1204  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{})
+<span id="L1205" class="ln">  1205  </span>		assert.Error(t, err)
+<span id="L1206" class="ln">  1206  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1207" class="ln">  1207  </span>	})
+<span id="L1208" class="ln">  1208  </span>
+<span id="L1209" class="ln">  1209  </span>	t.Run(&#34;Database error during task creation&#34;, func(t *testing.T) {
+<span id="L1210" class="ln">  1210  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
+<span id="L1211" class="ln">  1211  </span>			WithArgs(anyArgs(9)...).
+<span id="L1212" class="ln">  1212  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L1213" class="ln">  1213  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
+<span id="L1214" class="ln">  1214  </span>			WithArgs(anyArgs(11)...).
+<span id="L1215" class="ln">  1215  </span>			WillReturnError(fmt.Errorf(&#34;simulated DB error on task&#34;))
+<span id="L1216" class="ln">  1216  </span>
+<span id="L1217" class="ln">  1217  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{
+<span id="L1218" class="ln">  1218  </span>			Chain:    pgengine.Chain{ChainName: &#34;test-chain&#34;},
+<span id="L1219" class="ln">  1219  </span>			Schedule: &#34;0 0 * * *&#34;,
+<span id="L1220" class="ln">  1220  </span>			Tasks: []pgengine.YamlTask{
+<span id="L1221" class="ln">  1221  </span>				{ChainTask: pgengine.ChainTask{Command: &#34;SELECT 1&#34;, Kind: &#34;SQL&#34;}},
+<span id="L1222" class="ln">  1222  </span>			},
+<span id="L1223" class="ln">  1223  </span>		})
+<span id="L1224" class="ln">  1224  </span>		assert.Error(t, err)
+<span id="L1225" class="ln">  1225  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1226" class="ln">  1226  </span>	})
+<span id="L1227" class="ln">  1227  </span>
+<span id="L1228" class="ln">  1228  </span>	t.Run(&#34;Database error during parameter unmarshalling&#34;, func(t *testing.T) {
+<span id="L1229" class="ln">  1229  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
+<span id="L1230" class="ln">  1230  </span>			WithArgs(anyArgs(9)...).
+<span id="L1231" class="ln">  1231  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L1232" class="ln">  1232  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
+<span id="L1233" class="ln">  1233  </span>			WithArgs(anyArgs(11)...).
+<span id="L1234" class="ln">  1234  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L1235" class="ln">  1235  </span>
+<span id="L1236" class="ln">  1236  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{
+<span id="L1237" class="ln">  1237  </span>			Chain:    pgengine.Chain{ChainName: &#34;test-chain&#34;},
+<span id="L1238" class="ln">  1238  </span>			Schedule: &#34;0 0 * * *&#34;,
+<span id="L1239" class="ln">  1239  </span>			Tasks: []pgengine.YamlTask{
+<span id="L1240" class="ln">  1240  </span>				{
+<span id="L1241" class="ln">  1241  </span>					ChainTask:  pgengine.ChainTask{Command: &#34;SELECT 1&#34;, Kind: &#34;SQL&#34;},
+<span id="L1242" class="ln">  1242  </span>					Parameters: []any{func() {}}, <span class="comment">// functions cannot be marshalled to JSON</span>
+<span id="L1243" class="ln">  1243  </span>				},
+<span id="L1244" class="ln">  1244  </span>			},
+<span id="L1245" class="ln">  1245  </span>		})
+<span id="L1246" class="ln">  1246  </span>		assert.Error(t, err)
+<span id="L1247" class="ln">  1247  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1248" class="ln">  1248  </span>	})
+<span id="L1249" class="ln">  1249  </span>
+<span id="L1250" class="ln">  1250  </span>	t.Run(&#34;Database error during parameter creation&#34;, func(t *testing.T) {
+<span id="L1251" class="ln">  1251  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.chain`).
+<span id="L1252" class="ln">  1252  </span>			WithArgs(anyArgs(9)...).
+<span id="L1253" class="ln">  1253  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;chain_id&#34;}).AddRow(1))
+<span id="L1254" class="ln">  1254  </span>		mockPool.ExpectQuery(`INSERT INTO timetable.task`).
+<span id="L1255" class="ln">  1255  </span>			WithArgs(anyArgs(11)...).
+<span id="L1256" class="ln">  1256  </span>			WillReturnRows(pgxmock.NewRows([]string{&#34;task_id&#34;}).AddRow(1))
+<span id="L1257" class="ln">  1257  </span>		mockPool.ExpectExec(`INSERT INTO timetable.parameter`).
+<span id="L1258" class="ln">  1258  </span>			WithArgs(anyArgs(3)...).
+<span id="L1259" class="ln">  1259  </span>			WillReturnError(fmt.Errorf(&#34;simulated DB error on parameter&#34;))
+<span id="L1260" class="ln">  1260  </span>
+<span id="L1261" class="ln">  1261  </span>		_, err := mockpge.CreateChainFromYaml(ctx, &amp;pgengine.YamlChain{
+<span id="L1262" class="ln">  1262  </span>			Chain:    pgengine.Chain{ChainName: &#34;test-chain&#34;},
+<span id="L1263" class="ln">  1263  </span>			Schedule: &#34;0 0 * * *&#34;,
+<span id="L1264" class="ln">  1264  </span>			Tasks: []pgengine.YamlTask{
+<span id="L1265" class="ln">  1265  </span>				{
+<span id="L1266" class="ln">  1266  </span>					ChainTask:  pgengine.ChainTask{Command: &#34;SELECT 1&#34;, Kind: &#34;SQL&#34;},
+<span id="L1267" class="ln">  1267  </span>					Parameters: []any{&#34;foo&#34;},
+<span id="L1268" class="ln">  1268  </span>				},
+<span id="L1269" class="ln">  1269  </span>			},
+<span id="L1270" class="ln">  1270  </span>		})
+<span id="L1271" class="ln">  1271  </span>		assert.Error(t, err)
+<span id="L1272" class="ln">  1272  </span>		assert.NoError(t, mockPool.ExpectationsWereMet())
+<span id="L1273" class="ln">  1273  </span>	})
+<span id="L1274" class="ln">  1274  </span>}
+<span id="L1275" class="ln">  1275  </span>
 </pre><p></p>
 
 <div id="footer">

@@ -81,9 +81,9 @@
 <span id="L24" class="ln">    24  </span><span class="comment">// overwrite CombinedOutput function of os/exec so only parameter syntax and return codes are checked...</span>
 <span id="L25" class="ln">    25  </span>func (c testCommander) CombinedOutput(_ context.Context, command string, args ...string) ([]byte, error) {
 <span id="L26" class="ln">    26  </span>	if strings.HasPrefix(command, &#34;ping&#34;) {
-<span id="L27" class="ln">    27  </span>		return []byte(fmt.Sprint(command, args)), nil
+<span id="L27" class="ln">    27  </span>		return fmt.Append(nil, command, args), nil
 <span id="L28" class="ln">    28  </span>	}
-<span id="L29" class="ln">    29  </span>	return []byte(fmt.Sprintf(&#34;Command %s not found&#34;, command)), &amp;exec.Error{Name: command, Err: exec.ErrNotFound}
+<span id="L29" class="ln">    29  </span>	return fmt.Appendf(nil, &#34;Command %s not found&#34;, command), &amp;exec.Error{Name: command, Err: exec.ErrNotFound}
 <span id="L30" class="ln">    30  </span>}
 <span id="L31" class="ln">    31  </span>
 <span id="L32" class="ln">    32  </span>func TestShellCommandDuration(t *testing.T) {

@@ -124,7 +124,7 @@
 <span id="L67" class="ln">    67  </span>	pge := pgengine.NewDB(mockPool, &#34;pgengine_unit_test&#34;)
 <span id="L68" class="ln">    68  </span>	defer mockPool.Close()
 <span id="L69" class="ln">    69  </span>
-<span id="L70" class="ln">    70  </span>	for i := 0; i &lt; 3; i++ {
+<span id="L70" class="ln">    70  </span>	for range 3 {
 <span id="L71" class="ln">    71  </span>		mockPool.ExpectQuery(&#34;SELECT.+chain_id&#34;).WithArgs(pgxmock.AnyArg()).WillReturnError(errors.New(&#34;error&#34;))
 <span id="L72" class="ln">    72  </span>		mockPool.ExpectQuery(&#34;SELECT.+chain_id&#34;).WithArgs(pgxmock.AnyArg()).WillReturnRows(pgxmock.NewRows([]string{&#34;foo&#34;}).AddRow(&#34;baz&#34;))
 <span id="L73" class="ln">    73  </span>	}

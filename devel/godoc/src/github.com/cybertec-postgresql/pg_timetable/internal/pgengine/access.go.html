@@ -199,7 +199,7 @@
 <span id="L142" class="ln">   142  </span>	autonomous,
 <span id="L143" class="ln">   143  </span>	COALESCE(database_connection, &#39;&#39;) as database_connection,
 <span id="L144" class="ln">   144  </span>	timeout
-<span id="L145" class="ln">   145  </span>FROM timetable.task WHERE chain_id = $1 ORDER BY task_order ASC`
+<span id="L145" class="ln">   145  </span>FROM timetable.task WHERE chain_id = $1 AND live ORDER BY task_order ASC`
 <span id="L146" class="ln">   146  </span>	rows, err := pge.ConfigDb.Query(ctx, sqlSelectChainTasks, chainID)
 <span id="L147" class="ln">   147  </span>	if err != nil {
 <span id="L148" class="ln">   148  </span>		return err
