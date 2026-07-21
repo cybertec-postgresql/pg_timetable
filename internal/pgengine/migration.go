@@ -159,6 +159,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00792.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00797 Add indexes to timetable.execution_log",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00797.sql")
+			},
+		},
 		// adding new migration here, update "timetable"."migration" in "sql/init.sql"
 		// and "dbapi" variable in main.go!
 

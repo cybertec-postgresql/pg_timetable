@@ -29,4 +29,5 @@ VALUES
     (13, '00629 Add ignore_error column to timetable.execution_log'),
     (14, '00721 Add more job control functions'),
     (15, '00733 Add params column to timetable.execution_log table'),
-    (16, '00792 Add ability to enable and disable tasks');
+    (16, '00792 Add ability to enable and disable tasks'),
+    (17, '00797 Add indexes to timetable.execution_log');

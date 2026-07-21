@@ -127,6 +127,38 @@ CREATE TABLE timetable.execution_log (
 
 COMMENT ON TABLE timetable.execution_log IS
     'Stores log entries of executed tasks and chains';
+COMMENT ON COLUMN timetable.execution_log.chain_id IS
+    'Link to the chain executed';
+COMMENT ON COLUMN timetable.execution_log.task_id IS
+    'Link to the task executed';
+COMMENT ON COLUMN timetable.execution_log.txid IS
+    'Transaction ID of the executed task';
+COMMENT ON COLUMN timetable.execution_log.last_run IS
+    'Timestamp of the last execution of the task';
+COMMENT ON COLUMN timetable.execution_log.finished IS
+    'Timestamp of the task execution finish';
+COMMENT ON COLUMN timetable.execution_log.pid IS
+    'Process ID of the worker executing the task';
+COMMENT ON COLUMN timetable.execution_log.returncode IS
+    'Return code of the executed task';
+COMMENT ON COLUMN timetable.execution_log.ignore_error IS
+    'Indicates whether a next task in a chain can be executed regardless of the success of the current one';
+COMMENT ON COLUMN timetable.execution_log.kind IS
+    'Indicates whether "command" is SQL, built-in function or an external program';
+COMMENT ON COLUMN timetable.execution_log.command IS
+    'Contains either an SQL command, or command string to be executed';
+COMMENT ON COLUMN timetable.execution_log.output IS
+    'Contains output of the executed task';
+COMMENT ON COLUMN timetable.execution_log.client_name IS
+    'Name of the client executing the task';
+COMMENT ON COLUMN timetable.execution_log.params IS
+    'Contains parameters passed as arguments to a chain task';
+
+CREATE INDEX execution_log_chain_id_finished_idx
+    ON timetable.execution_log (chain_id, finished);
+
+CREATE INDEX execution_log_finished_brin_idx
+    ON timetable.execution_log USING brin (finished);
 
 CREATE UNLOGGED TABLE timetable.active_chain(
     chain_id    BIGINT  NOT NULL,
