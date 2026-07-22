@@ -15,6 +15,8 @@ It is completely database driven and provides a couple of advanced concepts.
 - Full support for database driven logging
 - Cron-style scheduling at the PostgreSQL server time zone
 - Optional concurrency protection
+- Chains and individual tasks can be enabled or disabled without deleting them
+- YAML-based chain definitions for file-based configuration
 - Task and chain can have execution timeout settings
 - OpenTelemetry tracing and metrics export (opt-in)
 
@@ -70,7 +72,10 @@ Logging:
       --log-file-number=                           Maximum number of old log files to retain, 0 to retain all (default: 0)
 
 Start:
-  -f, --file=                                      SQL script file to execute during startup
+  -f, --file=                                      SQL script or YAML chain definition file to execute during
+                                                   startup; may be specified multiple times
+      --replace                                    Replace existing chains when loading YAML files
+      --validate                                   Only validate YAML file without importing chains
       --init                                       Initialize database schema to the latest version and exit. Can be used
                                                    with --upgrade
       --upgrade                                    Upgrade database to the latest version

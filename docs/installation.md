@@ -29,6 +29,7 @@ You may find binary package for your platform on the official [Releases](https:/
 ## Docker
 
 The official docker image can be found here: <https://hub.docker.com/r/cybertecpostgresql/pg_timetable>
+Published tags include a multi-architecture manifest for both `linux/amd64` and `linux/arm64`.
 
 !!! note
 

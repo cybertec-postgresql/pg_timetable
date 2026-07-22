@@ -14,8 +14,11 @@ YAML chain definitions provide a human-readable way to create scheduled task cha
 ## Basic Usage
 
 ```bash
-# Load YAML chains
+# Load a single YAML file
 pg_timetable --file chains.yaml postgresql://user:pass@host/db
+
+# Load several startup files in order
+pg_timetable --file bootstrap.sql --file chains/base.yaml --file chains/prod.yaml ******host/db
 
 # Validate YAML without importing
 pg_timetable --file chains.yaml --validate
@@ -23,6 +26,8 @@ pg_timetable --file chains.yaml --validate
 # Replace existing chains with same names
 pg_timetable --file chains.yaml --replace postgresql://user:pass@host/db
 ```
+
+Each `--file` value is processed in the order provided, so you can mix SQL bootstrap scripts and YAML chain definitions in one startup command.
 
 ## YAML Format
 
@@ -48,6 +53,7 @@ chains:
         ignore_error: false            # Optional: continue on error
         autonomous: false              # Optional: run outside transaction
         timeout: 5000                  # Optional: task timeout in ms
+        live: true                     # Optional: set false to keep the task but skip execution
         parameters:                    # Optional: task parameters, each entry causes separate execution
           - ["value1", 42]             # Parameters for SQL tasks are arrays of values
 ```
@@ -200,6 +206,26 @@ chains:
       - command: "DELETE FROM logs WHERE created_at < now() - interval '7 days'"
 ```
 
+#### Disabling a Task Without Removing It
+
+```yaml
+chains:
+  - name: "maintenance-window"
+    schedule: "0 1 * * *"
+    live: true
+
+    tasks:
+      - name: "pre-check"
+        command: "SELECT run_precheck()"
+      - name: "paused-step"
+        command: "SELECT run_optional_step()"
+        live: false
+      - name: "post-check"
+        command: "SELECT run_postcheck()"
+```
+
+Tasks with `live: false` remain part of the chain definition but are skipped until re-enabled.
+
 ## Advanced Features
 
 ### Error Handling
@@ -259,10 +285,10 @@ YAML files are validated when loaded:
 - **Task kinds**: Must be SQL, PROGRAM, or BUILTIN
 - **Timeouts**: Non-negative integers
 
-Use `--validate` to check files without importing:
+Use `--validate` to check one or more YAML files without importing:
 
 ```bash
-pg_timetable --file chains.yaml --validate
+pg_timetable --file chains/base.yaml --file chains/prod.yaml --validate
 ```
 
 ## Migration from SQL
