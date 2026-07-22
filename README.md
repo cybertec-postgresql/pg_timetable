@@ -56,7 +56,10 @@ SELECT timetable.add_job('reindex-job', '0 0 * * 7', 'bash',
 - Full support for database driven logging
 - Enhanced cron-style scheduling
 - Optional concurrency protection
-- **NEW**: YAML-based chain definitions for easy configuration
+- Chain and task definitions can be enabled or disabled without deleting them
+- YAML-based chain definitions for easy configuration
+- OpenTelemetry tracing and metrics export (opt-in)
+- Official Docker images published for both `linux/amd64` and `linux/arm64`
 
 ## YAML Configuration
 
@@ -83,10 +86,11 @@ chains:
         command: "CALL load_to_warehouse()"
 ```
 
-Load YAML chains with:
+Load YAML chains with one or more startup files:
 
 ```bash
 pg_timetable --file chains.yaml postgresql://user:pass@host/db
+pg_timetable --file bootstrap.sql --file chains/base.yaml --file chains/prod.yaml ******host/db
 ```
 
 See [`samples/yaml/`](samples/yaml/) for more examples and [YAML Schema](https://cybertec-postgresql.github.io/pg_timetable/latest/yaml-format/) for complete format specification.
