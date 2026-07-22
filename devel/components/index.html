@@ -1798,6 +1798,12 @@
 </tr>
 </tbody>
 </table>
+<p>You can temporarily skip a single step without deleting it by toggling the <code>live</code> flag:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">UPDATE</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">SET</span><span class="w"> </span><span class="n">live</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">FALSE</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">;</span>
+</code></pre></div>
+<p>For YAML-managed chains, the same behavior is available through <code>live: false</code> on an individual task.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>If the <strong>task</strong> has been configured with <code>ignore_error</code> set to <code>true</code> (the default value is <code>false</code>), the worker process will report a success on execution <em>even if the task within the chain fails</em>.</p>
@@ -1836,85 +1842,85 @@ In most cases, they have to be brought to live by passing input parameters to th
 <h4 id="sql_1"><code>SQL</code></h4>
 <p>Schema: <code>array</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="s1">&#39;[ &quot;one&quot;, 2, 3.14, false ]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="s1">&#39;[ &quot;one&quot;, 2, 3.14, false ]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="program_1"><code>PROGRAM</code></h4>
 <p>Schema: <code>array of strings</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="s1">&#39;[&quot;-x&quot;, &quot;Latin-ASCII&quot;, &quot;-o&quot;, &quot;orte_ansi.txt&quot;, &quot;orte.txt&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="s1">&#39;[&quot;-x&quot;, &quot;Latin-ASCII&quot;, &quot;-o&quot;, &quot;orte_ansi.txt&quot;, &quot;orte.txt&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-sleep"><code>BUILTIN: Sleep</code></h4>
 <p>Schema: <code>integer</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="s1">&#39;5&#39;</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="s1">&#39;5&#39;</span><span class="w"> </span><span class="p">::</span><span class="w"> </span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-log"><code>BUILTIN: Log</code></h4>
 <p>Schema: <code>any</code></p>
 <p>Examples:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="s1">&#39;&quot;WARNING&quot;&#39;</span><span class="p">::</span><span class="n">jsonb</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="s1">&#39;{&quot;Status&quot;: &quot;WARNING&quot;}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="s1">&#39;&quot;WARNING&quot;&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s1">&#39;{&quot;Status&quot;: &quot;WARNING&quot;}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-sendmail"><code>BUILTIN: SendMail</code></h4>
 <p>Schema: <code>object</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="s1">&#39;{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s1">    &quot;username&quot;:     &quot;user@example.com&quot;,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s1">    &quot;password&quot;:     &quot;password&quot;,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">    &quot;serverhost&quot;:   &quot;smtp.example.com&quot;,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">    &quot;serverport&quot;:   587,</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">    &quot;senderaddr&quot;:   &quot;user@example.com&quot;,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s1">    &quot;ccaddr&quot;:       [&quot;recipient_cc@example.com&quot;],</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s1">    &quot;bccaddr&quot;:      [&quot;recipient_bcc@example.com&quot;],</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s1">    &quot;toaddr&quot;:       [&quot;recipient@example.com&quot;],</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s1">    &quot;subject&quot;:      &quot;pg_timetable - No Reply&quot;,</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s1">    &quot;attachment&quot;:   [&quot;/temp/attachments/Report.pdf&quot;,&quot;config.yaml&quot;],</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s1">    &quot;attachmentdata&quot;: [{&quot;name&quot;: &quot;File.txt&quot;, &quot;base64data&quot;: &quot;RmlsZSBDb250ZW50&quot;}],</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s1">    &quot;msgbody&quot;:      &quot;&lt;h2&gt;Hello User,&lt;/h2&gt; &lt;p&gt;check some attachments!&lt;/p&gt;&quot;,</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s1">    &quot;contenttype&quot;:   &quot;text/html; charset=UTF-8&quot;</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="s1">    &quot;username&quot;:     &quot;user@example.com&quot;,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">    &quot;password&quot;:     &quot;password&quot;,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s1">    &quot;serverhost&quot;:   &quot;smtp.example.com&quot;,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">    &quot;serverport&quot;:   587,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">    &quot;senderaddr&quot;:   &quot;user@example.com&quot;,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">    &quot;ccaddr&quot;:       [&quot;recipient_cc@example.com&quot;],</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">    &quot;bccaddr&quot;:      [&quot;recipient_bcc@example.com&quot;],</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s1">    &quot;toaddr&quot;:       [&quot;recipient@example.com&quot;],</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="s1">    &quot;subject&quot;:      &quot;pg_timetable - No Reply&quot;,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="s1">    &quot;attachment&quot;:   [&quot;/temp/attachments/Report.pdf&quot;,&quot;config.yaml&quot;],</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="s1">    &quot;attachmentdata&quot;: [{&quot;name&quot;: &quot;File.txt&quot;, &quot;base64data&quot;: &quot;RmlsZSBDb250ZW50&quot;}],</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="s1">    &quot;msgbody&quot;:      &quot;&lt;h2&gt;Hello User,&lt;/h2&gt; &lt;p&gt;check some attachments!&lt;/p&gt;&quot;,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="s1">    &quot;contenttype&quot;:   &quot;text/html; charset=UTF-8&quot;</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-download"><code>BUILTIN: Download</code></h4>
 <p>Schema: <code>object</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="s1">&#39;{</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="s1">    &quot;workersnum&quot;: 2, </span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="s1">    &quot;fileurls&quot;: [&quot;http://example.com/foo.gz&quot;, &quot;https://example.com/bar.csv&quot;], </span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="s1">    &quot;destpath&quot;: &quot;.&quot;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s1">    &quot;workersnum&quot;: 2, </span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s1">    &quot;fileurls&quot;: [&quot;http://example.com/foo.gz&quot;, &quot;https://example.com/bar.csv&quot;], </span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s1">    &quot;destpath&quot;: &quot;.&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-copyfromfile"><code>BUILTIN: CopyFromFile</code></h4>
 <p>Schema: <code>object</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="s1">&#39;{</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;, </span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/orte_ansi.txt&quot; </span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;, </span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/orte_ansi.txt&quot; </span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-copytofile"><code>BUILTIN: CopyToFile</code></h4>
 <p>Schema: <code>object</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="s1">&#39;{</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;, </span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/location.txt&quot; </span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;, </span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="s1">    &quot;filename&quot;: &quot;download/location.txt&quot; </span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-copytoprogram"><code>BUILTIN: CopyToProgram</code></h4>
 <p>Schema: <code>object</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="s1">&#39;{</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;,</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="s1">    &quot;cmd&quot;: &quot;sh&quot;,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="s1">    &quot;args&quot;: [&quot;gzip&quot;, &quot;-c&quot;, &quot;&gt;&quot;, &quot;/tmp/output.gz&quot;]</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location TO STDOUT&quot;,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="s1">    &quot;cmd&quot;: &quot;sh&quot;,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="s1">    &quot;args&quot;: [&quot;gzip&quot;, &quot;-c&quot;, &quot;&gt;&quot;, &quot;/tmp/output.gz&quot;]</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-copyfromprogram"><code>BUILTIN: CopyFromProgram</code></h4>
 <p>Schema: <code>object</code></p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="s1">&#39;{</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;,</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="s1">    &quot;cmd&quot;: &quot;gunzip&quot;,</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="s1">    &quot;args&quot;: [&quot;-c&quot;, &quot;/tmp/data.gz&quot;]</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="s1">&#39;{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="s1">    &quot;sql&quot;: &quot;COPY location FROM STDIN&quot;,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="s1">    &quot;cmd&quot;: &quot;gunzip&quot;,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="s1">    &quot;args&quot;: [&quot;-c&quot;, &quot;/tmp/data.gz&quot;]</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="s1">}&#39;</span><span class="p">::</span><span class="n">jsonb</span>
 </code></pre></div>
 <h4 id="builtin-shutdown"><code>BUILTIN: Shutdown</code></h4>
 <p>value ignored</p>
@@ -1984,10 +1990,10 @@ In most cases, they have to be brought to live by passing input parameters to th
 <p>All chains in <strong>pg_timetable</strong> are scheduled at the PostgreSQL server time zone.
 You can change the <a href="https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-TIMEZONES">timezone</a> 
 for the <strong>current session</strong> when adding new chains, e.g.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">SET</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="s1">&#39;UTC&#39;</span><span class="p">;</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1">-- Run VACUUM at 00:05 every day in August UTC</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">SET</span><span class="w"> </span><span class="k">TIME</span><span class="w"> </span><span class="k">ZONE</span><span class="w"> </span><span class="s1">&#39;UTC&#39;</span><span class="p">;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1">-- Run VACUUM at 00:05 every day in August UTC</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
 </code></pre></div>
 </div>
 
