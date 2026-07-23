@@ -32,7 +32,7 @@ var (
 	date    = "unknown"
 	// dbSchema is the pg_timetable DB schema version pgtt is compatible with.
 	// Used by the Phase 1 schema-version check (REQ-016 / AC-009).
-	dbSchema = "00733"
+	dbSchema = "00797"
 )
 
 // globalOptions holds flags shared by all subcommands.

@@ -21,7 +21,7 @@ var (
 // PgClient is the pgxpool-backed implementation of Client.
 type PgClient struct {
 	pool *pgxpool.Pool
-	// wantVersion is the schema version pgtt is compatible with, e.g. "00733".
+	// wantVersion is the schema version pgtt is compatible with, e.g. "00797".
 	wantVersion string
 }
 
@@ -82,7 +82,7 @@ func (c *PgClient) CheckSchemaVersion(ctx context.Context) error {
 }
 
 // schemaVersionToken extracts the leading numeric token from a migration
-// version string, e.g. "00733 Add params column" -> "00733".
+// version string, e.g. "00797 Add indexes" -> "00797".
 func schemaVersionToken(version string) string {
 	v := strings.TrimSpace(version)
 	if i := strings.IndexByte(v, ' '); i >= 0 {

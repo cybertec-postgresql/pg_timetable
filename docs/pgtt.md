@@ -271,6 +271,6 @@ verbose: false
 ## Schema compatibility
 
 `pgtt` checks the `timetable.migration` table on every connection and refuses to
-operate against an incompatible schema version (printed as `required: 00733`).
+operate against an incompatible schema version (printed as `required: 00797`).
 If the schema is absent, run a pg_timetable instance against the database first
 to create and initialise it.

@@ -44,7 +44,7 @@ Resolve open questions and lay the package skeleton. No user-facing features yet
       `go test ./...` / `golangci-lint run` tasks (path-globbed, no task edits needed). (§6)
 
 **Exit criteria (MET)**: `pgtt` binary builds, runs `--help` and `version`
-(prints compatible DB schema 00733); vet + lint clean.
+(prints compatible DB schema 00797); vet + lint clean.
 
 > Phase 1 note: `pgengine.New` executes/creates the schema on connect. `pgtt` MUST NOT
 > create the schema (REQ-016 / §9 "schema absent"); Phase 1 (P1-4) needs a lighter
