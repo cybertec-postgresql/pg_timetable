@@ -128,6 +128,44 @@ func TestActivityFreezeAndScroll(t *testing.T) {
 	}
 }
 
+// TestActivityScrollKeepsFullWindow guards the reported bug: repeatedly
+// pressing Up (or jumping to the top with 'g') must never scroll the oldest
+// entry off the top and shrink the window down to a single line. The offset is
+// clamped so a full window (viewH lines) always stays visible.
+func TestActivityScrollKeepsFullWindow(t *testing.T) {
+	v := newActivityView(nil, newStyles(false), client.LogFilter{})
+	v.SetSize(120, 12)
+	entries := make([]client.ActivityEntry, 0, 50)
+	for i := 0; i < 50; i++ {
+		entries = append(entries, actEntry("INFO", "a", "m", 1))
+	}
+	uv, _ := v.Update(activityBackfillMsg{entries: entries})
+	v = uv.(*activityView)
+
+	// Render once so viewH is known, then spam Up far past the buffer size.
+	v.Body(120, 12)
+	for i := 0; i < 200; i++ {
+		v.Update(tea.KeyMsg{Type: tea.KeyUp})
+	}
+	if want := v.maxOffset(); v.offset != want {
+		t.Fatalf("after 200 Up: offset=%d, want clamped to %d", v.offset, want)
+	}
+	// The visible window must still be full (viewH lines), not a single line.
+	visible := len(v.entries) - v.offset
+	if visible < v.viewH {
+		t.Fatalf("window shrank to %d lines, want a full window of %d", visible, v.viewH)
+	}
+
+	// 'g' (top) must land on the same full-window offset, not len-1.
+	v.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	if v.offset != v.maxOffset() {
+		t.Fatalf("g offset=%d, want %d", v.offset, v.maxOffset())
+	}
+	if got := len(v.entries) - v.offset; got < v.viewH {
+		t.Fatalf("g window = %d lines, want full window of %d", got, v.viewH)
+	}
+}
+
 func TestActivityRingCap(t *testing.T) {
 	v := newActivityView(nil, newStyles(false), client.LogFilter{})
 	for i := 0; i < activityRingCap+50; i++ {

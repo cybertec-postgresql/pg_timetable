@@ -41,6 +41,11 @@ type activityView struct {
 	offset  int                    // scroll offset from the bottom (0 = newest)
 	frozen  bool                   // autoscroll paused?
 
+	// viewH is the number of activity lines the last Body render could show.
+	// It bounds how far Up may scroll so the oldest entry stops at the top of
+	// a full window instead of scrolling off into an ever-shrinking view.
+	viewH int
+
 	width, hght int
 
 	// streaming plumbing
@@ -168,13 +173,13 @@ func (v *activityView) handleKey(msg tea.KeyMsg) (view, tea.Cmd) {
 		return v, func() tea.Msg { return statusMsg("scroll: " + state) }
 	case key.Matches(msg, v.keys.Top):
 		v.frozen = true
-		v.offset = maxInt(0, len(v.entries)-1)
+		v.offset = v.maxOffset()
 	case key.Matches(msg, v.keys.Bottom):
 		v.offset = 0
 		v.frozen = false
 	case key.Matches(msg, defaultKeyMap().Up):
 		v.frozen = true
-		v.offset = minInt(v.offset+1, maxInt(0, len(v.entries)-1))
+		v.offset = minInt(v.offset+1, v.maxOffset())
 	case key.Matches(msg, defaultKeyMap().Down):
 		v.offset = maxInt(0, v.offset-1)
 		if v.offset == 0 {
@@ -193,8 +198,21 @@ func (v *activityView) append(e client.ActivityEntry) {
 	}
 	if v.frozen && v.offset > 0 {
 		// Keep the same line in view as new ones arrive below.
-		v.offset = minInt(v.offset+1, maxInt(0, len(v.entries)-1))
+		v.offset = minInt(v.offset+1, v.maxOffset())
 	}
+}
+
+// maxOffset is the largest scroll-back offset that still keeps a full window of
+// entries visible: it stops once the oldest entry reaches the top of the
+// window. Scrolling further would only shrink the visible window (entries
+// appearing to "vanish"), so we clamp here. When there are fewer entries than
+// the window can hold, the max offset is 0 (nothing to scroll). If the view
+// height is not yet known (before the first render), fall back to len-1.
+func (v *activityView) maxOffset() int {
+	if v.viewH <= 0 {
+		return maxInt(0, len(v.entries)-1)
+	}
+	return maxInt(0, len(v.entries)-v.viewH)
 }
 
 func trimRing(entries []client.ActivityEntry) []client.ActivityEntry {
@@ -213,6 +231,11 @@ func (v *activityView) Body(width, height int) string {
 		panelH = 3
 	}
 	innerW, innerH := v.styles.innerSize(width, panelH)
+
+	// Remember the window height and re-clamp the offset so scrolling can never
+	// push the oldest entry off the top (which made entries appear to vanish).
+	v.viewH = innerH
+	v.offset = minInt(v.offset, v.maxOffset())
 
 	var content string
 	if len(v.entries) == 0 {
