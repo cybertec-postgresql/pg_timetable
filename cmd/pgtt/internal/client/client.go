@@ -19,12 +19,15 @@ type Chain = pgengine.Chain
 // ChainTask is re-exported for command/rendering layers.
 type ChainTask = pgengine.ChainTask
 
-// Session describes an active scheduler session (timetable.active_session).
+// Session describes an active scheduler session (timetable.active_session),
+// enriched with the backend's current activity from pg_stat_activity.
 type Session struct {
 	ClientName string `db:"client_name" json:"client_name"`
 	ClientPID  int64  `db:"client_pid" json:"client_pid"`
 	ServerPID  int64  `db:"server_pid" json:"server_pid"`
 	StartedAt  string `db:"started_at" json:"started_at"`
+	State      string `db:"state" json:"state"`
+	Query      string `db:"query" json:"query"`
 }
 
 // ActiveChain describes a currently running chain (timetable.active_chain).
@@ -116,6 +119,9 @@ type Client interface {
 	ShowChain(ctx context.Context, ref string) (*ChainListItem, []ChainTask, error)
 	ListSessions(ctx context.Context) ([]Session, error)
 	ListActiveChains(ctx context.Context) ([]ActiveChain, error)
+	// ListSessionsAndChains fetches sessions and running chains in a single
+	// round-trip so both panels of the Sessions view share one snapshot.
+	ListSessionsAndChains(ctx context.Context) ([]Session, []ActiveChain, error)
 	ListLogs(ctx context.Context, f LogFilter) ([]LogEntry, error)
 
 	// --- Live control (Phase 3) ---

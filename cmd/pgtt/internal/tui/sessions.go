@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/cmd/pgtt/internal/client"
 
@@ -29,6 +30,14 @@ type sessionsLoadedMsg struct {
 type activeLoadedMsg struct {
 	active []client.ActiveChain
 	err    error
+}
+
+// sessionsSnapshotMsg carries a combined sessions+chains snapshot fetched in a
+// single round-trip, so both panels reflect the same moment in time.
+type sessionsSnapshotMsg struct {
+	sessions []client.Session
+	active   []client.ActiveChain
+	err      error
 }
 
 // sessionsView shows, top, the live database connections each running
@@ -72,31 +81,38 @@ func newSessionsView(c client.Client, s styles) *sessionsView {
 
 func (v *sessionsView) Title() string { return "Sessions" }
 
-func (v *sessionsView) Init() tea.Cmd { return tea.Batch(v.fetchSessions(), v.fetchActive()) }
+func (v *sessionsView) Init() tea.Cmd { return v.fetchSnapshot() }
 
 func (v *sessionsView) SetSize(w, h int) { v.width, v.height = w, h }
 
-func (v *sessionsView) fetchSessions() tea.Cmd {
+// fetchSnapshot loads connections and running chains together in one DB
+// round-trip so the two panels never show mismatched snapshots.
+func (v *sessionsView) fetchSnapshot() tea.Cmd {
 	c := v.client
 	return func() tea.Msg {
-		s, err := c.ListSessions(context.Background())
-		return sessionsLoadedMsg{sessions: s, err: err}
-	}
-}
-
-func (v *sessionsView) fetchActive() tea.Cmd {
-	c := v.client
-	return func() tea.Msg {
-		a, err := c.ListActiveChains(context.Background())
-		return activeLoadedMsg{active: a, err: err}
+		s, a, err := c.ListSessionsAndChains(context.Background())
+		return sessionsSnapshotMsg{sessions: s, active: a, err: err}
 	}
 }
 
 func (v *sessionsView) Update(msg tea.Msg) (view, tea.Cmd) {
 	switch msg := msg.(type) {
 	case refreshMsg:
-		return v, tea.Batch(v.fetchSessions(), v.fetchActive())
+		return v, v.fetchSnapshot()
 
+	case sessionsSnapshotMsg:
+		if msg.err != nil {
+			return v, func() tea.Msg { return errMsg{msg.err} }
+		}
+		v.sessions = msg.sessions
+		v.active = msg.active
+		v.sessCursor = clamp(v.sessCursor, len(v.sessions))
+		v.activeCursor = clamp(v.activeCursor, len(v.active))
+		return v, func() tea.Msg {
+			return statusMsg(fmt.Sprintf("%d sessions · %d running", len(v.sessions), len(v.active)))
+		}
+
+	// Kept for backward-compatibility / direct injection in tests.
 	case sessionsLoadedMsg:
 		if msg.err != nil {
 			return v, func() tea.Msg { return errMsg{msg.err} }
@@ -170,10 +186,11 @@ func (v *sessionsView) Body(width, height int) string {
 
 func (v *sessionsView) sessionsTable(width, height int) string {
 	cols := []column{
-		{title: "WORKER", min: 12, flex: 2}, // client_name = instance/worker name
+		{title: "WORKER", min: 12, flex: 1}, // client_name = instance/worker name
 		{title: "SCHED PID", min: 10},       // client_pid = scheduler process PID
 		{title: "BACKEND PID", min: 11},     // server_pid = PostgreSQL backend PID
-		{title: "CONNECTED", min: 19, flex: 1},
+		{title: "CONNECTED", min: 19},
+		{title: "ACTIVITY", min: 12, flex: 3}, // current query or <IDLE>
 	}
 	rows := make([][]cell, len(v.sessions))
 	for i, s := range v.sessions {
@@ -182,6 +199,7 @@ func (v *sessionsView) sessionsTable(width, height int) string {
 			plainCell(strconv.FormatInt(s.ClientPID, 10)),
 			plainCell(strconv.FormatInt(s.ServerPID, 10)),
 			plainCell(orDash(s.StartedAt)),
+			plainCell(sessionActivity(s)),
 		}
 	}
 	sel := -1
@@ -212,4 +230,32 @@ func (v *sessionsView) activeTable(width, height int) string {
 		sel = v.activeCursor
 	}
 	return v.styles.renderTable(cols, rows, sel, width, height)
+}
+
+// sessionActivity returns a single-line description of what a backend is doing,
+// straight from pg_stat_activity.state.
+//
+// pg_timetable uses a connection pool: most connections are LISTEN'ers sitting
+// "idle", the chain-executing backend spends most of its life "idle in
+// transaction" between tasks, and it is "active" only while a statement runs.
+// We surface the real backend state so the operator sees the truth:
+//   - "active"              → the running SQL (or <ACTIVE> if the query text is hidden)
+//   - "idle in transaction" → <IDLE IN TX>
+//   - "idle" / unknown      → <IDLE>
+func sessionActivity(s client.Session) string {
+	switch strings.TrimSpace(s.State) {
+	case "active":
+		if q := strings.Join(strings.Fields(s.Query), " "); q != "" {
+			return q
+		}
+		return "<ACTIVE>"
+	case "idle in transaction":
+		return "<IDLE IN TX>"
+	case "idle in transaction (aborted)":
+		return "<IDLE IN TX (ABORTED)>"
+	case "fastpath function call":
+		return "<FASTPATH>"
+	default:
+		return "<IDLE>"
+	}
 }

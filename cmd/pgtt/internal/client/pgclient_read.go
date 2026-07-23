@@ -129,13 +129,17 @@ ORDER BY task_order ASC`
 	return &chain, tasks, nil
 }
 
-// ListSessions returns active scheduler sessions (REQ-011).
+// ListSessions returns active scheduler sessions (REQ-011), enriched with the
+// current backend activity (state / query) from pg_stat_activity.
 func (c *PgClient) ListSessions(ctx context.Context) ([]Session, error) {
 	const q = `
-SELECT client_name, client_pid, server_pid,
-       COALESCE(to_char(started_at, 'YYYY-MM-DD HH24:MI:SS'), '') AS started_at
-FROM timetable.active_session
-ORDER BY started_at`
+SELECT s.client_name, s.client_pid, s.server_pid,
+       COALESCE(to_char(s.started_at, 'YYYY-MM-DD HH24:MI:SS'), '') AS started_at,
+       COALESCE(a.state, '')                                        AS state,
+       COALESCE(NULLIF(a.query, ''), '')                            AS query
+FROM timetable.active_session s
+LEFT JOIN pg_stat_activity a ON a.pid = s.server_pid
+ORDER BY s.started_at`
 	rows, err := c.pool.Query(ctx, q)
 	if err != nil {
 		return nil, err
@@ -158,6 +162,54 @@ ORDER BY ac.started_at`
 		return nil, err
 	}
 	return pgx.CollectRows(rows, pgx.RowToStructByName[ActiveChain])
+}
+
+// ListSessionsAndChains fetches active sessions and running chains together in a
+// single round-trip (one pgx.Batch on one connection), so the Sessions view
+// shows a consistent snapshot of "who is connected" and "what is running" taken
+// at the same moment instead of two independently-timed queries.
+func (c *PgClient) ListSessionsAndChains(ctx context.Context) ([]Session, []ActiveChain, error) {
+	const sessQ = `
+SELECT s.client_name, s.client_pid, s.server_pid,
+       COALESCE(to_char(s.started_at, 'YYYY-MM-DD HH24:MI:SS'), '') AS started_at,
+       COALESCE(a.state, '')                                        AS state,
+       COALESCE(NULLIF(a.query, ''), '')                            AS query
+FROM timetable.active_session s
+LEFT JOIN pg_stat_activity a ON a.pid = s.server_pid
+ORDER BY s.started_at`
+	const chainQ = `
+SELECT ac.chain_id,
+       COALESCE(c.chain_name, '') AS chain_name,
+       ac.client_name,
+       COALESCE(to_char(ac.started_at, 'YYYY-MM-DD HH24:MI:SS'), '') AS started_at
+FROM timetable.active_chain ac
+LEFT JOIN timetable.chain c ON c.chain_id = ac.chain_id
+ORDER BY ac.started_at`
+
+	batch := &pgx.Batch{}
+	batch.Queue(sessQ)
+	batch.Queue(chainQ)
+	br := c.pool.SendBatch(ctx, batch)
+	defer br.Close()
+
+	sessRows, err := br.Query()
+	if err != nil {
+		return nil, nil, err
+	}
+	sessions, err := pgx.CollectRows(sessRows, pgx.RowToStructByName[Session])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	chainRows, err := br.Query()
+	if err != nil {
+		return nil, nil, err
+	}
+	chains, err := pgx.CollectRows(chainRows, pgx.RowToStructByName[ActiveChain])
+	if err != nil {
+		return nil, nil, err
+	}
+	return sessions, chains, nil
 }
 
 // ListRuns returns recent execution runs for a chain, one row per txid (P5-4).

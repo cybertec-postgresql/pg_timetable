@@ -11,8 +11,12 @@ import (
 
 func sampleSessions() []client.Session {
 	return []client.Session{
-		{ClientName: "w1", ClientPID: 100, ServerPID: 200, StartedAt: "2026-06-23 09:00:00"},
-		{ClientName: "w2", ClientPID: 101, ServerPID: 201, StartedAt: "2026-06-23 09:05:00"},
+		{ClientName: "w1", ClientPID: 100, ServerPID: 200, StartedAt: "2026-06-23 09:00:00",
+			State: "active", Query: "SELECT timetable.get_chain()"},
+		{ClientName: "w2", ClientPID: 101, ServerPID: 201, StartedAt: "2026-06-23 09:05:00",
+			State: "idle in transaction"},
+		{ClientName: "w3", ClientPID: 102, ServerPID: 202, StartedAt: "2026-06-23 09:06:00",
+			State: "idle"},
 	}
 }
 
@@ -25,19 +29,17 @@ func sampleActive() []client.ActiveChain {
 func loadedSessionsView() *sessionsView {
 	v := newSessionsView(nil, newStyles(false))
 	v.SetSize(120, 20)
-	uv, _ := v.Update(sessionsLoadedMsg{sessions: sampleSessions()})
-	v = uv.(*sessionsView)
-	uv, _ = v.Update(activeLoadedMsg{active: sampleActive()})
+	uv, _ := v.Update(sessionsSnapshotMsg{sessions: sampleSessions(), active: sampleActive()})
 	return uv.(*sessionsView)
 }
 
 func TestSessionsLoad(t *testing.T) {
 	v := loadedSessionsView()
-	if len(v.sessions) != 2 || len(v.active) != 1 {
-		t.Fatalf("sessions=%d active=%d, want 2/1", len(v.sessions), len(v.active))
+	if len(v.sessions) != 3 || len(v.active) != 1 {
+		t.Fatalf("sessions=%d active=%d, want 3/1", len(v.sessions), len(v.active))
 	}
 	out := v.Body(120, 18)
-	for _, want := range []string{"Connections", "Running chains", "w1", "w2", "BACKEND PID", "CHAIN", "NAME", "nightly-etl"} {
+	for _, want := range []string{"Connections", "Running chains", "w1", "w2", "BACKEND PID", "CHAIN", "NAME", "nightly-etl", "ACTIVITY", "<IDLE>", "<IDLE IN TX>"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("body missing %q", want)
 		}
@@ -90,19 +92,48 @@ func TestSessionsErrorSurfaces(t *testing.T) {
 	if _, ok := cmd().(errMsg); !ok {
 		t.Fatal("expected errMsg from active error")
 	}
+
+	_, cmd = v.Update(sessionsSnapshotMsg{err: errTest("down3")})
+	if _, ok := cmd().(errMsg); !ok {
+		t.Fatal("expected errMsg from snapshot error")
+	}
 }
 
 func TestSessionsStatusCountsBoth(t *testing.T) {
 	v := newSessionsView(nil, newStyles(false))
-	uv, _ := v.Update(activeLoadedMsg{active: sampleActive()})
-	v = uv.(*sessionsView)
-	_, cmd := v.Update(sessionsLoadedMsg{sessions: sampleSessions()})
+	_, cmd := v.Update(sessionsSnapshotMsg{sessions: sampleSessions(), active: sampleActive()})
 	msg := cmd()
 	sm, ok := msg.(statusMsg)
 	if !ok {
 		t.Fatalf("expected statusMsg, got %T", msg)
 	}
-	if !strings.Contains(string(sm), "2 sessions") || !strings.Contains(string(sm), "1 running") {
+	if !strings.Contains(string(sm), "3 sessions") || !strings.Contains(string(sm), "1 running") {
 		t.Fatalf("status = %q, want counts", string(sm))
+	}
+}
+
+func TestSessionActivity(t *testing.T) {
+	cases := []struct {
+		name string
+		s    client.Session
+		want string
+	}{
+		{"running query", client.Session{State: "active", Query: "SELECT 1"}, "SELECT 1"},
+		{"active no query", client.Session{State: "active"}, "<ACTIVE>"},
+		{"idle in transaction ignores stale query", client.Session{State: "idle in transaction", Query: "BEGIN"}, "<IDLE IN TX>"},
+		{"idle in transaction aborted", client.Session{State: "idle in transaction (aborted)"}, "<IDLE IN TX (ABORTED)>"},
+		{"fastpath", client.Session{State: "fastpath function call"}, "<FASTPATH>"},
+		{"idle ignores stale query", client.Session{State: "idle", Query: "SELECT 1"}, "<IDLE>"},
+		{"idle no query", client.Session{State: "idle"}, "<IDLE>"},
+		{"no info", client.Session{}, "<IDLE>"},
+		{"no state ignores stale query", client.Session{Query: "SELECT 1"}, "<IDLE>"},
+		{"multiline collapsed", client.Session{State: "active", Query: "SELECT\n  a,\n  b"}, "SELECT a, b"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := sessionActivity(tc.s); got != tc.want {
+				t.Fatalf("sessionActivity() = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
