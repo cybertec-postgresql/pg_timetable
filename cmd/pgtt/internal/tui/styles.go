@@ -24,9 +24,9 @@ func levelColor(level string) lipgloss.Color {
 		return colorBlue
 	case "WARN", "WARNING":
 		return colorMagenta
-	case "ERROR", "FATAL", "PANIC", "FAIL":
+	case "ERROR", "FATAL", "PANIC", "FAIL", "FAILED":
 		return colorRed
-	case "OK", "INFO", "NOTICE", "LOG":
+	case "OK", "INFO", "NOTICE", "LOG", "SUCCESS", "SUCCEEDED":
 		return colorGreen
 	default:
 		return colorGreen

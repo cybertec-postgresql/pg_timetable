@@ -189,3 +189,12 @@ func names(items []client.ChainListItem) []string {
 	}
 	return out
 }
+
+func TestLevelColorFailedIsRed(t *testing.T) {
+	if got := levelColor("failed"); got != colorRed {
+		t.Fatalf("levelColor(\"failed\") = %v, want colorRed %v", got, colorRed)
+	}
+	if got := levelColor("success"); got != colorGreen {
+		t.Fatalf("levelColor(\"success\") = %v, want colorGreen %v", got, colorGreen)
+	}
+}
