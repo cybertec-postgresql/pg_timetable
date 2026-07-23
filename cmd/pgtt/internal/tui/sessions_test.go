@@ -18,7 +18,7 @@ func sampleSessions() []client.Session {
 
 func sampleActive() []client.ActiveChain {
 	return []client.ActiveChain{
-		{ChainID: 5, ClientName: "w1", StartedAt: "2026-06-23 10:00:00"},
+		{ChainID: 5, ChainName: "nightly-etl", ClientName: "w1", StartedAt: "2026-06-23 10:00:00"},
 	}
 }
 
@@ -37,7 +37,7 @@ func TestSessionsLoad(t *testing.T) {
 		t.Fatalf("sessions=%d active=%d, want 2/1", len(v.sessions), len(v.active))
 	}
 	out := v.Body(120, 18)
-	for _, want := range []string{"Connections", "Running chains", "w1", "w2", "BACKEND PID", "CHAIN"} {
+	for _, want := range []string{"Connections", "Running chains", "w1", "w2", "BACKEND PID", "CHAIN", "NAME", "nightly-etl"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("body missing %q", want)
 		}

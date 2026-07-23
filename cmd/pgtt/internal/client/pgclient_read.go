@@ -146,10 +146,13 @@ ORDER BY started_at`
 // ListActiveChains returns currently running chains (REQ-011).
 func (c *PgClient) ListActiveChains(ctx context.Context) ([]ActiveChain, error) {
 	const q = `
-SELECT chain_id, client_name,
-       COALESCE(to_char(started_at, 'YYYY-MM-DD HH24:MI:SS'), '') AS started_at
-FROM timetable.active_chain
-ORDER BY started_at`
+SELECT ac.chain_id,
+       COALESCE(c.chain_name, '') AS chain_name,
+       ac.client_name,
+       COALESCE(to_char(ac.started_at, 'YYYY-MM-DD HH24:MI:SS'), '') AS started_at
+FROM timetable.active_chain ac
+LEFT JOIN timetable.chain c ON c.chain_id = ac.chain_id
+ORDER BY ac.started_at`
 	rows, err := c.pool.Query(ctx, q)
 	if err != nil {
 		return nil, err

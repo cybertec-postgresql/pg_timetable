@@ -30,6 +30,7 @@ type Session struct {
 // ActiveChain describes a currently running chain (timetable.active_chain).
 type ActiveChain struct {
 	ChainID    int    `db:"chain_id" json:"chain_id"`
+	ChainName  string `db:"chain_name" json:"chain_name"`
 	ClientName string `db:"client_name" json:"client_name"`
 	StartedAt  string `db:"started_at" json:"started_at"`
 }

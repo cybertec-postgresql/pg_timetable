@@ -194,6 +194,7 @@ func (v *sessionsView) sessionsTable(width, height int) string {
 func (v *sessionsView) activeTable(width, height int) string {
 	cols := []column{
 		{title: "CHAIN", min: 8},
+		{title: "NAME", min: 12, flex: 2},
 		{title: "WORKER", min: 12, flex: 2},
 		{title: "STARTED", min: 19, flex: 1},
 	}
@@ -201,6 +202,7 @@ func (v *sessionsView) activeTable(width, height int) string {
 	for i, a := range v.active {
 		rows[i] = []cell{
 			plainCell(strconv.Itoa(a.ChainID)),
+			plainCell(orDash(a.ChainName)),
 			plainCell(orDash(a.ClientName)),
 			plainCell(orDash(a.StartedAt)),
 		}
