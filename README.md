@@ -194,4 +194,4 @@ For professional support, please contact [Cybertec](https://www.cybertec-postgre
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=cybertec-postgresql/pg_timetable&type=Date)](https://star-history.com/#cybertec-postgresql/pg_timetable&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=cybertec-postgresql/pg_timetable&type=Date)](https://star-history.dera.page/#cybertec-postgresql/pg_timetable&Date)
