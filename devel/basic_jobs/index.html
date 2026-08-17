@@ -1375,22 +1375,22 @@
 <ol>
 <li>
 <p>Run <code>public.my_func()</code> at 00:05 every day in August Postgres server time zone:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;execute-func&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;5 0 * 8 *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;SELECT public.my_func()&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'execute-func'</span><span class="p">,</span><span class="w"> </span><span class="s1">'5 0 * 8 *'</span><span class="p">,</span><span class="w"> </span><span class="s1">'SELECT public.my_func()'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 <li>
 <p>Run <code>VACUUM</code> at minute 23 past every 2nd hour from 0 through 20 every day Postgres server time zone:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;run-vacuum&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;23 0-20/2 * * *&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;VACUUM&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'run-vacuum'</span><span class="p">,</span><span class="w"> </span><span class="s1">'23 0-20/2 * * *'</span><span class="p">,</span><span class="w"> </span><span class="s1">'VACUUM'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 <li>
 <p>Refresh materialized view every 2 hours:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;refresh-matview&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;@every 2 hours&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;REFRESH MATERIALIZED VIEW public.mat_view&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'refresh-matview'</span><span class="p">,</span><span class="w"> </span><span class="s1">'@every 2 hours'</span><span class="p">,</span><span class="w"> </span><span class="s1">'REFRESH MATERIALIZED VIEW public.mat_view'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 <li>
 <p>Clear log table after <strong>pg_timetable</strong> restart:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;clear-log&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;@reboot&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;TRUNCATE timetable.log&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'clear-log'</span><span class="p">,</span><span class="w"> </span><span class="s1">'@reboot'</span><span class="p">,</span><span class="w"> </span><span class="s1">'TRUNCATE timetable.log'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 <li>
@@ -1398,20 +1398,20 @@
 <ul>
 <li>
 <p>using default database under default user (no command line arguments)</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;reindex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;0 0 * * 7&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reindexdb&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">job_kind</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'reindex'</span><span class="p">,</span><span class="w"> </span><span class="s1">'0 0 * * 7'</span><span class="p">,</span><span class="w"> </span><span class="s1">'reindexdb'</span><span class="p">,</span><span class="w"> </span><span class="n">job_kind</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="s1">'PROGRAM'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 <li>
 <p>specifying target database and tables, and be verbose</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;reindex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;0 0 * * 7&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reindexdb&#39;</span><span class="p">,</span><span class="w"> </span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="s1">&#39;[&quot;--table=foo&quot;, &quot;--dbname=postgres&quot;, &quot;--verbose&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'reindex'</span><span class="p">,</span><span class="w"> </span><span class="s1">'0 0 * * 7'</span><span class="p">,</span><span class="w"> </span><span class="s1">'reindexdb'</span><span class="p">,</span><span class="w"> </span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="s1">'["--table=foo", "--dbname=postgres", "--verbose"]'</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span><span class="w"> </span><span class="s1">'PROGRAM'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 <li>
 <p>passing password using environment variable through <code>bash</code> shell</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">&#39;reindex&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;0 0 * * 7&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;bash&#39;</span><span class="p">,</span><span class="w"> </span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="s1">&#39;[&quot;-c&quot;, &quot;PGPASSWORD=5m3R7K4754p4m reindexdb -U postgres -h 192.168.0.221 -v&quot;]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span><span class="w"> </span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="s1">&#39;PROGRAM&#39;</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'reindex'</span><span class="p">,</span><span class="w"> </span><span class="s1">'0 0 * * 7'</span><span class="p">,</span><span class="w"> </span><span class="s1">'bash'</span><span class="p">,</span><span class="w"> </span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="s1">'["-c", "PGPASSWORD=5m3R7K4754p4m reindexdb -U postgres -h 192.168.0.221 -v"]'</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span><span class="w"> </span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="s1">'PROGRAM'</span><span class="p">);</span>
 </code></pre></div>
 </li>
 </ul>
