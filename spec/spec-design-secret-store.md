@@ -1,6 +1,6 @@
 ---
 title: Postgres-Native Secret Store (`timetable.secret`) for pg_timetable
-version: 2.0
+version: 2.1
 date_created: 2026-08-17
 last_updated: 2026-08-17
 owner: pg_timetable maintainers
@@ -50,7 +50,9 @@ general-purpose vault:
 
 - `timetable.secret` table, its constraint, comments, trigger, and ownership
   model, added to **both** the fresh-install DDL and a new migration.
-- `pgcrypto` extension acquisition with deterministic schema resolution.
+- Optional-dependency handling for `pgcrypto`: call-time discovery inside
+  `timetable.resolve_secret()`, and **no `CREATE EXTENSION` anywhere** in
+  pg_timetable's own DDL or migrations.
 - `timetable.resolve_secret()` and `timetable.secret_count()`
   `SECURITY DEFINER` functions.
 - `${secret:name}` reference syntax in `timetable.parameter.value` (jsonb
@@ -78,6 +80,9 @@ general-purpose vault:
 - YAML authoring UX for secret references (`samples/yaml/*.yaml` unchanged).
 - Creating, owning, or managing Postgres roles (pg_timetable creates no roles
   today and will not start).
+- Installing, requiring, probing for, or upgrading any PostgreSQL extension.
+  pg_timetable connects and runs; `pgcrypto` provisioning belongs to whoever
+  deploys the database.
 - Any guarantee of confidentiality against a compromised worker host,
   `ps`/auditd argv inspection, or a party holding both `value_enc` and the
   encryption key.
@@ -115,8 +120,11 @@ verifying the implementation against this contract.
 - **`SECURITY DEFINER`**: a Postgres function execution mode that runs with
   the privileges of the function's **owner** rather than its caller.
 - **pgcrypto**: the Postgres contrib extension providing `pgp_sym_encrypt` /
-  `pgp_sym_decrypt`. Since PostgreSQL 13 it is a **trusted** extension,
-  installable by a non-superuser holding `CREATE` on the database.
+  `pgp_sym_decrypt`. An **optional** dependency of this feature: pg_timetable
+  never installs it, never requires it, and never checks for it outside the
+  body of `timetable.resolve_secret()`. Installing it is the responsibility of
+  whoever deploys the database. Since PostgreSQL 13 it is a **trusted**
+  extension, installable by a non-superuser holding `CREATE` on the database.
 - **pgx tracer**: `tracelog.TraceLog` installed on the connection pool in
   `internal/pgengine/bootstrap.go`, which logs each query's SQL **and bound
   arguments** when the log level is debug.
@@ -157,44 +165,70 @@ verifying the implementation against this contract.
   project's supported matrix, unlike PG11+ `EXECUTE FUNCTION`) and with plain
   `CREATE TRIGGER` (not PG14+ `CREATE OR REPLACE TRIGGER`).
 
-### Extension requirements
+### Extension requirements (`pgcrypto` is an optional dependency)
 
-- **REQ-007**: The implementation MUST NOT assume `pgcrypto`'s schema.
-  `CREATE EXTENSION IF NOT EXISTS pgcrypto` installs into the first writable
-  schema of the installing session's `search_path` (normally `public`), which
-  is not reachable from a function pinned to
-  `SET search_path = pg_catalog, timetable`. The unqualified
-  `pgp_sym_decrypt` call would then fail at runtime.
-- **REQ-008**: Schema creation MUST therefore (a) install `pgcrypto` into
-  `timetable` when the extension is absent, (b) detect the schema it actually
-  occupies via `pg_catalog.pg_extension`/`pg_catalog.pg_namespace`, and
-  (c) create `timetable.resolve_secret` with `pgp_sym_decrypt`
-  **schema-qualified to that schema**, by generating the `CREATE FUNCTION`
-  through `EXECUTE format(...)` with a `%I` placeholder. Raise an exception
-  when the extension is still absent after step (a). See §4.1 for the exact
-  SQL.
-- **REQ-053**: Qualifying inside the body is REQUIRED; pinning an
-  unqualified body and repairing it afterwards with
-  `ALTER FUNCTION ... SET search_path` does NOT work. PostgreSQL validates a
-  `LANGUAGE sql` body at creation time against the pinned `search_path`, so
-  `CREATE FUNCTION` itself fails with
-  `function pgp_sym_decrypt(bytea, text) does not exist` on any database
-  where `pgcrypto` is not in `timetable`. Verified on PostgreSQL 16.1 against
-  a database with `pgcrypto` pre-installed in `public`.
-- **REQ-052**: Because installing `pgcrypto` into `timetable` puts
-  `pgp_sym_encrypt` outside the default `search_path`, every **write-side**
-  call — in samples, documentation, and tests — MUST either schema-qualify it
-  as `timetable.pgp_sym_encrypt(...)` or run with `timetable` on the
-  session `search_path`. Verified against PostgreSQL 16: with the extension
-  in `timetable`, an unqualified `pgp_sym_encrypt('x', 'k')` from a default
-  session fails with `function pgp_sym_encrypt(unknown, unknown) does not
-  exist`, while both the qualified form and `SET search_path = public,
-  timetable` succeed. This affects REQ-047 and REQ-048 directly, since
-  `samples/*.sql` execute in a plain session via `ExecuteCustomScripts`.
-- **CON-001**: No other object in `internal/pgengine/sql/` issues
-  `CREATE EXTENSION` today; this feature introduces the project's first
-  extension dependency and MUST fail the migration loudly (rather than
-  degrade) if `pgcrypto` cannot be installed.
+- **REQ-007**: pg_timetable MUST NOT install, require, or provision any
+  PostgreSQL extension. Neither `internal/pgengine/sql/ddl.sql` nor any file
+  in `internal/pgengine/sql/migrations/` may contain `CREATE EXTENSION` or
+  `ALTER EXTENSION`, directly or inside a `DO` block. Installing `pgcrypto`
+  is the responsibility of whoever deploys the database. The product contract
+  is "just connect and run": a scheduler MUST start, bootstrap, migrate, and
+  execute chains normally on a database where `pgcrypto` is absent and cannot
+  be installed, with the secret store simply unusable.
+- **REQ-008**: Because the extension may be absent when the schema is created
+  and may appear — or live in any schema — later, `timetable.resolve_secret`
+  MUST NOT bake a schema into its body and MUST NOT reference
+  `pgp_sym_decrypt` statically. It MUST be `LANGUAGE plpgsql` and MUST, at
+  call time:
+  1. read `value_enc` for `(p_client, p_name)` and return NULL when no row
+     matches (REQ-041 class 1) — before any extension lookup, so a missing
+     secret never depends on `pgcrypto` being present;
+  2. resolve the extension's schema from
+     `pg_catalog.pg_extension`/`pg_catalog.pg_namespace`;
+  3. `RAISE EXCEPTION ... USING ERRCODE = 'feature_not_supported'` (SQLSTATE
+     `0A000`) naming `pgcrypto`, with a `HINT` telling the operator to install
+     it, when that lookup finds nothing;
+  4. otherwise decrypt through
+     `EXECUTE format('SELECT %I.pgp_sym_decrypt($1, $2)', <schema>) INTO ...
+     USING value_enc, p_key`.
+  See §4.1 for the exact SQL.
+- **REQ-053**: `LANGUAGE plpgsql` is REQUIRED for `resolve_secret` and
+  `LANGUAGE sql` is PROHIBITED. PostgreSQL parses and validates a
+  `LANGUAGE sql` body at `CREATE FUNCTION` time against the pinned
+  `search_path`, so such a body fails to create with
+  `function pgp_sym_decrypt(bytea, text) does not exist` on every database
+  where `pgcrypto` is absent or off that path — which would make the whole
+  migration, and therefore startup, fail. The PL/pgSQL validator checks
+  syntax only: it never resolves referenced functions, tables, or operators,
+  and the decrypt call additionally lives inside dynamic SQL whose text the
+  validator never inspects. `resolve_secret` therefore creates successfully on
+  a database with no `pgcrypto` at all, and the extension is needed only by
+  the sessions that actually resolve a secret.
+- **REQ-054**: A missing `pgcrypto` MUST have no observable effect other than
+  the failure of tasks that actually use a `${secret:...}` reference:
+  - `ExecuteSchemaScripts` and `MigrateDb` succeed unchanged (REQ-007);
+  - startup succeeds with no error and no warning; **no probe for the
+    extension is performed** at startup, per task, or anywhere else;
+  - `timetable.secret`, `timetable.resolve_secret`, and
+    `timetable.secret_count` all exist and are callable, and
+    `secret_count()` returns `0`;
+  - the only party that notices is an operator trying to `INSERT` a row,
+    because they have no `pgp_sym_encrypt` to build `value_enc` with;
+    pg_timetable neither checks nor reports that.
+- **REQ-052**: Write-side encryption lies entirely outside pg_timetable's
+  code: the operator — or a demo sample — calls `pgp_sym_encrypt` from
+  whichever schema hosts `pgcrypto` on their database. Documentation MUST NOT
+  instruct operators to install the extension into `timetable`, MUST NOT
+  assume any particular schema, and MUST NOT present installation as a
+  pg_timetable step. Samples MAY issue
+  `CREATE EXTENSION IF NOT EXISTS pgcrypto` themselves — they are
+  demonstrations, run explicitly by a user, not product DDL — and then use an
+  unqualified `pgp_sym_encrypt`, which resolves because `CREATE EXTENSION`
+  installs into the session `search_path` (normally `public`).
+- **CON-001**: `internal/pgengine/sql/` contains no `CREATE EXTENSION` today
+  and MUST NOT gain one. A missing extension MUST degrade — the secret store
+  is unusable, everything else works — and MUST NOT fail a migration, abort
+  startup, or emit a startup diagnostic.
 
 ### Ownership and access-control requirements
 
@@ -211,8 +245,11 @@ verifying the implementation against this contract.
   new functions (`REVOKE ALL ON FUNCTION ... FROM PUBLIC`, required because
   new functions grant `EXECUTE` to `PUBLIC` by default).
 - **REQ-011**: `timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-  RETURNS TEXT` MUST be `LANGUAGE sql`, `SECURITY DEFINER`, `STABLE`,
-  `STRICT`, and pinned via `SET search_path` per REQ-008.
+  RETURNS TEXT` MUST be `LANGUAGE plpgsql` (REQ-053), `SECURITY DEFINER`,
+  `STABLE`, `STRICT`, and pinned with
+  `SET search_path = pg_catalog, timetable`. The pinned path needs no
+  `pgcrypto` schema entry because the decrypt call is schema-qualified at run
+  time (REQ-008).
 - **REQ-012**: `resolve_secret` MUST match `client_name = p_client AND
   secret_name = p_name` exactly — no `OR client_name IS NULL` fallback, no
   `ORDER BY`/`LIMIT` tie-break. The composite primary key guarantees at most
@@ -389,16 +426,15 @@ verifying the implementation against this contract.
 
 ### Failure-semantics requirements
 
-- **REQ-041**: The three failure classes MUST be distinguished, because the
+- **REQ-041**: The four failure classes MUST be distinguished, because the
   underlying SQL behaves differently in each:
-  1. **Missing secret** — a `LANGUAGE sql` scalar function whose final query
-     matches no row returns **NULL**, not zero rows (PostgreSQL: "If the last
-     query happens to return no rows at all, the null value will be
-     returned"). `SELECT timetable.resolve_secret(...)` therefore yields
-     exactly one row containing NULL, so the implementation MUST scan into a
-     nullable target (`*string` or `pgtype.Text`) and treat NULL as
-     not-found. It MUST NOT rely on `pgx.ErrNoRows`, which never occurs on
-     this path. Error text MUST name the secret and the client scope, e.g.
+  1. **Missing secret** — `resolve_secret` returns **NULL**: its plpgsql body
+     returns NULL when the `SELECT ... INTO` matches no row, so
+     `SELECT timetable.resolve_secret(...)` yields exactly one row containing
+     NULL. The implementation MUST scan into a nullable target (`*string` or
+     `pgtype.Text`) and treat NULL as not-found. It MUST NOT rely on
+     `pgx.ErrNoRows`, which never occurs on this path. Error text MUST name
+     the secret and the client scope, e.g.
      `secret "smtp_main" not found for client "worker-1"`.
   2. **Key unset** — when the input contains a reference and
      `SecretEncryptionKey` is empty, `ResolveSecrets*` MUST fail before
@@ -408,6 +444,14 @@ verifying the implementation against this contract.
   3. **Wrong key** — `pgp_sym_decrypt` raises `Wrong key or corrupt data`.
      The error MUST be wrapped with the secret name and MUST NOT be
      conflated with class 1.
+  4. **`pgcrypto` absent** — `resolve_secret` raises `feature_not_supported`
+     (SQLSTATE `0A000`) naming `pgcrypto` (REQ-008). The error MUST be
+     wrapped with the secret name and MUST state that the secret store needs
+     the `pgcrypto` extension, whose installation is the database
+     administrator's responsibility. It MUST NOT be reported as class 1 or
+     class 3, MUST NOT be turned into a startup failure or a scheduler-level
+     failure, and MUST NOT disable anything beyond the referencing task
+     (REQ-054).
 - **REQ-042**: Silent empty-string substitution is PROHIBITED in every class.
 - **REQ-043**: Failures MUST propagate as Go `error` values from
   `ResolveSecretsJSON`/`ResolveSecretsConnString` and from every caller,
@@ -443,17 +487,21 @@ verifying the implementation against this contract.
   implementation time in case another migration lands first, and all four
   occurrences (file name, `migration.go` entry, `init.sql` row, `dbapi`) MUST
   agree.
-- **REQ-047**: `samples/Mail.sql` MUST insert a secret row via
-  `timetable.pgp_sym_encrypt` (schema-qualified per REQ-052, because samples
-  run in a plain session) scoped to an explicit `client_name` placeholder, change
-  the `"password"` parameter field to `"${secret:smtp_main}"`, and retain a
-  `-- Legacy (deprecated):` comment showing the prior inline literal. The
-  legacy inline-literal form MUST continue to work unchanged for chains
-  created before this feature ships; `${secret:...}` is opt-in syntax, not a
-  format change.
+- **REQ-047**: `samples/Mail.sql` MUST issue
+  `CREATE EXTENSION IF NOT EXISTS pgcrypto;` as its own first statement —
+  legitimate in a demo a user runs deliberately, and PROHIBITED in product
+  DDL (REQ-007/REQ-052) — insert a secret row with `pgp_sym_encrypt` scoped
+  to an explicit `client_name`, change the `"password"` parameter field to
+  `"${secret:smtp_main}"`, and retain a `-- Legacy (deprecated):` comment
+  showing the prior inline literal. The sample MUST carry a comment stating
+  that pg_timetable itself never installs the extension and that the sample
+  installs it only to be runnable out of the box. The legacy inline-literal
+  form MUST continue to work unchanged for chains created before this feature
+  ships; `${secret:...}` is opt-in syntax, not a format change.
 - **REQ-048**: `samples/RemoteDB.sql` MUST replace `password=somestrong`
-  with `password=${secret:remotedb_demo}`, insert the corresponding secret
-  row using `timetable.pgp_sym_encrypt` under the same client-name
+  with `password=${secret:remotedb_demo}`, issue the same
+  `CREATE EXTENSION IF NOT EXISTS pgcrypto;` demo prologue, insert the
+  corresponding secret row using `pgp_sym_encrypt` under the same client-name
   convention, and note that the demo is same-cluster while the pattern
   applies to genuine cross-host connections.
 - **REQ-049**: The sample changes break two currently-passing tests and MUST
@@ -475,10 +523,17 @@ verifying the implementation against this contract.
     them with no manual setup.
   - The samples MUST use the same key literal as the harness so decryption
     succeeds in tests.
+  - `pgcrypto` MUST be brought in by the **test or sample** side, never by
+    product DDL: the samples' own
+    `CREATE EXTENSION IF NOT EXISTS pgcrypto` (REQ-047/REQ-048) covers
+    `TestSamplesScripts` and `TestRun`, and any Go test that encrypts a value
+    MUST install the extension itself as part of its fixture.
 - **REQ-050**: `docs/samples.md` and `docs/yaml-usage-guide.md` MUST gain a
   "Secrets" subsection documenting `${secret:name}`, the write-only model,
-  the manual grant step of REQ-014, the PROGRAM argv caveat of SEC-003, the
-  debug-level caveat of SEC-004, and the trust boundary of SEC-002.
+  the fact that `pgcrypto` is an optional prerequisite the DBA installs and
+  that pg_timetable runs normally without it (REQ-007/REQ-054), the manual
+  grant step of REQ-014, the PROGRAM argv caveat of SEC-003, the debug-level
+  caveat of SEC-004, and the trust boundary of SEC-002.
 - **REQ-051**: `docs/database_schema.md` embeds `ddl.sql` verbatim through a
   pymdownx snippet, so the table and functions are documented automatically
   by REQ-045; the page MUST additionally gain prose covering the write-only
@@ -560,14 +615,9 @@ This block is appended verbatim to `internal/pgengine/sql/ddl.sql` and
 duplicated in `internal/pgengine/sql/migrations/00798.sql`.
 
 ```sql
--- Ensure pgcrypto exists (REQ-007/REQ-008).
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_catalog.pg_extension WHERE extname = 'pgcrypto') THEN
-        EXECUTE 'CREATE EXTENSION pgcrypto SCHEMA timetable';
-    END IF;
-END;
-$$;
+-- pgcrypto is an OPTIONAL runtime dependency. pg_timetable NEVER installs it
+-- and never probes for it outside resolve_secret (REQ-007, REQ-054), so this
+-- block applies unchanged on a database that has no pgcrypto at all.
 
 CREATE TABLE timetable.secret (
     client_name  TEXT        NOT NULL,   -- REQUIRED security boundary: no NULL/global secrets
@@ -583,13 +633,13 @@ ALTER TABLE timetable.secret ADD CONSTRAINT secret_name_format
     CHECK (secret_name ~ '^[A-Za-z0-9_.-]+$');
 
 COMMENT ON TABLE timetable.secret IS
-    'Write-only, named secret values referenced from task parameters and connection strings as ${secret:name}, scoped to exactly one client_name. Modeled on GitHub Actions repository secrets: no plaintext read path, no rotation, no versioning, no cross-client sharing.';
+    'Write-only, named secret values referenced from task parameters and connection strings as ${secret:name}, scoped to exactly one client_name. Modeled on GitHub Actions repository secrets: no plaintext read path, no rotation, no versioning, no cross-client sharing. Requires the pgcrypto extension, which the database administrator installs; pg_timetable itself never does.';
 COMMENT ON COLUMN timetable.secret.client_name IS
     'Owning client. Mandatory security boundary: resolvable only by the scheduler process running with this exact client_name (-c/--clientname). Unlike timetable.chain.client_name, NULL/global is not permitted.';
 COMMENT ON COLUMN timetable.secret.secret_name IS
     'Reference key used in ${secret:name} syntax, unique within client_name. Case-sensitive, no whitespace (enforced by CHECK secret_name_format).';
 COMMENT ON COLUMN timetable.secret.value_enc IS
-    'pgcrypto-encrypted value. Decrypted only by timetable.resolve_secret() when supplied the key configured as PGTT_SECRET_KEY, which the database never stores.';
+    'Value encrypted by the operator with pgp_sym_encrypt() from the pgcrypto extension. Decrypted only by timetable.resolve_secret() when supplied the key configured as PGTT_SECRET_KEY, which the database never stores.';
 COMMENT ON COLUMN timetable.secret.updated_by IS
     'session_user that last inserted or updated this row, maintained by the secret_touch trigger.';
 
@@ -614,50 +664,54 @@ CREATE TRIGGER secret_touch
     BEFORE UPDATE ON timetable.secret
     FOR EACH ROW EXECUTE PROCEDURE timetable.secret_touch();
 
--- Create resolve_secret with the decrypt call schema-qualified to whichever
--- schema pgcrypto actually occupies: 'timetable' on fresh installs, but
--- possibly 'public' or another schema where pgcrypto pre-existed (REQ-008).
---
--- The qualification must be baked into the body at creation time. A plain
--- CREATE FUNCTION with an unqualified pgp_sym_decrypt plus a later
--- ALTER FUNCTION ... SET search_path does NOT work: PostgreSQL validates a
--- LANGUAGE sql body when the function is created, using the pinned
--- search_path, so creation itself fails with
--- `function pgp_sym_decrypt(bytea, text) does not exist` on any database
--- where pgcrypto is not in `timetable`. Verified on PostgreSQL 16.1.
-DO $OUTER$
+-- resolve_secret is LANGUAGE plpgsql, never LANGUAGE sql (REQ-053). PL/pgSQL
+-- validates syntax only -- it never resolves referenced functions -- and the
+-- decrypt call additionally lives in dynamic SQL, so this CREATE succeeds on a
+-- database with no pgcrypto installed. The extension is located, and needed,
+-- only when a secret is actually resolved (REQ-008).
+CREATE OR REPLACE FUNCTION timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+STABLE
+STRICT
+SET search_path = pg_catalog, timetable
+AS $CODE$
 DECLARE
+    v_enc        BYTEA;
     v_ext_schema TEXT;
+    v_plain      TEXT;
 BEGIN
+    SELECT value_enc INTO v_enc
+    FROM timetable.secret
+    WHERE client_name = p_client
+      AND secret_name = p_name;
+
+    IF NOT FOUND THEN
+        RETURN NULL;   -- unknown (client_name, secret_name): no pgcrypto needed
+    END IF;
+
     SELECT n.nspname INTO v_ext_schema
     FROM pg_catalog.pg_extension e
     JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace
     WHERE e.extname = 'pgcrypto';
 
-    IF v_ext_schema IS NULL THEN
-        RAISE EXCEPTION 'pgcrypto extension is required by timetable.secret but is not installed';
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'pgcrypto extension is not installed, cannot decrypt timetable.secret values'
+            USING ERRCODE = 'feature_not_supported',
+                  HINT = 'Install it (CREATE EXTENSION pgcrypto) or stop using ${secret:...} references';
     END IF;
 
-    EXECUTE format($SQL$
-        CREATE OR REPLACE FUNCTION timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-        RETURNS TEXT
-        LANGUAGE sql
-        SECURITY DEFINER
-        STABLE
-        STRICT
-        SET search_path = pg_catalog, timetable
-        AS $BODY$
-            SELECT %I.pgp_sym_decrypt(value_enc, p_key)
-            FROM timetable.secret
-            WHERE client_name = p_client
-              AND secret_name = p_name;
-        $BODY$;
-    $SQL$, v_ext_schema);
+    EXECUTE format('SELECT %I.pgp_sym_decrypt($1, $2)', v_ext_schema)
+       INTO v_plain
+      USING v_enc, p_key;
+
+    RETURN v_plain;
 END;
-$OUTER$;
+$CODE$;
 
 COMMENT ON FUNCTION timetable.resolve_secret(TEXT, TEXT, TEXT) IS
-    'Returns the decrypted value of one secret, or NULL when the (client_name, secret_name) pair does not exist. Raises when the key is wrong.';
+    'Returns the decrypted value of one secret, or NULL when the (client_name, secret_name) pair does not exist. Raises feature_not_supported when pgcrypto is not installed, and Wrong key or corrupt data when the key is wrong.';
 
 REVOKE ALL ON FUNCTION timetable.resolve_secret(TEXT, TEXT, TEXT) FROM PUBLIC;
 
@@ -672,7 +726,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION timetable.secret_count() IS
-    'Number of stored secrets, used by the scheduler startup check when no encryption key is configured. Exposes no secret material.';
+    'Number of stored secrets, used by the scheduler startup check when no encryption key is configured. Exposes no secret material and does not require pgcrypto.';
 
 REVOKE ALL ON FUNCTION timetable.secret_count() FROM PUBLIC;
 
@@ -712,6 +766,15 @@ func (pge *PgEngine) CheckSecretConfig(ctx context.Context) error
 // scope, and applies quote to each resolved value before substitution. The
 // context passed to the query is marked with log.WithoutQueryArgs so that the
 // encryption key never reaches the pgx tracer (REQ-018/REQ-030).
+//
+// Errors are classified per REQ-041: a NULL result is class 1 (not found), an
+// empty pge.SecretEncryptionKey is class 2 and short-circuits before any
+// query, a `Wrong key or corrupt data` failure is class 3, and a *pgconn.PgError
+// with Code == "0A000" (feature_not_supported, raised by resolve_secret when
+// pgcrypto is not installed) is class 4 — wrapped with the secret name and a
+// statement that installing pgcrypto is the DBA's responsibility. Class 4 is a
+// per-task error only: it never fails startup and never disables the scheduler
+// (REQ-054).
 func (pge *PgEngine) resolveRefs(ctx context.Context, s string, quote func(value string, m []int, in string) string) (string, []string, error)
 ```
 
@@ -778,15 +841,27 @@ case-sensitive exact match against `secret_name`.
 - **AC-003**: Given `main.go`, `migration.go`, `init.sql`, and the migration
   file name, Then all four agree on `00798`, and `dbapi` reported by
   `--version` equals the highest registered migration.
-- **AC-004**: Given a database where `pgcrypto` was pre-installed into
-  `public` before pg_timetable bootstrap, When the schema is created, Then
-  `resolve_secret`'s `search_path` includes `public` and decryption succeeds.
-- **AC-025**: Given a fresh install where `pgcrypto` resides in `timetable`,
-  When `samples/Mail.sql` and `samples/RemoteDB.sql` are executed through
-  `ExecuteCustomScripts` (a plain session with a default `search_path`), Then
-  every `pgp_sym_encrypt` call succeeds. An unqualified call in that session
-  fails with `function pgp_sym_encrypt(unknown, unknown) does not exist`, so
-  this criterion fails if REQ-052 is not honored.
+- **AC-004**: Given a database where `pgcrypto` is installed in `public` (the
+  `CREATE EXTENSION pgcrypto` default), When a secret is resolved, Then
+  `resolve_secret` discovers `public` at call time and decryption succeeds,
+  even though `public` is not on the function's pinned `search_path`.
+- **AC-026**: Given a database where `pgcrypto` is installed in a non-default
+  schema (for example `ext`) that appears on no session's `search_path`, When
+  a secret is resolved, Then decryption still succeeds, because the schema is
+  looked up and interpolated at call time (REQ-008).
+- **AC-025**: Given a database where `pgcrypto` is absent and the connection
+  role cannot install it, When the scheduler bootstraps a fresh schema,
+  migrates an existing one, and runs chains that use no secret references,
+  Then every operation succeeds with no error, no warning, and no
+  `CREATE EXTENSION` attempt; `timetable.secret`, `timetable.resolve_secret`
+  and `timetable.secret_count` exist; `secret_count()` returns `0`; and a
+  search for `CREATE EXTENSION` under `internal/pgengine/sql/` finds nothing
+  (REQ-007, REQ-053, REQ-054, CON-001).
+- **AC-027**: Given that same `pgcrypto`-less database and a task parameter
+  containing `${secret:x}` whose row exists, When the task runs, Then that
+  task alone fails with an error naming both `pgcrypto` and the secret, the
+  scheduler keeps running and keeps executing other chains, and
+  `execution_log.params` still holds the reference form (REQ-041 class 4).
 - **AC-005**: Given `timetable.secret` contains at least one row and
   `SecretEncryptionKey` is unset, When the scheduler starts, Then an error is
   logged at startup, before any chain executes.
@@ -855,7 +930,8 @@ case-sensitive exact match against `secret_name`.
   without it.
 - **AC-023**: Given `samples/Mail.sql` and `samples/RemoteDB.sql` after
   migration, When `TestSamplesScripts` and `TestRun` execute them against a
-  fresh container with no manual setup, Then both pass, the secret rows are
+  fresh container with no manual setup, Then both pass, each sample installs
+  `pgcrypto` itself via `CREATE EXTENSION IF NOT EXISTS`, the secret rows are
   created, the `SendMail` parameter reads `"${secret:smtp_main}"`,
   `database_connection` contains `password=${secret:remotedb_demo}`, and the
   `-- Legacy (deprecated):` comment is present in `Mail.sql`.
@@ -885,8 +961,17 @@ case-sensitive exact match against `secret_name`.
   - `TestResolveSecretsJSONEscaping` (AC-008).
   - `TestResolveSecretsConnStringQuoting` (AC-009).
   - `TestResolveSecretsErrorClasses` (AC-010, AC-011, AC-012).
-  - `TestSecretSchemaFreshInstall` (AC-001, AC-004, AC-018, AC-019, AC-020,
-    AC-021).
+  - `TestSecretSchemaFreshInstall` (AC-001, AC-018, AC-019, AC-020, AC-021),
+    installing `pgcrypto` as part of its own fixture — never relying on
+    product DDL to provide it.
+  - `TestResolveSecretLocatesPgcrypto` (AC-004, AC-026): the same secret
+    resolves with `pgcrypto` in `public` and, after
+    `ALTER EXTENSION pgcrypto SET SCHEMA ext`, in `ext`.
+  - `TestSecretsWithoutPgcrypto` (AC-025, AC-027): bootstrap and migrate a
+    database with no `pgcrypto`, assert startup and non-secret chains are
+    unaffected, assert `secret_count()` returns 0, and assert that a task
+    referencing an existing secret row fails with SQLSTATE `0A000` wrapped
+    with the secret name while the scheduler stays up.
   - `TestSecretGrants` (AC-016), creating a throwaway role inside the test.
   - `TestExecutionLogNeverContainsPlaintext` (AC-013), covering SQL, builtin,
     and PROGRAM paths.
@@ -904,7 +989,7 @@ case-sensitive exact match against `secret_name`.
     from `executeBuiltinTask` and asserts a count is present and no
     parameter value is.
   - `TestSamplesScripts` and `TestRun`, unmodified in name, extended by the
-    REQ-049 harness change (AC-023, AC-025).
+    REQ-049 harness change (AC-023).
   - `TestLegacyLiteralParametersUnchanged` (AC-024) — a chain whose
     `parameter.value` holds a literal password executes identically after the
     migration.
@@ -932,6 +1017,16 @@ case-sensitive exact match against `secret_name`.
   explicitly out of scope. The honest security claim is SEC-001's: the key
   lives outside the database, so a `pg_dump` or a logical replica alone is
   insufficient.
+- **Why pg_timetable never installs `pgcrypto`**: the product promise is
+  "just connect and run". Forcing a DBA to accept an extension — on a managed
+  service, a hardened cluster, or a build without OpenSSL — in order to keep
+  scheduling jobs would be a regression for every user who stores no secrets
+  at all, and `CREATE EXTENSION` inside a migration transaction turns a
+  privilege or availability problem into a permanent startup failure. The
+  secret store is therefore an opt-in feature layered on an operator-supplied
+  prerequisite: absent `pgcrypto`, the catalog and both functions still exist,
+  `secret_count()` still answers, and only a task that actually dereferences
+  `${secret:...}` fails (REQ-007, REQ-054).
 - **Why `client_name NOT NULL`, diverging from `timetable.chain`**: the
   column name and type are copied from `timetable.chain.client_name` for
   consistency, but the nullable "any client" convenience that makes sense for
@@ -952,13 +1047,16 @@ case-sensitive exact match against `secret_name`.
   infrastructure the project does not own. SEC-001 states the resulting
   property truthfully rather than claiming that no query anywhere can reach
   plaintext.
-- **Why the extension schema is baked into the function body**: pinning
-  `search_path` is required for a `SECURITY DEFINER` function, but pinning it
-  to a fixed list breaks whenever `pgcrypto` already exists in another schema.
-  Generating the body with the real schema interpolated is deterministic on
-  both fresh installs and pre-existing databases, and — unlike a post-hoc
-  `ALTER FUNCTION` — survives PostgreSQL's create-time validation of
-  `LANGUAGE sql` bodies (REQ-008).
+- **Why the extension schema is discovered at call time**: pinning
+  `search_path` is required for a `SECURITY DEFINER` function, but the pinned
+  list cannot name a schema that is unknown — or nonexistent — when the
+  function is created. Looking `pgcrypto` up in `pg_extension` inside the body
+  and interpolating the schema into dynamic SQL is correct in every case:
+  extension absent at create time and installed later, installed in `public`,
+  installed in a private schema, or relocated with
+  `ALTER EXTENSION ... SET SCHEMA` after the fact. It also keeps the
+  create-time contract trivial, since PL/pgSQL never validates the referenced
+  function (REQ-008, REQ-053).
 - **Why masking is not a follow-up**: without it the feature is a compliance
   checkbox that fails audits. Three concrete leak paths exist in the code
   today — `execution_log.params` persisting the raw parameter string, the
@@ -992,25 +1090,16 @@ case-sensitive exact match against `secret_name`.
   setup. A sample that requires an operator to pre-insert a secret or match a
   placeholder client name converts a green test into a red one, so the sample
   migration and the harness change ship together.
-- **Verification provenance of §4.1**: the SQL block in §4.1 was executed
-  verbatim against a scratch PostgreSQL 16.1 cluster during authoring. All of
-  the following were observed rather than assumed, and any implementation
-  divergence should be re-checked the same way:
-  - the whole block applies cleanly against a database containing only
-    `CREATE SCHEMA timetable` (pgcrypto absent → installed into `timetable`)
-    and, separately, against a database where `pgcrypto` pre-existed in
-    `public`; in the latter `pg_proc.prosrc` contains
-    `public.pgp_sym_decrypt` and decryption succeeds;
-  - the earlier `ALTER FUNCTION ... SET search_path` formulation was rejected
-    by exactly this test — it fails at `CREATE FUNCTION` time in the
-    pre-existing-extension case (REQ-053);
-  - `provolatile='s'`, `proisstrict=true`, `prosecdef=true` for
-    `resolve_secret`; `prosecdef=true` for `secret_count`;
+- **Verification provenance and what v2.1 changed**: the SQL of an earlier
+  revision was executed against a scratch PostgreSQL 16.1 cluster during
+  authoring. Observations that carry over unchanged, because the objects they
+  concern are unchanged:
+  - `prosecdef=true` for both functions; `proisstrict=true` and
+    `provolatile='s'` for `resolve_secret`;
   - `has_function_privilege('public', ...)` is false for both functions and
     `has_table_privilege('public', ...)` is false for the table;
   - a missing secret yields **one row containing NULL**, and a wrong key
-    raises `ERROR: Wrong key or corrupt data` with
-    `CONTEXT: SQL function "resolve_secret" statement 1`;
+    raises `ERROR: Wrong key or corrupt data`;
   - the `secret_touch` trigger overrides a deliberately falsified
     `updated_at='epoch', updated_by='liar'` UPDATE;
   - both `secret_name_format` violations (`'has space'`, `''`) and a NULL
@@ -1020,6 +1109,22 @@ case-sensitive exact match against `secret_name`.
     `permission denied for schema timetable`, since it also lacks `USAGE`);
   - the owning role *can* `SELECT value_enc`, which is precisely why SEC-001
     states the key — not the grant model — as the confidentiality boundary.
+
+  Superseded by this revision and therefore NOT to be reused: the
+  `CREATE EXTENSION pgcrypto SCHEMA timetable` acquisition block, the
+  `LANGUAGE sql` body of `resolve_secret`, and the `EXECUTE format(...)`
+  generation of that body at schema-creation time. All three encoded the
+  rejected premise that pg_timetable may install the extension.
+
+  MUST be re-verified against a live server for the §4.1 SQL of this
+  revision, since it is a new formulation: (a) the whole block applies to a
+  database containing only `CREATE SCHEMA timetable` and **no** `pgcrypto`;
+  (b) `secret_count()` then returns 0 and a scheduler runs normally;
+  (c) after `CREATE EXTENSION pgcrypto` (in `public`) a value inserted with
+  `pgp_sym_encrypt` decrypts through `resolve_secret`; (d) after
+  `ALTER EXTENSION pgcrypto SET SCHEMA ext` it still decrypts; (e) with the
+  extension dropped, `resolve_secret` on an existing row raises SQLSTATE
+  `0A000` while `resolve_secret` on a nonexistent name still returns NULL.
 
 ## 8. Dependencies & External Integrations
 
@@ -1034,15 +1139,18 @@ case-sensitive exact match against `secret_name`.
 
 ### Infrastructure Dependencies
 
-- **INF-001**: PostgreSQL server hosting the `timetable` schema, able to load
-  `pgcrypto`. Since PostgreSQL 13 `pgcrypto` is a **trusted** extension,
+- **INF-001**: PostgreSQL server hosting the `timetable` schema. No extension
+  is required to run pg_timetable. `pgcrypto` is required **only** to use the
+  secret store, and it is installed by whoever deploys the database, never by
+  pg_timetable (REQ-007). Since PostgreSQL 13 it is a **trusted** extension,
   installable by a non-superuser holding `CREATE` on the database, so managed
-  services (RDS, Azure, Cloud SQL, Supabase and similar) satisfy this without
-  superuser. Only PostgreSQL 12 and older require superuser or an
-  allowlist entry.
+  services (RDS, Azure, Cloud SQL, Supabase and similar) satisfy it without
+  superuser; only PostgreSQL 12 and older require superuser or an allowlist
+  entry.
 - **INF-002**: `pgcrypto` requires a PostgreSQL build with OpenSSL support.
-  Builds without it cannot host this feature; the migration fails loudly
-  (CON-001) rather than degrading.
+  On a build without it the extension cannot be installed and the secret
+  store is simply unavailable; bootstrap, migration, startup and every
+  non-secret task are unaffected (REQ-054).
 
 ### Data Dependencies
 
@@ -1071,23 +1179,26 @@ case-sensitive exact match against `secret_name`.
 ## 9. Examples & Edge Cases
 
 ```sql
+-- Prerequisite, performed by the operator or (as here) by a demo sample —
+-- never by pg_timetable itself (REQ-007/REQ-052). Installs into the session
+-- search_path, normally `public`, which is why the calls below need no
+-- schema qualification.
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Admin inserts a secret scoped to the client that will resolve it.
 -- client_name must equal that worker's own -c/--clientname value; there is
 -- no global/NULL-scoped secret.
--- pgp_sym_encrypt is schema-qualified because pgcrypto lives in `timetable`
--- on fresh installs and is therefore not on a default session search_path
--- (REQ-052).
 INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-VALUES ('worker-1', 'smtp_main', timetable.pgp_sym_encrypt('s3cr3t pw''s', 'the-configured-key'));
+VALUES ('worker-1', 'smtp_main', pgp_sym_encrypt('s3cr3t pw''s', 'the-configured-key'));
 
 -- The same secret_name under a different client is an independent secret,
 -- not another version of the one above.
 INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-VALUES ('worker-2', 'smtp_main', timetable.pgp_sym_encrypt('other-pw', 'the-configured-key'));
+VALUES ('worker-2', 'smtp_main', pgp_sym_encrypt('other-pw', 'the-configured-key'));
 
 -- Overwrite in place; the secret_touch trigger refreshes updated_at/updated_by.
 UPDATE timetable.secret
-   SET value_enc = timetable.pgp_sym_encrypt('rotated-by-hand', 'the-configured-key')
+   SET value_enc = pgp_sym_encrypt('rotated-by-hand', 'the-configured-key')
  WHERE client_name = 'worker-1' AND secret_name = 'smtp_main';
 
 -- Optional operator step: delegate writes to a separate role that the
@@ -1151,16 +1262,29 @@ Edge cases:
 - **`NULL`/omitted `client_name` on insert**: rejected by the `NOT NULL`
   constraint of the composite primary key. No code path, application-level or
   SQL, can create a global secret.
-- **`pgcrypto` already installed in `public`**: detected and appended to
-  `resolve_secret`'s `search_path`; no attempt is made to relocate the
-  extension.
+- **`pgcrypto` in any schema**: located at call time from `pg_extension` and
+  interpolated into the decrypt call, whether it sits in `public`, in a
+  private schema off every `search_path`, or was relocated with
+  `ALTER EXTENSION ... SET SCHEMA`. No attempt is ever made to install,
+  relocate, or upgrade it.
+- **`pgcrypto` absent**: nothing changes for the scheduler — bootstrap,
+  migration, startup, and every task that uses no reference behave exactly as
+  before, and `secret_count()` returns 0. A task that does dereference
+  `${secret:...}` for an existing row fails with SQLSTATE `0A000` naming
+  `pgcrypto`; a reference to a nonexistent name still reports not-found,
+  since the row lookup precedes the extension lookup (REQ-054, REQ-041).
 - **Debug logging enabled**: the `Query` entries for secret-bearing
   statements retain `sql` and lose `args`; every other query keeps both.
 
 ## 10. Validation Criteria
 
-- All acceptance criteria in §5 (AC-001 … AC-024) pass under §6's strategy,
+- All acceptance criteria in §5 (AC-001 … AC-027) pass under §6's strategy,
   each mapped to a named test.
+- No file under `internal/pgengine/sql/` contains `CREATE EXTENSION` or
+  `ALTER EXTENSION` (REQ-007, CON-001).
+- On a database without `pgcrypto`, bootstrap, migration, `--version`,
+  startup, and every chain that uses no `${secret:...}` reference behave
+  byte-for-byte as they did before this feature (REQ-054, AC-025).
 - `go vet` and the CI `golangci-lint` run pass on all new and modified files
   with no new suppressions.
 - Fresh-install and migration paths converge: a database bootstrapped from
@@ -1183,7 +1307,8 @@ Edge cases:
   - the stdout/file log contains neither.
 - `samples/Mail.sql` and `samples/RemoteDB.sql` execute end to end against a
   fresh migrated database under `TestSamplesScripts` and `TestRun` with no
-  manual setup, and the resolved secret is actually used.
+  manual setup — each installing `pgcrypto` itself, as a demo may — and the
+  resolved secret is actually used.
 - Backward compatibility: a chain whose `parameter.value` holds a literal
   password behaves exactly as before.
 
