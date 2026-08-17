@@ -136,7 +136,7 @@ func trimFilename(s string) string {
 }
 
 func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry) {
-	if entry.HasCaller() {
+	if entry.Caller != nil {
 		if f.CustomCallerFormatter != nil {
 			fmt.Fprint(b, f.CustomCallerFormatter(entry.Caller))
 		} else {
