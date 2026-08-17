@@ -425,3 +425,22 @@ Error: chain 1: chain name is required
 ```
 
 → Check all required fields are present
+
+## Secrets
+
+YAML-authored chains do **not** support `${secret:name}` references in v1.
+The reference syntax is a string-substitution feature implemented in the
+Go runtime after `parameter.value` is materialized into the database; the
+YAML loader does not perform secret resolution. A YAML chain that needs a
+secret must either:
+
+- reference a `timetable.task` row whose `parameter.value` already contains
+  `${secret:name}` (i.e., the chain was originally created via SQL using
+  `samples/Mail.sql` or `samples/RemoteDB.sql` as a template), or
+- use a connection-string literal in `database_connection` and accept the
+  trade-off documented in [`docs/samples.md`](samples.md#secrets) (the
+  password is then visible to DB readers, backups, and dumps).
+
+See [`docs/samples.md`](samples.md#secrets) for the trust boundary,
+limitations, and the trade-off between `${secret:name}` references and
+inline literals.

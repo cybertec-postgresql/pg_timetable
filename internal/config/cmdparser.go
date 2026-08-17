@@ -65,9 +65,10 @@ type CmdOptions struct {
 	Resource       ResourceOpts `group:"Resource" mapstructure:"Resource"`
 	RESTApi        RestAPIOpts  `group:"REST" mapstructure:"REST"`
 	OTel           OTelOpts     `group:"OTel" mapstructure:"OTel"`
-	NoProgramTasks bool         `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
-	NoHelpMessage  bool         `long:"no-help" mapstructure:"no-help" hidden:"system use"`
-	Version        bool         `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
+	NoProgramTasks      bool         `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
+	SecretEncryptionKey string       `long:"secret-key" mapstructure:"secret-key" description:"Symmetric key used to decrypt timetable.secret values" env:"PGTT_SECRET_KEY"`
+	NoHelpMessage       bool         `long:"no-help" mapstructure:"no-help" hidden:"system use"`
+	Version             bool         `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
 }
 
 // Verbose returns true if the debug log is enabled

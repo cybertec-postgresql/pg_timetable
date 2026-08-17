@@ -8,11 +8,12 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 )
+
+const testSecretEncryptionKey = "pgtt_test_secret_key"
 
 // PostgresTestContainer wraps the postgres container with pg_timetable engine
 type PostgresTestContainer struct {
@@ -53,14 +54,14 @@ func SetupPostgresContainerWithOptions(t *testing.T, customizer func(*config.Cmd
 	}
 
 	cmdOpts := config.NewCmdOptions("--clientname=testcontainers_unit_test", "--connstr="+connStr)
+	cmdOpts.SecretEncryptionKey = testSecretEncryptionKey
 
 	if customizer != nil {
 		customizer(cmdOpts)
 	}
-
 	var pge *pgengine.PgEngine
-	timeout := time.After(3 * time.Minute)
 	done := make(chan bool)
+	timeout := time.After(3 * time.Minute)
 	go func() {
 		pge, err = pgengine.New(ctx, *cmdOpts, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}))
 		done <- true

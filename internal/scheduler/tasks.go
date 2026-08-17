@@ -35,7 +35,7 @@ func (sch *Scheduler) executeBuiltinTask(ctx context.Context, task *pgengine.Cha
 		return errors.New("No built-in task found: " + name)
 	}
 	l := log.GetLogger(ctx)
-	l.WithField("name", name).Debugf("Executing builtin task with parameters %+q", paramValues)
+	l.WithField("name", name).WithField("param_count", len(paramValues)).Debug("Executing builtin task")
 	if len(paramValues) == 0 {
 		stdout, err = f(ctx, sch, "")
 		sch.pgengine.LogTaskExecution(context.Background(), task, errCodes[err == nil], stdout, "")
@@ -75,9 +75,13 @@ func taskLog(ctx context.Context, _ *Scheduler, val string) (stdout string, err 
 	return "Logged: " + val, nil
 }
 
-func taskSendMail(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error) {
+func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error) {
+	resolved, _, err := sch.pgengine.ResolveSecretsJSON(ctx, paramValues)
+	if err != nil {
+		return "", err
+	}
 	conn := tasks.EmailConn{ServerPort: 587, ContentType: "text/plain"}
-	if err := json.Unmarshal([]byte(paramValues), &conn); err != nil {
+	if err := json.Unmarshal([]byte(resolved), &conn); err != nil {
 		return "", err
 	}
 	return "", tasks.SendMail(ctx, conn)

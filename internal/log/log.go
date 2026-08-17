@@ -20,8 +20,9 @@ type (
 		AddHook(hook logrus.Hook)
 	}
 
-	loggerKey struct{}
-)
+	loggerKey      struct{}
+	noQueryArgsKey struct{}
+ )
 
 func getLogFileWriter(opts config.LoggingOpts) any {
 	if opts.LogFileRotate {
@@ -74,11 +75,13 @@ func NewPgxLogger(l LoggerIface) *PgxLogger {
 	return &PgxLogger{l}
 }
 
-// Log transforms logging calls from pgx to logrus
 func (pgxlogger *PgxLogger) Log(ctx context.Context, level tracelog.LogLevel, msg string, data map[string]any) {
 	logger := GetLogger(ctx)
 	if logger == FallbackLogger { //switch from standard to specified
 		logger = pgxlogger.l
+	}
+	if data != nil && noQueryArgs(ctx) {
+		delete(data, "args")
 	}
 	if data != nil {
 		logger = logger.WithFields(data)
@@ -95,6 +98,19 @@ func (pgxlogger *PgxLogger) Log(ctx context.Context, level tracelog.LogLevel, ms
 	default:
 		logger.WithField("INVALID_PGX_LOG_LEVEL", level).Error(msg)
 	}
+}
+
+// WithoutQueryArgs marks ctx so that PgxLogger.Log drops the "args" field
+// from pgx tracer entries executed under it. Used for queries whose bound
+// arguments carry secret material (e.g. timetable.resolve_secret, SQL tasks
+// that consumed a secret reference).
+func WithoutQueryArgs(ctx context.Context) context.Context {
+	return context.WithValue(ctx, noQueryArgsKey{}, struct{}{})
+}
+
+func noQueryArgs(ctx context.Context) bool {
+	_, ok := ctx.Value(noQueryArgsKey{}).(struct{})
+	return ok
 }
 
 // WithLogger returns a new context with the provided logger. Use in

@@ -57,3 +57,41 @@ Based on these values, we can calculate the success ratio.
 ```sql
 --8<-- "samples/ManyTasks.sql"
 ```
+
+## Secrets
+
+`samples/Mail.sql` and `samples/RemoteDB.sql` demonstrate the secret store:
+a `${secret:name}` reference in a parameter (jsonb) or a `database_connection`
+conninfo string is replaced at execution time with the decrypted value of the
+matching `timetable.secret` row for the running client. The store is
+**write-only by design** — values are encrypted at rest with
+`pgcrypto.pgp_sym_encrypt`, decrypted only by the `SECURITY DEFINER` function
+`timetable.resolve_secret`, and never exposed back to SQL as plaintext outside
+the resolved parameter.
+
+Trust boundary: the running worker is fully trusted. Secrets protect against
+DB readers, backups, dumps, and audit-log spill — not against a compromised
+worker host. See the Secrets section and
+[`docs/database_schema.md`](database_schema.md) for the full masking rules.
+
+To use the feature with your own chains:
+
+1. Configure `--secret-key` (or `PGTT_SECRET_KEY`) on the scheduler process.
+2. Insert a row into `timetable.secret` with `pgp_sym_encrypt` using the same
+   key. The cluster role must own `timetable.secret` for this to succeed.
+3. Replace the literal in your parameter with `"${secret:your_name}"` (for
+   jsonb fields) or `password=${secret:your_name}` (for connection strings).
+4. If you want a separate administrative role to be able to manage secrets
+   without being able to read plaintext, `GRANT SELECT (client_name, secret_name)
+   ON timetable.secret TO admin_role` — `resolve_secret` is owned by the
+   scheduler role and is not granted to anyone by default.
+
+PROGRAM-tasks (`samples/Shell.sql`) take a JSON-encoded argv array. Resolved
+values land in argv, which is observable via `/proc/<pid>/cmdline` and
+`/proc/<pid>/environ` on the worker host — this is a documented trade-off, not
+a bug. Prefer env vars or stdin for sensitive argv in production chains.
+
+Debug-level logging of `execution_log.params` is intentionally the unresolved
+`${secret:name}` form. The pgx logger drops `args` for queries that carry a
+resolved secret into `resolve_secret(...)` itself, so the plaintext never
+appears in trace logs.

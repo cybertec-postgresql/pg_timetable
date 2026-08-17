@@ -101,13 +101,23 @@ func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxCo
 }
 
 // ExecRemoteSQLTask executes task against remote connection
+// ExecRemoteSQLTask executes task against remote connection.
+//
+// Per REQ-038 / REQ-040, task.ConnectString is resolved eagerly (before any
+// SetRole / SetCurrentTaskContext side effects fire inside the closure
+// passed to ExecStandaloneTask) into a local variable. The original
+// task.ConnectString MUST NOT be mutated — masking rules apply uniformly to
+// the persisted value.
 func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error {
+	resolvedConn, _, err := pge.ResolveSecretsConnString(ctx, task.ConnectString)
+	if err != nil {
+		return err
+	}
 	log.GetLogger(ctx).Info("Switching to remote task mode")
 	return pge.ExecStandaloneTask(ctx,
-		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, task.ConnectString) },
+		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, resolvedConn) },
 		task, paramValues)
 }
-
 // ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
 func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error {
 	log.GetLogger(ctx).Info("Switching to autonomous task mode")
@@ -116,7 +126,15 @@ func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask,
 		task, paramValues)
 }
 
-// ExecuteSQLCommand executes chain command with parameters inside transaction
+// ExecuteSQLCommand executes chain command with parameters inside transaction.
+//
+// Per REQ-031 / REQ-037 / REQ-030 / REQ-040, ${secret:name} references inside
+// each parameter are resolved *before* unmarshalling into the bound args,
+// while the original (unresolved) `val` is the only string passed to
+// LogTaskExecution. When resolution substitutes at least one secret, the
+// bound-argument query is issued under a context marked with
+// log.WithoutQueryArgs so the pgx tracer does not persist resolved values
+// to timetable.log.
 func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, task *ChainTask, paramValues []string) (err error) {
 	var params []any
 	var errCodes = map[bool]int{false: 0, true: -1}
@@ -133,11 +151,19 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 			continue
 		}
 		task.StartedAt = time.Now() // reset start time for each parameter set execution
-		if parseErr := json.Unmarshal([]byte(val), &params); parseErr != nil {
-			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", val, parseErr))
+		resolved, names, rerr := pge.ResolveSecretsJSON(ctx, val)
+		if rerr != nil {
+			return rerr
+		}
+		if parseErr := json.Unmarshal([]byte(resolved), &params); parseErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", resolved, parseErr))
 			return
 		}
-		ct, e := executor.Exec(ctx, task.Command, params...)
+		execCtx := ctx
+		if len(names) > 0 {
+			execCtx = log.WithoutQueryArgs(ctx)
+		}
+		ct, e := executor.Exec(execCtx, task.Command, params...)
 		err = errors.Join(err, e)
 		pge.LogTaskExecution(context.Background(), task, errCodes[e != nil], ct.String(), val)
 	}

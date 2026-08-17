@@ -27,7 +27,13 @@ func (c realCommander) CombinedOutput(ctx context.Context, command string, args 
 // Cmd executes a command
 var Cmd commander = realCommander{}
 
-// ExecuteProgramCommand executes program command and returns status code, output and error if any
+// ExecuteProgramCommand executes program command and returns status code,
+// output and error if any.
+//
+// Per REQ-031 / REQ-039, each loop value is resolved into a separate
+// variable before unmarshalling into argv. The unresolved `val` is the only
+// string passed to LogTaskExecution. v1 substitutes into argv; SEC-003
+// documents the resulting argv exposure on the worker host.
 func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.ChainTask, paramValues []string) error {
 	var err error
 	var exitCode int
@@ -43,7 +49,11 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.
 		exitCode = 0
 		params := []string{}
 		if val > "" {
-			if err := json.Unmarshal([]byte(val), &params); err != nil {
+			resolved, _, rerr := sch.pgengine.ResolveSecretsJSON(ctx, val)
+			if rerr != nil {
+				return rerr
+			}
+			if err := json.Unmarshal([]byte(resolved), &params); err != nil {
 				return err
 			}
 		}
