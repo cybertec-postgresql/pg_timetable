@@ -441,6 +441,19 @@ secret must either:
   trade-off documented in [`docs/samples.md`](samples.md#secrets) (the
   password is then visible to DB readers, backups, and dumps).
 
-See [`docs/samples.md`](samples.md#secrets) for the trust boundary,
-limitations, and the trade-off between `${secret:name}` references and
-inline literals.
+### What you need to enable the secret store
+
+`pgcrypto` is **not** installed by pg_timetable. To use `${secret:name}`
+references, the database administrator must install `pgcrypto` once per
+database (any schema; since PostgreSQL 13 it is a **trusted** extension
+and can be installed by any role holding `CREATE` on the database). The
+scheduler is configured with `--secret-key` (or `PGTT_SECRET_KEY`) and
+secret rows are inserted with `pgp_sym_encrypt` from the same schema.
+
+The store is opt-in syntax: chains whose `parameter.value` holds a literal
+password continue to work unchanged.
+
+See [`docs/samples.md`](samples.md#secrets) for the trust boundary, the
+honest confidentiality model (the key — not the grant model — is the
+boundary), the PROGRAM argv exposure, the debug-level caveat, and the
+trade-off between `${secret:name}` references and inline literals.

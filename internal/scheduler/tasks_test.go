@@ -16,6 +16,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// installPgcrypto ensures the pgcrypto extension is present in the test
+// database. Per REQ-007 / REQ-049, every test that exercises a secret
+// round trip installs the extension in its own fixture.
+func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) {
+	t.Helper()
+	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
+	require.NoError(t, err, "installing pgcrypto must succeed in the test fixture")
+}
+
 func TestExecuteTask(t *testing.T) {
 	mock, err := pgxmock.NewPool() //
 	a := assert.New(t)
@@ -77,12 +87,13 @@ func TestSendMailResolvesSecret(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 
 	const name = "sendmail_resolve"
 	const pw = "real-secret-pw"
 	_, err := pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-		 VALUES ($1, $2, timetable.pgp_sym_encrypt($3, $4))
+		 VALUES ($1, $2, pgp_sym_encrypt($3, $4))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name, pw, pge.SecretEncryptionKey)
 	require.NoError(t, err)

@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -22,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
 // executorStub is a no-op executor that satisfies the pgengine.executor
 // interface. Used by AC-013 / AC-024 tests to drive ExecuteSQLCommand
 // without a live database connection.
@@ -29,6 +33,17 @@ type executorStub struct{}
 
 func (executorStub) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
 	return pgconn.CommandTag{}, nil
+}
+
+// installPgcrypto ensures the pgcrypto extension is present in the test
+// database. Per REQ-007 / REQ-049, every test that exercises a secret round
+// trip installs the extension in its own fixture. pgcrypto lives wherever
+// CREATE EXTENSION places it (default `public`), so subsequent test code uses
+// unqualified pgp_sym_encrypt / pgp_sym_decrypt calls.
+func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) {
+	t.Helper()
+	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
+	require.NoError(t, err, "installing pgcrypto must succeed in the test fixture")
 }
 
 // mustExtractJSONString extracts a top-level string field from a jsonb payload.
@@ -106,6 +121,66 @@ func pgxLogLevel(name string) tracelog.LogLevel {
 	}
 	return tracelog.LogLevelDebug
 }
+
+// assertNoExtensionDMLInDDL walks every SQL file under internal/pgengine/sql/
+// and fails the test if any file contains CREATE EXTENSION or ALTER EXTENSION
+// (REQ-007 / CON-001). Walked from the test working directory; resolves the
+// module root by walking upward until go.mod is found.
+func assertNoExtensionDMLInDDL(t *testing.T) {
+	t.Helper()
+	root, err := findModuleRoot()
+	require.NoError(t, err)
+	dir := filepath.Join(root, "internal", "pgengine", "sql")
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(path, ".sql") {
+			return nil
+		}
+		b, rerr := os.ReadFile(path)
+		if rerr != nil {
+			return rerr
+		}
+		s := string(b)
+		// Reject actual statements, but allow the substrings to appear inside
+		// SQL string literals or comments if and only if they are escaped /
+		// commented out. The simplest correct check is: no top-level
+		// `CREATE EXTENSION` or `ALTER EXTENSION` statement — i.e. a line
+		// beginning with either keyword, ignoring leading whitespace.
+		for _, line := range strings.Split(s, "\n") {
+			trimmed := strings.TrimSpace(line)
+			upper := strings.ToUpper(trimmed)
+			if strings.HasPrefix(upper, "CREATE EXTENSION") ||
+				strings.HasPrefix(upper, "ALTER EXTENSION") {
+				t.Errorf("forbidden extension DML in %s: %s", path, trimmed)
+			}
+		}
+		return nil
+	})
+	require.NoError(t, err)
+}
+
+func findModuleRoot() (string, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	dir := cwd
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", errors.New("go.mod not found")
+		}
+		dir = parent
+	}
+}
 func TestResolveSecretsShortCircuit(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
@@ -153,14 +228,14 @@ func TestResolveSecretsJSONEscaping(t *testing.T) {
 	pge := container.Engine
 
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 	const name = "json_esc_test"
 	const plaintext = `he said "hi"\then` // includes quotes, backslash, newline
 	_, err := pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc) VALUES ($1,$2,
-		    timetable.pgp_sym_encrypt($3, $4))
+		    pgp_sym_encrypt($3, $4))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name, plaintext, pge.SecretEncryptionKey)
-
 	in := `{"username":"svc","password":"${secret:` + name + `}"}`
 	out, names, err := pge.ResolveSecretsJSON(ctx, in)
 	require.NoError(t, err)
@@ -181,15 +256,15 @@ func TestResolveSecretsConnStringQuoting(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 
 	const name = "conn_quote"
 	const pw = "s3cr3t pw's"
 	_, err := pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc) VALUES ($1,$2,
-		    timetable.pgp_sym_encrypt($3, $4))
+		    pgp_sym_encrypt($3, $4))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name, pw, pge.SecretEncryptionKey)
-
 	// Bare reference: must wrap in single quotes (value has space and ').
 	out, _, err := pge.ResolveSecretsConnString(ctx,
 		"host=h dbname=d user=u password=${secret:"+name+"}")
@@ -215,6 +290,7 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 
 	// AC-010: missing secret must error naming the secret and client.
 	_, _, err := pge.ResolveSecretsJSON(ctx,
@@ -227,10 +303,9 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 	const name = "wrong_key"
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc) VALUES ($1,$2,
-		    timetable.pgp_sym_encrypt('right', 'right-key'))
+		    pgp_sym_encrypt('right', 'right-key'))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name)
-	pge.SecretEncryptionKey = "WRONG-key"
 	_, _, err = pge.ResolveSecretsJSON(ctx,
 		`{"password":"${secret:`+name+`}"}`)
 	require.Error(t, err)
@@ -252,10 +327,11 @@ func TestSecretStartupCheck(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 	pge.SecretEncryptionKey = ""
 	_, _ = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc) VALUES
-		    ($1,'startup_check', timetable.pgp_sym_encrypt('x', 'k'))`,
+		    ($1,'startup_check', pgp_sym_encrypt('x', 'k'))`,
 		pge.ClientName)
 	require.NoError(t, pge.CheckSecretConfig(ctx))
 
@@ -277,13 +353,14 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 
 	// Table + functions must exist (AC-001). The secret_touch trigger is
 	// verified separately.
 	for _, obj := range []string{
-		`timetable.secret` /* table */,
-		`timetable.resolve_secret` /* function */,
-		`timetable.secret_count` /* function */,
+		`timetable.secret`,         /* table */
+		`timetable.resolve_secret`, /* function */
+		`timetable.secret_count`,   /* function */
 	} {
 		var present bool
 		err := pge.ConfigDb.QueryRow(ctx,
@@ -299,11 +376,6 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 		require.NoError(t, err, obj)
 		assert.True(t, present, obj+" must exist")
 	}
-	var pgcryptoInstalled bool
-	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
-		`SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pgcrypto')`).
-		Scan(&pgcryptoInstalled))
-	assert.True(t, pgcryptoInstalled, "pgcrypto extension must be installed")
 	var hasSecretNameFormat bool
 	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
 		`SELECT EXISTS (
@@ -313,8 +385,8 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	assert.True(t, hasSecretNameFormat, "secret_name_format check constraint must exist")
 	_, err := pge.ConfigDb.Exec(ctx, `INSERT INTO timetable.secret
 		(client_name, secret_name, value_enc) VALUES
-		($1, 'iso', timetable.pgp_sym_encrypt('for-me', $2)),
-		('other-client', 'iso', timetable.pgp_sym_encrypt('not-me', $2))`,
+		($1, 'iso', pgp_sym_encrypt('for-me', $2)),
+		('other-client', 'iso', pgp_sym_encrypt('not-me', $2))`,
 		pge.ClientName, pge.SecretEncryptionKey)
 	require.NoError(t, err)
 
@@ -328,19 +400,19 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	// AC-019: secret_name_format rejects whitespace and empty.
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-		 VALUES ($1, 'has space', timetable.pgp_sym_encrypt('x', $2))`,
+		 VALUES ($1, 'has space', pgp_sym_encrypt('x', $2))`,
 		pge.ClientName, pge.SecretEncryptionKey)
 	assert.Error(t, err)
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-		 VALUES ($1, '', timetable.pgp_sym_encrypt('x', $2))`,
+		 VALUES ($1, '', pgp_sym_encrypt('x', $2))`,
 		pge.ClientName, pge.SecretEncryptionKey)
 	assert.Error(t, err)
 
 	// AC-020: NULL client_name rejected.
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-		 VALUES (NULL, 'nullcn', timetable.pgp_sym_encrypt('x', $2))`,
+		 VALUES (NULL, 'nullcn', pgp_sym_encrypt('x', $2))`,
 		pge.SecretEncryptionKey)
 	assert.Error(t, err)
 
@@ -364,12 +436,12 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 // dedicated unit test for "MigrateDb is idempotent on partial state" would
 // couple to pgx-migrator internals (column name, ordering, CASCADE behavior),
 
-
 func TestSecretGrants(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 
 	const throwaway = "pgtt_throwaway_role_grants"
 	_, _ = pge.ConfigDb.Exec(ctx, `DROP ROLE IF EXISTS `+throwaway)
@@ -382,7 +454,7 @@ func TestSecretGrants(t *testing.T) {
 	// Insert one row so a non-empty table is exercised.
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-		 VALUES ($1,'grants', timetable.pgp_sym_encrypt('x', $2))`,
+		 VALUES ($1,'grants', pgp_sym_encrypt('x', $2))`,
 		pge.ClientName, pge.SecretEncryptionKey)
 	require.NoError(t, err)
 
@@ -446,6 +518,7 @@ func TestResolveSecretsJSONWrongKey(t *testing.T) {
 	assert.Contains(t, err.Error(), "wrong key or corrupt data")
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
+
 // TestExecutionLogNeverContainsPlaintext — AC-013 (SQL path, T036; PROGRAM
 // path, T042). For each kind of task, run a parameter that contains a
 // `${secret:…}` reference and assert that `timetable.execution_log.params`
@@ -456,11 +529,12 @@ func TestExecutionLogNeverContainsPlaintext(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
 
 	const pw = "s3cr3t-plaintext-AC-013"
 	_, err := pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
-		 VALUES ($1, 'plaintext_log', timetable.pgp_sym_encrypt($2, $3))`,
+		 VALUES ($1, 'plaintext_log', pgp_sym_encrypt($2, $3))`,
 		pge.ClientName, pw, pge.SecretEncryptionKey)
 	require.NoError(t, err)
 
@@ -523,6 +597,7 @@ func TestExecutionLogNeverContainsPlaintext(t *testing.T) {
 		assert.NotZero(t, count, "ExecuteProgramCommand must record an execution_log row with the unresolved reference")
 	})
 }
+
 // TestPgxTracerRedactsSecretArgs — AC-014 / SEC-004 / REQ-030. The pgx tracer
 // in this codebase is `log.NewPgxLogger`, wired via
 // bootstrap.getPgxConnConfig. When the resolver calls `timetable.resolve_secret`
@@ -599,4 +674,126 @@ func TestLegacyLiteralParametersUnchanged(t *testing.T) {
 		Scan(&recorded))
 	assert.Equal(t, `["`+literal+`"]`, recorded,
 		"literal parameter must pass through unmolested (AC-024)")
+}
+
+// TestResolveSecretLocatesPgcrypto — AC-004 / AC-026 / REQ-008. Install
+// pgcrypto (it lands in `public` by default), insert a secret, resolve it,
+// then ALTER EXTENSION pgcrypto SET SCHEMA ext and resolve the same secret
+// again. Both MUST succeed, proving the schema is discovered at call time.
+func TestResolveSecretLocatesPgcrypto(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+	pge := container.Engine
+	ctx := context.Background()
+	installPgcrypto(t, ctx, pge)
+
+	const name = "locate_pgcrypto"
+	_, err := pge.ConfigDb.Exec(ctx,
+		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
+		 VALUES ($1, $2, pgp_sym_encrypt($3, $4))
+		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
+		pge.ClientName, name, "plaintext-ext", pge.SecretEncryptionKey)
+	require.NoError(t, err)
+
+	// (a) pgcrypto in `public`: must decrypt.
+	var got *string
+	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+		`SELECT timetable.resolve_secret($1, $2, $3)`,
+		name, pge.ClientName, pge.SecretEncryptionKey).Scan(&got))
+	require.NotNil(t, got)
+	assert.Equal(t, "plaintext-ext", *got)
+
+	// (b) Move pgcrypto to a private schema `ext` and resolve again.
+	_, err = pge.ConfigDb.Exec(ctx, `CREATE SCHEMA IF NOT EXISTS ext`)
+	require.NoError(t, err)
+	_, err = pge.ConfigDb.Exec(ctx, `ALTER EXTENSION pgcrypto SET SCHEMA ext`)
+	require.NoError(t, err)
+	got = nil
+	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+		`SELECT timetable.resolve_secret($1, $2, $3)`,
+		name, pge.ClientName, pge.SecretEncryptionKey).Scan(&got))
+	require.NotNil(t, got)
+	assert.Equal(t, "plaintext-ext", *got,
+		"resolve_secret must discover the extension schema at call time (REQ-008)")
+}
+
+// TestSecretsWithoutPgcrypto — AC-025 / AC-027 / REQ-007 / REQ-053 / REQ-054
+// / CON-001. On a container where pgcrypto is NOT installed: bootstrap/migration
+// succeeded, both functions and the table exist, secret_count() returns 0,
+// resolve_secret on an unknown name returns NULL, and resolve_secret on an
+// existing row whose value_enc is plain bytea raises SQLSTATE 0A000 wrapped
+// with the secret name. The scheduler keeps running. Also asserts statically
+// that no file under internal/pgengine/sql/ contains CREATE EXTENSION or
+// ALTER EXTENSION.
+func TestSecretsWithoutPgcrypto(t *testing.T) {
+	// Static guard first: no DDL file may install or alter an extension.
+	assertNoExtensionDMLInDDL(t)
+
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+	pge := container.Engine
+	ctx := context.Background()
+
+	// Drop pgcrypto if the test harness pulled it in (the alpine image ships
+	// with pgcrypto preinstalled). We require the test to exercise the absent
+	// case.
+	var present bool
+	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+		`SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pgcrypto')`).
+		Scan(&present))
+	if present {
+		_, err := pge.ConfigDb.Exec(ctx, `DROP EXTENSION pgcrypto CASCADE`)
+		require.NoError(t, err, "test requires dropping pgcrypto to exercise the absent path")
+	}
+
+	// Bootstrap and migration already succeeded (SetupPostgresContainer ran
+	// them) — bootstrap did NOT raise, did NOT log any extension probe.
+	// Both functions and the table exist.
+	for _, q := range []string{
+		`SELECT to_regclass('timetable.secret')::text`,
+		`SELECT to_regprocedure('timetable.resolve_secret(text,text,text)')::text`,
+		`SELECT to_regprocedure('timetable.secret_count()')::text`,
+	} {
+		var name *string
+		require.NoError(t, pge.ConfigDb.QueryRow(ctx, q).Scan(&name))
+		assert.NotNil(t, name, q)
+		assert.NotEmpty(t, *name, q)
+	}
+
+	// secret_count() returns 0.
+	var count int64
+	require.NoError(t, pge.ConfigDb.QueryRow(ctx, `SELECT timetable.secret_count()`).Scan(&count))
+	assert.Equal(t, int64(0), count)
+
+	// resolve_secret on an unknown name returns NULL (no pgcrypto needed).
+	var missing *string
+	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+		`SELECT timetable.resolve_secret('does_not_exist', $1, $2)`,
+		pge.ClientName, pge.SecretEncryptionKey).Scan(&missing))
+	assert.Nil(t, missing)
+
+	// Insert a row whose value_enc is a plain bytea literal (NOT pgcrypto
+	// ciphertext). Resolving it must raise SQLSTATE 0A000, wrapped with the
+	// secret name by the Go layer.
+	_, err := pge.ConfigDb.Exec(ctx,
+		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
+		 VALUES ($1, 'absent_test', E'\\\\xdeadbeef'::bytea)`, pge.ClientName)
+	require.NoError(t, err)
+
+	_, _, rerr := pge.ResolveSecretsJSON(ctx,
+		`{"password":"${secret:absent_test}"}`)
+	require.Error(t, rerr)
+	msg := strings.ToLower(rerr.Error())
+	assert.Contains(t, msg, "absent_test",
+		"error must name the secret (REQ-041 class 4)")
+	assert.Contains(t, msg, "pgcrypto",
+		"error must name pgcrypto and the DBA's responsibility (REQ-041 class 4)")
+
+	// Scheduler remains usable: a non-secret SQL task still executes.
+	task := &pgengine.ChainTask{
+		Command: "SELECT $1::text",
+		Kind:    "SQL",
+	}
+	require.NoError(t, pge.ExecuteSQLCommand(ctx, &executorStub{}, task,
+		[]string{`["ok"]`}))
 }

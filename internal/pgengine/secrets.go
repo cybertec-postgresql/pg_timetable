@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // secretRefPattern matches ${secret:name}; the character class mirrors the
@@ -52,16 +53,26 @@ func (pge *PgEngine) resolveRefs(
 		last  int
 	)
 	for _, m := range secretRefPattern.FindAllStringSubmatchIndex(s, -1) {
-		out.WriteString(s[last:m[0]])
 		name := s[m[2]:m[3]]
 		var plaintext *string
 		err := pge.ConfigDb.QueryRow(markedCtx, resolveSecretSQL, name, pge.ClientName, pge.SecretEncryptionKey).Scan(&plaintext)
 		if err != nil {
-			// Wrong key: pgp_sym_decrypt raises "Wrong key or corrupt data".
-			// Surface it wrapped with the secret name (REQ-041 class 3).
+			// REQ-041 class 3: pgp_sym_decrypt raises "Wrong key or corrupt data".
+			// Surface it wrapped with the secret name; never as not-found.
 			if isWrongKey(err) {
 				return "", append(names, name), fmt.Errorf(
 					`secret %q: wrong key or corrupt data`, name)
+			}
+			// REQ-041 class 4: pgcrypto is absent. resolve_secret raises
+			// feature_not_supported (SQLSTATE 0A000) per REQ-008. Wrap with
+			// the secret name and a statement that installing pgcrypto is the
+			// database administrator's responsibility. This is a per-task
+			// error only — never a startup failure (REQ-054).
+			if isMissingPgcrypto(err) {
+				return "", append(names, name), fmt.Errorf(
+					`secret %q: pgcrypto extension is not installed; `+
+						`installing it is the database administrator's responsibility`,
+					name)
 			}
 			return "", append(names, name), fmt.Errorf(
 				"secret %q: %w", name, err)
@@ -72,6 +83,7 @@ func (pge *PgEngine) resolveRefs(
 			return "", append(names, name), fmt.Errorf(
 				`secret %q not found for client %q`, name, pge.ClientName)
 		}
+		out.WriteString(s[last:m[0]])
 		out.WriteString(quote(*plaintext, m, s))
 		names = append(names, name)
 		last = m[1]
@@ -91,8 +103,17 @@ func isWrongKey(err error) bool {
 		strings.Contains(msg, "wrong key or corrupt data")
 }
 
-// uniqueRefNames preserves first-seen order and de-duplicates a comma-joined
-// list of names. If s does not contain a `,`, treat it as a single name.
+// isMissingPgcrypto reports whether the error is the SQLSTATE 0A000
+// (feature_not_supported) raised by timetable.resolve_secret when the
+// pgcrypto extension is not installed (REQ-041 class 4, REQ-008).
+func isMissingPgcrypto(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "0A000"
+	}
+	return false
+}
+
 func uniqueRefNames(s string) []string {
 	if s == "" {
 		return nil

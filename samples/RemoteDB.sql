@@ -3,10 +3,17 @@
 -- testability; the same pattern applies to genuine cross-host connections
 -- (REQ-048).
 --
+-- pg_timetable itself NEVER installs the pgcrypto extension (REQ-007,
+-- REQ-052, CON-001). As a demo a user runs deliberately, this sample
+-- installs pgcrypto itself and uses the unqualified pgp_sym_encrypt call.
+--
 -- Decision (REQ-049): client_name is derived from
 -- `pg_timetable.current_client_name` via current_setting() so the sample is
 -- self-contained under TestSamplesScripts; the test harness sets the matching
 -- fixed encryption key.
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 DO $$
 DECLARE
     v_task_id bigint;
@@ -25,11 +32,12 @@ BEGIN
         nullif(current_setting('pg_timetable.current_client_name', true), ''),
         'sample_client');
 
-    -- Store the remote DB password encrypted. pgcrypto lives in `timetable`
-    -- on fresh installs (REQ-052), so the call MUST be schema-qualified.
+    -- Store the remote DB password encrypted. pgcrypto is required for the
+    -- secret store; here it lives in `public` (the default), so the call is
+    -- unqualified (REQ-008, REQ-052).
     INSERT INTO timetable.secret (client_name, secret_name, value_enc)
     VALUES (v_client_name, 'remotedb_demo',
-            timetable.pgp_sym_encrypt('somestrong', 'pgtt_test_secret_key'))
+            pgp_sym_encrypt('somestrong', 'pgtt_test_secret_key'))
     ON CONFLICT (client_name, secret_name) DO UPDATE
         SET value_enc = EXCLUDED.value_enc;
 

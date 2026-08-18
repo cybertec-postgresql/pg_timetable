@@ -64,7 +64,7 @@ before any code changes.
       consistently to the migration file name, the `migration.go` entry, the
       `internal/pgengine/sql/init.sql` seed row, and `main.go`'s `dbapi`
       (REQ-046, AC-003). All four MUST agree.
-- [ ] T004 [P] Confirm the local verification path for SQL work: either
+- [x] T004 [P] Confirm the local verification path for SQL work: either
       Docker (for `testcontainers-go`) or a local PostgreSQL instance. The
       §4.1 SQL of v2.1 is a NEW formulation (plpgsql `resolve_secret`, no
       `CREATE EXTENSION`) and MUST be re-executed against a live server in
@@ -82,7 +82,7 @@ story can resolve or mask a secret until this phase is complete.
 
 ### Schema and migration
 
-- [ ] T005 Rewrite the schema block in `internal/pgengine/sql/ddl.sql` to the
+- [x] T005 Rewrite the schema block in `internal/pgengine/sql/ddl.sql` to the
       v2.1 §4.1 form: the `timetable.secret` table with
       `PRIMARY KEY (client_name, secret_name)` and no surrogate id, the
       `secret_name_format` CHECK, all five `COMMENT`s,
@@ -121,7 +121,7 @@ story can resolve or mask a secret until this phase is complete.
         `EXECUTE FUNCTION` / `CREATE OR REPLACE TRIGGER` (PLT-002).
       - Reference no role name (REQ-009). A `GRANT` to a nonexistent role
         aborts the whole migration transaction and blocks startup.
-- [ ] T006 Apply the same rewrite to
+- [x] T006 Apply the same rewrite to
       `internal/pgengine/sql/migrations/00798.sql` so both files again hold
       identical object definitions — likewise with no `CREATE EXTENSION`,
       which matters most here: the migrator wraps each migration in one
@@ -137,7 +137,7 @@ story can resolve or mask a secret until this phase is complete.
       entry, the `(18, '00798 Add timetable.secret store')` row in
       `internal/pgengine/sql/init.sql`, and `dbapi = "00798"` in `main.go`
       (REQ-046, AC-003).
-- [ ] T008 Verify the schema against a live server in ALL THREE extension
+- [x] T008 Verify the schema against a live server in ALL THREE extension
       scenarios before proceeding:
       (a) `pgcrypto` **absent** → the whole block still applies, both
       functions are created, `secret_count()` returns 0, a scheduler starts
@@ -217,7 +217,7 @@ story can resolve or mask a secret until this phase is complete.
       delimiters are not doubled. An empty value MUST emit `''`, because a
       bare `password=` would swallow the next token (REQ-028, REQ-029,
       AC-009).
-- [ ] T017 Implement the **four** distinguished failure classes in
+- [x] T017 Implement the **four** distinguished failure classes in
       `internal/pgengine/secrets.go` (REQ-041, REQ-042, REQ-043, REQ-044,
       REQ-054). Classes 1–3 already exist in the WIP; class 4 is new:
       1. **Missing secret** — scan into a nullable target (`*string` or
@@ -255,7 +255,7 @@ story can resolve or mask a secret until this phase is complete.
 
 ### Foundational tests
 
-- [ ] T019 [P] `TestSecretSchemaFreshInstall` in
+- [x] T019 [P] `TestSecretSchemaFreshInstall` in
       `internal/pgengine/secrets_test.go` (package `pgengine_test`, using
       `testutils.SetupPostgresContainer`): asserts table/functions/trigger
       exist, the `secret_touch` trigger overrides a falsified
@@ -266,13 +266,13 @@ story can resolve or mask a secret until this phase is complete.
       `pgcrypto` and on `timetable.pgp_sym_encrypt` existing: the test MUST now
       install the extension itself in its own fixture and call
       `pgp_sym_encrypt` from wherever `CREATE EXTENSION` put it (REQ-049).
-- [ ] T019a [P] `TestResolveSecretLocatesPgcrypto` in
+- [x] T019a [P] `TestResolveSecretLocatesPgcrypto` in
       `internal/pgengine/secrets_test.go`: install `pgcrypto` (landing in
       `public`), store and resolve a secret, then
       `CREATE SCHEMA ext; ALTER EXTENSION pgcrypto SET SCHEMA ext;` and
       resolve the same secret again. Both MUST succeed, proving the schema is
       discovered at call time rather than pinned (AC-004, AC-026, REQ-008).
-- [ ] T019b [P] `TestSecretsWithoutPgcrypto` in
+- [x] T019b [P] `TestSecretsWithoutPgcrypto` in
       `internal/pgengine/secrets_test.go`: on a container where `pgcrypto` is
       NOT installed, assert bootstrap/migration succeeded, both functions and
       the table exist, `secret_count()` returns 0, `resolve_secret` on an
@@ -489,14 +489,14 @@ container with no manual setup, and the samples actually use a resolved secret.
 
 ### Implementation for User Story 4
 
-- [ ] T046 [US4] Update `internal/testutils/testcontainers.go` to set a fixed
+- [x] T046 [US4] Update `internal/testutils/testcontainers.go` to set a fixed
       test `SecretEncryptionKey` on the constructed `CmdOptions` (via the
       existing `customizer` seam or directly), and apply the T002 decision so
       the samples resolve under the harness's
       `--clientname=testcontainers_unit_test`. Do NOT make the harness install
       `pgcrypto` on behalf of the samples: each sample installs it itself
       (T047, T048), which is also what a real user's demo run does (REQ-049).
-- [ ] T047 [US4] Rework `samples/Mail.sql`: open with
+- [x] T047 [US4] Rework `samples/Mail.sql`: open with
       `CREATE EXTENSION IF NOT EXISTS pgcrypto;` — allowed here because a
       sample is a demo the user runs deliberately, and PROHIBITED in product
       DDL — then insert the secret row with an **unqualified**
@@ -506,17 +506,17 @@ container with no manual setup, and the samples actually use a resolved secret.
       `-- Legacy (deprecated):` comment. Add a header comment stating that
       pg_timetable itself never installs the extension and that the sample
       does so only to be runnable out of the box (REQ-047, REQ-052, AC-023).
-- [ ] T048 [US4] Rework `samples/RemoteDB.sql` the same way: add the
+- [x] T048 [US4] Rework `samples/RemoteDB.sql` the same way: add the
       `CREATE EXTENSION IF NOT EXISTS pgcrypto;` demo prologue, keep
       `password=${secret:remotedb_demo}`, replace `timetable.pgp_sym_encrypt`
       with the unqualified call, and keep the note that the demo is
       same-cluster while the pattern applies to genuine cross-host
       connections (REQ-048, REQ-052, AC-023).
-- [ ] T049 [US4] Confirm `TestSamplesScripts`
+- [x] T049 [US4] Confirm `TestSamplesScripts`
       (`internal/pgengine/pgengine_test.go`) and `TestRun`
       (`internal/scheduler/scheduler_test.go`) pass unmodified in name against
       a fresh container with no manual setup (AC-023).
-- [ ] T050 [P] [US4] Update the "Secrets" subsection in `docs/samples.md` and
+- [x] T050 [P] [US4] Update the "Secrets" subsection in `docs/samples.md` and
       `docs/yaml-usage-guide.md`: `${secret:name}`, the write-only model, the
       manual `GRANT` step for a separate admin role, the PROGRAM argv caveat,
       the debug-level caveat, and the trust boundary. Re-opened because the
@@ -529,7 +529,7 @@ container with no manual setup, and the samples actually use a resolved secret.
       / `.pg_service.conf` on the worker host for remote Postgres passwords —
       the store exists for credentials that have no host-local equivalent,
       such as SMTP (REQ-050, REQ-014, SEC-002, SEC-003, SEC-004, GUD-003).
-- [ ] T051 [P] [US4] Update the prose in `docs/database_schema.md`: keep the
+- [x] T051 [P] [US4] Update the prose in `docs/database_schema.md`: keep the
       write-only model and `resolve_secret` usage, and remove the claim that
       the migration installs `pgcrypto` into `timetable` (and any
       `<pgcrypto_schema>.pgp_sym_decrypt` `search_path` wording that implies a
@@ -542,7 +542,7 @@ container with no manual setup, and the samples actually use a resolved secret.
       this raises the bar against other database roles, logical replicas, and
       `pg_dump` without the key, but satisfies no specific regulatory control
       on its own (COM-001).
-- [ ] T053 [P] [US4] Rewrite the deployment-prerequisites documentation
+- [x] T053 [P] [US4] Rewrite the deployment-prerequisites documentation
       honestly: nothing is required to run pg_timetable; `pgcrypto` is needed
       **only** by the secret store and is installed by whoever deploys the
       database. Since PostgreSQL 13 it is a **trusted** extension, installable
@@ -562,7 +562,7 @@ together with the code.
 
 **Purpose**: Whole-feature verification and cleanup.
 
-- [ ] T055 Verify the non-goals held: no change to the scheduler's own
+- [x] T055 Verify the non-goals held: no change to the scheduler's own
       connection/authentication mechanism (CON-005), no versioning/rotation/
       leasing/KMS (CON-006), no new role created by the schema (REQ-009), no
       key stored in any table (REQ-017), no new `go.mod` entry (PLT-001), and
@@ -574,17 +574,17 @@ together with the code.
       `SELECT params FROM timetable.execution_log` holds only reference forms,
       `SELECT message, message_data FROM timetable.log` contains neither the
       plaintext nor the key, and the stdout/file log contains neither.
-- [ ] T057 Confirm fresh-install and migration paths converge: compare
+- [x] T057 Confirm fresh-install and migration paths converge: compare
       `pg_catalog` introspection of `timetable.secret`, its constraint, its
       trigger, and both functions between a database bootstrapped from
       `ddl.sql` and one upgraded through `00798.sql`, on a database with **no**
       `pgcrypto` installed, so the comparison also proves both paths apply
       without the extension (REQ-007, REQ-045, AC-001, AC-002, AC-025).
-- [ ] T058 Run the full suite once: `go test ./...` plus `go vet ./...` and
+- [x] T058 Run the full suite once: `go test ./...` plus `go vet ./...` and
       the CI `golangci-lint` configuration, with no new suppressions. Note
       the CI job's 300 s suite timeout — reuse the existing container helpers
       rather than starting a container per test case.
-- [ ] T059 Confirm every acceptance criterion AC-001 … AC-027 maps to a named
+- [x] T059 Confirm every acceptance criterion AC-001 … AC-027 maps to a named
       test that actually runs. CI enforces no numeric coverage threshold, so
       this mapping is the coverage bar (§6, §10).
 - [x] T060 Delete `docs/secret-vault-analysis.md` and

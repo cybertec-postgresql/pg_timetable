@@ -1,10 +1,19 @@
 -- Mail.sql demonstrates SendMail with a stored secret.
--- Decision (REQ-049): samples derive client_name from
--- `current_setting('pg_timetable.current_client_name', true)` where available
--- (the chain-task context sets it via SetCurrentTaskContext), so the sample is
--- self-contained under TestSamplesScripts without a manual placeholder.
--- The fixed test encryption key matches the one set in
--- internal/testutils/testcontainers.go (T046 / REQ-049).
+--
+-- pg_timetable itself NEVER installs the pgcrypto extension (REQ-007,
+-- REQ-052, CON-001). It is an optional dependency of the secret store,
+-- provisioned by the database administrator. As a demo a user runs
+-- deliberately, this sample installs pgcrypto itself and uses the
+-- unqualified pgp_sym_encrypt call. Production chains should remove the
+-- CREATE EXTENSION line and rely on the DBA having installed pgcrypto.
+--
+-- Decision (REQ-049): client_name is derived from
+-- `pg_timetable.current_client_name` via current_setting() so the sample is
+-- self-contained under TestSamplesScripts; the test harness sets the matching
+-- fixed encryption key in internal/testutils/testcontainers.go.
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 DO $$
     -- An example for using the SendMail task.
 DECLARE
@@ -19,11 +28,12 @@ BEGIN
         nullif(current_setting('pg_timetable.current_client_name', true), ''),
         'sample_client');
 
-    -- Store the SMTP password encrypted. pgcrypto lives in `timetable` on
-    -- fresh installs (REQ-052), so the call MUST be schema-qualified.
+    -- Store the SMTP password encrypted. pgcrypto is required for the secret
+    -- store; here it lives in `public` (the default), so the call is
+    -- unqualified (REQ-008, REQ-052).
     INSERT INTO timetable.secret (client_name, secret_name, value_enc)
     VALUES (v_client_name, 'smtp_main',
-            timetable.pgp_sym_encrypt('s3cr3t pw''s', 'pgtt_test_secret_key'))
+            pgp_sym_encrypt('s3cr3t pw''s', 'pgtt_test_secret_key'))
     ON CONFLICT (client_name, secret_name) DO UPDATE
         SET value_enc = EXCLUDED.value_enc;
 
@@ -101,7 +111,7 @@ ON CONFLICT (task_id, order_id) DO UPDATE SET value = EXCLUDED.value$query$,
 --       45 |       24 |         10 | BUILTIN | SendMail
 --       47 |       24 |         20 | SQL     | WITH sent_mail(toaddr) AS (DELETE FROM timetable.p
 --       46 |       24 |         30 | BUILTIN | Log
--- (3 rows)
+-- (3 rows);
 
 END;
 $$

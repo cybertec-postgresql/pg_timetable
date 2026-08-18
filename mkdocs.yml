@@ -60,6 +60,7 @@ nav:
     - Background: background.md
   - Concepts:
     - Components: components.md
+    - Secret Store: secret_store.md
     - Database Schema: database_schema.md
   - Tutorials:
     - Installation: installation.md
