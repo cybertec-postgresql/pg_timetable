@@ -29,14 +29,14 @@ func TestMigrations(t *testing.T) {
 	assert.True(t, ok, "Should need migrations")
 	assert.NoError(t, pge.MigrateDb(ctx), "Migrations should be applied")
 
-	// 00798 applies over every prior migration and the
+	// 00820 applies over every prior migration and the
 	// timetable.secret store is created.
 	var hasSecret bool
 	assert.NoError(t, pge.ConfigDb.QueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c
 		                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
 		                WHERE n.nspname='timetable' AND c.relname='secret')`).Scan(&hasSecret))
-	assert.True(t, hasSecret, "00798 must create timetable.secret")
+	assert.True(t, hasSecret, "00820 must create timetable.secret")
 }
 func TestExecuteMigrationScript(t *testing.T) {
 	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, "foo"), "File does not exist")

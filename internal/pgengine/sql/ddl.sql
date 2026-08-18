@@ -210,7 +210,7 @@ STRICT
 LANGUAGE plpgsql;
 
 
--- 00798 Add timetable.secret store (mirrors migrations/00798.sql).
+-- 00820 Add timetable.secret store (mirrors migrations/00820.sql).
 --
 -- pg_timetable never installs any PostgreSQL extension. This block applies
 -- unchanged on a database that has no pgcrypto installed. The extension is

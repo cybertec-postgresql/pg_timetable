@@ -1,4 +1,4 @@
--- 00798 Add timetable.secret store
+-- 00820 Add timetable.secret store
 --
 -- pg_timetable never installs any PostgreSQL extension. This block applies
 -- unchanged on a database that has no pgcrypto installed. The extension is

@@ -31,4 +31,4 @@ VALUES
     (15, '00733 Add params column to timetable.execution_log table'),
     (16, '00792 Add ability to enable and disable tasks'),
     (17, '00797 Add indexes to timetable.execution_log'),
-    (18, '00798 Add timetable.secret store');
+    (18, '00820 Add timetable.secret store');

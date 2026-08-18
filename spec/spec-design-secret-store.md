@@ -464,7 +464,7 @@ verifying the implementation against this contract.
 
 - **REQ-045**: The schema objects MUST be added to **both**
   `internal/pgengine/sql/ddl.sql` and
-  `internal/pgengine/sql/migrations/00798.sql`, with identical object
+  `internal/pgengine/sql/migrations/00820.sql`, with identical object
   definitions. A migration alone is insufficient: `ExecuteSchemaScripts`
   runs `{init, cron, ddl, json_schema, job_functions}` only when the
   `timetable` schema is absent, and `sql/init.sql` seeds
@@ -478,11 +478,11 @@ verifying the implementation against this contract.
   here, update `timetable.migration` in `sql/init.sql` and `dbapi` variable
   in `main.go`!"):
   1. `internal/pgengine/migration.go` — appended `&migrator.Migration{...}`
-     entry named `00798 Add timetable.secret store`.
-  2. `internal/pgengine/sql/init.sql` — `(18, '00798 Add timetable.secret store')`
+     entry named `00820 Add timetable.secret store`.
+  2. `internal/pgengine/sql/init.sql` — `(18, '00820 Add timetable.secret store')`
      appended to the seed `INSERT`.
-  3. `main.go` — `dbapi = "00798"`.
-  The number `00798` is the next available after the current highest
+  3. `main.go` — `dbapi = "00820"`.
+  The number `00820` is the next available after the current highest
   migration `00797`; it MUST be reconfirmed against `migration.go` at
   implementation time in case another migration lands first, and all four
   occurrences (file name, `migration.go` entry, `init.sql` row, `dbapi`) MUST
@@ -612,7 +612,7 @@ verifying the implementation against this contract.
 ### 4.1 SQL schema
 
 This block is appended verbatim to `internal/pgengine/sql/ddl.sql` and
-duplicated in `internal/pgengine/sql/migrations/00798.sql`.
+duplicated in `internal/pgengine/sql/migrations/00820.sql`.
 
 ```sql
 -- pgcrypto is an OPTIONAL runtime dependency. pg_timetable NEVER installs it
@@ -812,7 +812,7 @@ SecretEncryptionKey string `long:"secret-key" mapstructure:"secret-key" descript
 | `internal/log/log.go` | `PgxLogger.Log` | Drops the `args` field under a marked context (REQ-030) |
 | `internal/pgengine/bootstrap.go` | — | No tracer change; redaction is context-scoped, not level-scoped |
 | `internal/pgengine/secrets.go` | new file | `ResolveSecretsJSON`, `ResolveSecretsConnString`, `CheckSecretConfig`, `resolveRefs` |
-| `main.go` | `run` | Calls `pge.CheckSecretConfig(ctx)` after the migration/upgrade block, before `scheduler.New`; also `dbapi = "00798"` |
+| `main.go` | `run` | Calls `pge.CheckSecretConfig(ctx)` after the migration/upgrade block, before `scheduler.New`; also `dbapi = "00820"` |
 | `internal/testutils/testcontainers.go` | `SetupPostgresContainerWithOptions` | Sets a fixed test `SecretEncryptionKey` (REQ-049) |
 | `internal/tasks/mail.go` | — | No change (CON-003) |
 
@@ -835,11 +835,11 @@ case-sensitive exact match against `secret_name`.
   startup succeeds with no error and no behavior change versus pre-feature
   behavior.
 - **AC-002**: Given a database migrated from the previous release, When
-  `MigrateDb` runs, Then migration `00798` applies inside its transaction and
+  `MigrateDb` runs, Then migration `00820` applies inside its transaction and
   produces objects identical to the fresh-install path; `TestMigrations`
   passes.
 - **AC-003**: Given `main.go`, `migration.go`, `init.sql`, and the migration
-  file name, Then all four agree on `00798`, and `dbapi` reported by
+  file name, Then all four agree on `00820`, and `dbapi` reported by
   `--version` equals the highest registered migration.
 - **AC-004**: Given a database where `pgcrypto` is installed in `public` (the
   `CREATE EXTENSION pgcrypto` default), When a secret is resolved, Then
@@ -978,7 +978,7 @@ case-sensitive exact match against `secret_name`.
   - `TestPgxTracerRedactsSecretArgs` (AC-014), asserting on `timetable.log`
     contents after a debug-level run.
   - `TestSecretKeyConfigBinding` (AC-022) in `internal/config`.
-  - `TestMigrations` extended for `00798` (AC-002, AC-003).
+  - `TestMigrations` extended for `00820` (AC-002, AC-003).
   - `TestSecretStartupCheck` (AC-005, AC-006) — asserts the error is logged
     when secrets exist without a key, and that `secret_count()` is not
     queried when a key is present (pgxmock for the negative case).
@@ -1288,10 +1288,10 @@ Edge cases:
 - `go vet` and the CI `golangci-lint` run pass on all new and modified files
   with no new suppressions.
 - Fresh-install and migration paths converge: a database bootstrapped from
-  `ddl.sql` and a database upgraded through `00798.sql` yield identical
+  `ddl.sql` and a database upgraded through `00820.sql` yield identical
   definitions for `timetable.secret`, its constraint, its trigger, and both
   functions (comparable via `pg_catalog` introspection).
-- `00798` appears consistently in the migration file name,
+- `00820` appears consistently in the migration file name,
   `internal/pgengine/migration.go`, `internal/pgengine/sql/init.sql` (id 18),
   and `main.go`'s `dbapi`.
 - Grant verification: a throwaway role with no explicit grants can neither

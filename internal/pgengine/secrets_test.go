@@ -430,7 +430,7 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 
 // TestSecretMigrationPgcryptoFreshInstall exercises the contract that
 // every test container is built fresh with no manual pgcrypto setup,
-// and the migration succeeds exactly because 00798.sql creates the store
+// and the migration succeeds exactly because 00820.sql creates the store
 // without requiring the extension. A dedicated unit test for "MigrateDb is
 // idempotent on partial state" would couple to pgx-migrator internals
 // (column name, ordering, CASCADE behavior),

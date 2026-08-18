@@ -5,7 +5,7 @@
 !!! note "PostgreSQL extensions"
 
     **No extension is required to run pg_timetable.** The secret store
-    (`timetable.secret`, introduced by migration `00798`) is the only
+    (`timetable.secret`, introduced by migration `00820`) is the only
     feature with an extension dependency: it uses `pgcrypto`'s
     `pgp_sym_encrypt` / `pgp_sym_decrypt`. `pgcrypto` is installed by
     whoever deploys the database — pg_timetable never installs, requires,

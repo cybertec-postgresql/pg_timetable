@@ -169,9 +169,9 @@ var Migrations func() migrator.Option = func() migrator.Option {
 		// and "dbapi" variable in main.go!
 
 		&migrator.Migration{
-			Name: "00798 Add timetable.secret store",
+			Name: "00820 Add timetable.secret store",
 			Func: func(ctx context.Context, tx pgx.Tx) error {
-				return ExecuteMigrationScript(ctx, tx, "00798.sql")
+				return ExecuteMigrationScript(ctx, tx, "00820.sql")
 			},
 		},
 

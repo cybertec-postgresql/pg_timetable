@@ -122,7 +122,7 @@ story can resolve or mask a secret until this phase is complete.
       - Reference no role name (REQ-009). A `GRANT` to a nonexistent role
         aborts the whole migration transaction and blocks startup.
 - [x] T006 Apply the same rewrite to
-      `internal/pgengine/sql/migrations/00798.sql` so both files again hold
+      `internal/pgengine/sql/migrations/00820.sql` so both files again hold
       identical object definitions — likewise with no `CREATE EXTENSION`,
       which matters most here: the migrator wraps each migration in one
       transaction, so an extension failure inside it would permanently block
@@ -133,9 +133,9 @@ story can resolve or mask a secret until this phase is complete.
       never runs new migrations.
 - [x] T007 Register the migration in all three places, per the in-code comment
       in `internal/pgengine/migration.go`: the appended
-      `&migrator.Migration{Name: "00798 Add timetable.secret store", ...}`
-      entry, the `(18, '00798 Add timetable.secret store')` row in
-      `internal/pgengine/sql/init.sql`, and `dbapi = "00798"` in `main.go`
+      `&migrator.Migration{Name: "00820 Add timetable.secret store", ...}`
+      entry, the `(18, '00820 Add timetable.secret store')` row in
+      `internal/pgengine/sql/init.sql`, and `dbapi = "00820"` in `main.go`
       (REQ-046, AC-003).
 - [x] T008 Verify the schema against a live server in ALL THREE extension
       scenarios before proceeding:
@@ -319,7 +319,7 @@ story can resolve or mask a secret until this phase is complete.
       directly and bypasses viper, so it would pass even with the
       `mapstructure` tag missing and would not defend REQ-016 (AC-022).
 - [x] T027 [P] Extend `TestMigrations` in
-      `internal/pgengine/migration_test.go` to cover `00798` applying over
+      `internal/pgengine/migration_test.go` to cover `00820` applying over
       every prior migration, and assert the four-way agreement of the
       migration number (AC-002, AC-003).
 - [x] T028 [P] `TestPgxLoggerDropsQueryArgs` in `internal/log/log_test.go`
@@ -577,7 +577,7 @@ together with the code.
 - [x] T057 Confirm fresh-install and migration paths converge: compare
       `pg_catalog` introspection of `timetable.secret`, its constraint, its
       trigger, and both functions between a database bootstrapped from
-      `ddl.sql` and one upgraded through `00798.sql`, on a database with **no**
+      `ddl.sql` and one upgraded through `00820.sql`, on a database with **no**
       `pgcrypto` installed, so the comparison also proves both paths apply
       without the extension (REQ-007, REQ-045, AC-001, AC-002, AC-025).
 - [x] T058 Run the full suite once: `go test ./...` plus `go vet ./...` and

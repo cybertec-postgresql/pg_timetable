@@ -1,6 +1,6 @@
 ## Secret store
 
-The secret store is introduced by migration `00798` and lives entirely in
+The secret store is introduced by migration `00820` and lives entirely in
 the `timetable` schema. The schema applies unchanged on a database without
 `pgcrypto` installed; the extension is needed only by sessions that
 actually resolve a secret.
@@ -75,6 +75,7 @@ The store is opt-in syntax. Chains created before this feature, whose
 `parameter.value` holds a literal password, continue to work unchanged.
 
 ### Permission model
+
 - `PUBLIC` has no privileges on the table or the functions.
 - The owning role (the scheduler's connection role) can read `value_enc`
   directly — the key, not the grant model, is the confidentiality boundary.

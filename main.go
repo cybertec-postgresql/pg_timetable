@@ -55,7 +55,7 @@ var (
 	commit  = "000000"
 	version = "master"
 	date    = "unknown"
-	dbapi   = "00798"
+	dbapi   = "00820"
 )
 
 func printVersion() {
@@ -105,8 +105,7 @@ func run(ctx context.Context, cmdOpts *config.CmdOptions, logger log.LoggerHooke
 		logger.WithError(err).Warn("Secret configuration check failed")
 	}
 
-
- 	// Initialise OTel provider (noop when not configured)
+	// Initialise OTel provider (noop when not configured)
 	otelProvider, otelErr := otel.New(ctx, cmdOpts.OTel, cmdOpts.ClientName, version)
 	if otelErr != nil {
 		logger.WithError(otelErr).Warn("OTel provider init failed; continuing without telemetry")
