@@ -30,10 +30,10 @@ var Cmd commander = realCommander{}
 // ExecuteProgramCommand executes program command and returns status code,
 // output and error if any.
 //
-// Per REQ-031 / REQ-039, each loop value is resolved into a separate
-// variable before unmarshalling into argv. The unresolved `val` is the only
-// string passed to LogTaskExecution. v1 substitutes into argv; SEC-003
-// documents the resulting argv exposure on the worker host.
+// Each loop value is resolved into a separate variable before unmarshalling
+// into argv. The unresolved `val` is the only string passed to
+// LogTaskExecution. v1 substitutes into argv; the documentation notes the
+// resulting argv exposure on the worker host.
 func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.ChainTask, paramValues []string) error {
 	var err error
 	var exitCode int

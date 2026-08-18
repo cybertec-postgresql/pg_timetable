@@ -75,11 +75,9 @@ The store is opt-in syntax. Chains created before this feature, whose
 `parameter.value` holds a literal password, continue to work unchanged.
 
 ### Permission model
-
 - `PUBLIC` has no privileges on the table or the functions.
 - The owning role (the scheduler's connection role) can read `value_enc`
-  directly — this is the documented honesty (SEC-001): the key, not the
-  grant model, is the confidentiality boundary.
+  directly — the key, not the grant model, is the confidentiality boundary.
 - No new role is created by the schema. Operators who want a separate
   secret-administration role must `GRANT INSERT, UPDATE, DELETE ON
   timetable.secret TO admin_role` themselves; this is an operator step,
@@ -88,5 +86,3 @@ The store is opt-in syntax. Chains created before this feature, whose
   `timetable.secret_count()` exactly once when the encryption key is unset,
   and skips it entirely when the key is set. A failure of the check itself
   is logged, never fatal.
-
-*ER-Diagram showing the database structure*

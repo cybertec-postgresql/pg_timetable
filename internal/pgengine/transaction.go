@@ -103,9 +103,9 @@ func (pge *PgEngine) ExecStandaloneTask(ctx context.Context, connf func() (PgxCo
 // ExecRemoteSQLTask executes task against remote connection
 // ExecRemoteSQLTask executes task against remote connection.
 //
-// Per REQ-038 / REQ-040, task.ConnectString is resolved eagerly (before any
-// SetRole / SetCurrentTaskContext side effects fire inside the closure
-// passed to ExecStandaloneTask) into a local variable. The original
+// task.ConnectString is resolved eagerly (before any SetRole /
+// SetCurrentTaskContext side effects fire inside the closure passed to
+// ExecStandaloneTask) into a local variable. The original
 // task.ConnectString MUST NOT be mutated — masking rules apply uniformly to
 // the persisted value.
 func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error {
@@ -128,13 +128,12 @@ func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask,
 
 // ExecuteSQLCommand executes chain command with parameters inside transaction.
 //
-// Per REQ-031 / REQ-037 / REQ-030 / REQ-040, ${secret:name} references inside
-// each parameter are resolved *before* unmarshalling into the bound args,
-// while the original (unresolved) `val` is the only string passed to
-// LogTaskExecution. When resolution substitutes at least one secret, the
-// bound-argument query is issued under a context marked with
-// log.WithoutQueryArgs so the pgx tracer does not persist resolved values
-// to timetable.log.
+// ${secret:name} references inside each parameter are resolved *before*
+// unmarshalling into the bound args, while the original (unresolved) `val`
+// is the only string passed to LogTaskExecution. When resolution substitutes
+// at least one secret, the bound-argument query is issued under a context
+// marked with log.WithoutQueryArgs so the pgx tracer does not persist
+// resolved values to timetable.log.
 func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, task *ChainTask, paramValues []string) (err error) {
 	var params []any
 	var errCodes = map[bool]int{false: 0, true: -1}

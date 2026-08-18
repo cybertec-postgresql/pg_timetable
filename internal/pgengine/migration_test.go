@@ -29,7 +29,7 @@ func TestMigrations(t *testing.T) {
 	assert.True(t, ok, "Should need migrations")
 	assert.NoError(t, pge.MigrateDb(ctx), "Migrations should be applied")
 
-	// AC-002 / AC-003: 00798 applies over every prior migration and the
+	// 00798 applies over every prior migration and the
 	// timetable.secret store is created.
 	var hasSecret bool
 	assert.NoError(t, pge.ConfigDb.QueryRow(ctx,

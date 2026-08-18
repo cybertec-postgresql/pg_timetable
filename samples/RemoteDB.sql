@@ -1,17 +1,15 @@
 -- RemoteDB.sql demonstrates a remote-database task whose connection string
 -- references a stored secret. The demo is same-cluster (loopback) for
--- testability; the same pattern applies to genuine cross-host connections
--- (REQ-048).
+-- testability; the same pattern applies to genuine cross-host connections.
 --
--- pg_timetable itself NEVER installs the pgcrypto extension (REQ-007,
--- REQ-052, CON-001). As a demo a user runs deliberately, this sample
--- installs pgcrypto itself and uses the unqualified pgp_sym_encrypt call.
+-- pg_timetable itself NEVER installs the pgcrypto extension. As a demo a
+-- user runs deliberately, this sample installs pgcrypto itself and uses the
+-- unqualified pgp_sym_encrypt call.
 --
--- Decision (REQ-049): client_name is derived from
+-- Decision: client_name is derived from
 -- `pg_timetable.current_client_name` via current_setting() so the sample is
 -- self-contained under TestSamplesScripts; the test harness sets the matching
 -- fixed encryption key.
-
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 DO $$
@@ -34,8 +32,7 @@ BEGIN
 
     -- Store the remote DB password encrypted. pgcrypto is required for the
     -- secret store; here it lives in `public` (the default), so the call is
-    -- unqualified (REQ-008, REQ-052).
-    INSERT INTO timetable.secret (client_name, secret_name, value_enc)
+    -- unqualified.
     VALUES (v_client_name, 'remotedb_demo',
             pgp_sym_encrypt('somestrong', 'pgtt_test_secret_key'))
     ON CONFLICT (client_name, secret_name) DO UPDATE

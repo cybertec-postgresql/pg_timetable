@@ -1,12 +1,8 @@
 -- 00798 Add timetable.secret store
--- Implements the Postgres-native secret store described in
--- spec/spec-design-secret-store.md (REQ-001..REQ-014, SEC-005, SEC-006,
--- PLT-002, CON-001, CON-007, DAT-001).
 --
--- REQ-007 / REQ-054 / CON-001: pg_timetable never installs any PostgreSQL
--- extension. This block applies unchanged on a database that has no pgcrypto
--- installed. The extension is looked up at call time inside resolve_secret.
-
+-- pg_timetable never installs any PostgreSQL extension. This block applies
+-- unchanged on a database that has no pgcrypto installed. The extension is
+-- looked up at call time inside resolve_secret.
 CREATE TABLE timetable.secret (
     client_name  TEXT        NOT NULL,
     secret_name  TEXT        NOT NULL,
@@ -51,13 +47,11 @@ COMMENT ON FUNCTION timetable.secret_touch() IS
 CREATE TRIGGER secret_touch
     BEFORE UPDATE ON timetable.secret
     FOR EACH ROW EXECUTE PROCEDURE timetable.secret_touch();
-
--- REQ-053: resolve_secret is LANGUAGE plpgsql so the validator does not
--- resolve pgp_sym_decrypt at create time; REQ-008: the extension schema is
--- looked up at call time and interpolated into dynamic SQL so any install
--- layout (public, custom schema, ALTER EXTENSION ... SET SCHEMA) works. A
--- missing extension raises SQLSTATE 0A000 (REQ-041 class 4) without
--- requiring pgcrypto for create time.
+-- resolve_secret is LANGUAGE plpgsql so the validator does not resolve
+-- pgp_sym_decrypt at create time; the extension schema is looked up at call
+-- time and interpolated into dynamic SQL so any install layout (public,
+-- custom schema, ALTER EXTENSION ... SET SCHEMA) works. A missing extension
+-- raises SQLSTATE 0A000 without requiring pgcrypto for create time.
 CREATE OR REPLACE FUNCTION timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql

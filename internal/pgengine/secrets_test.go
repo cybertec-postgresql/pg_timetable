@@ -27,7 +27,7 @@ import (
 )
 
 // executorStub is a no-op executor that satisfies the pgengine.executor
-// interface. Used by AC-013 / AC-024 tests to drive ExecuteSQLCommand
+// interface. Used by the SQL execution_log tests to drive ExecuteSQLCommand
 // without a live database connection.
 type executorStub struct{}
 
@@ -36,10 +36,10 @@ func (executorStub) Exec(ctx context.Context, sql string, args ...any) (pgconn.C
 }
 
 // installPgcrypto ensures the pgcrypto extension is present in the test
-// database. Per REQ-007 / REQ-049, every test that exercises a secret round
-// trip installs the extension in its own fixture. pgcrypto lives wherever
-// CREATE EXTENSION places it (default `public`), so subsequent test code uses
-// unqualified pgp_sym_encrypt / pgp_sym_decrypt calls.
+// database. Every test that exercises a secret round trip installs the
+// extension in its own fixture. pgcrypto lives wherever CREATE EXTENSION
+// places it (default `public`), so subsequent test code uses unqualified
+// pgp_sym_encrypt / pgp_sym_decrypt calls.
 func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) {
 	t.Helper()
 	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
@@ -47,7 +47,7 @@ func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) 
 }
 
 // mustExtractJSONString extracts a top-level string field from a jsonb payload.
-// Used by AC-008 to verify that resolved JSON leaves survive a round-trip.
+// Used to verify that resolved JSON leaves survive a round-trip.
 func mustExtractJSONString(t *testing.T, s, field string) string {
 	t.Helper()
 	var m map[string]any
@@ -57,8 +57,8 @@ func mustExtractJSONString(t *testing.T, s, field string) string {
 	return v
 }
 
-// newSchedulerFor builds a minimal scheduler bound to `pge`. Used by AC-013
-// PROGRAM path (T042), which needs ExecuteProgramCommand on *Scheduler.
+// newSchedulerFor builds a minimal scheduler bound to `pge`. Used by the
+// PROGRAM path test, which needs ExecuteProgramCommand on *Scheduler.
 func newSchedulerFor(t *testing.T, pge *pgengine.PgEngine) *scheduler.Scheduler {
 	t.Helper()
 	return scheduler.New(pge,
@@ -68,8 +68,8 @@ func newSchedulerFor(t *testing.T, pge *pgengine.PgEngine) *scheduler.Scheduler 
 }
 
 // shellForOS returns a shell command guaranteed to exist on the host OS.
-// Used by the AC-013 PROGRAM test so the test runs on both Linux/macOS
-// (where /bin/sh is present) and Windows (where sh is absent).
+// Used by the PROGRAM test so it runs on both Linux/macOS (where /bin/sh is
+// present) and Windows (where sh is absent).
 func shellForOS() string {
 	return "/bin/sh"
 }
@@ -79,7 +79,7 @@ func shellEchoArgs(envName string) string {
 }
 
 // captureBuf is a thread-safe buffer that captures logrus output for the
-// AC-014 PgxLogger test.
+// PgxLogger test.
 type captureBuf struct {
 	mu  sync.Mutex
 	buf strings.Builder
@@ -105,7 +105,7 @@ func newLogrusInto(w interface{ Write([]byte) (int, error) }) *logrus.Logger {
 	return l
 }
 
-// pgxLogLevel maps a tracelog.LogLevel by name for the AC-014 test.
+// pgxLogLevel maps a tracelog.LogLevel by name for the PgxLogger test.
 func pgxLogLevel(name string) tracelog.LogLevel {
 	switch name {
 	case "Trace":
@@ -123,9 +123,9 @@ func pgxLogLevel(name string) tracelog.LogLevel {
 }
 
 // assertNoExtensionDMLInDDL walks every SQL file under internal/pgengine/sql/
-// and fails the test if any file contains CREATE EXTENSION or ALTER EXTENSION
-// (REQ-007 / CON-001). Walked from the test working directory; resolves the
-// module root by walking upward until go.mod is found.
+// and fails the test if any file contains CREATE EXTENSION or ALTER EXTENSION.
+// Walked from the test working directory; resolves the module root by walking
+// upward until go.mod is found.
 func assertNoExtensionDMLInDDL(t *testing.T) {
 	t.Helper()
 	root, err := findModuleRoot()
@@ -219,7 +219,7 @@ func TestResolveSecretsConnStringNoRefs(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
 
-// TestResolveSecretsJSONEscaping — AC-008: secret value containing `"`, `\`,
+// TestResolveSecretsJSONEscaping: secret value containing `"`, `\`,
 // and a newline round-trips through the resolver and the downstream
 // json.Unmarshal byte-for-byte.
 func TestResolveSecretsJSONEscaping(t *testing.T) {
@@ -249,7 +249,7 @@ func TestResolveSecretsJSONEscaping(t *testing.T) {
 	assert.Equal(t, plaintext, doc.Password)
 }
 
-// TestResolveSecretsConnStringQuoting — AC-009: value with space and `'`
+// TestResolveSecretsConnStringQuoting: value with space and `'`
 // accepted by pgx.ParseConfig; already-delimited template not doubled.
 func TestResolveSecretsConnStringQuoting(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
@@ -283,8 +283,8 @@ func TestResolveSecretsConnStringQuoting(t *testing.T) {
 	assert.Equal(t, pw, cfg2.Password)
 }
 
-// TestResolveSecretsErrorClasses — AC-010, AC-011, AC-012: missing secret,
-// wrong key, and key-unset failure classes.
+// TestResolveSecretsErrorClasses: missing secret, wrong key,
+// and key-unset failure classes.
 func TestResolveSecretsErrorClasses(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
@@ -292,14 +292,14 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 	ctx := context.Background()
 	installPgcrypto(t, ctx, pge)
 
-	// AC-010: missing secret must error naming the secret and client.
+	// missing secret must error naming the secret and client.
 	_, _, err := pge.ResolveSecretsJSON(ctx,
 		`{"password":"${secret:does_not_exist}"}`)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "does_not_exist")
 	assert.Contains(t, err.Error(), pge.ClientName)
 
-	// AC-012: wrong key — insert with a key, try to decrypt with another.
+	// wrong key — insert with a key, try to decrypt with another.
 	const name = "wrong_key"
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc) VALUES ($1,$2,
@@ -312,7 +312,7 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 	assert.Contains(t, err.Error(), name)
 	assert.Contains(t, strings.ToLower(err.Error()), "wrong key or corrupt data")
 
-	// AC-011: key unset, reference present → fails before any query.
+	// key unset, reference present → fails before any query.
 	pge.SecretEncryptionKey = ""
 	_, _, err = pge.ResolveSecretsJSON(ctx,
 		`{"password":"${secret:anything}"}`)
@@ -320,9 +320,9 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 	assert.Contains(t, err.Error(), "SecretEncryptionKey")
 }
 
-// TestSecretStartupCheck — AC-005, AC-006.
+// TestSecretStartupCheck: error logged when secrets exist without a key.
 func TestSecretStartupCheck(t *testing.T) {
-	// AC-005: key unset and rows present → error logged.
+	// key unset and rows present → error logged.
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
 	pge := container.Engine
@@ -335,7 +335,7 @@ func TestSecretStartupCheck(t *testing.T) {
 		pge.ClientName)
 	require.NoError(t, pge.CheckSecretConfig(ctx))
 
-	// AC-006: key set → no secret_count() call. Use a mock pool for the negative.
+	// key set → no secret_count() call. Use a mock pool for the negative.
 	initmockdb(t)
 	defer mockPool.Close()
 	pgeMock := pgengine.NewDB(mockPool, "test_client")
@@ -345,9 +345,8 @@ func TestSecretStartupCheck(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet(), "no query must be issued")
 }
 
-// TestSecretSchemaFreshInstall — AC-001, AC-004, AC-018, AC-019, AC-020,
-// AC-021. Asserts schema, trigger, name format, NOT NULL, and per-client
-// isolation.
+// TestSecretSchemaFreshInstall: asserts schema, trigger, name format,
+// NOT NULL, and per-client isolation.
 func TestSecretSchemaFreshInstall(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
@@ -355,7 +354,7 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	ctx := context.Background()
 	installPgcrypto(t, ctx, pge)
 
-	// Table + functions must exist (AC-001). The secret_touch trigger is
+	// Table + functions must exist. The secret_touch trigger is
 	// verified separately.
 	for _, obj := range []string{
 		`timetable.secret`,         /* table */
@@ -397,7 +396,7 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	require.NotNil(t, mine)
 	assert.Equal(t, "for-me", *mine)
 
-	// AC-019: secret_name_format rejects whitespace and empty.
+	// secret_name_format rejects whitespace and empty.
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
 		 VALUES ($1, 'has space', pgp_sym_encrypt('x', $2))`,
@@ -409,14 +408,14 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 		pge.ClientName, pge.SecretEncryptionKey)
 	assert.Error(t, err)
 
-	// AC-020: NULL client_name rejected.
+	// NULL client_name rejected.
 	_, err = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
 		 VALUES (NULL, 'nullcn', pgp_sym_encrypt('x', $2))`,
 		pge.SecretEncryptionKey)
 	assert.Error(t, err)
 
-	// AC-018: secret_touch trigger refreshes updated_at / updated_by.
+	// secret_touch trigger refreshes updated_at / updated_by.
 	_, err = pge.ConfigDb.Exec(ctx,
 		`UPDATE timetable.secret SET updated_at = 'epoch', updated_by = 'liar'
 		 WHERE client_name = $1 AND secret_name = 'iso'`, pge.ClientName)
@@ -429,13 +428,12 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	assert.NotEqual(t, "liar", updatedBy)
 }
 
-// TestSecretMigrationPgcryptoFreshInstall exercises CON-001 through the
-// existing TestSamplesScripts / TestRun integration path: every test
-// container is built fresh with no manual pgcrypto setup, and the migration
-// succeeds exactly because 00798.sql installs pgcrypto on first run. A
-// dedicated unit test for "MigrateDb is idempotent on partial state" would
-// couple to pgx-migrator internals (column name, ordering, CASCADE behavior),
-
+// TestSecretMigrationPgcryptoFreshInstall exercises the contract that
+// every test container is built fresh with no manual pgcrypto setup,
+// and the migration succeeds exactly because 00798.sql creates the store
+// without requiring the extension. A dedicated unit test for "MigrateDb is
+// idempotent on partial state" would couple to pgx-migrator internals
+// (column name, ordering, CASCADE behavior),
 func TestSecretGrants(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
@@ -475,7 +473,7 @@ func TestSecretGrants(t *testing.T) {
 		`SELECT timetable.resolve_secret('grants', $1, $2)`,
 		pge.ClientName, pge.SecretEncryptionKey).Scan(&s)
 	assert.Error(t, err, "throwaway role must not EXECUTE resolve_secret")
-	// SEC-001: owner CAN read value_enc.
+	// owner CAN read value_enc.
 	var v []byte
 	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
 		`SELECT value_enc FROM timetable.secret
@@ -484,7 +482,7 @@ func TestSecretGrants(t *testing.T) {
 	assert.NotEmpty(t, v)
 }
 
-// TestResolveSecretsJSONMissingSecretReturnsError — missing secret goes through
+// TestResolveSecretsJSONMissingSecretReturnsError: missing secret goes through
 // resolve_secret which returns NULL. Use a mock to drive that path.
 func TestResolveSecretsJSONMissingSecretReturnsError(t *testing.T) {
 	initmockdb(t)
@@ -502,7 +500,7 @@ func TestResolveSecretsJSONMissingSecretReturnsError(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
 
-// TestResolveSecretsJSONWrongKey — pgp_sym_decrypt error path.
+// TestResolveSecretsJSONWrongKey: pgp_sym_decrypt error path.
 func TestResolveSecretsJSONWrongKey(t *testing.T) {
 	initmockdb(t)
 	defer mockPool.Close()
@@ -519,11 +517,11 @@ func TestResolveSecretsJSONWrongKey(t *testing.T) {
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
 
-// TestExecutionLogNeverContainsPlaintext — AC-013 (SQL path, T036; PROGRAM
-// path, T042). For each kind of task, run a parameter that contains a
-// `${secret:…}` reference and assert that `timetable.execution_log.params`
-// carries the reference form, never the plaintext, and that
-// `timetable.execution_log.command` likewise keeps the reference form.
+// TestExecutionLogNeverContainsPlaintext: for each kind of task, run a
+// parameter that contains a `${secret:…}` reference and assert that
+// `timetable.execution_log.params` carries the reference form, never the
+// plaintext, and that `timetable.execution_log.command` likewise keeps the
+// reference form.
 func TestExecutionLogNeverContainsPlaintext(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
@@ -531,7 +529,7 @@ func TestExecutionLogNeverContainsPlaintext(t *testing.T) {
 	ctx := context.Background()
 	installPgcrypto(t, ctx, pge)
 
-	const pw = "s3cr3t-plaintext-AC-013"
+	const pw = "s3cr3t-plaintext-no-log"
 	_, err := pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
 		 VALUES ($1, 'plaintext_log', pgp_sym_encrypt($2, $3))`,
@@ -598,14 +596,14 @@ func TestExecutionLogNeverContainsPlaintext(t *testing.T) {
 	})
 }
 
-// TestPgxTracerRedactsSecretArgs — AC-014 / SEC-004 / REQ-030. The pgx tracer
-// in this codebase is `log.NewPgxLogger`, wired via
-// bootstrap.getPgxConnConfig. When the resolver calls `timetable.resolve_secret`
-// under a context marked with `log.WithoutQueryArgs`, PgxLogger.Log MUST drop
-// the `args` field (which carries the encryption key as a bound parameter)
-// while retaining `sql`. This test drives PgxLogger directly so the assertion
-// is independent of whether the testcontainer's log level is high enough to
-// persist tracer output to `timetable.log`.
+// TestPgxTracerRedactsSecretArgs: the pgx tracer in this codebase is
+// `log.NewPgxLogger`, wired via bootstrap.getPgxConnConfig. When the resolver
+// calls `timetable.resolve_secret` under a context marked with
+// `log.WithoutQueryArgs`, PgxLogger.Log MUST drop the `args` field (which
+// carries the encryption key as a bound parameter) while retaining `sql`.
+// This test drives PgxLogger directly so the assertion is independent of
+// whether the testcontainer's log level is high enough to persist tracer
+// output to `timetable.log`.
 func TestPgxTracerRedactsSecretArgs(t *testing.T) {
 	// Unmarked context: args + sql must both appear.
 	unmarkedBuf := &captureBuf{}
@@ -631,32 +629,32 @@ func TestPgxTracerRedactsSecretArgs(t *testing.T) {
 		"Query",
 		map[string]any{
 			"sql":  "SELECT timetable.resolve_secret($1, $2, $3)",
-			"args": []any{"tracer_redact", "AC-014-pw", "AC-014-key"},
+			"args": []any{"tracer_redact", "marker-pw", "marker-key"},
 		},
 	)
 	out := markedBuf.String()
 	assert.Contains(t, out, "SELECT timetable.resolve_secret",
-		"sql must be retained (REQ-023, REQ-030)")
-	assert.NotContains(t, out, "AC-014-pw",
+		"sql must be retained")
+	assert.NotContains(t, out, "marker-pw",
 		"plaintext must not leak through args under WithoutQueryArgs")
-	assert.NotContains(t, out, "AC-014-key",
+	assert.NotContains(t, out, "marker-key",
 		"encryption key must not leak through args under WithoutQueryArgs")
 	assert.NotContains(t, out, "tracer_redact",
 		"secret name (an arg) must not leak through args under WithoutQueryArgs")
 }
 
-// TestLegacyLiteralParametersUnchanged — AC-024 (T045). A chain whose
-// `parameter.value` holds a literal password (no `${secret:…}` reference)
-// MUST behave identically before and after the migration. The downstream
-// JSON unmarshal accepts the literal, and `execution_log.params` records
-// the literal verbatim — no rewriting is forced.
+// TestLegacyLiteralParametersUnchanged: a chain whose `parameter.value`
+// holds a literal password (no `${secret:…}` reference) MUST behave
+// identically before and after the migration. The downstream JSON unmarshal
+// accepts the literal, and `execution_log.params` records the literal
+// verbatim — no rewriting is forced.
 func TestLegacyLiteralParametersUnchanged(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
 
-	const literal = "literal-legacy-password-AC-024"
+	const literal = "literal-legacy-password"
 	_, _ = pge.ConfigDb.Exec(ctx, `DELETE FROM timetable.execution_log`)
 
 	task := &pgengine.ChainTask{
@@ -673,13 +671,13 @@ func TestLegacyLiteralParametersUnchanged(t *testing.T) {
 		 WHERE params <> '' ORDER BY last_run DESC LIMIT 1`).
 		Scan(&recorded))
 	assert.Equal(t, `["`+literal+`"]`, recorded,
-		"literal parameter must pass through unmolested (AC-024)")
+		"literal parameter must pass through unmolested")
 }
 
-// TestResolveSecretLocatesPgcrypto — AC-004 / AC-026 / REQ-008. Install
-// pgcrypto (it lands in `public` by default), insert a secret, resolve it,
-// then ALTER EXTENSION pgcrypto SET SCHEMA ext and resolve the same secret
-// again. Both MUST succeed, proving the schema is discovered at call time.
+// TestResolveSecretLocatesPgcrypto: install pgcrypto (it lands in `public`
+// by default), insert a secret, resolve it, then ALTER EXTENSION pgcrypto
+// SET SCHEMA ext and resolve the same secret again. Both MUST succeed,
+// proving the schema is discovered at call time.
 func TestResolveSecretLocatesPgcrypto(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
@@ -714,17 +712,16 @@ func TestResolveSecretLocatesPgcrypto(t *testing.T) {
 		name, pge.ClientName, pge.SecretEncryptionKey).Scan(&got))
 	require.NotNil(t, got)
 	assert.Equal(t, "plaintext-ext", *got,
-		"resolve_secret must discover the extension schema at call time (REQ-008)")
+		"resolve_secret must discover the extension schema at call time")
 }
 
-// TestSecretsWithoutPgcrypto — AC-025 / AC-027 / REQ-007 / REQ-053 / REQ-054
-// / CON-001. On a container where pgcrypto is NOT installed: bootstrap/migration
-// succeeded, both functions and the table exist, secret_count() returns 0,
-// resolve_secret on an unknown name returns NULL, and resolve_secret on an
-// existing row whose value_enc is plain bytea raises SQLSTATE 0A000 wrapped
-// with the secret name. The scheduler keeps running. Also asserts statically
-// that no file under internal/pgengine/sql/ contains CREATE EXTENSION or
-// ALTER EXTENSION.
+// TestSecretsWithoutPgcrypto: on a container where pgcrypto is NOT
+// installed, bootstrap/migration succeeded, both functions and the table
+// exist, secret_count() returns 0, resolve_secret on an unknown name
+// returns NULL, and resolve_secret on an existing row whose value_enc is
+// plain bytea raises SQLSTATE 0A000 wrapped with the secret name. The
+// scheduler keeps running. Also asserts statically that no file under
+// internal/pgengine/sql/ contains CREATE EXTENSION or ALTER EXTENSION.
 func TestSecretsWithoutPgcrypto(t *testing.T) {
 	// Static guard first: no DDL file may install or alter an extension.
 	assertNoExtensionDMLInDDL(t)
@@ -785,9 +782,9 @@ func TestSecretsWithoutPgcrypto(t *testing.T) {
 	require.Error(t, rerr)
 	msg := strings.ToLower(rerr.Error())
 	assert.Contains(t, msg, "absent_test",
-		"error must name the secret (REQ-041 class 4)")
+		"error must name the secret")
 	assert.Contains(t, msg, "pgcrypto",
-		"error must name pgcrypto and the DBA's responsibility (REQ-041 class 4)")
+		"error must name pgcrypto and the DBA's responsibility")
 
 	// Scheduler remains usable: a non-secret SQL task still executes.
 	task := &pgengine.ChainTask{

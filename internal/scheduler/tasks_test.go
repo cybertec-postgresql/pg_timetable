@@ -18,8 +18,8 @@ import (
 )
 
 // installPgcrypto ensures the pgcrypto extension is present in the test
-// database. Per REQ-007 / REQ-049, every test that exercises a secret
-// round trip installs the extension in its own fixture.
+// database. Every test that exercises a secret round trip installs the
+// extension in its own fixture.
 func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) {
 	t.Helper()
 	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
@@ -76,10 +76,10 @@ func TestExecuteTask(t *testing.T) {
 	a.NoError(et("Shutdown", []string{}))
 }
 
-// TestSendMailResolvesSecret — AC-007 / T029. Stores a secret for the running
-// client, calls taskSendMail with a reference, and asserts that the plaintext
-// reaches EmailConn (verified indirectly via the SendMail boundary: we let
-// the resolver succeed and then trigger the SMTP call which fails fast on a
+// TestSendMailResolvesSecret stores a secret for the running client, calls
+// taskSendMail with a reference, and asserts that the plaintext reaches
+// EmailConn (verified indirectly via the SendMail boundary: we let the
+// resolver succeed and then trigger the SMTP call which fails fast on a
 // non-listening port — what matters is that the JSON unmarshal succeeded,
 // i.e. the reference was replaced with the stored plaintext).
 func TestSendMailResolvesSecret(t *testing.T) {
@@ -116,8 +116,8 @@ func TestSendMailResolvesSecret(t *testing.T) {
 	_ = sch // sch kept for future direct invocation; today we exercise the resolver path used by taskSendMail.
 }
 
-// TestBuiltinDebugLogOmitsParamValues — AC-015 / T030. The debug log emitted
-// by executeBuiltinTask must carry a parameter count and MUST NOT contain any
+// TestBuiltinDebugLogOmitsParamValues — the debug log emitted by
+// executeBuiltinTask must carry a parameter count and MUST NOT contain any
 // parameter value.
 func TestBuiltinDebugLogOmitsParamValues(t *testing.T) {
 	var buf bytes.Buffer

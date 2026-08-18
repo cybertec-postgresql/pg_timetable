@@ -13,25 +13,25 @@ import (
 )
 
 // secretRefPattern matches ${secret:name}; the character class mirrors the
-// secret_name_format CHECK constraint (REQ-021, REQ-025).
+// secret_name_format CHECK constraint on the timetable.secret table.
 var secretRefPattern = regexp.MustCompile(`\$\{secret:([A-Za-z0-9_.-]+)\}`)
 
 const secretRefSubstring = "${secret:"
 
 // resolveSecretSQL calls timetable.resolve_secret with the fixed client scope.
 // The context is wrapped with log.WithoutQueryArgs so the encryption key never
-// reaches the pgx tracer (REQ-018, REQ-030).
+// reaches the pgx tracer.
 const resolveSecretSQL = `SELECT timetable.resolve_secret($1, $2, $3)`
 
 // resolveRefs is the shared engine used by both ResolveSecretsJSON and
-// ResolveSecretsConnString (REQ-018, REQ-022, REQ-024, REQ-025, REQ-040).
+// ResolveSecretsConnString.
 //
 // If s does not contain the literal substring `${secret:`, it is returned
-// byte-identical with no parsing, no regexp evaluation, and no database call
-// (REQ-026, CON-002). Otherwise, each match is resolved exactly once against
+// byte-identical with no parsing, no regexp evaluation, and no database call.
+// Otherwise, each match is resolved exactly once against
 // timetable.resolve_secret using pge.ClientName as the fixed scope, and quote
 // is applied to the resolved value before substitution. Resolved values are
-// never re-scanned (REQ-024).
+// never re-scanned.
 func (pge *PgEngine) resolveRefs(
 	ctx context.Context, s string,
 	quote func(value string, m []int, in string) string,
@@ -40,7 +40,7 @@ func (pge *PgEngine) resolveRefs(
 		return s, nil, nil
 	}
 	// Pre-flight: if any reference is present and the key is empty, fail fast
-	// with a descriptive error (REQ-041 class 2).
+	// with a descriptive error.
 	if pge.SecretEncryptionKey == "" {
 		return "", uniqueRefNames(s), fmt.Errorf(
 			"secret references found (%s) but SecretEncryptionKey is not configured; set PGTT_SECRET_KEY/--secret-key",
@@ -57,17 +57,17 @@ func (pge *PgEngine) resolveRefs(
 		var plaintext *string
 		err := pge.ConfigDb.QueryRow(markedCtx, resolveSecretSQL, name, pge.ClientName, pge.SecretEncryptionKey).Scan(&plaintext)
 		if err != nil {
-			// REQ-041 class 3: pgp_sym_decrypt raises "Wrong key or corrupt data".
+			// pgp_sym_decrypt raises "Wrong key or corrupt data".
 			// Surface it wrapped with the secret name; never as not-found.
 			if isWrongKey(err) {
 				return "", append(names, name), fmt.Errorf(
 					`secret %q: wrong key or corrupt data`, name)
 			}
-			// REQ-041 class 4: pgcrypto is absent. resolve_secret raises
-			// feature_not_supported (SQLSTATE 0A000) per REQ-008. Wrap with
+			// pgcrypto is absent. resolve_secret raises
+			// feature_not_supported (SQLSTATE 0A000). Wrap with
 			// the secret name and a statement that installing pgcrypto is the
 			// database administrator's responsibility. This is a per-task
-			// error only — never a startup failure (REQ-054).
+			// error only — never a startup failure.
 			if isMissingPgcrypto(err) {
 				return "", append(names, name), fmt.Errorf(
 					`secret %q: pgcrypto extension is not installed; `+
@@ -78,8 +78,8 @@ func (pge *PgEngine) resolveRefs(
 				"secret %q: %w", name, err)
 		}
 		if plaintext == nil {
-			// Missing secret (one row containing NULL). Indistinguishable
-			// across client scopes (REQ-041 class 1, REQ-044).
+		// Missing secret (one row containing NULL). Indistinguishable
+		// across client scopes.
 			return "", append(names, name), fmt.Errorf(
 				`secret %q not found for client %q`, name, pge.ClientName)
 		}
@@ -93,7 +93,7 @@ func (pge *PgEngine) resolveRefs(
 }
 
 // isWrongKey reports whether the error originates from pgp_sym_decrypt's
-// "Wrong key or corrupt data" failure (REQ-041 class 3).
+// "Wrong key or corrupt data" failure.
 func isWrongKey(err error) bool {
 	if err == nil {
 		return false
@@ -105,7 +105,7 @@ func isWrongKey(err error) bool {
 
 // isMissingPgcrypto reports whether the error is the SQLSTATE 0A000
 // (feature_not_supported) raised by timetable.resolve_secret when the
-// pgcrypto extension is not installed (REQ-041 class 4, REQ-008).
+// pgcrypto extension is not installed.
 func isMissingPgcrypto(err error) bool {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
@@ -132,11 +132,11 @@ func uniqueRefNames(s string) []string {
 }
 
 // ResolveSecretsJSON resolves ${secret:name} references inside the string
-// leaves of a jsonb-encoded parameter value and returns the re-encoded JSON
-// (REQ-027, REQ-029, AC-008). Resolved values are never re-scanned (REQ-024).
+// leaves of a jsonb-encoded parameter value and returns the re-encoded JSON.
+// Resolved values are never re-scanned.
 //
 // If s does not contain the literal substring "${secret:" it is returned
-// byte-identical with no parsing, no database call (REQ-026, CON-002).
+// byte-identical with no parsing, no database call.
 func (pge *PgEngine) ResolveSecretsJSON(ctx context.Context, s string) (resolved string, names []string, err error) {
 	if !strings.Contains(s, secretRefSubstring) {
 		return s, nil, nil
@@ -215,8 +215,8 @@ func walkJSON(v any, fn func(*string)) {
 }
 
 // ResolveSecretsConnString resolves ${secret:name} references inside a libpq
-// conninfo string, applying conninfo quoting to each resolved value per
-// REQ-028. Same short-circuit contract as ResolveSecretsJSON (REQ-026).
+// conninfo string, applying conninfo quoting to each resolved value.
+// Same short-circuit contract as ResolveSecretsJSON.
 func (pge *PgEngine) ResolveSecretsConnString(ctx context.Context, s string) (resolved string, names []string, err error) {
 	return pge.resolveRefs(ctx, s, func(value string, m []int, in string) string {
 		return quoteConnInfoValue(value, in, m)
@@ -226,9 +226,9 @@ func (pge *PgEngine) ResolveSecretsConnString(ctx context.Context, s string) (re
 // quoteConnInfoValue applies libpq conninfo quoting to a resolved secret
 // value. If the reference in the template is already delimited by single
 // quotes (e.g. `password='${secret:pw}'`), the wrapping is omitted and only
-// `\` and `'` are escaped, so the existing delimiters are not doubled
-// (REQ-028). An empty value is emitted as `''` because a bare `password=`
-// followed by whitespace would swallow the next token (REQ-028).
+// `\` and `'` are escaped, so the existing delimiters are not doubled.
+// An empty value is emitted as `''` because a bare `password=`
+// followed by whitespace would swallow the next token.
 func quoteConnInfoValue(value string, in string, m []int) string {
 	if value == "" {
 		return "''"
@@ -258,9 +258,8 @@ func isAlreadySingleQuoted(in string, m []int) bool {
 }
 
 // CheckSecretConfig logs an error when timetable.secret contains rows but no
-// encryption key is configured (REQ-013, REQ-019, REQ-020, CON-002). It
-// performs no query when SecretEncryptionKey is non-empty. A failure of the
-// check itself is logged, never fatal (REQ-020).
+// encryption key is configured. It performs no query when SecretEncryptionKey
+// is non-empty. A failure of the check itself is logged, never fatal.
 func (pge *PgEngine) CheckSecretConfig(ctx context.Context) error {
 	if pge.SecretEncryptionKey != "" {
 		return nil

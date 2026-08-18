@@ -98,9 +98,9 @@ func run(ctx context.Context, cmdOpts *config.CmdOptions, logger log.LoggerHooke
 		return ExitCodeOK
 	}
 
-	// Verify the secret-store configuration before any chain runs (REQ-013,
-	// REQ-019, REQ-020, CON-002). Failures of the check itself are logged,
-	// not fatal — see CheckSecretConfig.
+	// Verify the secret-store configuration before any chain runs.
+	// Failures of the check itself are logged, not fatal — see
+	// CheckSecretConfig.
 	if err := pge.CheckSecretConfig(ctx); err != nil {
 		logger.WithError(err).Warn("Secret configuration check failed")
 	}

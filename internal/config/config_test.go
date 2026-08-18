@@ -109,7 +109,7 @@ func TestValidateOTel(t *testing.T) {
 }
 
 func TestSecretKeyConfigBinding(t *testing.T) {
-	// REQ-016 / AC-022: NewConfig MUST bind --secret-key and PGTT_SECRET_KEY
+	// NewConfig MUST bind --secret-key and PGTT_SECRET_KEY
 	// to ConfigOptions.SecretEncryptionKey. This guards the mandatory
 	// mapstructure tag.
 	const want = "the-test-secret-key"

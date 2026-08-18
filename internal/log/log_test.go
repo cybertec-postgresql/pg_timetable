@@ -40,9 +40,9 @@ func TestPgxLog(*testing.T) {
 	}
 }
 
-// TestPgxLoggerDropsQueryArgs — REQ-030 / T028: a context marked with
-// WithoutQueryArgs drops the `args` key while retaining `sql`; an unmarked
-// context retains both.
+// TestPgxLoggerDropsQueryArgs: a context marked with WithoutQueryArgs
+// drops the `args` key while retaining `sql`; an unmarked context retains
+// both.
 func TestPgxLoggerDropsQueryArgs(t *testing.T) {
 	var buf bytes.Buffer
 	base := logrus.New()
