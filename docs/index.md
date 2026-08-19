@@ -25,6 +25,7 @@ New to pg_timetable? Follow the [tutorial](tutorial-first-chain.md) to schedule 
 ## Learn More
 
 - **Tutorial**: [Your First Scheduled Chain](tutorial-first-chain.md)
+- **Tutorial**: [Your First YAML Chain](tutorial-your-first-yaml-chain.md)
 - **How-to Guides**: [Installation](installation.md)
 - **Reference**: [REST API](api.md)
 - **Concept**: [Project Background](background.md)
