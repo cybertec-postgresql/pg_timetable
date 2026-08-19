@@ -20,7 +20,7 @@ import (
 // installPgcrypto ensures the pgcrypto extension is present in the test
 // database. Every test that exercises a secret round trip installs the
 // extension in its own fixture.
-func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) {
+func installPgcrypto(ctx context.Context, t *testing.T, pge *pgengine.PgEngine) {
 	t.Helper()
 	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
 	require.NoError(t, err, "installing pgcrypto must succeed in the test fixture")
@@ -87,7 +87,7 @@ func TestSendMailResolvesSecret(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	const name = "sendmail_resolve"
 	const pw = "real-secret-pw"

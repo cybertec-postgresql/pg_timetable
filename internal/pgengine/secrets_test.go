@@ -31,7 +31,7 @@ import (
 // without a live database connection.
 type executorStub struct{}
 
-func (executorStub) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+func (executorStub) Exec(_ context.Context, _ string, _ ...any) (pgconn.CommandTag, error) {
 	return pgconn.CommandTag{}, nil
 }
 
@@ -40,22 +40,12 @@ func (executorStub) Exec(ctx context.Context, sql string, args ...any) (pgconn.C
 // extension in its own fixture. pgcrypto lives wherever CREATE EXTENSION
 // places it (default `public`), so subsequent test code uses unqualified
 // pgp_sym_encrypt / pgp_sym_decrypt calls.
-func installPgcrypto(t *testing.T, ctx context.Context, pge *pgengine.PgEngine) {
+func installPgcrypto(ctx context.Context, t *testing.T, pge *pgengine.PgEngine) {
 	t.Helper()
 	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
 	require.NoError(t, err, "installing pgcrypto must succeed in the test fixture")
 }
 
-// mustExtractJSONString extracts a top-level string field from a jsonb payload.
-// Used to verify that resolved JSON leaves survive a round-trip.
-func mustExtractJSONString(t *testing.T, s, field string) string {
-	t.Helper()
-	var m map[string]any
-	require.NoError(t, json.Unmarshal([]byte(s), &m))
-	v, ok := m[field].(string)
-	require.True(t, ok, "expected string field %q in %s", field, s)
-	return v
-}
 
 // newSchedulerFor builds a minimal scheduler bound to `pge`. Used by the
 // PROGRAM path test, which needs ExecuteProgramCommand on *Scheduler.
@@ -74,9 +64,6 @@ func shellForOS() string {
 	return "/bin/sh"
 }
 
-func shellEchoArgs(envName string) string {
-	return `["-c","echo ` + envName + `"]`
-}
 
 // captureBuf is a thread-safe buffer that captures logrus output for the
 // PgxLogger test.
@@ -228,7 +215,7 @@ func TestResolveSecretsJSONEscaping(t *testing.T) {
 	pge := container.Engine
 
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 	const name = "json_esc_test"
 	const plaintext = `he said "hi"\then` // includes quotes, backslash, newline
 	_, err := pge.ConfigDb.Exec(ctx,
@@ -236,6 +223,7 @@ func TestResolveSecretsJSONEscaping(t *testing.T) {
 		    pgp_sym_encrypt($3, $4))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name, plaintext, pge.SecretEncryptionKey)
+	require.NoError(t, err)
 	in := `{"username":"svc","password":"${secret:` + name + `}"}`
 	out, names, err := pge.ResolveSecretsJSON(ctx, in)
 	require.NoError(t, err)
@@ -256,7 +244,7 @@ func TestResolveSecretsConnStringQuoting(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	const name = "conn_quote"
 	const pw = "s3cr3t pw's"
@@ -265,6 +253,7 @@ func TestResolveSecretsConnStringQuoting(t *testing.T) {
 		    pgp_sym_encrypt($3, $4))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name, pw, pge.SecretEncryptionKey)
+	require.NoError(t, err)
 	// Bare reference: must wrap in single quotes (value has space and ').
 	out, _, err := pge.ResolveSecretsConnString(ctx,
 		"host=h dbname=d user=u password=${secret:"+name+"}")
@@ -290,7 +279,7 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	// missing secret must error naming the secret and client.
 	_, _, err := pge.ResolveSecretsJSON(ctx,
@@ -306,6 +295,7 @@ func TestResolveSecretsErrorClasses(t *testing.T) {
 		    pgp_sym_encrypt('right', 'right-key'))
 		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
 		pge.ClientName, name)
+	require.NoError(t, err)
 	_, _, err = pge.ResolveSecretsJSON(ctx,
 		`{"password":"${secret:`+name+`}"}`)
 	require.Error(t, err)
@@ -327,7 +317,7 @@ func TestSecretStartupCheck(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 	pge.SecretEncryptionKey = ""
 	_, _ = pge.ConfigDb.Exec(ctx,
 		`INSERT INTO timetable.secret (client_name, secret_name, value_enc) VALUES
@@ -352,7 +342,7 @@ func TestSecretSchemaFreshInstall(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	// Table + functions must exist. The secret_touch trigger is
 	// verified separately.
@@ -439,7 +429,7 @@ func TestSecretGrants(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	const throwaway = "pgtt_throwaway_role_grants"
 	_, _ = pge.ConfigDb.Exec(ctx, `DROP ROLE IF EXISTS `+throwaway)
@@ -463,7 +453,7 @@ func TestSecretGrants(t *testing.T) {
 	// ownership. The owning role remains connected via ConfigDb.
 	tx, terr := pge.ConfigDb.Begin(ctx)
 	require.NoError(t, terr)
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 	_, terr = tx.Exec(ctx, `SET LOCAL ROLE `+throwaway)
 	require.NoError(t, terr)
 
@@ -527,7 +517,7 @@ func TestExecutionLogNeverContainsPlaintext(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	const pw = "s3cr3t-plaintext-no-log"
 	_, err := pge.ConfigDb.Exec(ctx,
@@ -683,7 +673,7 @@ func TestResolveSecretLocatesPgcrypto(t *testing.T) {
 	defer cleanup()
 	pge := container.Engine
 	ctx := context.Background()
-	installPgcrypto(t, ctx, pge)
+	installPgcrypto(ctx, t, pge)
 
 	const name = "locate_pgcrypto"
 	_, err := pge.ConfigDb.Exec(ctx,
