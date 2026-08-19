@@ -36,8 +36,7 @@ New to pg_timetable? Follow the [tutorial](tutorial-first-chain.md) to schedule 
   [Secret Store Security Model](explanation-secret-store-security-model.md)
 - **Observability**: [Enable OpenTelemetry](how-to-enable-opentelemetry.md) ·
   [OpenTelemetry Reference](reference-opentelemetry.md)
-- **Concept**: [The Scheduling Model](explanation-scheduling-model.md) ·
-  [Project Background](background.md)
+- **Concept**: [The Scheduling Model](explanation-scheduling-model.md)
 
 See the sidebar navigation for the complete Reference and How-to Guides sections.
 
@@ -51,7 +50,9 @@ and to tell the world about it.
 
 ## Support
 
-For professional support, please contact [Cybertec](https://www.cybertec-postgresql.com/).
+**pg_timetable** started in 2019 for internal scheduling needs at Cybertec, which also provides
+commercial 9-to-5 and 24/7 support for pg_timetable — contact
+[Cybertec](https://www.cybertec-postgresql.com/) for details.
 
 ## Authors
 

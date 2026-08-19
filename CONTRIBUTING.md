@@ -14,9 +14,9 @@ New documentation files use a quadrant-prefixed name:
 - `reference-<topic>.md`
 - `explanation-<topic>.md`
 
-Existing files predating this convention (`api.md`, `background.md`, `database_schema.md`,
-`installation.md`, `migration.md`, `samples.md`, `secret_store.md`, `yaml-format.md`) are not
-renamed retroactively — renaming breaks external links and `git blame`. New pages should follow
-the convention above regardless of the older filenames already in the tree.
+Existing files predating this convention (`api.md`, `database_schema.md`, `installation.md`,
+`migration.md`, `samples.md`, `secret_store.md`, `yaml-format.md`) are not renamed
+retroactively — renaming breaks external links and `git blame`. New pages should follow the
+convention above regardless of the older filenames already in the tree.
 
 Add every new page to the correct section of `mkdocs.yml`'s `nav`.

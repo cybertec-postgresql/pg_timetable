@@ -78,7 +78,6 @@ nav:
     - Secret Store: secret_store.md
     - OpenTelemetry Reference: reference-opentelemetry.md
   - Concept:
-    - Project Background: background.md
     - The Scheduling Model: explanation-scheduling-model.md
     - Secret Store Security Model: explanation-secret-store-security-model.md
   - Developer:
