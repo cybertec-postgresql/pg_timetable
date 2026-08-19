@@ -30,6 +30,7 @@ BEGIN
     -- Store the SMTP password encrypted. pgcrypto is required for the secret
     -- store; here it lives in `public` (the default), so the call is
     -- unqualified.
+    INSERT INTO timetable.secret (client_name, secret_name, value_enc)
     VALUES (v_client_name, 'smtp_main',
             pgp_sym_encrypt('s3cr3t pw''s', 'pgtt_test_secret_key'))
     ON CONFLICT (client_name, secret_name) DO UPDATE

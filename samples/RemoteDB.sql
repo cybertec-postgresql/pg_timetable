@@ -33,6 +33,7 @@ BEGIN
     -- Store the remote DB password encrypted. pgcrypto is required for the
     -- secret store; here it lives in `public` (the default), so the call is
     -- unqualified.
+    INSERT INTO timetable.secret (client_name, secret_name, value_enc)
     VALUES (v_client_name, 'remotedb_demo',
             pgp_sym_encrypt('somestrong', 'pgtt_test_secret_key'))
     ON CONFLICT (client_name, secret_name) DO UPDATE
