@@ -1,15 +1,7 @@
 # YAML Chain Configuration Guide
 
-This guide explains how to use YAML files to define pg_timetable chains as an alternative to SQL-based configuration.
-
-## Overview
-
-YAML chain definitions provide a human-readable way to create scheduled task chains without writing SQL. Benefits include:
-
-- Creating complex multi-step workflows with clear structure
-- Version controlling your chain configurations
-- Easy review and modification of scheduled tasks
-- Sharing chain templates across environments
+This guide shows you how to define pg_timetable chains in YAML files as an alternative to
+SQL-based configuration.
 
 ## Basic Usage
 
