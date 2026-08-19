@@ -25,7 +25,8 @@ New to pg_timetable? Follow the [tutorial](tutorial-first-chain.md) to schedule 
 ## Learn More
 
 - **Tutorials**: [Your First Scheduled Chain](tutorial-first-chain.md) ·
-  [Your First YAML Chain](tutorial-your-first-yaml-chain.md)
+  [Your First YAML Chain](tutorial-your-first-yaml-chain.md) ·
+  [Handling Chain Errors](tutorial-handling-chain-errors.md)
 - **Chain scheduling**: [Schedule Common Jobs](how-to-schedule-common-jobs.md) ·
   [Commands, Tasks, and Chains Reference](reference-commands-tasks-chains.md)
 - **YAML authoring**: [Define Chains in YAML](how-to-write-yaml-chains.md) ·

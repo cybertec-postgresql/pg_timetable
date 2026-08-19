@@ -59,6 +59,7 @@ nav:
   - Tutorial:
     - Your First Scheduled Chain: tutorial-first-chain.md
     - Your First YAML Chain: tutorial-your-first-yaml-chain.md
+    - Handling Chain Errors: tutorial-handling-chain-errors.md
   - How-to Guides:
     - Install pg_timetable: installation.md
     - Schedule Common Jobs: how-to-schedule-common-jobs.md
