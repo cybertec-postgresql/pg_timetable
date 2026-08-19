@@ -113,7 +113,7 @@ jobs:
         cache-dependency-path: '**/requirements-doc.txt'
 
     - name: Install dependencies
-      run: pip install -r docs/requirements-doc.txt
+      run: pip install -r requirements-doc.txt
 
     - name: Check if we should push to gh-pages
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
