@@ -80,6 +80,7 @@ nav:
     - OpenTelemetry Reference: reference-opentelemetry.md
   - Concept:
     - The Scheduling Model: explanation-scheduling-model.md
+    - Design Philosophy: explanation-design-philosophy.md
     - Secret Store Security Model: explanation-secret-store-security-model.md
   - Developer:
     - License: license.md

@@ -36,7 +36,7 @@ New to pg_timetable? Follow the [tutorial](tutorial-first-chain.md) to schedule 
   [Secret Store Security Model](explanation-secret-store-security-model.md)
 - **Observability**: [Enable OpenTelemetry](how-to-enable-opentelemetry.md) ·
   [OpenTelemetry Reference](reference-opentelemetry.md)
-- **Concept**: [The Scheduling Model](explanation-scheduling-model.md)
+- **Concept**: [Design Philosophy](explanation-design-philosophy.md) · [The Scheduling Model](explanation-scheduling-model.md)
 
 See the sidebar navigation for the complete Reference and How-to Guides sections.
 
