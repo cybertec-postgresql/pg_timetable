@@ -47,45 +47,18 @@ Each task can have multiple parameter entries, with each entry causing a separat
     - ["two", 4, 6.28, true]     # Second execution
 
 # PROGRAM task parameters (arrays of command-line arguments)
-- name: "program-task" 
+- name: "program-task"
   kind: "PROGRAM"
   command: "iconv"
   parameters:
     - ["-x", "Latin-ASCII", "-o", "file1.txt", "input1.txt"]
     - ["-x", "UTF-8", "-o", "file2.txt", "input2.txt"]
-
-# BUILTIN: Sleep task (integer values)
-- name: "sleep-task"
-  kind: "BUILTIN"
-  command: "Sleep"
-  parameters:
-    - 5    # Sleep for 5 seconds
-    - 10   # Then sleep for 10 seconds
-
-# BUILTIN: Log task (string or object values)
-- name: "log-task"
-  kind: "BUILTIN"
-  command: "Log"
-  parameters:
-    - "WARNING: Simple message"
-    - level: "WARNING"
-      details: "Object message"
-
-# BUILTIN: SendMail task (complex object)
-- name: "mail-task"
-  kind: "BUILTIN"
-  command: "SendMail"
-  parameters:
-    - username: "user@example.com"
-      password: "password123"
-      serverhost: "smtp.example.com"
-      serverport: 587
-      senderaddr: "user@example.com"
-      toaddr: ["recipient@example.com"]
-      subject: "Notification"
-      msgbody: "<p>Hello User</p>"
-      contenttype: "text/html; charset=UTF-8"
 ```
+
+`BUILTIN` commands (`Sleep`, `Log`, `SendMail`, `Download`, `CopyFromFile`, `CopyToFile`,
+`CopyFromProgram`, `CopyToProgram`) take the same parameter value in YAML as in SQL — only the
+surrounding syntax differs. For every command's exact JSON shape and a worked example, see
+[Parameter value format](reference-commands-tasks-chains.md#parameter-value-format).
 
 ### Examples
 
