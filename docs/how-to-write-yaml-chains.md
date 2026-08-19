@@ -31,32 +31,7 @@ Each `--file` value is processed in the order provided, so you can mix SQL boots
 
 ## YAML Format
 
-### Basic Structure
-
-```yaml
-chains:
-  - name: "chain-name"                 # Required: unique identifier
-    schedule: "* * * * *"              # Required: cron format
-    live: true                         # Optional: enable/disable chain
-    max_instances: 1                   # Optional: max parallel executions
-    timeout: 30000                     # Optional: timeout in milliseconds
-    self_destruct: false               # Optional: delete after success
-    exclusive: false                   # Optional: pause other chains while running
-    client_name: "worker-1"            # Optional: restrict to specific client
-    on_error: "SELECT log_error($1)"   # Optional: error handling SQL
-    tasks:                             # Required: array of tasks
-      - name: "task-name"              # Optional: task description
-        kind: "SQL"                    # Optional: SQL, PROGRAM, or BUILTIN
-        command: "SELECT now()"        # Required: command to execute
-        run_as: "postgres"             # Optional: role for SET ROLE
-        connect_string: "postgresql://user@host/otherdb"  # Optional: different database connection
-        ignore_error: false            # Optional: continue on error
-        autonomous: false              # Optional: run outside transaction
-        timeout: 5000                  # Optional: task timeout in ms
-        live: true                     # Optional: set false to keep the task but skip execution
-        parameters:                    # Optional: task parameters, each entry causes separate execution
-          - ["value1", 42]             # Parameters for SQL tasks are arrays of values
-```
+See the [YAML Chain Schema](yaml-format.md) reference for the complete field list and defaults. The patterns below show common authoring tasks.
 
 ### Task Parameters
 
@@ -114,18 +89,7 @@ Each task can have multiple parameter entries, with each entry causing a separat
 
 ### Examples
 
-#### Simple SQL Job
-
-```yaml
-chains:
-  - name: "daily-cleanup"
-    schedule: "0 2 * * *"  # 2 AM daily
-    live: true
-    
-    tasks:
-      - name: "vacuum-tables"
-        command: "VACUUM ANALYZE"
-```
+For a minimal single-task example, see [YAML Chain Schema](yaml-format.md#simple-sql-job).
 
 #### Multi-Step Chain
 
@@ -159,30 +123,6 @@ chains:
         
       - name: "load"
         command: "INSERT INTO target_table SELECT * FROM temp_data"
-```
-
-#### Program Tasks  
-
-```yaml
-chains:
-  - name: "backup-job"
-    schedule: "0 3 * * 0"  # Sunday 3 AM
-    live: true
-    client_name: "backup-worker"
-    
-    tasks:
-      - name: "database-backup"
-        kind: "PROGRAM"
-        command: "pg_dump"
-        parameters:
-          - ["-h", "localhost", "-U", "postgres", "-d", "mydb", "-f", "/backups/mydb.sql"]
-        timeout: 3600000  # 1 hour
-        
-      - name: "compress-backup"
-        kind: "PROGRAM" 
-        command: "gzip"
-        parameters: 
-          - ["/backups/mydb.sql"]
 ```
 
 #### Multiple Chains in One File
@@ -275,22 +215,6 @@ tasks:
     connect_string: "postgresql://user:pass@other-host/other-db"
 ```
 
-## Validation
-
-YAML files are validated when loaded:
-
-- **Syntax**: Valid YAML format
-- **Structure**: Required fields present
-- **Cron**: Valid 5-field cron expressions  
-- **Task kinds**: Must be SQL, PROGRAM, or BUILTIN
-- **Timeouts**: Non-negative integers
-
-Use `--validate` to check one or more YAML files without importing:
-
-```bash
-pg_timetable --file chains/base.yaml --file chains/prod.yaml --validate
-```
-
 ## Migration from SQL
 
 ### Converting Existing Chains
@@ -348,48 +272,6 @@ chains:
       - command: "CALL generate_report()"
 ```
 
-## Best Practices
-
-### Naming Conventions
-
-- Use descriptive, kebab-case names
-- Include environment in name for clarity
-- Group related chains in same file
-
-### Documentation
-
-- Use YAML comments to document complex logic
-- Include purpose and dependencies in task names
-- Document parameter meanings
-
-```yaml
-chains:
-  - name: "etl-sales-data"
-    # Processes daily sales data from external API
-    # Depends on: external API availability, sales_raw table
-    schedule: "0 2 * * *"
-    
-    tasks:
-      - name: "extract-from-api"
-        # Fetches last 24h of sales data from REST API
-        command: "SELECT fetch_sales_data($1)"
-        parameters: ["yesterday"]
-```
-
-### Testing
-
-- Always validate YAML before deployment
-- Test with `--validate` flag
-- Use non-live chains for testing
-- Keep backups of working configurations
-
-### Version Control
-
-- Store YAML files in version control
-- Use meaningful commit messages
-- Tag releases for production deployments
-- Review changes before merging
-
 ## Troubleshooting
 
 ### Common Issues
@@ -428,32 +310,4 @@ Error: chain 1: chain name is required
 
 ## Secrets
 
-YAML-authored chains do **not** support `${secret:name}` references in v1.
-The reference syntax is a string-substitution feature implemented in the
-Go runtime after `parameter.value` is materialized into the database; the
-YAML loader does not perform secret resolution. A YAML chain that needs a
-secret must either:
-
-- reference a `timetable.task` row whose `parameter.value` already contains
-  `${secret:name}` (i.e., the chain was originally created via SQL using
-  `samples/Mail.sql` or `samples/RemoteDB.sql` as a template), or
-- use a connection-string literal in `database_connection` and accept the
-  trade-off documented in [`docs/samples.md`](samples.md#secrets) (the
-  password is then visible to DB readers, backups, and dumps).
-
-### What you need to enable the secret store
-
-`pgcrypto` is **not** installed by pg_timetable. To use `${secret:name}`
-references, the database administrator must install `pgcrypto` once per
-database (any schema; since PostgreSQL 13 it is a **trusted** extension
-and can be installed by any role holding `CREATE` on the database). The
-scheduler is configured with `--secret-key` (or `PGTT_SECRET_KEY`) and
-secret rows are inserted with `pgp_sym_encrypt` from the same schema.
-
-The store is opt-in syntax: chains whose `parameter.value` holds a literal
-password continue to work unchanged.
-
-See [`docs/samples.md`](samples.md#secrets) for the trust boundary, the
-honest confidentiality model (the key — not the grant model — is the
-boundary), the PROGRAM argv exposure, the debug-level caveat, and the
-trade-off between `${secret:name}` references and inline literals.
+YAML-authored chains do not support `${secret:name}` resolution in v1 — see [Use the Secret Store](how-to-use-secret-store.md#use-secrets-with-yaml-authored-chains) for the two supported workarounds.

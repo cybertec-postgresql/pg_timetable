@@ -55,23 +55,29 @@ markdown_extensions:
   - md_in_html
 
 nav:
-  - Intro:
-    - Introduction: index.md
-    - Background: background.md
-  - Concepts:
-    - Components: components.md
-    - Secret Store: secret_store.md
-    - Database Schema: database_schema.md
-  - Tutorials:
-    - Installation: installation.md
-    - Basic Jobs: basic_jobs.md
-    - Migration: migration.md
-    - Samples: samples.md
-    - YAML Chains: yaml-usage-guide.md
+  - Home: index.md
+  - Tutorial:
+    - Your First Scheduled Chain: tutorial-first-chain.md
+  - How-to Guides:
+    - Install pg_timetable: installation.md
+    - Schedule Common Jobs: how-to-schedule-common-jobs.md
+    - Run Sample Chains: samples.md
+    - Migrate from Other Schedulers: migration.md
+    - Define Chains in YAML: how-to-write-yaml-chains.md
+    - Use the Secret Store: how-to-use-secret-store.md
+    - Enable OpenTelemetry: how-to-enable-opentelemetry.md
   - Reference:
-    - API: api.md
-    - YAML Schema: yaml-format.md
-    - OpenTelemetry: opentelemetry.md
+    - REST API: api.md
+    - Command-Line Reference: reference-cli-options.md
+    - Commands, Tasks, and Chains: reference-commands-tasks-chains.md
+    - YAML Chain Schema: yaml-format.md
+    - Database Schema: database_schema.md
+    - Secret Store: secret_store.md
+    - OpenTelemetry Reference: reference-opentelemetry.md
+  - Concept:
+    - Project Background: background.md
+    - The Scheduling Model: explanation-scheduling-model.md
+    - Secret Store Security Model: explanation-secret-store-security-model.md
   - Developer:
     - License: license.md
     - Documentation: ../devel/godoc/index.html
