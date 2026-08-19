@@ -69,6 +69,7 @@ nav:
     - Define Chains in YAML: how-to-write-yaml-chains.md
     - Use the Secret Store: how-to-use-secret-store.md
     - Enable OpenTelemetry: how-to-enable-opentelemetry.md
+    - Limit Database Sessions: how-to-limit-database-sessions.md
   - Reference:
     - REST API: api.md
     - Command-Line Reference: reference-cli-options.md
