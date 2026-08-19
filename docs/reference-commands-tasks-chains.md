@@ -56,7 +56,7 @@ The next building block is a **task**, which simply represents a step in a list 
 | `timeout` | `integer` | Abort any task within a chain that takes more than the specified number of milliseconds |
 | `live` | `boolean` | Indication that the task is ready to run, set to `false` to skip execution (default: `true`) |
 
-You can temporarily skip a single step without deleting it by toggling the `live` flag:
+Setting `live = FALSE` on a task row skips its execution without deleting it:
 
 ```sql
 UPDATE timetable.task
@@ -64,7 +64,7 @@ SET live = FALSE
 WHERE task_id = 42;
 ```
 
-For YAML-managed chains, the same behavior is available through `live: false` on an individual task.
+The same effect on YAML-managed chains is available via `live: false` on an individual task.
 
 !!! warning
 
