@@ -44,6 +44,3 @@ Creates a simple one-task chain
 --8<-- "internal/pgengine/sql/cron.sql"
 ```
 
-## ER-Diagram
-
-![Database Schema](timetable_schema.png)
