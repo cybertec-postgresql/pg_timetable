@@ -24,7 +24,7 @@ In this tutorial we'll write a chain in a YAML file, load it, and watch **pg_tim
 3. Validate the file before loading it:
 
     ```bash
-    # pg_timetable --file hello.yaml --validate postgresql://scheduler:somestrong@localhost/my_database
+    pg_timetable --file hello.yaml --validate postgresql://scheduler:somestrong@localhost/my_database
     ```
 
     You'll see:
@@ -37,14 +37,17 @@ In this tutorial we'll write a chain in a YAML file, load it, and watch **pg_tim
    scheduler starts, so you'll see the result immediately:
 
     ```bash
-    # pg_timetable --file hello.yaml --clientname=yamltester postgresql://scheduler:somestrong@localhost/my_database
+    pg_timetable --file hello.yaml --clientname=yamltester postgresql://scheduler:somestrong@localhost/my_database
     ```
 
 5. In a second terminal, check what the chain produced:
 
     ```sql
-    my_database=> SELECT output FROM timetable.execution_log
-    my_database-> WHERE chain_id = (SELECT chain_id FROM timetable.chain WHERE chain_name = 'hello-yaml');
+    SELECT output FROM timetable.execution_log
+    WHERE chain_id = (SELECT chain_id FROM timetable.chain WHERE chain_name = 'hello-yaml');
+    ```
+
+    ```text
                     output
     ------------------------------------------
      Logged: Hello from my first YAML chain!
