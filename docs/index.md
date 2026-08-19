@@ -24,11 +24,20 @@ New to pg_timetable? Follow the [tutorial](tutorial-first-chain.md) to schedule 
 
 ## Learn More
 
-- **Tutorial**: [Your First Scheduled Chain](tutorial-first-chain.md)
-- **Tutorial**: [Your First YAML Chain](tutorial-your-first-yaml-chain.md)
-- **How-to Guides**: [Installation](installation.md)
-- **Reference**: [REST API](api.md)
-- **Concept**: [Project Background](background.md)
+- **Tutorials**: [Your First Scheduled Chain](tutorial-first-chain.md) ·
+  [Your First YAML Chain](tutorial-your-first-yaml-chain.md)
+- **Chain scheduling**: [Schedule Common Jobs](how-to-schedule-common-jobs.md) ·
+  [Commands, Tasks, and Chains Reference](reference-commands-tasks-chains.md)
+- **YAML authoring**: [Define Chains in YAML](how-to-write-yaml-chains.md) ·
+  [YAML Chain Schema](yaml-format.md)
+- **Secrets**: [Use the Secret Store](how-to-use-secret-store.md) ·
+  [Secret Store Security Model](explanation-secret-store-security-model.md)
+- **Observability**: [Enable OpenTelemetry](how-to-enable-opentelemetry.md) ·
+  [OpenTelemetry Reference](reference-opentelemetry.md)
+- **Concept**: [The Scheduling Model](explanation-scheduling-model.md) ·
+  [Project Background](background.md)
+
+See the sidebar navigation for the complete Reference and How-to Guides sections.
 
 ## Contributing
 
