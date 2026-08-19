@@ -60,13 +60,6 @@ password continue to work unchanged.
 
 For the schema and reference syntax, see [Secret Store Reference](secret_store.md).
 
-## Recommendations
-
-- Prefer `.pgpass` / `.pg_service.conf` on the worker host over `${secret:...}`
-  for remote Postgres passwords. The secret store exists for credentials that
-  have no host-local equivalent, such as SMTP.
-- Prefer environment variables or stdin for sensitive argv in production
-  chains; passing the literal `${secret:x}` to a child process would be
-  silently wrong rather than loudly unsupported.
-
-For the trust boundary and design rationale, see [Secret Store Security Model](explanation-secret-store-security-model.md). For the schema and syntax, see [Secret Store Reference](secret_store.md).
+For the trust boundary, design rationale, and credential-handling recommendations, see
+[Secret Store Security Model](explanation-secret-store-security-model.md). For the schema and
+syntax, see [Secret Store Reference](secret_store.md).

@@ -32,3 +32,15 @@ the plaintext nor the encryption key reaches `timetable.log` or the
 stdout/file log.
 
 `execution_log.params` is intentionally the unresolved `${secret:name}` form.
+
+## Trade-offs Against Alternatives
+
+`.pgpass` / `.pg_service.conf` on the worker host is a better fit than
+`${secret:...}` for remote Postgres passwords: it keeps the credential off
+the database entirely. The secret store earns its complexity for
+credentials that have no host-local equivalent, such as SMTP passwords.
+
+Environment variables or stdin are a better fit than `${secret:...}` for
+sensitive `PROGRAM`-task argv in production: passing the literal
+`${secret:x}` to a child process would be silently wrong (the placeholder
+string itself, not the secret) rather than loudly unsupported.
