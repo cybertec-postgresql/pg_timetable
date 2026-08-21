@@ -13,7 +13,7 @@ require (
 	github.com/sethvargo/go-retry v0.4.0
 	github.com/sirupsen/logrus v1.10.0
 	github.com/spf13/viper v1.21.0
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.44.0
 	go.opentelemetry.io/otel v1.45.0
