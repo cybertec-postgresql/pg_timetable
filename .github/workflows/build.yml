@@ -44,6 +44,9 @@ jobs:
         go mod download
         go version
 
+    - name: Cross-compile check for Windows
+      run: GOOS=windows go build ./...
+
     - name: GolangCI-Lint
       uses: golangci/golangci-lint-action@v9
       with:

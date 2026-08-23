@@ -11,6 +11,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/api"
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/cybertec-postgresql/pg_timetable/internal/notify"
 	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
 	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
@@ -25,12 +26,18 @@ import (
  */
 var pge *pgengine.PgEngine
 
+// cancelFn stores the cancellation function for the application context.
+// It is set by SetupCloseHandler and invoked by the Windows service handler
+// when the Service Control Manager requests the service to stop.
+var cancelFn context.CancelFunc
+
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
 // program if it receives an interrupt from the OS. We then handle this by calling
 // our clean up procedure and exiting the program.
 func SetupCloseHandler(cancel context.CancelFunc) {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	cancelFn = cancel
 	go func() {
 		<-c
 		cancel()
@@ -123,6 +130,7 @@ func run(ctx context.Context, cmdOpts *config.CmdOptions, logger log.LoggerHooke
 	sch := scheduler.New(pge, logger, otelProvider)
 	apiserver.APIHandler = sch
 
+	notify.Ready()
 	if sch.Run(ctx) == scheduler.ShutdownStatus {
 		return ExitCodeShutdownCommand
 	}
@@ -142,6 +150,10 @@ func main() {
 	}
 	if cmdOpts.Version {
 		printVersion()
+	}
+
+	if cmdOpts.Service > "" {
+		os.Exit(handleServiceCommand(cmdOpts))
 	}
 
 	logger := log.Init(cmdOpts.Logging)

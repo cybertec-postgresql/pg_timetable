@@ -108,6 +108,18 @@ func TestPrintVersion(t *testing.T) {
 	assert.Contains(t, out, "Built:")
 }
 
+// TestSetupCloseHandlerSetsCancelFn verifies that the package level cancelFn
+// used by the Windows service handler is assigned during setup.
+func TestSetupCloseHandlerSetsCancelFn(t *testing.T) {
+	cancelled := false
+	prev := cancelFn
+	defer func() { cancelFn = prev }()
+	SetupCloseHandler(func() { cancelled = true })
+	assert.NotNil(t, cancelFn, "cancelFn must be set by SetupCloseHandler")
+	cancelFn()
+	assert.True(t, cancelled)
+}
+
 // TestSetupCloseHandler verifies that sending SIGTERM causes the provided
 // cancel function to be called. Skipped on Windows where signal delivery to
 // the current process works differently.
