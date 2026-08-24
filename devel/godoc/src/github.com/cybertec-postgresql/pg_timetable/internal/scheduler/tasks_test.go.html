@@ -58,68 +58,157 @@
 <pre><span id="L1" class="ln">     1  </span>package scheduler
 <span id="L2" class="ln">     2  </span>
 <span id="L3" class="ln">     3  </span>import (
-<span id="L4" class="ln">     4  </span>	&#34;context&#34;
-<span id="L5" class="ln">     5  </span>	&#34;testing&#34;
-<span id="L6" class="ln">     6  </span>	&#34;time&#34;
-<span id="L7" class="ln">     7  </span>
-<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
-<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
-<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/otel&#34;
-<span id="L11" class="ln">    11  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
-<span id="L12" class="ln">    12  </span>	&#34;github.com/pashagolub/pgxmock/v5&#34;
-<span id="L13" class="ln">    13  </span>	&#34;github.com/stretchr/testify/assert&#34;
-<span id="L14" class="ln">    14  </span>)
-<span id="L15" class="ln">    15  </span>
-<span id="L16" class="ln">    16  </span>func TestExecuteTask(t *testing.T) {
-<span id="L17" class="ln">    17  </span>	mock, err := pgxmock.NewPool() <span class="comment">//</span>
-<span id="L18" class="ln">    18  </span>	a := assert.New(t)
-<span id="L19" class="ln">    19  </span>	a.NoError(err)
-<span id="L20" class="ln">    20  </span>	pge := pgengine.NewDB(mock, &#34;--log-database-level=none&#34;)
-<span id="L21" class="ln">    21  </span>	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}), otel.NewNoop())
-<span id="L22" class="ln">    22  </span>
-<span id="L23" class="ln">    23  </span>	task := &amp;pgengine.ChainTask{Command: &#34;NoOp&#34;}
-<span id="L24" class="ln">    24  </span>	et := func(cmd string, params []string) (err error) {
-<span id="L25" class="ln">    25  </span>		task.Command = cmd
-<span id="L26" class="ln">    26  </span>		err = mocksch.executeBuiltinTask(context.TODO(), task, params)
-<span id="L27" class="ln">    27  </span>		return
-<span id="L28" class="ln">    28  </span>	}
-<span id="L29" class="ln">    29  </span>
-<span id="L30" class="ln">    30  </span>	a.Error(et(&#34;foo&#34;, []string{}))
-<span id="L31" class="ln">    31  </span>
-<span id="L32" class="ln">    32  </span>	a.Error(et(&#34;Sleep&#34;, []string{&#34;foo&#34;}))
-<span id="L33" class="ln">    33  </span>	a.False(task.StartedAt.IsZero()) <span class="comment">// must be set to current time for every new parameter</span>
-<span id="L34" class="ln">    34  </span>	a.NoError(et(&#34;Sleep&#34;, []string{&#34;1&#34;}))
-<span id="L35" class="ln">    35  </span>	a.GreaterOrEqual(time.Since(task.StartedAt), time.Second)
-<span id="L36" class="ln">    36  </span>
-<span id="L37" class="ln">    37  </span>	a.NoError(et(&#34;NoOp&#34;, []string{}))
-<span id="L38" class="ln">    38  </span>	a.NoError(et(&#34;NoOp&#34;, []string{&#34;foo&#34;, &#34;bar&#34;}))
-<span id="L39" class="ln">    39  </span>
-<span id="L40" class="ln">    40  </span>	a.NoError(et(&#34;Log&#34;, []string{&#34;foo&#34;}))
-<span id="L41" class="ln">    41  </span>
-<span id="L42" class="ln">    42  </span>	a.Error(et(&#34;CopyFromFile&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
-<span id="L43" class="ln">    43  </span>	a.Error(et(&#34;CopyFromFile&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;filename&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
+<span id="L4" class="ln">     4  </span>	&#34;bytes&#34;
+<span id="L5" class="ln">     5  </span>	&#34;context&#34;
+<span id="L6" class="ln">     6  </span>	&#34;testing&#34;
+<span id="L7" class="ln">     7  </span>	&#34;time&#34;
+<span id="L8" class="ln">     8  </span>
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/otel&#34;
+<span id="L12" class="ln">    12  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/tasks&#34;
+<span id="L14" class="ln">    14  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
+<span id="L15" class="ln">    15  </span>	gomail &#34;github.com/ory/mail/v3&#34;
+<span id="L16" class="ln">    16  </span>	&#34;github.com/pashagolub/pgxmock/v5&#34;
+<span id="L17" class="ln">    17  </span>	&#34;github.com/sirupsen/logrus&#34;
+<span id="L18" class="ln">    18  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L19" class="ln">    19  </span>	&#34;github.com/stretchr/testify/require&#34;
+<span id="L20" class="ln">    20  </span>)
+<span id="L21" class="ln">    21  </span>
+<span id="L22" class="ln">    22  </span><span class="comment">// installPgcrypto ensures the pgcrypto extension is present in the test</span>
+<span id="L23" class="ln">    23  </span><span class="comment">// database. Every test that exercises a secret round trip installs the</span>
+<span id="L24" class="ln">    24  </span><span class="comment">// extension in its own fixture.</span>
+<span id="L25" class="ln">    25  </span>func installPgcrypto(ctx context.Context, t *testing.T, pge *pgengine.PgEngine) {
+<span id="L26" class="ln">    26  </span>	t.Helper()
+<span id="L27" class="ln">    27  </span>	_, err := pge.ConfigDb.Exec(ctx, `CREATE EXTENSION IF NOT EXISTS pgcrypto`)
+<span id="L28" class="ln">    28  </span>	require.NoError(t, err, &#34;installing pgcrypto must succeed in the test fixture&#34;)
+<span id="L29" class="ln">    29  </span>}
+<span id="L30" class="ln">    30  </span>
+<span id="L31" class="ln">    31  </span>func TestExecuteTask(t *testing.T) {
+<span id="L32" class="ln">    32  </span>	mock, err := pgxmock.NewPool() <span class="comment">//</span>
+<span id="L33" class="ln">    33  </span>	a := assert.New(t)
+<span id="L34" class="ln">    34  </span>	a.NoError(err)
+<span id="L35" class="ln">    35  </span>	pge := pgengine.NewDB(mock, &#34;--log-database-level=none&#34;)
+<span id="L36" class="ln">    36  </span>	mocksch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}), otel.NewNoop())
+<span id="L37" class="ln">    37  </span>
+<span id="L38" class="ln">    38  </span>	task := &amp;pgengine.ChainTask{Command: &#34;NoOp&#34;}
+<span id="L39" class="ln">    39  </span>	et := func(cmd string, params []string) (err error) {
+<span id="L40" class="ln">    40  </span>		task.Command = cmd
+<span id="L41" class="ln">    41  </span>		err = mocksch.executeBuiltinTask(context.TODO(), task, params)
+<span id="L42" class="ln">    42  </span>		return
+<span id="L43" class="ln">    43  </span>	}
 <span id="L44" class="ln">    44  </span>
-<span id="L45" class="ln">    45  </span>	a.Error(et(&#34;CopyToFile&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
-<span id="L46" class="ln">    46  </span>	a.Error(et(&#34;CopyToFile&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;filename&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
-<span id="L47" class="ln">    47  </span>
-<span id="L48" class="ln">    48  </span>	a.Error(et(&#34;CopyToProgram&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
-<span id="L49" class="ln">    49  </span>	a.Error(et(&#34;CopyToProgram&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;program&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
-<span id="L50" class="ln">    50  </span>
-<span id="L51" class="ln">    51  </span>	a.Error(et(&#34;CopyFromProgram&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
-<span id="L52" class="ln">    52  </span>	a.Error(et(&#34;CopyFromProgram&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;program&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
-<span id="L53" class="ln">    53  </span>
-<span id="L54" class="ln">    54  </span>	a.Error(et(&#34;SendMail&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
-<span id="L55" class="ln">    55  </span>	a.Error(et(&#34;SendMail&#34;, []string{`{&#34;ServerHost&#34;:&#34;smtp.example.com&#34;,&#34;ServerPort&#34;:587,&#34;Username&#34;:&#34;user&#34;}`}))
+<span id="L45" class="ln">    45  </span>	a.Error(et(&#34;foo&#34;, []string{}))
+<span id="L46" class="ln">    46  </span>
+<span id="L47" class="ln">    47  </span>	a.Error(et(&#34;Sleep&#34;, []string{&#34;foo&#34;}))
+<span id="L48" class="ln">    48  </span>	a.False(task.StartedAt.IsZero()) <span class="comment">// must be set to current time for every new parameter</span>
+<span id="L49" class="ln">    49  </span>	a.NoError(et(&#34;Sleep&#34;, []string{&#34;1&#34;}))
+<span id="L50" class="ln">    50  </span>	a.GreaterOrEqual(time.Since(task.StartedAt), time.Second)
+<span id="L51" class="ln">    51  </span>
+<span id="L52" class="ln">    52  </span>	a.NoError(et(&#34;NoOp&#34;, []string{}))
+<span id="L53" class="ln">    53  </span>	a.NoError(et(&#34;NoOp&#34;, []string{&#34;foo&#34;, &#34;bar&#34;}))
+<span id="L54" class="ln">    54  </span>
+<span id="L55" class="ln">    55  </span>	a.NoError(et(&#34;Log&#34;, []string{&#34;foo&#34;}))
 <span id="L56" class="ln">    56  </span>
-<span id="L57" class="ln">    57  </span>	a.Error(et(&#34;Download&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
-<span id="L58" class="ln">    58  </span>	a.EqualError(et(&#34;Download&#34;, []string{`{&#34;workersnum&#34;: 0, &#34;fileurls&#34;: [] }`}),
-<span id="L59" class="ln">    59  </span>		&#34;files to download are not specified&#34;, &#34;Download with empty files should fail&#34;)
-<span id="L60" class="ln">    60  </span>	a.Error(et(&#34;Download&#34;, []string{`{&#34;workersnum&#34;: 0, &#34;fileurls&#34;: [&#34;http://foo.bar&#34;], &#34;destpath&#34;: &#34;&#34; }`}),
-<span id="L61" class="ln">    61  </span>		&#34;Downlod incorrect url should fail&#34;)
+<span id="L57" class="ln">    57  </span>	a.Error(et(&#34;CopyFromFile&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
+<span id="L58" class="ln">    58  </span>	a.Error(et(&#34;CopyFromFile&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;filename&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
+<span id="L59" class="ln">    59  </span>
+<span id="L60" class="ln">    60  </span>	a.Error(et(&#34;CopyToFile&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
+<span id="L61" class="ln">    61  </span>	a.Error(et(&#34;CopyToFile&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;filename&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
 <span id="L62" class="ln">    62  </span>
-<span id="L63" class="ln">    63  </span>	a.NoError(et(&#34;Shutdown&#34;, []string{}))
-<span id="L64" class="ln">    64  </span>}
+<span id="L63" class="ln">    63  </span>	a.Error(et(&#34;CopyToProgram&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
+<span id="L64" class="ln">    64  </span>	a.Error(et(&#34;CopyToProgram&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;program&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
 <span id="L65" class="ln">    65  </span>
+<span id="L66" class="ln">    66  </span>	a.Error(et(&#34;CopyFromProgram&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
+<span id="L67" class="ln">    67  </span>	a.Error(et(&#34;CopyFromProgram&#34;, []string{`{&#34;sql&#34;: &#34;COPY&#34;, &#34;program&#34;: &#34;foo&#34;}`}), &#34;Acquire() should fail&#34;)
+<span id="L68" class="ln">    68  </span>
+<span id="L69" class="ln">    69  </span>	a.Error(et(&#34;SendMail&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
+<span id="L70" class="ln">    70  </span>	a.Error(et(&#34;SendMail&#34;, []string{`{&#34;ServerHost&#34;:&#34;smtp.example.com&#34;,&#34;ServerPort&#34;:587,&#34;Username&#34;:&#34;user&#34;}`}))
+<span id="L71" class="ln">    71  </span>
+<span id="L72" class="ln">    72  </span>	a.Error(et(&#34;Download&#34;, []string{&#34;foo&#34;}), &#34;Invalid json&#34;)
+<span id="L73" class="ln">    73  </span>	a.EqualError(et(&#34;Download&#34;, []string{`{&#34;workersnum&#34;: 0, &#34;fileurls&#34;: [] }`}),
+<span id="L74" class="ln">    74  </span>		&#34;files to download are not specified&#34;, &#34;Download with empty files should fail&#34;)
+<span id="L75" class="ln">    75  </span>	a.Error(et(&#34;Download&#34;, []string{`{&#34;workersnum&#34;: 0, &#34;fileurls&#34;: [&#34;http://foo.bar&#34;], &#34;destpath&#34;: &#34;&#34; }`}),
+<span id="L76" class="ln">    76  </span>		&#34;Downlod incorrect url should fail&#34;)
+<span id="L77" class="ln">    77  </span>
+<span id="L78" class="ln">    78  </span>	a.NoError(et(&#34;Shutdown&#34;, []string{}))
+<span id="L79" class="ln">    79  </span>}
+<span id="L80" class="ln">    80  </span>
+<span id="L81" class="ln">    81  </span><span class="comment">// fakeDialer implements tasks.Dialer and captures nothing itself; the</span>
+<span id="L82" class="ln">    82  </span><span class="comment">// password is captured by the tasks.NewDialer override in</span>
+<span id="L83" class="ln">    83  </span><span class="comment">// TestSendMailResolvesSecret.</span>
+<span id="L84" class="ln">    84  </span>type fakeDialer struct{}
+<span id="L85" class="ln">    85  </span>
+<span id="L86" class="ln">    86  </span>func (fakeDialer) DialAndSend(context.Context, ...*gomail.Message) error { return nil }
+<span id="L87" class="ln">    87  </span>
+<span id="L88" class="ln">    88  </span><span class="comment">// TestSendMailResolvesSecret stores a secret for the running client, calls</span>
+<span id="L89" class="ln">    89  </span><span class="comment">// taskSendMail (the actual code path executed by the scheduler) with a</span>
+<span id="L90" class="ln">    90  </span><span class="comment">// reference, and asserts that the *decrypted* plaintext — not the literal</span>
+<span id="L91" class="ln">    91  </span><span class="comment">// ${secret:...} reference — is what reaches the tasks.SendMail boundary.</span>
+<span id="L92" class="ln">    92  </span><span class="comment">// tasks.NewDialer is overridden to capture the password argument instead of</span>
+<span id="L93" class="ln">    93  </span><span class="comment">// performing a real SMTP dial, so a regression where taskSendMail stops</span>
+<span id="L94" class="ln">    94  </span><span class="comment">// calling the resolver (and passes the unresolved reference through) is</span>
+<span id="L95" class="ln">    95  </span><span class="comment">// caught here, unlike a test that exercises ResolveSecretsJSON directly.</span>
+<span id="L96" class="ln">    96  </span>func TestSendMailResolvesSecret(t *testing.T) {
+<span id="L97" class="ln">    97  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L98" class="ln">    98  </span>	defer cleanup()
+<span id="L99" class="ln">    99  </span>	pge := container.Engine
+<span id="L100" class="ln">   100  </span>	ctx := context.Background()
+<span id="L101" class="ln">   101  </span>	installPgcrypto(ctx, t, pge)
+<span id="L102" class="ln">   102  </span>
+<span id="L103" class="ln">   103  </span>	const name = &#34;sendmail_resolve&#34;
+<span id="L104" class="ln">   104  </span>	const pw = &#34;real-secret-pw&#34;
+<span id="L105" class="ln">   105  </span>	_, err := pge.ConfigDb.Exec(ctx,
+<span id="L106" class="ln">   106  </span>		`INSERT INTO timetable.secret (client_name, secret_name, value_enc)
+<span id="L107" class="ln">   107  </span>		 VALUES ($1, $2, pgp_sym_encrypt($3, $4))
+<span id="L108" class="ln">   108  </span>		 ON CONFLICT (client_name, secret_name) DO UPDATE SET value_enc = EXCLUDED.value_enc`,
+<span id="L109" class="ln">   109  </span>		pge.ClientName, name, pw, pge.SecretEncryptionKey)
+<span id="L110" class="ln">   110  </span>	require.NoError(t, err)
+<span id="L111" class="ln">   111  </span>
+<span id="L112" class="ln">   112  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}), otel.NewNoop())
+<span id="L113" class="ln">   113  </span>
+<span id="L114" class="ln">   114  </span>	var gotPassword string
+<span id="L115" class="ln">   115  </span>	origNewDialer := tasks.NewDialer
+<span id="L116" class="ln">   116  </span>	tasks.NewDialer = func(_ string, _ int, _, password string) tasks.Dialer {
+<span id="L117" class="ln">   117  </span>		gotPassword = password
+<span id="L118" class="ln">   118  </span>		return fakeDialer{}
+<span id="L119" class="ln">   119  </span>	}
+<span id="L120" class="ln">   120  </span>	defer func() { tasks.NewDialer = origNewDialer }()
+<span id="L121" class="ln">   121  </span>
+<span id="L122" class="ln">   122  </span>	param := `{&#34;serverhost&#34;:&#34;127.0.0.1&#34;,&#34;serverport&#34;:1,&#34;username&#34;:&#34;u&#34;,&#34;senderaddr&#34;:&#34;u@x&#34;,&#34;toaddr&#34;:[&#34;u@x&#34;],&#34;subject&#34;:&#34;s&#34;,&#34;msgbody&#34;:&#34;b&#34;,&#34;password&#34;:&#34;${secret:` + name + `}&#34;}`
+<span id="L123" class="ln">   123  </span>	_, err = taskSendMail(ctx, sch, param)
+<span id="L124" class="ln">   124  </span>	require.NoError(t, err)
+<span id="L125" class="ln">   125  </span>	assert.Equal(t, pw, gotPassword, &#34;taskSendMail must pass the decrypted secret, not the literal reference, to SendMail&#34;)
+<span id="L126" class="ln">   126  </span>}
+<span id="L127" class="ln">   127  </span>
+<span id="L128" class="ln">   128  </span><span class="comment">// TestBuiltinDebugLogOmitsParamValues — the debug log emitted by</span>
+<span id="L129" class="ln">   129  </span><span class="comment">// executeBuiltinTask must carry a parameter count and MUST NOT contain any</span>
+<span id="L130" class="ln">   130  </span><span class="comment">// parameter value.</span>
+<span id="L131" class="ln">   131  </span>func TestBuiltinDebugLogOmitsParamValues(t *testing.T) {
+<span id="L132" class="ln">   132  </span>	var buf bytes.Buffer
+<span id="L133" class="ln">   133  </span>	l := logrus.New()
+<span id="L134" class="ln">   134  </span>	l.SetOutput(&amp;buf)
+<span id="L135" class="ln">   135  </span>	l.SetLevel(logrus.DebugLevel)
+<span id="L136" class="ln">   136  </span>
+<span id="L137" class="ln">   137  </span>	mock, err := pgxmock.NewPool()
+<span id="L138" class="ln">   138  </span>	require.NoError(t, err)
+<span id="L139" class="ln">   139  </span>	defer mock.Close()
+<span id="L140" class="ln">   140  </span>	pge := pgengine.NewDB(mock, &#34;--clientname=worker&#34;)
+<span id="L141" class="ln">   141  </span>	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: &#34;debug&#34;}), otel.NewNoop())
+<span id="L142" class="ln">   142  </span>
+<span id="L143" class="ln">   143  </span>	task := &amp;pgengine.ChainTask{Command: &#34;NoOp&#34;}
+<span id="L144" class="ln">   144  </span>	require.NoError(t, sch.executeBuiltinTask(
+<span id="L145" class="ln">   145  </span>		log.WithLogger(context.Background(), l), task,
+<span id="L146" class="ln">   146  </span>		[]string{&#34;super-secret-password&#34;, &#34;another-secret&#34;}))
+<span id="L147" class="ln">   147  </span>
+<span id="L148" class="ln">   148  </span>	out := buf.String()
+<span id="L149" class="ln">   149  </span>	assert.Contains(t, out, &#34;Executing builtin task&#34;)
+<span id="L150" class="ln">   150  </span>	assert.Contains(t, out, &#34;param_count&#34;)
+<span id="L151" class="ln">   151  </span>	assert.NotContains(t, out, &#34;super-secret-password&#34;)
+<span id="L152" class="ln">   152  </span>	assert.NotContains(t, out, &#34;another-secret&#34;)
+<span id="L153" class="ln">   153  </span>}
+<span id="L154" class="ln">   154  </span>
 </pre><p></p>
 
 <div id="footer">

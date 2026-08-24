@@ -579,6 +579,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../database_schema/" class="md-nav__link">
         
   
@@ -877,6 +905,89 @@
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Secrets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pgcrypto is an optional prerequisite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust-boundary-honest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust boundary (honest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-feature-with-your-own-chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use the feature with your own chains
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#program-tasks-argv-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PROGRAM-tasks (argv exposure)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-level-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug-level logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guidance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1278,6 +1389,89 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Secrets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pgcrypto is an optional prerequisite
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trust-boundary-honest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust boundary (honest)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-feature-with-your-own-chains" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use the feature with your own chains
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#program-tasks-argv-exposure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PROGRAM-tasks (argv exposure)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-level-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debug-level logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guidance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1321,89 +1515,123 @@
 <p>This sample demonstrates how to create an advanced email job. It will check if there are emails to send,
 will send them and log the status of the command execution. You don't need to setup anything, every parameter
 can be specified during the chain creation.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="c1">-- An example for using the SendMail task.</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">DECLARE</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="n">v_mail_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="n">v_log_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="n">v_chain_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="k">BEGIN</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="c1">-- Get the chain id</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">'send_mail'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">;</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="c1">-- Add SendMail task</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span><span class="w"> </span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="s1">'BUILTIN'</span><span class="p">,</span><span class="w"> </span><span class="s1">'SendMail'</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_mail_task_id</span><span class="p">;</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="c1">-- Create the parameters for the SensMail task</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">        </span><span class="c1">-- "username":        The username used for authenticating on the mail server</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">        </span><span class="c1">-- "password":        The password used for authenticating on the mail server</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">        </span><span class="c1">-- "serverhost":      The IP address or hostname of the mail server</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="c1">-- "serverport":      The port of the mail server</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">        </span><span class="c1">-- "senderaddr":      The email that will appear as the sender</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">        </span><span class="c1">-- "ccaddr":          String array of the recipients(Cc) email addresses</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">        </span><span class="c1">-- "bccaddr":         String array of the recipients(Bcc) email addresses</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">        </span><span class="c1">-- "toaddr":          String array of the recipients(To) email addresses</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">        </span><span class="c1">-- "subject":         Subject of the email</span>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">        </span><span class="c1">-- "attachment":      String array of the attachments (local file)</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">        </span><span class="c1">-- "attachmentdata":  Pairs of name and base64-encoded content</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">        </span><span class="c1">-- "msgbody":         The body of the email</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_mail_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">'{</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="s1">                "username":     "user@example.com",</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="s1">                "password":     "password",</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="s1">                "serverhost":   "smtp.example.com",</span>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="s1">                "serverport":   587,</span>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="s1">                "senderaddr":   "user@example.com",</span>
-<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="s1">                "ccaddr":       ["recipient_cc@example.com"],</span>
-<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="s1">                "bccaddr":      ["recipient_bcc@example.com"],</span>
-<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="s1">                "toaddr":       ["recipient@example.com"],</span>
-<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="s1">                "subject":      "pg_timetable - No Reply",</span>
-<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="s1">                "attachment":   ["D:\\Go stuff\\Books\\Concurrency in Go.pdf","report.yaml"],</span>
-<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="s1">                "attachmentdata": [{"name": "File.txt", "base64data": "RmlsZSBDb250ZW50"}],</span>
-<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="s1">                "msgbody":      "&lt;b&gt;Hello User,&lt;/b&gt; &lt;p&gt;I got some Go books for you enjoy&lt;/p&gt; &lt;i&gt;pg_timetable&lt;/i&gt;!",</span>
-<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="s1">                "contenttype":  "text/html; charset=UTF-8"</span>
-<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="s1">                }'</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- Mail.sql demonstrates SendMail with a stored secret.</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">--</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">-- pg_timetable itself NEVER installs the pgcrypto extension. It is an</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">-- optional dependency of the secret store, provisioned by the database</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1">-- administrator. As a demo a user runs deliberately, this sample installs</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">-- pgcrypto itself and uses the unqualified pgp_sym_encrypt call.</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1">-- Production chains should remove the CREATE EXTENSION line and rely on</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">-- the DBA having installed pgcrypto.</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">--</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1">-- Decision: client_name is derived from</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">-- `pg_timetable.current_client_name` via current_setting() so the sample is</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">-- self-contained under TestSamplesScripts; the test harness sets the matching</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1">-- fixed encryption key in internal/testutils/testcontainers.go.</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">pgcrypto</span><span class="p">;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="k">DO</span><span class="w"> </span><span class="err">$$</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="c1">-- An example for using the SendMail task.</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="k">DECLARE</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="n">v_mail_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="n">v_log_task_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="n">v_chain_id</span><span class="w"> </span><span class="nb">bigint</span><span class="p">;</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="n">v_client_name</span><span class="w"> </span><span class="nb">text</span><span class="p">;</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="k">BEGIN</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">    </span><span class="c1">-- Resolve the client_name from the session setting when available;</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="c1">-- fall back to a literal placeholder for ad-hoc execution.</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">    </span><span class="n">v_client_name</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="k">coalesce</span><span class="p">(</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">        </span><span class="k">nullif</span><span class="p">(</span><span class="n">current_setting</span><span class="p">(</span><span class="s1">'pg_timetable.current_client_name'</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">),</span><span class="w"> </span><span class="s1">''</span><span class="p">),</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">        </span><span class="s1">'sample_client'</span><span class="p">);</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">    </span><span class="c1">-- Store the SMTP password encrypted. pgcrypto is required for the secret</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="c1">-- store; here it lives in `public` (the default), so the call is</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="c1">-- unqualified.</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">secret</span><span class="w"> </span><span class="p">(</span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">secret_name</span><span class="p">,</span><span class="w"> </span><span class="n">value_enc</span><span class="p">)</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">    </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_client_name</span><span class="p">,</span><span class="w"> </span><span class="s1">'smtp_main'</span><span class="p">,</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">            </span><span class="n">pgp_sym_encrypt</span><span class="p">(</span><span class="s1">'s3cr3t pw''s'</span><span class="p">,</span><span class="w"> </span><span class="s1">'pgtt_test_secret_key'</span><span class="p">))</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">secret_name</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">UPDATE</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">        </span><span class="k">SET</span><span class="w"> </span><span class="n">value_enc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EXCLUDED</span><span class="p">.</span><span class="n">value_enc</span><span class="p">;</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">    </span><span class="c1">-- Get the chain id</span>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">chain</span><span class="w"> </span><span class="p">(</span><span class="n">chain_name</span><span class="p">,</span><span class="w"> </span><span class="n">max_instances</span><span class="p">,</span><span class="w"> </span><span class="n">live</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">'send_mail'</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">TRUE</span><span class="p">)</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">chain_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">;</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">    </span><span class="c1">-- Add SendMail task</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="s1">'BUILTIN'</span><span class="p">,</span><span class="w"> </span><span class="s1">'SendMail'</span>
+<a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_mail_task_id</span><span class="p">;</span>
 <a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a>
-<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">    </span><span class="c1">-- Add Log task and make it the last task using `task_order` column (=30)</span>
-<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span><span class="w"> </span>
-<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="s1">'BUILTIN'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Log'</span>
-<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_log_task_id</span><span class="p">;</span>
-<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>
-<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a><span class="w">    </span><span class="c1">-- Add housekeeping task, that will delete sent mail and update parameter for the previous logging task</span>
-<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a><span class="w">    </span><span class="c1">-- Since we're using special add_task() function we don't need to specify the `chain_id`.</span>
-<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a><span class="w">    </span><span class="c1">-- Function will take the same `chain_id` from the parent task, SendMail in this particular case</span>
-<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a><span class="w">    </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_task</span><span class="p">(</span>
-<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a><span class="w">        </span><span class="n">kind</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">'SQL'</span><span class="p">,</span><span class="w"> </span>
-<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a><span class="w">        </span><span class="n">parent_id</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v_mail_task_id</span><span class="p">,</span>
-<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a><span class="w">        </span><span class="n">command</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">format</span><span class="p">(</span>
-<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a><span class="err">$</span><span class="n">query$WITH</span><span class="w"> </span><span class="n">sent_mail</span><span class="p">(</span><span class="n">toaddr</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">%</span><span class="n">s</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">value</span><span class="o">-&gt;&gt;</span><span class="s1">'username'</span><span class="p">)</span>
-<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span>
-<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">%</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">to_jsonb</span><span class="p">(</span><span class="s1">'Sent emails to: '</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">string_agg</span><span class="p">(</span><span class="n">sent_mail</span><span class="p">.</span><span class="n">toaddr</span><span class="p">,</span><span class="w"> </span><span class="s1">';'</span><span class="p">))</span>
-<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a><span class="k">FROM</span><span class="w"> </span><span class="n">sent_mail</span>
-<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EXCLUDED</span><span class="p">.</span><span class="n">value$query$</span><span class="p">,</span><span class="w"> </span>
-<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a><span class="w">                </span><span class="n">v_mail_task_id</span><span class="p">,</span><span class="w"> </span><span class="n">v_log_task_id</span>
-<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a><span class="w">            </span><span class="p">),</span>
-<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a><span class="w">        </span><span class="n">order_delta</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">10</span>
-<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a><span class="w">    </span><span class="p">);</span>
-<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a>
-<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a><span class="c1">-- In the end we should have something like this. Note, that even Log task was created earlier it will be executed later</span>
-<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a><span class="c1">-- due to `task_order` column.</span>
-<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a>
-<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a><span class="c1">-- timetable=&gt; SELECT task_id, chain_id, kind, left(command, 50) FROM timetable.task ORDER BY task_order;  </span>
-<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a><span class="c1">--  task_id | chain_id | task_order |  kind   |                             left</span>
-<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a><span class="c1">-- ---------+----------+------------+---------+---------------------------------------------------------------</span>
-<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a><span class="c1">--       45 |       24 |         10 | BUILTIN | SendMail</span>
-<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a><span class="c1">--       47 |       24 |         20 | SQL     | WITH sent_mail(toaddr) AS (DELETE FROM timetable.p</span>
-<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a><span class="c1">--       46 |       24 |         30 | BUILTIN | Log</span>
-<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a><span class="c1">-- (3 rows)</span>
-<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a>
-<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a><span class="k">END</span><span class="p">;</span>
-<a id="__codelineno-1-82" name="__codelineno-1-82" href="#__codelineno-1-82"></a><span class="err">$$</span>
-<a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">PLPGSQL</span><span class="p">;</span>
+<a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">    </span><span class="c1">-- Create the parameters for the SensMail task</span>
+<a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="w">        </span><span class="c1">-- "username":        The username used for authenticating on the mail server</span>
+<a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">        </span><span class="c1">-- "password":        The password used for authenticating on the mail server</span>
+<a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">        </span><span class="c1">-- "serverhost":      The IP address or hostname of the mail server</span>
+<a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a><span class="w">        </span><span class="c1">-- "serverport":      The port of the mail server</span>
+<a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a><span class="w">        </span><span class="c1">-- "senderaddr":      The email that will appear as the sender</span>
+<a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a><span class="w">        </span><span class="c1">-- "ccaddr":      String array of the recipients(Cc) email addresses</span>
+<a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a><span class="w">        </span><span class="c1">-- "bccaddr":     String array of the recipients(Bcc) email addresses</span>
+<a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a><span class="w">        </span><span class="c1">-- "toaddr":          String array of the recipients(To) email addresses</span>
+<a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a><span class="w">        </span><span class="c1">-- "subject":     Subject of the email</span>
+<a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a><span class="w">        </span><span class="c1">-- "attachment":      String array of the attachments (local file)</span>
+<a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a><span class="w">        </span><span class="c1">-- "attachmentdata":  Pairs of name and base64-encoded content</span>
+<a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a><span class="w">        </span><span class="c1">-- "msgbody":     The body of the email</span>
+<a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a>
+<a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a><span class="w">        </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">v_mail_task_id</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a><span class="s1">                "username":     "user@example.com",</span>
+<a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a><span class="s1">                "password":     "${secret:smtp_main}",</span>
+<a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a><span class="s1">                "serverhost":   "smtp.example.com",</span>
+<a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a><span class="s1">                "serverport":   587,</span>
+<a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a><span class="s1">                "senderaddr":   "user@example.com",</span>
+<a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a><span class="s1">                "ccaddr":       ["recipient_cc@example.com"],</span>
+<a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a><span class="s1">                "bccaddr":      ["recipient_bcc@example.com"],</span>
+<a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a><span class="s1">                "toaddr":       ["recipient@example.com"],</span>
+<a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a><span class="s1">                "subject":      "pg_timetable - No Reply",</span>
+<a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a><span class="s1">                "attachment":   ["D:\\Go stuff\\Books\\Concurrency in Go.pdf","report.yaml"],</span>
+<a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a><span class="s1">                "attachmentdata": [{"name": "File.txt", "base64data": "RmlsZSBDb250ZW50"}],</span>
+<a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a><span class="s1">                "msgbody":      "&lt;b&gt;Hello User,&lt;/b&gt; &lt;p&gt;I got some Go books for you enjoy&lt;/p&gt; &lt;i&gt;pg_timetable&lt;/i&gt;!",</span>
+<a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a><span class="s1">                "contenttype":  "text/html; charset=UTF-8"</span>
+<a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a><span class="s1">                }'</span><span class="p">::</span><span class="n">jsonb</span><span class="p">);</span>
+<a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a><span class="w">    </span><span class="c1">-- Legacy (deprecated): inline literal in parameter.value still works</span>
+<a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a><span class="w">    </span><span class="c1">-- unchanged. ${secret:...} is opt-in syntax, not a format change.</span>
+<a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a><span class="w">    </span><span class="c1">-- "password":     "literal-insecure-password",</span>
+<a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a>
+<a id="__codelineno-1-82" name="__codelineno-1-82" href="#__codelineno-1-82"></a><span class="w">    </span><span class="c1">-- Add Log task and make it the last task using `task_order` column (=30)</span>
+<a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a><span class="w">    </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">task</span><span class="w"> </span><span class="p">(</span><span class="n">chain_id</span><span class="p">,</span><span class="w"> </span><span class="n">task_order</span><span class="p">,</span><span class="w"> </span><span class="n">kind</span><span class="p">,</span><span class="w"> </span><span class="n">command</span><span class="p">)</span>
+<a id="__codelineno-1-84" name="__codelineno-1-84" href="#__codelineno-1-84"></a><span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="s1">'BUILTIN'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Log'</span>
+<a id="__codelineno-1-85" name="__codelineno-1-85" href="#__codelineno-1-85"></a><span class="w">    </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">v_log_task_id</span><span class="p">;</span>
+<a id="__codelineno-1-86" name="__codelineno-1-86" href="#__codelineno-1-86"></a>
+<a id="__codelineno-1-87" name="__codelineno-1-87" href="#__codelineno-1-87"></a><span class="w">    </span><span class="c1">-- Add housekeeping task, that will delete sent mail and update parameter for the previous logging task</span>
+<a id="__codelineno-1-88" name="__codelineno-1-88" href="#__codelineno-1-88"></a><span class="w">    </span><span class="c1">-- Since we're using special add_task() function we don't need to specify the `chain_id`.</span>
+<a id="__codelineno-1-89" name="__codelineno-1-89" href="#__codelineno-1-89"></a><span class="w">    </span><span class="c1">-- Function will take the same `chain_id` from the parent task, SendMail in this particular case</span>
+<a id="__codelineno-1-90" name="__codelineno-1-90" href="#__codelineno-1-90"></a><span class="w">    </span><span class="n">PERFORM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_task</span><span class="p">(</span>
+<a id="__codelineno-1-91" name="__codelineno-1-91" href="#__codelineno-1-91"></a><span class="w">        </span><span class="n">kind</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">'SQL'</span><span class="p">,</span>
+<a id="__codelineno-1-92" name="__codelineno-1-92" href="#__codelineno-1-92"></a><span class="w">        </span><span class="n">parent_id</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">v_mail_task_id</span><span class="p">,</span>
+<a id="__codelineno-1-93" name="__codelineno-1-93" href="#__codelineno-1-93"></a><span class="w">        </span><span class="n">command</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">format</span><span class="p">(</span>
+<a id="__codelineno-1-94" name="__codelineno-1-94" href="#__codelineno-1-94"></a><span class="err">$</span><span class="n">query$WITH</span><span class="w"> </span><span class="n">sent_mail</span><span class="p">(</span><span class="n">toaddr</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span><span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">task_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">%</span><span class="n">s</span><span class="w"> </span><span class="n">RETURNING</span><span class="w"> </span><span class="n">value</span><span class="o">-&gt;&gt;</span><span class="s1">'username'</span><span class="p">)</span>
+<a id="__codelineno-1-95" name="__codelineno-1-95" href="#__codelineno-1-95"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="k">parameter</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-1-96" name="__codelineno-1-96" href="#__codelineno-1-96"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">%</span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">to_jsonb</span><span class="p">(</span><span class="s1">'Sent emails to: '</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">string_agg</span><span class="p">(</span><span class="n">sent_mail</span><span class="p">.</span><span class="n">toaddr</span><span class="p">,</span><span class="w"> </span><span class="s1">';'</span><span class="p">))</span>
+<a id="__codelineno-1-97" name="__codelineno-1-97" href="#__codelineno-1-97"></a><span class="k">FROM</span><span class="w"> </span><span class="n">sent_mail</span>
+<a id="__codelineno-1-98" name="__codelineno-1-98" href="#__codelineno-1-98"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_id</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">EXCLUDED</span><span class="p">.</span><span class="n">value$query$</span><span class="p">,</span>
+<a id="__codelineno-1-99" name="__codelineno-1-99" href="#__codelineno-1-99"></a><span class="w">                </span><span class="n">v_mail_task_id</span><span class="p">,</span><span class="w"> </span><span class="n">v_log_task_id</span>
+<a id="__codelineno-1-100" name="__codelineno-1-100" href="#__codelineno-1-100"></a><span class="w">            </span><span class="p">),</span>
+<a id="__codelineno-1-101" name="__codelineno-1-101" href="#__codelineno-1-101"></a><span class="w">        </span><span class="n">order_delta</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">10</span>
+<a id="__codelineno-1-102" name="__codelineno-1-102" href="#__codelineno-1-102"></a><span class="w">    </span><span class="p">);</span>
+<a id="__codelineno-1-103" name="__codelineno-1-103" href="#__codelineno-1-103"></a>
+<a id="__codelineno-1-104" name="__codelineno-1-104" href="#__codelineno-1-104"></a><span class="c1">-- In the end we should have something like this. Note, that even Log task was created earlier it will be executed later</span>
+<a id="__codelineno-1-105" name="__codelineno-1-105" href="#__codelineno-1-105"></a><span class="c1">-- due to `task_order` column.</span>
+<a id="__codelineno-1-106" name="__codelineno-1-106" href="#__codelineno-1-106"></a>
+<a id="__codelineno-1-107" name="__codelineno-1-107" href="#__codelineno-1-107"></a><span class="c1">-- timetable=&gt; SELECT task_id, chain_id, kind, left(command, 50) FROM timetable.task ORDER BY task_order;</span>
+<a id="__codelineno-1-108" name="__codelineno-1-108" href="#__codelineno-1-108"></a><span class="c1">--  task_id | chain_id | task_order |  kind   |                             left</span>
+<a id="__codelineno-1-109" name="__codelineno-1-109" href="#__codelineno-1-109"></a><span class="c1">-- ---------+----------+------------+---------+---------------------------------------------------------------</span>
+<a id="__codelineno-1-110" name="__codelineno-1-110" href="#__codelineno-1-110"></a><span class="c1">--       45 |       24 |         10 | BUILTIN | SendMail</span>
+<a id="__codelineno-1-111" name="__codelineno-1-111" href="#__codelineno-1-111"></a><span class="c1">--       47 |       24 |         20 | SQL     | WITH sent_mail(toaddr) AS (DELETE FROM timetable.p</span>
+<a id="__codelineno-1-112" name="__codelineno-1-112" href="#__codelineno-1-112"></a><span class="c1">--       46 |       24 |         30 | BUILTIN | Log</span>
+<a id="__codelineno-1-113" name="__codelineno-1-113" href="#__codelineno-1-113"></a><span class="c1">-- (3 rows);</span>
+<a id="__codelineno-1-114" name="__codelineno-1-114" href="#__codelineno-1-114"></a>
+<a id="__codelineno-1-115" name="__codelineno-1-115" href="#__codelineno-1-115"></a><span class="k">END</span><span class="p">;</span>
+<a id="__codelineno-1-116" name="__codelineno-1-116" href="#__codelineno-1-116"></a><span class="err">$$</span>
+<a id="__codelineno-1-117" name="__codelineno-1-117" href="#__codelineno-1-117"></a><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">PLPGSQL</span><span class="p">;</span>
 </code></pre></div>
 <h2 id="download-transform-and-import">Download, Transform and Import</h2>
 <p>This sample demonstrates how to create enhanced three-step chain with parameters. It uses DO statement to directly update the
@@ -1599,6 +1827,101 @@ Based on these values, we can calculate the success ratio.</p>
 <a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="w">    </span><span class="p">)</span>
 <a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">v_chain_id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">cte_chain</span>
 </code></pre></div>
+<h2 id="secrets">Secrets</h2>
+<p><code>samples/Mail.sql</code> and <code>samples/RemoteDB.sql</code> demonstrate the secret store:
+a <code>${secret:name}</code> reference in a parameter (jsonb) or a <code>database_connection</code>
+conninfo string is replaced at execution time with the decrypted value of the
+matching <code>timetable.secret</code> row for the running client.</p>
+<p>The store is <strong>write-only by design</strong> — values are encrypted at rest with
+<code>pgp_sym_encrypt</code> (from the <code>pgcrypto</code> extension), decrypted only by the
+<code>SECURITY DEFINER</code> function <code>timetable.resolve_secret()</code>, and never exposed
+back to SQL as plaintext outside the resolved parameter. There is no
+surrogate <code>secret_id</code>; rows are addressed by <code>(client_name, secret_name)</code>
+only.</p>
+<h3 id="pgcrypto-is-an-optional-prerequisite"><code>pgcrypto</code> is an optional prerequisite</h3>
+<p><code>pgcrypto</code> is <strong>not</strong> installed or required by pg_timetable itself. pg_timetable
+never issues <code>CREATE EXTENSION</code>, never probes for the extension outside the
+body of <code>timetable.resolve_secret()</code>, and runs normally on a database without
+<code>pgcrypto</code> — the secret store simply becomes unavailable. Installing
+<code>pgcrypto</code> is the responsibility of whoever deploys the database:</p>
+<ul>
+<li>Since PostgreSQL 13, <code>pgcrypto</code> is a <strong>trusted</strong> extension and can be
+  installed by any role holding <code>CREATE</code> on the database, so managed services
+  (RDS, Azure, Cloud SQL, Supabase and similar) need no superuser.</li>
+<li>On PostgreSQL 12 and older, superuser or an allowlist entry is required.</li>
+<li>The PostgreSQL build must include OpenSSL; on a build without it the
+  extension cannot be installed and the secret store is silently unavailable
+  (everything else is unaffected).</li>
+<li>The extension may live in any schema. <code>resolve_secret</code> is <code>LANGUAGE plpgsql</code>
+  and discovers <code>pgcrypto</code> at call time via <code>pg_catalog.pg_extension</code> /
+  <code>pg_catalog.pg_namespace</code>; the schema is interpolated into the decrypt
+  query as dynamic SQL. The migration does not prescribe an installation
+  schema.</li>
+</ul>
+<h3 id="trust-boundary-honest">Trust boundary (honest)</h3>
+<p>The running scheduler process is the trusted execution boundary. The secret
+store raises the bar against:</p>
+<ul>
+<li>other database roles (Grafana, reporting, ad-hoc DBA sessions),</li>
+<li>logical-replica subscribers, and</li>
+<li><code>pg_dump</code> archives taken without the encryption key.</li>
+</ul>
+<p>It does <strong>not</strong> raise the bar against a compromised worker host, <code>ps</code> /
+auditd argv inspection, or any party that holds both <code>value_enc</code> and the
+<code>PGTT_SECRET_KEY</code> value. The scheduler's connection role can read
+<code>value_enc</code> directly; confidentiality rests on possession of the encryption
+key, which the database never stores.</p>
+<p>This feature raises the bar against other database roles, logical replicas,
+and <code>pg_dump</code> without the key. It does not by itself satisfy any specific
+regulatory secret-management control (PCI-DSS key custody, SOC 2 rotation).</p>
+<h3 id="use-the-feature-with-your-own-chains">Use the feature with your own chains</h3>
+<ol>
+<li>Configure <code>--secret-key</code> (or <code>PGTT_SECRET_KEY</code>) on the scheduler process.</li>
+<li>Install <code>pgcrypto</code> (any schema) and insert a row into <code>timetable.secret</code>
+   with <code>pgp_sym_encrypt</code> using the same key:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="n">EXTENSION</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">pgcrypto</span><span class="p">;</span><span class="w"> </span><span class="c1">-- by the DBA, not by pg_timetable</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">secret</span><span class="w"> </span><span class="p">(</span><span class="n">client_name</span><span class="p">,</span><span class="w"> </span><span class="n">secret_name</span><span class="p">,</span><span class="w"> </span><span class="n">value_enc</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="s1">'worker-1'</span><span class="p">,</span><span class="w"> </span><span class="s1">'smtp_main'</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">        </span><span class="n">pgp_sym_encrypt</span><span class="p">(</span><span class="s1">'your-password'</span><span class="p">,</span><span class="w"> </span><span class="s1">'PGTT_SECRET_KEY_VALUE'</span><span class="p">));</span>
+</code></pre></div>
+   The cluster role must own <code>timetable.secret</code> for this to succeed.</li>
+<li>Replace the literal in your parameter with <code>"${secret:your_name}"</code> (for
+   jsonb fields) or <code>password=${secret:your_name}</code> (for connection strings).</li>
+<li>Optional: grant a separate administrative role write-only access. The
+   schema grants no default privileges on <code>timetable.secret</code>, so an operator
+   who wants to delegate secret administration without revealing plaintext
+   must <code>GRANT INSERT, UPDATE, DELETE ON timetable.secret TO admin_role</code>
+   manually:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">GRANT</span><span class="w"> </span><span class="k">INSERT</span><span class="p">,</span><span class="w"> </span><span class="k">UPDATE</span><span class="p">,</span><span class="w"> </span><span class="k">DELETE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">secret</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">admin_role</span><span class="p">;</span>
+</code></pre></div>
+   <code>resolve_secret</code> is owned by the scheduler role and not granted to any
+   other role by default.</li>
+</ol>
+<h3 id="program-tasks-argv-exposure">PROGRAM-tasks (argv exposure)</h3>
+<p>PROGRAM-tasks (<code>samples/Shell.sql</code>) take a JSON-encoded argv array. Resolved
+values land in argv, which is observable via <code>/proc/&lt;pid&gt;/cmdline</code> and
+<code>/proc/&lt;pid&gt;/environ</code> on the worker host. This is a documented trade-off of
+v1, not a bug. Prefer environment variables or stdin for sensitive argv in
+production chains; passing the literal <code>${secret:x}</code> to a child process
+would be silently wrong rather than loudly unsupported.</p>
+<h3 id="debug-level-logging">Debug-level logging</h3>
+<p>At <code>--log-level=debug</code> and <code>--log-database-level=debug</code>, the pgx tracer
+persists query entries to <code>timetable.log</code>. The pgx logger is context-aware:
+queries executed under <code>log.WithoutQueryArgs(ctx)</code> (the marker used by
+<code>ResolveSecrets*</code>) drop the <code>args</code> field while retaining <code>sql</code>, so neither
+the plaintext nor the encryption key reaches <code>timetable.log</code> or the
+stdout/file log.</p>
+<p><code>execution_log.params</code> is intentionally the unresolved <code>${secret:name}</code> form.</p>
+<h3 id="guidance">Guidance</h3>
+<ul>
+<li>Prefer <code>.pgpass</code> / <code>.pg_service.conf</code> on the worker host over <code>${secret:...}</code>
+  for remote Postgres passwords. The secret store exists for credentials that
+  have no host-local equivalent, such as SMTP.</li>
+<li>The migration does not install <code>pgcrypto</code>; the schema applies cleanly to a
+  database where the extension is absent and the connection role could not
+  install it. A scheduler starts with no error and no warning in that case,
+  and <code>secret_count()</code> returns <code>0</code>.</li>
+</ul>
 
 
 

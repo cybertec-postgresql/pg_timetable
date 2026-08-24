@@ -84,39 +84,49 @@
 <span id="L27" class="ln">    27  </span><span class="comment">// Cmd executes a command</span>
 <span id="L28" class="ln">    28  </span>var Cmd commander = realCommander{}
 <span id="L29" class="ln">    29  </span>
-<span id="L30" class="ln">    30  </span><span class="comment">// ExecuteProgramCommand executes program command and returns status code, output and error if any</span>
-<span id="L31" class="ln">    31  </span>func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.ChainTask, paramValues []string) error {
-<span id="L32" class="ln">    32  </span>	var err error
-<span id="L33" class="ln">    33  </span>	var exitCode int
-<span id="L34" class="ln">    34  </span>	command := strings.TrimSpace(task.Command)
-<span id="L35" class="ln">    35  </span>	if command == &#34;&#34; {
-<span id="L36" class="ln">    36  </span>		return errors.New(&#34;program command cannot be empty&#34;)
-<span id="L37" class="ln">    37  </span>	}
-<span id="L38" class="ln">    38  </span>	if len(paramValues) == 0 { <span class="comment">//mimic empty param</span>
-<span id="L39" class="ln">    39  </span>		paramValues = []string{&#34;&#34;}
-<span id="L40" class="ln">    40  </span>	}
-<span id="L41" class="ln">    41  </span>	for _, val := range paramValues {
-<span id="L42" class="ln">    42  </span>		task.StartedAt = time.Now() <span class="comment">// reset start time for each parameter set execution</span>
-<span id="L43" class="ln">    43  </span>		exitCode = 0
-<span id="L44" class="ln">    44  </span>		params := []string{}
-<span id="L45" class="ln">    45  </span>		if val &gt; &#34;&#34; {
-<span id="L46" class="ln">    46  </span>			if err := json.Unmarshal([]byte(val), &amp;params); err != nil {
-<span id="L47" class="ln">    47  </span>				return err
-<span id="L48" class="ln">    48  </span>			}
-<span id="L49" class="ln">    49  </span>		}
-<span id="L50" class="ln">    50  </span>		out, e := Cmd.CombinedOutput(ctx, command, params...) <span class="comment">// #nosec</span>
-<span id="L51" class="ln">    51  </span>		if e != nil {
-<span id="L52" class="ln">    52  </span>			exitCode = -1
-<span id="L53" class="ln">    53  </span>			err = errors.Join(err, e) <span class="comment">// accumulate errors for all param sets</span>
-<span id="L54" class="ln">    54  </span>			if exitError, ok := err.(*exec.ExitError); ok {
-<span id="L55" class="ln">    55  </span>				exitCode = exitError.ExitCode()
-<span id="L56" class="ln">    56  </span>			}
-<span id="L57" class="ln">    57  </span>		}
-<span id="L58" class="ln">    58  </span>		sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
-<span id="L59" class="ln">    59  </span>	}
-<span id="L60" class="ln">    60  </span>	return err
-<span id="L61" class="ln">    61  </span>}
-<span id="L62" class="ln">    62  </span>
+<span id="L30" class="ln">    30  </span><span class="comment">// ExecuteProgramCommand executes program command and returns status code,</span>
+<span id="L31" class="ln">    31  </span><span class="comment">// output and error if any.</span>
+<span id="L32" class="ln">    32  </span><span class="comment">//</span>
+<span id="L33" class="ln">    33  </span><span class="comment">// Each loop value is resolved into a separate variable before unmarshalling</span>
+<span id="L34" class="ln">    34  </span><span class="comment">// into argv. The unresolved `val` is the only string passed to</span>
+<span id="L35" class="ln">    35  </span><span class="comment">// LogTaskExecution. v1 substitutes into argv; the documentation notes the</span>
+<span id="L36" class="ln">    36  </span><span class="comment">// resulting argv exposure on the worker host.</span>
+<span id="L37" class="ln">    37  </span>func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.ChainTask, paramValues []string) error {
+<span id="L38" class="ln">    38  </span>	var err error
+<span id="L39" class="ln">    39  </span>	var exitCode int
+<span id="L40" class="ln">    40  </span>	command := strings.TrimSpace(task.Command)
+<span id="L41" class="ln">    41  </span>	if command == &#34;&#34; {
+<span id="L42" class="ln">    42  </span>		return errors.New(&#34;program command cannot be empty&#34;)
+<span id="L43" class="ln">    43  </span>	}
+<span id="L44" class="ln">    44  </span>	if len(paramValues) == 0 { <span class="comment">//mimic empty param</span>
+<span id="L45" class="ln">    45  </span>		paramValues = []string{&#34;&#34;}
+<span id="L46" class="ln">    46  </span>	}
+<span id="L47" class="ln">    47  </span>	for _, val := range paramValues {
+<span id="L48" class="ln">    48  </span>		task.StartedAt = time.Now() <span class="comment">// reset start time for each parameter set execution</span>
+<span id="L49" class="ln">    49  </span>		exitCode = 0
+<span id="L50" class="ln">    50  </span>		params := []string{}
+<span id="L51" class="ln">    51  </span>		if val &gt; &#34;&#34; {
+<span id="L52" class="ln">    52  </span>			resolved, _, rerr := sch.pgengine.ResolveSecretsJSON(ctx, val)
+<span id="L53" class="ln">    53  </span>			if rerr != nil {
+<span id="L54" class="ln">    54  </span>				return rerr
+<span id="L55" class="ln">    55  </span>			}
+<span id="L56" class="ln">    56  </span>			if err := json.Unmarshal([]byte(resolved), &amp;params); err != nil {
+<span id="L57" class="ln">    57  </span>				return err
+<span id="L58" class="ln">    58  </span>			}
+<span id="L59" class="ln">    59  </span>		}
+<span id="L60" class="ln">    60  </span>		out, e := Cmd.CombinedOutput(ctx, command, params...) <span class="comment">// #nosec</span>
+<span id="L61" class="ln">    61  </span>		if e != nil {
+<span id="L62" class="ln">    62  </span>			exitCode = -1
+<span id="L63" class="ln">    63  </span>			err = errors.Join(err, e) <span class="comment">// accumulate errors for all param sets</span>
+<span id="L64" class="ln">    64  </span>			if exitError, ok := err.(*exec.ExitError); ok {
+<span id="L65" class="ln">    65  </span>				exitCode = exitError.ExitCode()
+<span id="L66" class="ln">    66  </span>			}
+<span id="L67" class="ln">    67  </span>		}
+<span id="L68" class="ln">    68  </span>		sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
+<span id="L69" class="ln">    69  </span>	}
+<span id="L70" class="ln">    70  </span>	return err
+<span id="L71" class="ln">    71  </span>}
+<span id="L72" class="ln">    72  </span>
 </pre><p></p>
 
 <div id="footer">

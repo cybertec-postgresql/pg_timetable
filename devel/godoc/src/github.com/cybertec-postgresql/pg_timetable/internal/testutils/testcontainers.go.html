@@ -62,92 +62,93 @@
 <span id="L5" class="ln">     5  </span>	&#34;testing&#34;
 <span id="L6" class="ln">     6  </span>	&#34;time&#34;
 <span id="L7" class="ln">     7  </span>
-<span id="L8" class="ln">     8  </span>	&#34;github.com/testcontainers/testcontainers-go&#34;
-<span id="L9" class="ln">     9  </span>	&#34;github.com/testcontainers/testcontainers-go/modules/postgres&#34;
-<span id="L10" class="ln">    10  </span>	&#34;github.com/testcontainers/testcontainers-go/wait&#34;
-<span id="L11" class="ln">    11  </span>
-<span id="L12" class="ln">    12  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
-<span id="L13" class="ln">    13  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
-<span id="L14" class="ln">    14  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
-<span id="L15" class="ln">    15  </span>)
-<span id="L16" class="ln">    16  </span>
-<span id="L17" class="ln">    17  </span><span class="comment">// PostgresTestContainer wraps the postgres container with pg_timetable engine</span>
-<span id="L18" class="ln">    18  </span>type PostgresTestContainer struct {
-<span id="L19" class="ln">    19  </span>	Container *postgres.PostgresContainer
-<span id="L20" class="ln">    20  </span>	Engine    *pgengine.PgEngine
-<span id="L21" class="ln">    21  </span>	ConnStr   string
-<span id="L22" class="ln">    22  </span>}
-<span id="L23" class="ln">    23  </span>
-<span id="L24" class="ln">    24  </span><span class="comment">// SetupPostgresContainer creates a new PostgreSQL container for testing</span>
-<span id="L25" class="ln">    25  </span>func SetupPostgresContainer(t *testing.T) (*PostgresTestContainer, func()) {
-<span id="L26" class="ln">    26  </span>	t.Helper()
-<span id="L27" class="ln">    27  </span>	return SetupPostgresContainerWithOptions(t, nil)
-<span id="L28" class="ln">    28  </span>}
-<span id="L29" class="ln">    29  </span>
-<span id="L30" class="ln">    30  </span><span class="comment">// SetupPostgresContainerWithOptions creates a PostgreSQL container with custom options</span>
-<span id="L31" class="ln">    31  </span>func SetupPostgresContainerWithOptions(t *testing.T, customizer func(*config.CmdOptions)) (*PostgresTestContainer, func()) {
-<span id="L32" class="ln">    32  </span>	t.Helper()
-<span id="L33" class="ln">    33  </span>
-<span id="L34" class="ln">    34  </span>	ctx := context.Background()
-<span id="L35" class="ln">    35  </span>
-<span id="L36" class="ln">    36  </span>	postgresContainer, err := postgres.Run(ctx,
-<span id="L37" class="ln">    37  </span>		&#34;postgres:18-alpine&#34;,
-<span id="L38" class="ln">    38  </span>		postgres.WithDatabase(&#34;timetable&#34;),
-<span id="L39" class="ln">    39  </span>		postgres.WithUsername(&#34;scheduler&#34;),
-<span id="L40" class="ln">    40  </span>		postgres.WithPassword(&#34;somestrong&#34;),
-<span id="L41" class="ln">    41  </span>		testcontainers.WithWaitStrategyAndDeadline(
-<span id="L42" class="ln">    42  </span>			60*time.Second,
-<span id="L43" class="ln">    43  </span>			wait.ForLog(&#34;database system is ready to accept connections&#34;).WithOccurrence(2),
-<span id="L44" class="ln">    44  </span>		),
-<span id="L45" class="ln">    45  </span>	)
-<span id="L46" class="ln">    46  </span>	if err != nil {
-<span id="L47" class="ln">    47  </span>		t.Fatalf(&#34;Failed to start PostgreSQL container: %v&#34;, err)
-<span id="L48" class="ln">    48  </span>	}
-<span id="L49" class="ln">    49  </span>
-<span id="L50" class="ln">    50  </span>	connStr, err := postgresContainer.ConnectionString(ctx, &#34;sslmode=disable&#34;)
-<span id="L51" class="ln">    51  </span>	if err != nil {
-<span id="L52" class="ln">    52  </span>		t.Fatalf(&#34;Failed to get connection string: %v&#34;, err)
-<span id="L53" class="ln">    53  </span>	}
-<span id="L54" class="ln">    54  </span>
-<span id="L55" class="ln">    55  </span>	cmdOpts := config.NewCmdOptions(&#34;--clientname=testcontainers_unit_test&#34;, &#34;--connstr=&#34;+connStr)
-<span id="L56" class="ln">    56  </span>
-<span id="L57" class="ln">    57  </span>	if customizer != nil {
-<span id="L58" class="ln">    58  </span>		customizer(cmdOpts)
-<span id="L59" class="ln">    59  </span>	}
-<span id="L60" class="ln">    60  </span>
-<span id="L61" class="ln">    61  </span>	var pge *pgengine.PgEngine
-<span id="L62" class="ln">    62  </span>	timeout := time.After(3 * time.Minute)
+<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/testcontainers/testcontainers-go&#34;
+<span id="L12" class="ln">    12  </span>	&#34;github.com/testcontainers/testcontainers-go/modules/postgres&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/testcontainers/testcontainers-go/wait&#34;
+<span id="L14" class="ln">    14  </span>)
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span>const testSecretEncryptionKey = &#34;pgtt_test_secret_key&#34;
+<span id="L17" class="ln">    17  </span>
+<span id="L18" class="ln">    18  </span><span class="comment">// PostgresTestContainer wraps the postgres container with pg_timetable engine</span>
+<span id="L19" class="ln">    19  </span>type PostgresTestContainer struct {
+<span id="L20" class="ln">    20  </span>	Container *postgres.PostgresContainer
+<span id="L21" class="ln">    21  </span>	Engine    *pgengine.PgEngine
+<span id="L22" class="ln">    22  </span>	ConnStr   string
+<span id="L23" class="ln">    23  </span>}
+<span id="L24" class="ln">    24  </span>
+<span id="L25" class="ln">    25  </span><span class="comment">// SetupPostgresContainer creates a new PostgreSQL container for testing</span>
+<span id="L26" class="ln">    26  </span>func SetupPostgresContainer(t *testing.T) (*PostgresTestContainer, func()) {
+<span id="L27" class="ln">    27  </span>	t.Helper()
+<span id="L28" class="ln">    28  </span>	return SetupPostgresContainerWithOptions(t, nil)
+<span id="L29" class="ln">    29  </span>}
+<span id="L30" class="ln">    30  </span>
+<span id="L31" class="ln">    31  </span><span class="comment">// SetupPostgresContainerWithOptions creates a PostgreSQL container with custom options</span>
+<span id="L32" class="ln">    32  </span>func SetupPostgresContainerWithOptions(t *testing.T, customizer func(*config.CmdOptions)) (*PostgresTestContainer, func()) {
+<span id="L33" class="ln">    33  </span>	t.Helper()
+<span id="L34" class="ln">    34  </span>
+<span id="L35" class="ln">    35  </span>	ctx := context.Background()
+<span id="L36" class="ln">    36  </span>
+<span id="L37" class="ln">    37  </span>	postgresContainer, err := postgres.Run(ctx,
+<span id="L38" class="ln">    38  </span>		&#34;postgres:18-alpine&#34;,
+<span id="L39" class="ln">    39  </span>		postgres.WithDatabase(&#34;timetable&#34;),
+<span id="L40" class="ln">    40  </span>		postgres.WithUsername(&#34;scheduler&#34;),
+<span id="L41" class="ln">    41  </span>		postgres.WithPassword(&#34;somestrong&#34;),
+<span id="L42" class="ln">    42  </span>		testcontainers.WithWaitStrategyAndDeadline(
+<span id="L43" class="ln">    43  </span>			60*time.Second,
+<span id="L44" class="ln">    44  </span>			wait.ForLog(&#34;database system is ready to accept connections&#34;).WithOccurrence(2),
+<span id="L45" class="ln">    45  </span>		),
+<span id="L46" class="ln">    46  </span>	)
+<span id="L47" class="ln">    47  </span>	if err != nil {
+<span id="L48" class="ln">    48  </span>		t.Fatalf(&#34;Failed to start PostgreSQL container: %v&#34;, err)
+<span id="L49" class="ln">    49  </span>	}
+<span id="L50" class="ln">    50  </span>
+<span id="L51" class="ln">    51  </span>	connStr, err := postgresContainer.ConnectionString(ctx, &#34;sslmode=disable&#34;)
+<span id="L52" class="ln">    52  </span>	if err != nil {
+<span id="L53" class="ln">    53  </span>		t.Fatalf(&#34;Failed to get connection string: %v&#34;, err)
+<span id="L54" class="ln">    54  </span>	}
+<span id="L55" class="ln">    55  </span>
+<span id="L56" class="ln">    56  </span>	cmdOpts := config.NewCmdOptions(&#34;--clientname=testcontainers_unit_test&#34;, &#34;--connstr=&#34;+connStr)
+<span id="L57" class="ln">    57  </span>	cmdOpts.SecretEncryptionKey = testSecretEncryptionKey
+<span id="L58" class="ln">    58  </span>
+<span id="L59" class="ln">    59  </span>	if customizer != nil {
+<span id="L60" class="ln">    60  </span>		customizer(cmdOpts)
+<span id="L61" class="ln">    61  </span>	}
+<span id="L62" class="ln">    62  </span>	var pge *pgengine.PgEngine
 <span id="L63" class="ln">    63  </span>	done := make(chan bool)
-<span id="L64" class="ln">    64  </span>	go func() {
-<span id="L65" class="ln">    65  </span>		pge, err = pgengine.New(ctx, *cmdOpts, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
-<span id="L66" class="ln">    66  </span>		done &lt;- true
-<span id="L67" class="ln">    67  </span>	}()
-<span id="L68" class="ln">    68  </span>
-<span id="L69" class="ln">    69  </span>	select {
-<span id="L70" class="ln">    70  </span>	case &lt;-timeout:
-<span id="L71" class="ln">    71  </span>		t.Fatal(&#34;Cannot connect and initialize test database in time&#34;)
-<span id="L72" class="ln">    72  </span>	case &lt;-done:
-<span id="L73" class="ln">    73  </span>		if err != nil {
-<span id="L74" class="ln">    74  </span>			t.Fatalf(&#34;Failed to initialize pg_timetable engine: %v&#34;, err)
-<span id="L75" class="ln">    75  </span>		}
-<span id="L76" class="ln">    76  </span>	}
-<span id="L77" class="ln">    77  </span>
-<span id="L78" class="ln">    78  </span>	testContainer := &amp;PostgresTestContainer{
-<span id="L79" class="ln">    79  </span>		Container: postgresContainer,
-<span id="L80" class="ln">    80  </span>		Engine:    pge,
-<span id="L81" class="ln">    81  </span>		ConnStr:   connStr,
-<span id="L82" class="ln">    82  </span>	}
-<span id="L83" class="ln">    83  </span>
-<span id="L84" class="ln">    84  </span>	cleanup := func() {
-<span id="L85" class="ln">    85  </span>		if err := postgresContainer.Terminate(ctx); err != nil {
-<span id="L86" class="ln">    86  </span>			t.Logf(&#34;Failed to terminate PostgreSQL container: %v&#34;, err)
-<span id="L87" class="ln">    87  </span>		}
-<span id="L88" class="ln">    88  </span>		t.Log(&#34;PostgreSQL test container terminated&#34;)
-<span id="L89" class="ln">    89  </span>	}
-<span id="L90" class="ln">    90  </span>
-<span id="L91" class="ln">    91  </span>	return testContainer, cleanup
-<span id="L92" class="ln">    92  </span>}
-<span id="L93" class="ln">    93  </span>
+<span id="L64" class="ln">    64  </span>	timeout := time.After(3 * time.Minute)
+<span id="L65" class="ln">    65  </span>	go func() {
+<span id="L66" class="ln">    66  </span>		pge, err = pgengine.New(ctx, *cmdOpts, log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;}))
+<span id="L67" class="ln">    67  </span>		done &lt;- true
+<span id="L68" class="ln">    68  </span>	}()
+<span id="L69" class="ln">    69  </span>
+<span id="L70" class="ln">    70  </span>	select {
+<span id="L71" class="ln">    71  </span>	case &lt;-timeout:
+<span id="L72" class="ln">    72  </span>		t.Fatal(&#34;Cannot connect and initialize test database in time&#34;)
+<span id="L73" class="ln">    73  </span>	case &lt;-done:
+<span id="L74" class="ln">    74  </span>		if err != nil {
+<span id="L75" class="ln">    75  </span>			t.Fatalf(&#34;Failed to initialize pg_timetable engine: %v&#34;, err)
+<span id="L76" class="ln">    76  </span>		}
+<span id="L77" class="ln">    77  </span>	}
+<span id="L78" class="ln">    78  </span>
+<span id="L79" class="ln">    79  </span>	testContainer := &amp;PostgresTestContainer{
+<span id="L80" class="ln">    80  </span>		Container: postgresContainer,
+<span id="L81" class="ln">    81  </span>		Engine:    pge,
+<span id="L82" class="ln">    82  </span>		ConnStr:   connStr,
+<span id="L83" class="ln">    83  </span>	}
+<span id="L84" class="ln">    84  </span>
+<span id="L85" class="ln">    85  </span>	cleanup := func() {
+<span id="L86" class="ln">    86  </span>		if err := postgresContainer.Terminate(ctx); err != nil {
+<span id="L87" class="ln">    87  </span>			t.Logf(&#34;Failed to terminate PostgreSQL container: %v&#34;, err)
+<span id="L88" class="ln">    88  </span>		}
+<span id="L89" class="ln">    89  </span>		t.Log(&#34;PostgreSQL test container terminated&#34;)
+<span id="L90" class="ln">    90  </span>	}
+<span id="L91" class="ln">    91  </span>
+<span id="L92" class="ln">    92  </span>	return testContainer, cleanup
+<span id="L93" class="ln">    93  </span>}
+<span id="L94" class="ln">    94  </span>
 </pre><p></p>
 
 <div id="footer">

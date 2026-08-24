@@ -58,44 +58,70 @@
 <pre><span id="L1" class="ln">     1  </span>package log_test
 <span id="L2" class="ln">     2  </span>
 <span id="L3" class="ln">     3  </span>import (
-<span id="L4" class="ln">     4  </span>	&#34;context&#34;
-<span id="L5" class="ln">     5  </span>	&#34;os&#34;
-<span id="L6" class="ln">     6  </span>	&#34;testing&#34;
-<span id="L7" class="ln">     7  </span>
-<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
-<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
-<span id="L10" class="ln">    10  </span>	&#34;github.com/jackc/pgx/v5/tracelog&#34;
-<span id="L11" class="ln">    11  </span>	&#34;github.com/sirupsen/logrus&#34;
-<span id="L12" class="ln">    12  </span>	&#34;github.com/stretchr/testify/assert&#34;
-<span id="L13" class="ln">    13  </span>)
-<span id="L14" class="ln">    14  </span>
-<span id="L15" class="ln">    15  </span>func TestInit(t *testing.T) {
-<span id="L16" class="ln">    16  </span>	assert.NotNil(t, log.Init(config.LoggingOpts{LogLevel: &#34;debug&#34;}))
-<span id="L17" class="ln">    17  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;foobar&#34;})
-<span id="L18" class="ln">    18  </span>	assert.Equal(t, l.(*logrus.Logger).Level, logrus.InfoLevel)
-<span id="L19" class="ln">    19  </span>	pgxl := log.NewPgxLogger(l)
-<span id="L20" class="ln">    20  </span>	assert.NotNil(t, pgxl)
-<span id="L21" class="ln">    21  </span>	ctx := log.WithLogger(context.Background(), l)
-<span id="L22" class="ln">    22  </span>	assert.True(t, log.GetLogger(ctx) == l)
-<span id="L23" class="ln">    23  </span>	assert.True(t, log.GetLogger(context.Background()) == log.FallbackLogger)
-<span id="L24" class="ln">    24  </span>}
-<span id="L25" class="ln">    25  </span>
-<span id="L26" class="ln">    26  </span>func TestFileLogger(t *testing.T) {
-<span id="L27" class="ln">    27  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;debug&#34;, LogFile: &#34;test.log&#34;, LogFileFormat: &#34;text&#34;})
-<span id="L28" class="ln">    28  </span>	assert.Equal(t, l.(*logrus.Logger).Level, logrus.DebugLevel)
-<span id="L29" class="ln">    29  </span>	l.Info(&#34;test&#34;)
-<span id="L30" class="ln">    30  </span>	assert.FileExists(t, &#34;test.log&#34;, &#34;Log file should be created&#34;)
-<span id="L31" class="ln">    31  </span>	_ = os.Remove(&#34;test.log&#34;)
-<span id="L32" class="ln">    32  </span>}
-<span id="L33" class="ln">    33  </span>
-<span id="L34" class="ln">    34  </span>func TestPgxLog(*testing.T) {
-<span id="L35" class="ln">    35  </span>	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: &#34;trace&#34;}))
-<span id="L36" class="ln">    36  </span>	var level tracelog.LogLevel
-<span id="L37" class="ln">    37  </span>	for level = tracelog.LogLevelNone; level &lt;= tracelog.LogLevelTrace; level++ {
-<span id="L38" class="ln">    38  </span>		pgxl.Log(context.Background(), level, &#34;foo&#34;, map[string]any{&#34;func&#34;: &#34;TestPgxLog&#34;})
-<span id="L39" class="ln">    39  </span>	}
-<span id="L40" class="ln">    40  </span>}
-<span id="L41" class="ln">    41  </span>
+<span id="L4" class="ln">     4  </span>	&#34;bytes&#34;
+<span id="L5" class="ln">     5  </span>	&#34;context&#34;
+<span id="L6" class="ln">     6  </span>	&#34;os&#34;
+<span id="L7" class="ln">     7  </span>	&#34;testing&#34;
+<span id="L8" class="ln">     8  </span>
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/config&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/log&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/jackc/pgx/v5/tracelog&#34;
+<span id="L12" class="ln">    12  </span>	&#34;github.com/sirupsen/logrus&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L14" class="ln">    14  </span>)
+<span id="L15" class="ln">    15  </span>
+<span id="L16" class="ln">    16  </span>func TestInit(t *testing.T) {
+<span id="L17" class="ln">    17  </span>	assert.NotNil(t, log.Init(config.LoggingOpts{LogLevel: &#34;debug&#34;}))
+<span id="L18" class="ln">    18  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;foobar&#34;})
+<span id="L19" class="ln">    19  </span>	assert.Equal(t, l.(*logrus.Logger).Level, logrus.InfoLevel)
+<span id="L20" class="ln">    20  </span>	pgxl := log.NewPgxLogger(l)
+<span id="L21" class="ln">    21  </span>	assert.NotNil(t, pgxl)
+<span id="L22" class="ln">    22  </span>	ctx := log.WithLogger(context.Background(), l)
+<span id="L23" class="ln">    23  </span>	assert.True(t, log.GetLogger(ctx) == l)
+<span id="L24" class="ln">    24  </span>	assert.True(t, log.GetLogger(context.Background()) == log.FallbackLogger)
+<span id="L25" class="ln">    25  </span>}
+<span id="L26" class="ln">    26  </span>
+<span id="L27" class="ln">    27  </span>func TestFileLogger(t *testing.T) {
+<span id="L28" class="ln">    28  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;debug&#34;, LogFile: &#34;test.log&#34;, LogFileFormat: &#34;text&#34;})
+<span id="L29" class="ln">    29  </span>	assert.Equal(t, l.(*logrus.Logger).Level, logrus.DebugLevel)
+<span id="L30" class="ln">    30  </span>	l.Info(&#34;test&#34;)
+<span id="L31" class="ln">    31  </span>	assert.FileExists(t, &#34;test.log&#34;, &#34;Log file should be created&#34;)
+<span id="L32" class="ln">    32  </span>	_ = os.Remove(&#34;test.log&#34;)
+<span id="L33" class="ln">    33  </span>}
+<span id="L34" class="ln">    34  </span>
+<span id="L35" class="ln">    35  </span>func TestPgxLog(*testing.T) {
+<span id="L36" class="ln">    36  </span>	pgxl := log.NewPgxLogger(log.Init(config.LoggingOpts{LogLevel: &#34;trace&#34;}))
+<span id="L37" class="ln">    37  </span>	var level tracelog.LogLevel
+<span id="L38" class="ln">    38  </span>	for level = tracelog.LogLevelNone; level &lt;= tracelog.LogLevelTrace; level++ {
+<span id="L39" class="ln">    39  </span>		pgxl.Log(context.Background(), level, &#34;foo&#34;, map[string]any{&#34;func&#34;: &#34;TestPgxLog&#34;})
+<span id="L40" class="ln">    40  </span>	}
+<span id="L41" class="ln">    41  </span>}
+<span id="L42" class="ln">    42  </span>
+<span id="L43" class="ln">    43  </span><span class="comment">// TestPgxLoggerDropsQueryArgs: a context marked with WithoutQueryArgs</span>
+<span id="L44" class="ln">    44  </span><span class="comment">// drops the `args` key while retaining `sql`; an unmarked context retains</span>
+<span id="L45" class="ln">    45  </span><span class="comment">// both.</span>
+<span id="L46" class="ln">    46  </span>func TestPgxLoggerDropsQueryArgs(t *testing.T) {
+<span id="L47" class="ln">    47  </span>	var buf bytes.Buffer
+<span id="L48" class="ln">    48  </span>	base := logrus.New()
+<span id="L49" class="ln">    49  </span>	base.SetOutput(&amp;buf)
+<span id="L50" class="ln">    50  </span>	base.SetLevel(logrus.DebugLevel)
+<span id="L51" class="ln">    51  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;debug&#34;})
+<span id="L52" class="ln">    52  </span>	_ = l
+<span id="L53" class="ln">    53  </span>	pgxl := log.NewPgxLogger(base)
+<span id="L54" class="ln">    54  </span>
+<span id="L55" class="ln">    55  </span>	ctx := context.Background()
+<span id="L56" class="ln">    56  </span>	pgxl.Log(log.WithLogger(ctx, base), tracelog.LogLevelDebug,
+<span id="L57" class="ln">    57  </span>		&#34;Query&#34;, map[string]any{&#34;sql&#34;: &#34;SELECT $1&#34;, &#34;args&#34;: []any{&#34;secret-value&#34;}})
+<span id="L58" class="ln">    58  </span>	assert.Contains(t, buf.String(), &#34;SELECT $1&#34;)
+<span id="L59" class="ln">    59  </span>	assert.Contains(t, buf.String(), &#34;secret-value&#34;, &#34;args must be logged when context is unmarked&#34;)
+<span id="L60" class="ln">    60  </span>
+<span id="L61" class="ln">    61  </span>	buf.Reset()
+<span id="L62" class="ln">    62  </span>	pgxl.Log(log.WithLogger(log.WithoutQueryArgs(ctx), base), tracelog.LogLevelDebug,
+<span id="L63" class="ln">    63  </span>		&#34;Query&#34;, map[string]any{&#34;sql&#34;: &#34;SELECT $1&#34;, &#34;args&#34;: []any{&#34;secret-value&#34;}})
+<span id="L64" class="ln">    64  </span>	assert.Contains(t, buf.String(), &#34;SELECT $1&#34;, &#34;sql must remain under WithoutQueryArgs&#34;)
+<span id="L65" class="ln">    65  </span>	assert.NotContains(t, buf.String(), &#34;secret-value&#34;, &#34;args must be dropped under WithoutQueryArgs&#34;)
+<span id="L66" class="ln">    66  </span>}
+<span id="L67" class="ln">    67  </span>
 </pre><p></p>
 
 <div id="footer">

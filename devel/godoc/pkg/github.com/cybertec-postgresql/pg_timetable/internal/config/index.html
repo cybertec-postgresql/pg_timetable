@@ -229,7 +229,7 @@
 		
 			
 			
-			<h2 id="Parse">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L93">Parse</a>
+			<h2 id="Parse">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L94">Parse</a>
 				<a class="permalink" href="#Parse">&#xb6;</a>
 				
 				
@@ -307,17 +307,18 @@ strings removed and surrounding whitespace trimmed from the rest.
 			<p>CmdOptions holds command line options passed
 
 			<pre>type CmdOptions struct {
-<span id="CmdOptions.ClientName"></span>    ClientName     <a href="https://pkg.go.dev/builtin/#string">string</a>       `short:&#34;c&#34; long:&#34;clientname&#34; description:&#34;Unique name for application instance&#34; env:&#34;PGTT_CLIENTNAME&#34;`
-<span id="CmdOptions.Config"></span>    Config         <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;config&#34; description:&#34;YAML configuration file&#34;`
-<span id="CmdOptions.ConnStr"></span>    ConnStr        <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;connstr&#34; description:&#34;Connection string&#34; env:&#34;PGTT_CONNSTR&#34;`
-<span id="CmdOptions.Logging"></span>    Logging        <a href="#LoggingOpts">LoggingOpts</a>  `group:&#34;Logging&#34; mapstructure:&#34;Logging&#34;`
-<span id="CmdOptions.Start"></span>    Start          <a href="#StartOpts">StartOpts</a>    `group:&#34;Start&#34; mapstructure:&#34;Start&#34;`
-<span id="CmdOptions.Resource"></span>    Resource       <a href="#ResourceOpts">ResourceOpts</a> `group:&#34;Resource&#34; mapstructure:&#34;Resource&#34;`
-<span id="CmdOptions.RESTApi"></span>    RESTApi        <a href="#RestAPIOpts">RestAPIOpts</a>  `group:&#34;REST&#34; mapstructure:&#34;REST&#34;`
-<span id="CmdOptions.OTel"></span>    OTel           <a href="#OTelOpts">OTelOpts</a>     `group:&#34;OTel&#34; mapstructure:&#34;OTel&#34;`
-<span id="CmdOptions.NoProgramTasks"></span>    NoProgramTasks <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `long:&#34;no-program-tasks&#34; mapstructure:&#34;no-program-tasks&#34; description:&#34;Disable executing of PROGRAM tasks&#34; env:&#34;PGTT_NOPROGRAMTASKS&#34;`
-<span id="CmdOptions.NoHelpMessage"></span>    NoHelpMessage  <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `long:&#34;no-help&#34; mapstructure:&#34;no-help&#34; hidden:&#34;system use&#34;`
-<span id="CmdOptions.Version"></span>    Version        <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `short:&#34;v&#34; long:&#34;version&#34; mapstructure:&#34;version&#34; description:&#34;Output detailed version information&#34; env:&#34;PGTT_VERSION&#34;`
+<span id="CmdOptions.ClientName"></span>    ClientName          <a href="https://pkg.go.dev/builtin/#string">string</a>       `short:&#34;c&#34; long:&#34;clientname&#34; description:&#34;Unique name for application instance&#34; env:&#34;PGTT_CLIENTNAME&#34;`
+<span id="CmdOptions.Config"></span>    Config              <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;config&#34; description:&#34;YAML configuration file&#34;`
+<span id="CmdOptions.ConnStr"></span>    ConnStr             <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;connstr&#34; description:&#34;Connection string&#34; env:&#34;PGTT_CONNSTR&#34;`
+<span id="CmdOptions.Logging"></span>    Logging             <a href="#LoggingOpts">LoggingOpts</a>  `group:&#34;Logging&#34; mapstructure:&#34;Logging&#34;`
+<span id="CmdOptions.Start"></span>    Start               <a href="#StartOpts">StartOpts</a>    `group:&#34;Start&#34; mapstructure:&#34;Start&#34;`
+<span id="CmdOptions.Resource"></span>    Resource            <a href="#ResourceOpts">ResourceOpts</a> `group:&#34;Resource&#34; mapstructure:&#34;Resource&#34;`
+<span id="CmdOptions.RESTApi"></span>    RESTApi             <a href="#RestAPIOpts">RestAPIOpts</a>  `group:&#34;REST&#34; mapstructure:&#34;REST&#34;`
+<span id="CmdOptions.OTel"></span>    OTel                <a href="#OTelOpts">OTelOpts</a>     `group:&#34;OTel&#34; mapstructure:&#34;OTel&#34;`
+<span id="CmdOptions.NoProgramTasks"></span>    NoProgramTasks      <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `long:&#34;no-program-tasks&#34; mapstructure:&#34;no-program-tasks&#34; description:&#34;Disable executing of PROGRAM tasks&#34; env:&#34;PGTT_NOPROGRAMTASKS&#34;`
+<span id="CmdOptions.SecretEncryptionKey"></span>    SecretEncryptionKey <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;secret-key&#34; mapstructure:&#34;secret-key&#34; description:&#34;Symmetric key used to decrypt timetable.secret values&#34; env:&#34;PGTT_SECRET_KEY&#34;`
+<span id="CmdOptions.NoHelpMessage"></span>    NoHelpMessage       <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `long:&#34;no-help&#34; mapstructure:&#34;no-help&#34; hidden:&#34;system use&#34;`
+<span id="CmdOptions.Version"></span>    Version             <a href="https://pkg.go.dev/builtin/#bool">bool</a>         `short:&#34;v&#34; long:&#34;version&#34; mapstructure:&#34;version&#34; description:&#34;Output detailed version information&#34; env:&#34;PGTT_VERSION&#34;`
 }
 </pre>
 
@@ -331,7 +332,7 @@ strings removed and surrounding whitespace trimmed from the rest.
 
 			
 				
-				<h3 id="NewCmdOptions">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L84">NewCmdOptions</a>
+				<h3 id="NewCmdOptions">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L85">NewCmdOptions</a>
 					<a class="permalink" href="#NewCmdOptions">&#xb6;</a>
 					
 					
@@ -357,7 +358,7 @@ strings removed and surrounding whitespace trimmed from the rest.
 
 			
 				
-				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L74">Verbose</a>
+				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L75">Verbose</a>
 					<a class="permalink" href="#CmdOptions.Verbose">&#xb6;</a>
 					
 					
@@ -370,7 +371,7 @@ strings removed and surrounding whitespace trimmed from the rest.
 				
 			
 				
-				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L79">VersionOnly</a>
+				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L80">VersionOnly</a>
 					<a class="permalink" href="#CmdOptions.VersionOnly">&#xb6;</a>
 					
 					

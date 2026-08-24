@@ -136,7 +136,7 @@
 				<dd><a href="#taskNoOp">func taskNoOp(_ context.Context, _ *Scheduler, val string) (stdout string, err error)</a></dd>
 			
 				
-				<dd><a href="#taskSendMail">func taskSendMail(ctx context.Context, _ *Scheduler, paramValues string) (stdout string, err error)</a></dd>
+				<dd><a href="#taskSendMail">func taskSendMail(ctx context.Context, sch *Scheduler, paramValues string) (stdout string, err error)</a></dd>
 			
 				
 				<dd><a href="#taskShutdown">func taskShutdown(_ context.Context, sch *Scheduler, val string) (stdout string, err error)</a></dd>
@@ -339,7 +339,7 @@
 		
 			
 			
-			<h2 id="taskCopyFromFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L86">taskCopyFromFile</a>
+			<h2 id="taskCopyFromFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L90">taskCopyFromFile</a>
 				<a class="permalink" href="#taskCopyFromFile">&#xb6;</a>
 				
 				
@@ -352,7 +352,7 @@
 		
 			
 			
-			<h2 id="taskCopyFromProgram">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L135">taskCopyFromProgram</a>
+			<h2 id="taskCopyFromProgram">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L139">taskCopyFromProgram</a>
 				<a class="permalink" href="#taskCopyFromProgram">&#xb6;</a>
 				
 				
@@ -365,7 +365,7 @@
 		
 			
 			
-			<h2 id="taskCopyToFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L102">taskCopyToFile</a>
+			<h2 id="taskCopyToFile">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L106">taskCopyToFile</a>
 				<a class="permalink" href="#taskCopyToFile">&#xb6;</a>
 				
 				
@@ -378,7 +378,7 @@
 		
 			
 			
-			<h2 id="taskCopyToProgram">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L118">taskCopyToProgram</a>
+			<h2 id="taskCopyToProgram">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L122">taskCopyToProgram</a>
 				<a class="permalink" href="#taskCopyToProgram">&#xb6;</a>
 				
 				
@@ -391,7 +391,7 @@
 		
 			
 			
-			<h2 id="taskDownload">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L152">taskDownload</a>
+			<h2 id="taskDownload">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L156">taskDownload</a>
 				<a class="permalink" href="#taskDownload">&#xb6;</a>
 				
 				
@@ -435,7 +435,7 @@
 				
 				
 			</h2>
-			<pre>func taskSendMail(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, _ *<a href="#Scheduler">Scheduler</a>, paramValues <a href="https://pkg.go.dev/builtin/#string">string</a>) (stdout <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+			<pre>func taskSendMail(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, sch *<a href="#Scheduler">Scheduler</a>, paramValues <a href="https://pkg.go.dev/builtin/#string">string</a>) (stdout <a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
 			
 			
 			
@@ -443,7 +443,7 @@
 		
 			
 			
-			<h2 id="taskShutdown">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L168">taskShutdown</a>
+			<h2 id="taskShutdown">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/tasks.go.html#L172">taskShutdown</a>
 				<a class="permalink" href="#taskShutdown">&#xb6;</a>
 				
 				
@@ -633,13 +633,18 @@
 				
 			
 				
-				<h3 id="Scheduler.ExecuteProgramCommand">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/shell.go.html#L31">ExecuteProgramCommand</a>
+				<h3 id="Scheduler.ExecuteProgramCommand">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/shell.go.html#L37">ExecuteProgramCommand</a>
 					<a class="permalink" href="#Scheduler.ExecuteProgramCommand">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (sch *<a href="#Scheduler">Scheduler</a>) ExecuteProgramCommand(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/">pgengine</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
-				<p>ExecuteProgramCommand executes program command and returns status code, output and error if any
+				<p>ExecuteProgramCommand executes program command and returns status code,
+output and error if any.
+<p>Each loop value is resolved into a separate variable before unmarshalling
+into argv. The unresolved `val` is the only string passed to
+LogTaskExecution. v1 substitutes into argv; the documentation notes the
+resulting argv exposure on the worker host.
 
 				
 				

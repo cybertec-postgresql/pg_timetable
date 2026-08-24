@@ -117,6 +117,9 @@
 				<dd><a href="#WithLogger">func WithLogger(ctx context.Context, logger LoggerIface) context.Context</a></dd>
 			
 				
+				<dd><a href="#WithoutQueryArgs">func WithoutQueryArgs(ctx context.Context) context.Context</a></dd>
+			
+				
 				<dd><a href="#getColorByLevel">func getColorByLevel(level logrus.Level) int</a></dd>
 			
 				
@@ -124,6 +127,9 @@
 			
 				
 				<dd><a href="#getLogFileWriter">func getLogFileWriter(opts config.LoggingOpts) any</a></dd>
+			
+				
+				<dd><a href="#noQueryArgs">func noQueryArgs(ctx context.Context) bool</a></dd>
 			
 				
 				<dd><a href="#trimFilename">func trimFilename(s string) string</a></dd>
@@ -178,6 +184,11 @@
 			
 				
 				<dd><a href="#loggerKey">type loggerKey</a></dd>
+				
+				
+			
+				
+				<dd><a href="#noQueryArgsKey">type noQueryArgsKey</a></dd>
 				
 				
 			
@@ -237,7 +248,7 @@
 		
 			
 			
-			<h2 id="WithLogger">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L102">WithLogger</a>
+			<h2 id="WithLogger">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L118">WithLogger</a>
 				<a class="permalink" href="#WithLogger">&#xb6;</a>
 				
 				
@@ -245,6 +256,23 @@
 			<pre>func WithLogger(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, logger <a href="#LoggerIface">LoggerIface</a>) <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a></pre>
 			<p>WithLogger returns a new context with the provided logger. Use in
 combination with logger.WithField(s) for great effect
+
+			
+			
+
+		
+			
+			
+			<h2 id="WithoutQueryArgs">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L107">WithoutQueryArgs</a>
+				<a class="permalink" href="#WithoutQueryArgs">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func WithoutQueryArgs(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a></pre>
+			<p>WithoutQueryArgs marks ctx so that PgxLogger.Log drops the &quot;args&quot; field
+from pgx tracer entries executed under it. Used for queries whose bound
+arguments carry secret material (e.g. timetable.resolve_secret, SQL tasks
+that consumed a secret reference).
 
 			
 			
@@ -265,7 +293,7 @@ combination with logger.WithField(s) for great effect
 		
 			
 			
-			<h2 id="getLogFileFormatter">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L38">getLogFileFormatter</a>
+			<h2 id="getLogFileFormatter">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L39">getLogFileFormatter</a>
 				<a class="permalink" href="#getLogFileFormatter">&#xb6;</a>
 				
 				
@@ -278,12 +306,25 @@ combination with logger.WithField(s) for great effect
 		
 			
 			
-			<h2 id="getLogFileWriter">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L26">getLogFileWriter</a>
+			<h2 id="getLogFileWriter">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L27">getLogFileWriter</a>
 				<a class="permalink" href="#getLogFileWriter">&#xb6;</a>
 				
 				
 			</h2>
 			<pre>func getLogFileWriter(opts <a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/">config</a>.<a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/internal/config/#LoggingOpts">LoggingOpts</a>) <a href="https://pkg.go.dev/builtin/#any">any</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="noQueryArgs">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L111">noQueryArgs</a>
+				<a class="permalink" href="#noQueryArgs">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func noQueryArgs(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
 			
 			
 			
@@ -481,7 +522,7 @@ l.Error(&#34;test4&#34;)
 
 			
 				
-				<h3 id="Init">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L46">Init</a>
+				<h3 id="Init">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L47">Init</a>
 					<a class="permalink" href="#Init">&#xb6;</a>
 					
 					
@@ -516,7 +557,7 @@ l.Error(&#34;test4&#34;)
 
 			
 				
-				<h3 id="GetLogger">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L111">GetLogger</a>
+				<h3 id="GetLogger">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L127">GetLogger</a>
 					<a class="permalink" href="#GetLogger">&#xb6;</a>
 					
 					
@@ -533,7 +574,7 @@ available, the default logger is returned
 		
 			
 			
-			<h2 id="PgxLogger">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L68">PgxLogger</a>
+			<h2 id="PgxLogger">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L69">PgxLogger</a>
 				<a class="permalink" href="#PgxLogger">&#xb6;</a>
 				
 				
@@ -555,7 +596,7 @@ available, the default logger is returned
 
 			
 				
-				<h3 id="NewPgxLogger">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L73">NewPgxLogger</a>
+				<h3 id="NewPgxLogger">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L74">NewPgxLogger</a>
 					<a class="permalink" href="#NewPgxLogger">&#xb6;</a>
 					
 					
@@ -575,8 +616,7 @@ available, the default logger is returned
 					
 				</h3>
 				<pre>func (pgxlogger *<a href="#PgxLogger">PgxLogger</a>) Log(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, level <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/tracelog/">tracelog</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/tracelog/#LogLevel">LogLevel</a>, msg <a href="https://pkg.go.dev/builtin/#string">string</a>, data map[<a href="https://pkg.go.dev/builtin/#string">string</a>]<a href="https://pkg.go.dev/builtin/#any">any</a>)</pre>
-				<p>Log transforms logging calls from pgx to logrus
-
+				
 				
 				
 				
@@ -591,6 +631,29 @@ available, the default logger is returned
 			</h2>
 			
 			<pre>type loggerKey struct{}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+
+			
+		
+			
+			
+			<h2 id="noQueryArgsKey">type <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/log/log.go.html#L24">noQueryArgsKey</a>
+				<a class="permalink" href="#noQueryArgsKey">&#xb6;</a>
+				
+				
+			</h2>
+			
+			<pre>type noQueryArgsKey struct{}
 </pre>
 
 			

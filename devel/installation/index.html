@@ -579,6 +579,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../database_schema/" class="md-nav__link">
         
   
@@ -1235,22 +1263,18 @@
 <h1 id="installation">Installation</h1>
 <p><strong>pg_timetable</strong> is compatible with all supported <a href="https://www.postgresql.org/support/versioning/">PostgreSQL versions</a>.</p>
 <div class="admonition note">
-<p class="admonition-title">Older PostgreSQL versions (9.5, 9.6, and 10)</p>
-<p>If you want to use <strong>pg_timetable</strong> with older versions (9.5, 9.6 and 10), please execute this SQL command before running pg_timetable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">starts_with</span><span class="p">(</span><span class="nb">text</span><span class="p">,</span><span class="w"> </span><span class="nb">text</span><span class="p">)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">RETURNS</span><span class="w"> </span><span class="n">bool</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="err">$$</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">SELECT</span><span class="w"> </span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="k">length</span><span class="p">(</span><span class="err">$</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="k">length</span><span class="p">(</span><span class="err">$</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">        </span><span class="k">FALSE</span><span class="w"> </span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="k">ELSE</span><span class="w"> </span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">        </span><span class="k">left</span><span class="p">(</span><span class="err">$</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">length</span><span class="p">(</span><span class="err">$</span><span class="mi">2</span><span class="p">))</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span><span class="w"> </span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="k">END</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="err">$$</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="k">LANGUAGE</span><span class="w"> </span><span class="k">SQL</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">IMMUTABLE</span><span class="w"> </span><span class="k">STRICT</span><span class="w"> </span><span class="n">PARALLEL</span><span class="w"> </span><span class="n">SAFE</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">COST</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
-</code></pre></div>
+<p class="admonition-title">PostgreSQL extensions</p>
+<p><strong>No extension is required to run pg_timetable.</strong> The secret store
+(<code>timetable.secret</code>, introduced by migration <code>00820</code>) is the only
+feature with an extension dependency: it uses <code>pgcrypto</code>'s
+<code>pgp_sym_encrypt</code> / <code>pgp_sym_decrypt</code>. <code>pgcrypto</code> is installed by
+whoever deploys the database — pg_timetable never installs, requires,
+or probes for it. A database without <code>pgcrypto</code> runs pg_timetable
+normally with only the secret store unavailable.</p>
+<p>Since PostgreSQL 13, <code>pgcrypto</code> is a <strong>trusted</strong> extension and can
+be installed by any role holding <code>CREATE</code> on the database, so
+managed services (RDS, Azure, Cloud SQL, Supabase and similar)
+need no superuser.</p>
 </div>
 <h2 id="official-release-packages">Official release packages</h2>
 <p>You may find binary package for your platform on the official <a href="https://github.com/cybertec-postgresql/pg_timetable/releases">Releases</a> page. Right now <strong>Windows</strong>, <strong>Linux</strong> and <strong>macOS</strong> packages are available.</p>
@@ -1262,42 +1286,42 @@ Published tags include a multi-architecture manifest for both <code>linux/amd64<
 <p>The <code>latest</code> tag is up to date with the <code>master</code> branch thanks to <a href="https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/docker.yml">this github action</a>. In production you probably want to use the latest <a href="https://hub.docker.com/r/cybertecpostgresql/pg_timetable/tags">stable tag</a>.</p>
 </div>
 <p>Run <strong>pg_timetable</strong> in Docker:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>cybertecpostgresql/pg_timetable:latest<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>-h<span class="w"> </span><span class="m">10</span>.0.0.3<span class="w"> </span>-p<span class="w"> </span><span class="m">54321</span><span class="w"> </span>-c<span class="w"> </span>worker001
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>cybertecpostgresql/pg_timetable:latest<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>-h<span class="w"> </span><span class="m">10</span>.0.0.3<span class="w"> </span>-p<span class="w"> </span><span class="m">54321</span><span class="w"> </span>-c<span class="w"> </span>worker001
 </code></pre></div>
 <p>Run <strong>pg_timetable</strong> in Docker with Environment variables:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>-e<span class="w"> </span><span class="nv">PGTT_PGHOST</span><span class="o">=</span><span class="m">10</span>.0.0.3<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>-e<span class="w"> </span><span class="nv">PGTT_PGPORT</span><span class="o">=</span><span class="m">54321</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>cybertecpostgresql/pg_timetable:latest<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>-c<span class="w"> </span>worker001
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>-e<span class="w"> </span><span class="nv">PGTT_PGHOST</span><span class="o">=</span><span class="m">10</span>.0.0.3<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>-e<span class="w"> </span><span class="nv">PGTT_PGPORT</span><span class="o">=</span><span class="m">54321</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>cybertecpostgresql/pg_timetable:latest<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>-c<span class="w"> </span>worker001
 </code></pre></div>
 <h2 id="build-from-sources">Build from sources</h2>
 <ol>
 <li>Download and install <a href="https://golang.org/doc/install">Go</a> on your system.</li>
 <li>
 <p>Clone <strong>pg_timetable</strong> repo:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cybertec-postgresql/pg_timetable.git
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">cd</span><span class="w"> </span>pg_timetable
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cybertec-postgresql/pg_timetable.git
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>pg_timetable
 </code></pre></div>
 </li>
 <li>
 <p>Run <strong>pg_timetable</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>Alternatively, build a binary and run it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>go<span class="w"> </span>build
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>go<span class="w"> </span>build
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>(Optional) Run tests in all sub-folders of the project:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>psql<span class="w"> </span>--command<span class="o">=</span><span class="s2">"CREATE USER scheduler PASSWORD 'somestrong'"</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>createdb<span class="w"> </span>--owner<span class="o">=</span>scheduler<span class="w"> </span>timetable
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-failfast<span class="w"> </span>-timeout<span class="o">=</span>300s<span class="w"> </span>-count<span class="o">=</span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>psql<span class="w"> </span>--command<span class="o">=</span><span class="s2">"CREATE USER scheduler PASSWORD 'somestrong'"</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>createdb<span class="w"> </span>--owner<span class="o">=</span>scheduler<span class="w"> </span>timetable
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-failfast<span class="w"> </span>-timeout<span class="o">=</span>300s<span class="w"> </span>-count<span class="o">=</span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
 </code></pre></div>
 </li>
 </ol>

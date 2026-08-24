@@ -579,6 +579,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../database_schema/" class="md-nav__link">
         
   
@@ -1153,6 +1181,34 @@
     <span class="md-ellipsis">
       
         Common Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Secrets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-you-need-to-enable-the-secret-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you need to enable the secret store
       
     </span>
   </a>
@@ -1790,6 +1846,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Secrets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-you-need-to-enable-the-secret-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you need to enable the secret store
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2159,6 +2243,33 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Error: chain 1: chain name is required
 </code></pre></div>
 <p>→ Check all required fields are present</p>
+<h2 id="secrets">Secrets</h2>
+<p>YAML-authored chains do <strong>not</strong> support <code>${secret:name}</code> references in v1.
+The reference syntax is a string-substitution feature implemented in the
+Go runtime after <code>parameter.value</code> is materialized into the database; the
+YAML loader does not perform secret resolution. A YAML chain that needs a
+secret must either:</p>
+<ul>
+<li>reference a <code>timetable.task</code> row whose <code>parameter.value</code> already contains
+  <code>${secret:name}</code> (i.e., the chain was originally created via SQL using
+  <code>samples/Mail.sql</code> or <code>samples/RemoteDB.sql</code> as a template), or</li>
+<li>use a connection-string literal in <code>database_connection</code> and accept the
+  trade-off documented in <a href="../samples/#secrets"><code>docs/samples.md</code></a> (the
+  password is then visible to DB readers, backups, and dumps).</li>
+</ul>
+<h3 id="what-you-need-to-enable-the-secret-store">What you need to enable the secret store</h3>
+<p><code>pgcrypto</code> is <strong>not</strong> installed by pg_timetable. To use <code>${secret:name}</code>
+references, the database administrator must install <code>pgcrypto</code> once per
+database (any schema; since PostgreSQL 13 it is a <strong>trusted</strong> extension
+and can be installed by any role holding <code>CREATE</code> on the database). The
+scheduler is configured with <code>--secret-key</code> (or <code>PGTT_SECRET_KEY</code>) and
+secret rows are inserted with <code>pgp_sym_encrypt</code> from the same schema.</p>
+<p>The store is opt-in syntax: chains whose <code>parameter.value</code> holds a literal
+password continue to work unchanged.</p>
+<p>See <a href="../samples/#secrets"><code>docs/samples.md</code></a> for the trust boundary, the
+honest confidentiality model (the key — not the grant model — is the
+boundary), the PROGRAM argv exposure, the debug-level caveat, and the
+trade-off between <code>${secret:name}</code> references and inline literals.</p>
 
 
 

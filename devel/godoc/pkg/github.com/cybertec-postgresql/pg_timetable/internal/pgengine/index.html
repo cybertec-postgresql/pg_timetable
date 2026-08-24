@@ -118,13 +118,40 @@
 				<dd><a href="#adaptEntryLevel">func adaptEntryLevel(level logrus.Level) string</a></dd>
 			
 				
+				<dd><a href="#escapeConnInfo">func escapeConnInfo(v string) string</a></dd>
+			
+				
+				<dd><a href="#extractRefNames">func extractRefNames(s string) []string</a></dd>
+			
+				
+				<dd><a href="#isAlreadySingleQuoted">func isAlreadySingleQuoted(in string, m []int) bool</a></dd>
+			
+				
+				<dd><a href="#isMissingPgcrypto">func isMissingPgcrypto(err error) bool</a></dd>
+			
+				
+				<dd><a href="#isWrongKey">func isWrongKey(err error) bool</a></dd>
+			
+				
 				<dd><a href="#logIdent">func logIdent(id int, name string) string</a></dd>
 			
 				
 				<dd><a href="#nullString">func nullString(s string) any</a></dd>
 			
 				
+				<dd><a href="#quoteConnInfoValue">func quoteConnInfoValue(value string, in string, m []int) string</a></dd>
+			
+				
 				<dd><a href="#quoteIdent">func quoteIdent(s string) string</a></dd>
+			
+				
+				<dd><a href="#quoteJSONLeaf">func quoteJSONLeaf(value string, _ []int, _ string) string</a></dd>
+			
+				
+				<dd><a href="#uniqueRefNames">func uniqueRefNames(s string) []string</a></dd>
+			
+				
+				<dd><a href="#walkJSON">func walkJSON(v any, fn func(*string))</a></dd>
 			
 			
 				
@@ -194,6 +221,9 @@
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.CheckNeedMigrateDb">func (pge *PgEngine) CheckNeedMigrateDb(ctx context.Context) (bool, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.CheckSecretConfig">func (pge *PgEngine) CheckSecretConfig(ctx context.Context) error</a></dd>
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.CommitTransaction">func (pge *PgEngine) CommitTransaction(ctx context.Context, tx pgx.Tx)</a></dd>
@@ -298,6 +328,12 @@
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.ResetRole">func (pge *PgEngine) ResetRole(ctx context.Context, executor executor)</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ResolveSecretsConnString">func (pge *PgEngine) ResolveSecretsConnString(ctx context.Context, s string) (resolved string, names []string, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.ResolveSecretsJSON">func (pge *PgEngine) ResolveSecretsJSON(ctx context.Context, s string) (resolved string, names []string, err error)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.RollbackTransaction">func (pge *PgEngine) RollbackTransaction(ctx context.Context, tx pgx.Tx)</a></dd>
 				
 					
@@ -332,6 +368,9 @@
 				
 					
 					<dd>&nbsp; &nbsp; <a href="#PgEngine.initMigrator">func (pge *PgEngine) initMigrator() (*migrator.Migrator, error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#PgEngine.resolveRefs">func (pge *PgEngine) resolveRefs(ctx context.Context, s string, quote func(value string, m []int, in string) string) (string, []string, error)</a></dd>
 				
 			
 				
@@ -409,6 +448,8 @@
 			
 				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/notification.go.html">notification.go</a>
 			
+				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html">secrets.go</a>
+			
 				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/sql_embed.go.html">sql_embed.go</a>
 			
 				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html">transaction.go</a>
@@ -439,6 +480,15 @@
 				<p>maximum wait time before reconnect attempts
 
 				<pre>const <span id="maxWaitTime">maxWaitTime</span> = <a href="#WaitTime">WaitTime</a> * 16</pre>
+			
+				<p>resolveSecretSQL calls timetable.resolve_secret with the fixed client scope.
+The context is wrapped with log.WithoutQueryArgs so the encryption key never
+reaches the pgx tracer.
+
+				<pre>const <span id="resolveSecretSQL">resolveSecretSQL</span> = `SELECT timetable.resolve_secret($1, $2, $3)`</pre>
+			
+				
+				<pre>const <span id="secretRefSubstring">secretRefSubstring</span> = &#34;${secret:&#34;</pre>
 			
 				<p>Select live chains with proper client_name value
 
@@ -563,6 +613,13 @@ FROM timetable.chain WHERE live AND (client_name = $1 or client_name IS NULL)`</
                 return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00797.sql&#34;)
             },
         },
+
+        &amp;<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration">Migration</a>{
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Name">Name</a>: &#34;00820 Add timetable.secret store&#34;,
+            <a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migration.Func">Func</a>: func(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, tx <a href="https://pkg.go.dev/github.com/jackc/pgx/v5/">pgx</a>.<a href="https://pkg.go.dev/github.com/jackc/pgx/v5/#Tx">Tx</a>) <a href="https://pkg.go.dev/builtin/#error">error</a> {
+                return <a href="#ExecuteMigrationScript">ExecuteMigrationScript</a>(ctx, tx, &#34;00820.sql&#34;)
+            },
+        },
     )
 }</pre>
 			
@@ -599,6 +656,11 @@ a connection is the main loop period of 1 minute.
     }()
     return
 }()</pre>
+			
+				<p>secretRefPattern matches ${secret:name}; the character class mirrors the
+secret_name_format CHECK constraint on the timetable.secret table.
+
+				<pre>var <span id="secretRefPattern">secretRefPattern</span> = <a href="https://pkg.go.dev/regexp/">regexp</a>.<a href="https://pkg.go.dev/regexp/#MustCompile">MustCompile</a>(`\$\{secret:([A-Za-z0-9_.-]+)\}`)</pre>
 			
 				
 				<pre>var <span id="sqlCron">sqlCron</span> <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
@@ -652,6 +714,81 @@ a connection is the main loop period of 1 minute.
 		
 			
 			
+			<h2 id="escapeConnInfo">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L261">escapeConnInfo</a>
+				<a class="permalink" href="#escapeConnInfo">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func escapeConnInfo(v <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="extractRefNames">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L138">extractRefNames</a>
+				<a class="permalink" href="#extractRefNames">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func extractRefNames(s <a href="https://pkg.go.dev/builtin/#string">string</a>) []<a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			<p>extractRefNames extracts the unique ${secret:name} identifiers referenced
+in s (which may be arbitrary JSON or conninfo text), unlike uniqueRefNames
+which only dedupes an already-extracted, comma-joined list of names.
+
+			
+			
+
+		
+			
+			
+			<h2 id="isAlreadySingleQuoted">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L268">isAlreadySingleQuoted</a>
+				<a class="permalink" href="#isAlreadySingleQuoted">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func isAlreadySingleQuoted(in <a href="https://pkg.go.dev/builtin/#string">string</a>, m []<a href="https://pkg.go.dev/builtin/#int">int</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+			<p>isAlreadySingleQuoted returns true when the bytes immediately surrounding
+the reference form a `password=&apos;…&apos;` style template.
+
+			
+			
+
+		
+			
+			
+			<h2 id="isMissingPgcrypto">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L110">isMissingPgcrypto</a>
+				<a class="permalink" href="#isMissingPgcrypto">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func isMissingPgcrypto(err <a href="https://pkg.go.dev/builtin/#error">error</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+			<p>isMissingPgcrypto reports whether the error is the SQLSTATE 0A000
+(feature_not_supported) raised by timetable.resolve_secret when the
+pgcrypto extension is not installed.
+
+			
+			
+
+		
+			
+			
+			<h2 id="isWrongKey">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L98">isWrongKey</a>
+				<a class="permalink" href="#isWrongKey">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func isWrongKey(err <a href="https://pkg.go.dev/builtin/#error">error</a>) <a href="https://pkg.go.dev/builtin/#bool">bool</a></pre>
+			<p>isWrongKey reports whether the error originates from pgp_sym_decrypt&apos;s
+&quot;Wrong key or corrupt data&quot; failure.
+
+			
+			
+
+		
+			
+			
 			<h2 id="logIdent">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/types.go.html#L14">logIdent</a>
 				<a class="permalink" href="#logIdent">&#xb6;</a>
 				
@@ -681,6 +818,25 @@ e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is re
 		
 			
 			
+			<h2 id="quoteConnInfoValue">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L247">quoteConnInfoValue</a>
+				<a class="permalink" href="#quoteConnInfoValue">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func quoteConnInfoValue(value <a href="https://pkg.go.dev/builtin/#string">string</a>, in <a href="https://pkg.go.dev/builtin/#string">string</a>, m []<a href="https://pkg.go.dev/builtin/#int">int</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			<p>quoteConnInfoValue applies libpq conninfo quoting to a resolved secret
+value. If the reference in the template is already delimited by single
+quotes (e.g. `password=&apos;${secret:pw}&apos;`), the wrapping is omitted and only
+`\` and `&apos;` are escaped, so the existing delimiters are not doubled.
+An empty value is emitted as `”` because a bare `password=`
+followed by whitespace would swallow the next token.
+
+			
+			
+
+		
+			
+			
 			<h2 id="quoteIdent">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/bootstrap.go.html#L133">quoteIdent</a>
 				<a class="permalink" href="#quoteIdent">&#xb6;</a>
 				
@@ -688,6 +844,50 @@ e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is re
 			</h2>
 			<pre>func quoteIdent(s <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
 			
+			
+			
+
+		
+			
+			
+			<h2 id="quoteJSONLeaf">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L197">quoteJSONLeaf</a>
+				<a class="permalink" href="#quoteJSONLeaf">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func quoteJSONLeaf(value <a href="https://pkg.go.dev/builtin/#string">string</a>, _ []<a href="https://pkg.go.dev/builtin/#int">int</a>, _ <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			<p>quoteJSONLeaf is the no-op quote function used by ResolveSecretsJSON: the
+jsonb substitution happens inside the JSON walker, so the value is inserted
+verbatim. The secret&apos;s escaping is performed by json.Marshal.
+
+			
+			
+
+		
+			
+			
+			<h2 id="uniqueRefNames">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L118">uniqueRefNames</a>
+				<a class="permalink" href="#uniqueRefNames">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func uniqueRefNames(s <a href="https://pkg.go.dev/builtin/#string">string</a>) []<a href="https://pkg.go.dev/builtin/#string">string</a></pre>
+			
+			
+			
+
+		
+			
+			
+			<h2 id="walkJSON">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L203">walkJSON</a>
+				<a class="permalink" href="#walkJSON">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func walkJSON(v <a href="https://pkg.go.dev/builtin/#any">any</a>, fn func(*<a href="https://pkg.go.dev/builtin/#string">string</a>))</pre>
+			<p>walkJSON invokes fn on every JSON string leaf reachable from v. v is
+mutated in place.
+
 			
 			
 
@@ -1052,6 +1252,21 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
+				<h3 id="PgEngine.CheckSecretConfig">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L278">CheckSecretConfig</a>
+					<a class="permalink" href="#PgEngine.CheckSecretConfig">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) CheckSecretConfig(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
+				<p>CheckSecretConfig logs an error when timetable.secret contains rows but no
+encryption key is configured. It performs no query when SecretEncryptionKey
+is non-empty. A failure of the check itself is logged, never fatal.
+
+				
+				
+				
+			
+				
 				<h3 id="PgEngine.CommitTransaction">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L29">CommitTransaction</a>
 					<a class="permalink" href="#PgEngine.CommitTransaction">&#xb6;</a>
 					
@@ -1143,7 +1358,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L112">ExecAutonomousSQLTask</a>
+				<h3 id="PgEngine.ExecAutonomousSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L123">ExecAutonomousSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecAutonomousSQLTask">&#xb6;</a>
 					
 					
@@ -1169,13 +1384,19 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L104">ExecRemoteSQLTask</a>
+				<h3 id="PgEngine.ExecRemoteSQLTask">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L111">ExecRemoteSQLTask</a>
 					<a class="permalink" href="#PgEngine.ExecRemoteSQLTask">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecRemoteSQLTask(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
 				<p>ExecRemoteSQLTask executes task against remote connection
+ExecRemoteSQLTask executes task against remote connection.
+<p>task.ConnectString is resolved eagerly (before any SetRole /
+SetCurrentTaskContext side effects fire inside the closure passed to
+ExecStandaloneTask) into a local variable. The original
+task.ConnectString MUST NOT be mutated — masking rules apply uniformly to
+the persisted value.
 
 				
 				
@@ -1221,13 +1442,19 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L120">ExecuteSQLCommand</a>
+				<h3 id="PgEngine.ExecuteSQLCommand">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L138">ExecuteSQLCommand</a>
 					<a class="permalink" href="#PgEngine.ExecuteSQLCommand">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ExecuteSQLCommand(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor, task *<a href="#ChainTask">ChainTask</a>, paramValues []<a href="https://pkg.go.dev/builtin/#string">string</a>) (err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
-				<p>ExecuteSQLCommand executes chain command with parameters inside transaction
+				<p>ExecuteSQLCommand executes chain command with parameters inside transaction.
+<p>${secret:name} references inside each parameter are resolved *before*
+unmarshalling into the bound args, while the original (unresolved) `val`
+is the only string passed to LogTaskExecution. When resolution substitutes
+at least one secret, the bound-argument query is issued under a context
+marked with log.WithoutQueryArgs so the pgx tracer does not persist
+resolved values to timetable.log.
 
 				
 				
@@ -1273,7 +1500,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L167">FinalizeDBConnection</a>
+				<h3 id="PgEngine.FinalizeDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L196">FinalizeDBConnection</a>
 					<a class="permalink" href="#PgEngine.FinalizeDBConnection">&#xb6;</a>
 					
 					
@@ -1312,7 +1539,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L148">GetLocalDBConnection</a>
+				<h3 id="PgEngine.GetLocalDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L177">GetLocalDBConnection</a>
 					<a class="permalink" href="#PgEngine.GetLocalDBConnection">&#xb6;</a>
 					
 					
@@ -1325,7 +1552,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L157">GetRemoteDBConnection</a>
+				<h3 id="PgEngine.GetRemoteDBConnection">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L186">GetRemoteDBConnection</a>
 					<a class="permalink" href="#PgEngine.GetRemoteDBConnection">&#xb6;</a>
 					
 					
@@ -1482,13 +1709,45 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L187">ResetRole</a>
+				<h3 id="PgEngine.ResetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L216">ResetRole</a>
 					<a class="permalink" href="#PgEngine.ResetRole">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ResetRole(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, executor executor)</pre>
 				<p>ResetRole - RESET forms reset the current user identifier to be the current session user identifier
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ResolveSecretsConnString">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L235">ResolveSecretsConnString</a>
+					<a class="permalink" href="#PgEngine.ResolveSecretsConnString">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ResolveSecretsConnString(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, s <a href="https://pkg.go.dev/builtin/#string">string</a>) (resolved <a href="https://pkg.go.dev/builtin/#string">string</a>, names []<a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ResolveSecretsConnString resolves ${secret:name} references inside a libpq
+conninfo string, applying conninfo quoting to each resolved value.
+Same short-circuit contract as ResolveSecretsJSON.
+
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.ResolveSecretsJSON">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L155">ResolveSecretsJSON</a>
+					<a class="permalink" href="#PgEngine.ResolveSecretsJSON">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) ResolveSecretsJSON(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, s <a href="https://pkg.go.dev/builtin/#string">string</a>) (resolved <a href="https://pkg.go.dev/builtin/#string">string</a>, names []<a href="https://pkg.go.dev/builtin/#string">string</a>, err <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>ResolveSecretsJSON resolves ${secret:name} references inside the string
+leaves of a jsonb-encoded parameter value and returns the re-encoded JSON.
+Resolved values are never re-scanned.
+<p>If s does not contain the literal substring &quot;${secret:&quot; it is returned
+byte-identical with no parsing, no database call.
 
 				
 				
@@ -1560,7 +1819,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L197">SetCurrentTaskContext</a>
+				<h3 id="PgEngine.SetCurrentTaskContext">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L226">SetCurrentTaskContext</a>
 					<a class="permalink" href="#PgEngine.SetCurrentTaskContext">&#xb6;</a>
 					
 					
@@ -1573,7 +1832,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L177">SetRole</a>
+				<h3 id="PgEngine.SetRole">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/transaction.go.html#L206">SetRole</a>
 					<a class="permalink" href="#PgEngine.SetRole">&#xb6;</a>
 					
 					
@@ -1638,13 +1897,36 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L180">initMigrator</a>
+				<h3 id="PgEngine.initMigrator">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/migration.go.html#L187">initMigrator</a>
 					<a class="permalink" href="#PgEngine.initMigrator">&#xb6;</a>
 					
 					
 				</h3>
 				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) initMigrator() (*<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/">migrator</a>.<a href="https://pkg.go.dev/github.com/cybertec-postgresql/pgx-migrator/#Migrator">Migrator</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
 				
+				
+				
+				
+			
+				
+				<h3 id="PgEngine.resolveRefs">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L35">resolveRefs</a>
+					<a class="permalink" href="#PgEngine.resolveRefs">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (pge *<a href="#PgEngine">PgEngine</a>) resolveRefs(
+    ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, s <a href="https://pkg.go.dev/builtin/#string">string</a>,
+    quote func(value <a href="https://pkg.go.dev/builtin/#string">string</a>, m []<a href="https://pkg.go.dev/builtin/#int">int</a>, in <a href="https://pkg.go.dev/builtin/#string">string</a>) <a href="https://pkg.go.dev/builtin/#string">string</a>,
+) (<a href="https://pkg.go.dev/builtin/#string">string</a>, []<a href="https://pkg.go.dev/builtin/#string">string</a>, <a href="https://pkg.go.dev/builtin/#error">error</a>)</pre>
+				<p>resolveRefs is the shared engine used by both ResolveSecretsJSON and
+ResolveSecretsConnString.
+<p>If s does not contain the literal substring `${secret:`, it is returned
+byte-identical with no parsing, no regexp evaluation, and no database call.
+Otherwise, each match is resolved exactly once against
+timetable.resolve_secret using pge.ClientName as the fixed scope, and quote
+is applied to the resolved value before substitution. Resolved values are
+never re-scanned.
+
 				
 				
 				
