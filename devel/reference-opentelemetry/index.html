@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/secret_store/">
+        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/reference-opentelemetry/">
       
       
-        <link rel="prev" href="../database_schema/">
+        <link rel="prev" href="../secret_store/">
       
       
-        <link rel="next" href="../reference-opentelemetry/">
+        <link rel="next" href="../explanation-scheduling-model/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Secret Store - 🕰️ pg_timetable</title>
+        <title>OpenTelemetry Reference - 🕰️ pg_timetable</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secret-store" class="md-skip">
+        <a href="#opentelemetry-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Secret Store
+              OpenTelemetry Reference
             
           </span>
         </div>
@@ -1106,6 +1106,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1125,7 +1153,7 @@
   <span class="md-ellipsis">
     
   
-    Secret Store
+    OpenTelemetry Reference
   
 
     
@@ -1143,7 +1171,7 @@
   <span class="md-ellipsis">
     
   
-    Secret Store
+    OpenTelemetry Reference
   
 
     
@@ -1169,10 +1197,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
+  <a href="#protocol-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pgcrypto is an optional prerequisite
+        Protocol Selection
       
     </span>
   </a>
@@ -1180,10 +1208,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
+  <a href="#trace-schema" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Schema objects
+        Trace Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trace Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-chainexecute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span: chain.execute
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-taskexecute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span: task.execute
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metric-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metric Instruments
       
     </span>
   </a>
@@ -1191,10 +1258,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
+  <a href="#authentication-security" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference syntax
+        Authentication &amp; Security
       
     </span>
   </a>
@@ -1202,10 +1269,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
+  <a href="#sampling-ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Permission model
+        Sampling Ratio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resilience
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#otel-resource-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTel Resource Attributes
       
     </span>
   </a>
@@ -1216,34 +1316,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../reference-opentelemetry/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    OpenTelemetry Reference
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1545,10 +1617,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
+  <a href="#protocol-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pgcrypto is an optional prerequisite
+        Protocol Selection
       
     </span>
   </a>
@@ -1556,10 +1628,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
+  <a href="#trace-schema" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Schema objects
+        Trace Schema
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Trace Schema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-chainexecute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span: chain.execute
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-taskexecute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span: task.execute
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metric-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Metric Instruments
       
     </span>
   </a>
@@ -1567,10 +1678,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
+  <a href="#authentication-security" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference syntax
+        Authentication &amp; Security
       
     </span>
   </a>
@@ -1578,10 +1689,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
+  <a href="#sampling-ratio" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Permission model
+        Sampling Ratio
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resilience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resilience
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#yaml-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        YAML Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#otel-resource-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTel Resource Attributes
       
     </span>
   </a>
@@ -1608,74 +1752,232 @@
   
 
 
-<h1 id="secret-store">Secret Store</h1>
-<p>The secret store is introduced by migration <code>00820</code> and lives entirely in
-the <code>timetable</code> schema. The schema applies unchanged on a database without
-<code>pgcrypto</code> installed; the extension is needed only by sessions that
-actually resolve a secret.</p>
-<p>For the write-only design rationale and the threat model this raises the bar against, see <a href="../explanation-secret-store-security-model/">Secret Store Security Model</a>.</p>
-<h3 id="pgcrypto-is-an-optional-prerequisite"><code>pgcrypto</code> is an optional prerequisite</h3>
-<p>pg_timetable never installs, requires, or probes for <code>pgcrypto</code>. The
-migration and the <code>timetable</code> schema both apply cleanly on a database
-without <code>pgcrypto</code> and whose role could not install one. The extension is
-the responsibility of the database administrator; the only place it is
-looked up is inside <code>timetable.resolve_secret()</code> at call time.</p>
-<h3 id="schema-objects">Schema objects</h3>
-<p>The table and function definitions appear via the <code>ddl.sql</code> pymdownx
-snippet above. In summary:</p>
+<h1 id="opentelemetry-reference">OpenTelemetry Reference</h1>
+<p>OTel command-line flags are documented in the <a href="../reference-cli-options/">Command-Line Reference</a>.</p>
+<h2 id="protocol-selection">Protocol Selection</h2>
+<p>The OTLP transport protocol is inferred automatically from the endpoint URL scheme:</p>
+<table>
+<thead>
+<tr>
+<th>Scheme</th>
+<th>Transport</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>grpc://</code></td>
+<td>OTLP/gRPC</td>
+</tr>
+<tr>
+<td><code>http://</code></td>
+<td>OTLP/HTTP (protobuf)</td>
+</tr>
+<tr>
+<td><code>https://</code></td>
+<td>OTLP/HTTP with TLS</td>
+</tr>
+</tbody>
+</table>
+<p>TLS is <strong>enabled by default</strong> for all transports. Use <code>--otel-insecure</code> to disable TLS verification
+in development environments.</p>
+<h2 id="trace-schema">Trace Schema</h2>
+<p>Each chain execution produces a root span <strong><code>chain.execute</code></strong> containing child spans
+<strong><code>task.execute</code></strong> for every task in the chain.</p>
+<h3 id="span-chainexecute">Span: <code>chain.execute</code></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chain.id</code></td>
+<td>Chain ID (integer)</td>
+</tr>
+<tr>
+<td><code>chain.name</code></td>
+<td>Chain name</td>
+</tr>
+<tr>
+<td><code>client.name</code></td>
+<td>pg_timetable client name (<code>--clientname</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="span-taskexecute">Span: <code>task.execute</code></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>task.name</code></td>
+<td>Task command</td>
+</tr>
+<tr>
+<td><code>task.kind</code></td>
+<td><code>SQL</code>, <code>PROGRAM</code>, or <code>BUILTIN</code></td>
+</tr>
+<tr>
+<td><code>task.return_code</code></td>
+<td><code>0</code> on success, <code>-1</code> on failure</td>
+</tr>
+</tbody>
+</table>
+<p>Failed tasks produce an OTel <strong>error event</strong> with the error message, allowing trace-based
+alerting and root-cause analysis.</p>
+<h2 id="metric-instruments">Metric Instruments</h2>
+<p>All instruments are registered under the meter name <code>pg_timetable</code> and carry the
+<code>client.name</code> attribute for multi-instance deployments.</p>
+<table>
+<thead>
+<tr>
+<th>Instrument</th>
+<th>Kind</th>
+<th>Unit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pgtimetable.chain.started</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Chain executions started</td>
+</tr>
+<tr>
+<td><code>pgtimetable.chain.completed</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Chain executions completed successfully</td>
+</tr>
+<tr>
+<td><code>pgtimetable.chain.failed</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Chain executions that failed</td>
+</tr>
+<tr>
+<td><code>pgtimetable.chain.duration</code></td>
+<td>Histogram</td>
+<td><code>s</code></td>
+<td>Wall-clock duration of chain execution</td>
+</tr>
+<tr>
+<td><code>pgtimetable.task.executed</code></td>
+<td>Counter</td>
+<td><code>{execution}</code></td>
+<td>Tasks executed (labelled by <code>task.kind</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The histogram uses these explicit bucket boundaries (seconds):
+<code>0.001, 0.01, 0.1, 0.5, 1, 5, 10, 30, 60, 120, 300</code></p>
+<h2 id="authentication-security">Authentication &amp; Security</h2>
+<p>SaaS observability backends (Honeycomb, Grafana Cloud, Datadog, etc.) typically require an
+API key. Pass it as a custom HTTP header via the YAML configuration file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://api.honeycomb.io</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">x-honeycomb-team</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YOUR_API_KEY</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code>otel.headers</code> can only be set via the YAML configuration file — it is not available
+as a CLI flag to prevent API keys from appearing in shell history or process listings.
+Header values are <strong>never written to log output</strong>.</p>
+</div>
+<h2 id="sampling-ratio">Sampling Ratio</h2>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>1.0</code> (default)</td>
+<td>Every chain execution is traced</td>
+</tr>
+<tr>
+<td><code>0.5</code></td>
+<td>~50 % of executions traced</td>
+</tr>
+<tr>
+<td><code>0.0</code></td>
+<td>No traces generated</td>
+</tr>
+</tbody>
+</table>
+<h2 id="resilience">Resilience</h2>
 <ul>
-<li><code>timetable.secret(client_name TEXT NOT NULL, secret_name TEXT NOT NULL,
-  value_enc BYTEA NOT NULL, created_at / updated_at TIMESTAMPTZ NOT NULL
-  DEFAULT now(), updated_by TEXT NOT NULL DEFAULT session_user)</code>.
-  <code>PRIMARY KEY (client_name, secret_name)</code> — no surrogate <code>secret_id</code>.
-  <code>CHECK (secret_name ~ '^[A-Za-z0-9_.-]+$')</code>. <code>REVOKE ALL FROM PUBLIC</code>;
-  no default grants to other roles.</li>
-<li><code>timetable.secret_touch()</code> — <code>BEFORE UPDATE</code> trigger that refreshes
-  <code>updated_at</code> / <code>updated_by</code> so manual <code>UPDATE</code>s cannot leave stale audit
-  data. Created with <code>EXECUTE PROCEDURE</code> (compatible with every PostgreSQL
-  in the supported matrix) and a plain <code>CREATE TRIGGER</code>.</li>
-<li><code>timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-  RETURNS TEXT</code> — <code>LANGUAGE plpgsql</code>, <code>SECURITY DEFINER</code>, <code>STRICT</code>,
-  <code>STABLE</code>, <code>SET search_path = pg_catalog, timetable</code>. The pgcrypto lookup
-  and the decrypt call live in dynamic SQL. The function locates the
-  extension's schema at call time from <code>pg_catalog.pg_extension</code> /
-  <code>pg_catalog.pg_namespace</code>, so <code>public</code>, a private schema, and a schema
-  set via <code>ALTER EXTENSION pgcrypto SET SCHEMA ...</code> all work. Returns
-  <code>NULL</code> when the <code>(client_name, secret_name)</code> pair does not exist
-  (without requiring pgcrypto). Raises <code>feature_not_supported</code> (SQLSTATE
-  <code>0A000</code>) when pgcrypto is absent — that single task fails, the scheduler
-  keeps running. Raises <code>Wrong key or corrupt data</code> on a wrong key.
-  <code>LANGUAGE plpgsql</code> is required (not <code>LANGUAGE sql</code>) so the function
-  creates successfully on a database without pgcrypto.</li>
-<li><code>timetable.secret_count() RETURNS BIGINT</code> — <code>LANGUAGE sql</code>,
-  <code>SECURITY DEFINER</code>, <code>STABLE</code>. Returns <code>count(*)</code> over <code>timetable.secret</code>.
-  Used by the scheduler startup check when no encryption key is configured;
-  does not require <code>pgcrypto</code>. Returns <code>0</code> when no secrets exist, including
-  on a database without <code>pgcrypto</code> installed.</li>
+<li><strong>Unreachable backend</strong>: pg_timetable starts normally and logs a <code>WARN</code> message. Chain
+  scheduling is never interrupted by OTel export failures.</li>
+<li><strong>Graceful shutdown</strong>: On <code>SIGTERM</code>, pg_timetable flushes pending spans and metrics before
+  exiting. The flush timeout is controlled by <code>--otel-shutdown-timeout</code> (default: 5 s).</li>
 </ul>
-<h3 id="reference-syntax">Reference syntax</h3>
-<p><code>${secret:name}</code> in <code>timetable.parameter.value</code> (jsonb string leaves) or
-<code>timetable.task.database_connection</code> is replaced at execution time with
-the decrypted value of the matching <code>timetable.secret</code> row for the
-running client. Resolved values are masked from <code>execution_log.params</code>,
-<code>timetable.log</code>, and the pgx tracer's <code>args</code> field; see the masking
-contract in the spec.</p>
-<p>The store is opt-in syntax. Chains created before this feature, whose
-<code>parameter.value</code> holds a literal password, continue to work unchanged.</p>
-<h3 id="permission-model">Permission model</h3>
-<ul>
-<li><code>PUBLIC</code> has no privileges on the table or the functions.</li>
-<li>The owning role (the scheduler's connection role) can read <code>value_enc</code>
-  directly — the key, not the grant model, is the confidentiality boundary.</li>
-<li>No new role is created by the schema. Operators who want a separate
-  secret-administration role must <code>GRANT INSERT, UPDATE, DELETE ON
-  timetable.secret TO admin_role</code> themselves; this is an operator step,
-  not a schema-managed role.</li>
-<li>The scheduler startup check (<code>CheckSecretConfig</code>) calls
-  <code>timetable.secret_count()</code> exactly once when the encryption key is unset,
-  and skips it entirely when the key is set. A failure of the check itself
-  is logged, never fatal.</li>
-</ul>
+<h2 id="yaml-configuration">YAML Configuration</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># - OpenTelemetry Settings -</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">otel</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="c1"># OTLP exporter endpoint URL (grpc://, http://, https://)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">""</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="c1"># Enable distributed tracing (default: false)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="nt">traces</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="c1"># Enable metrics export (default: false)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">metrics</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span><span class="c1"># OTel service.name resource attribute (default: pg_timetable)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span><span class="nt">service-name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pg_timetable</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="c1"># Custom headers for OTLP export — use for API key auth (map of key: value)</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="nt">headers</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">  </span><span class="c1"># Disable TLS for OTLP connection — dev only (default: false)</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">  </span><span class="nt">insecure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">  </span><span class="c1"># Trace sampling ratio 0.0–1.0 (default: 1.0 = 100%)</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">  </span><span class="nt">sample-ratio</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">  </span><span class="c1"># Metrics export interval in seconds (default: 30)</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">  </span><span class="nt">metric-period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span><span class="c1"># OTel flush timeout in seconds on shutdown (default: 5)</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">  </span><span class="nt">shutdown-timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<h2 id="otel-resource-attributes">OTel Resource Attributes</h2>
+<p>Every span and metric datapoint carries these resource attributes identifying the
+pg_timetable instance:</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>service.name</code></td>
+<td><code>--otel-service-name</code> (default: <code>pg_timetable</code>)</td>
+</tr>
+<tr>
+<td><code>service.version</code></td>
+<td>pg_timetable binary version</td>
+</tr>
+<tr>
+<td><code>client.name</code></td>
+<td><code>--clientname</code> value</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -1713,7 +2015,7 @@ contract in the spec.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../database_schema/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Database Schema">
+          <a href="../secret_store/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Secret Store">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1723,20 +2025,20 @@ contract in the spec.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Database Schema
+                Secret Store
               </div>
             </div>
           </a>
         
         
           
-          <a href="../reference-opentelemetry/" class="md-footer__link md-footer__link--next" aria-label="Next: OpenTelemetry Reference">
+          <a href="../explanation-scheduling-model/" class="md-footer__link md-footer__link--next" aria-label="Next: The Scheduling Model">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                OpenTelemetry Reference
+                The Scheduling Model
               </div>
             </div>
             <div class="md-footer__button md-icon">

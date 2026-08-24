@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/secret_store/">
+        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/explanation-design-philosophy/">
       
       
-        <link rel="prev" href="../database_schema/">
+        <link rel="prev" href="../explanation-scheduling-model/">
       
       
-        <link rel="next" href="../reference-opentelemetry/">
+        <link rel="next" href="../explanation-secret-store-security-model/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Secret Store - 🕰️ pg_timetable</title>
+        <title>Design Philosophy - 🕰️ pg_timetable</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secret-store" class="md-skip">
+        <a href="#design-philosophy" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Secret Store
+              Design Philosophy
             
           </span>
         </div>
@@ -289,12 +289,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../api/" class="md-tabs__link">
           
   
@@ -311,10 +309,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../explanation-scheduling-model/" class="md-tabs__link">
           
   
@@ -909,31 +909,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -951,7 +948,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1106,37 +1103,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Secret Store
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
         
   
   
@@ -1152,70 +1122,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1260,28 +1166,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1299,7 +1208,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1342,10 +1251,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../explanation-design-philosophy/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Philosophy
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1361,6 +1297,103 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#chains-not-cron" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chains, Not Cron
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-driven-not-database-locked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database-Driven, Not Database-Locked
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#batteries-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batteries Included
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operator-first-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operator-First Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-pg_timetable-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What pg_timetable Is Not
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-go-why-standalone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Go? Why Standalone?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Further Reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1545,10 +1578,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
+  <a href="#chains-not-cron" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pgcrypto is an optional prerequisite
+        Chains, Not Cron
       
     </span>
   </a>
@@ -1556,10 +1589,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
+  <a href="#database-driven-not-database-locked" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Schema objects
+        Database-Driven, Not Database-Locked
       
     </span>
   </a>
@@ -1567,10 +1600,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
+  <a href="#batteries-included" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference syntax
+        Batteries Included
       
     </span>
   </a>
@@ -1578,10 +1611,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
+  <a href="#operator-first-design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Permission model
+        Operator-First Design
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-pg_timetable-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What pg_timetable Is Not
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-go-why-standalone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Go? Why Standalone?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Further Reading
       
     </span>
   </a>
@@ -1608,73 +1674,143 @@
   
 
 
-<h1 id="secret-store">Secret Store</h1>
-<p>The secret store is introduced by migration <code>00820</code> and lives entirely in
-the <code>timetable</code> schema. The schema applies unchanged on a database without
-<code>pgcrypto</code> installed; the extension is needed only by sessions that
-actually resolve a secret.</p>
-<p>For the write-only design rationale and the threat model this raises the bar against, see <a href="../explanation-secret-store-security-model/">Secret Store Security Model</a>.</p>
-<h3 id="pgcrypto-is-an-optional-prerequisite"><code>pgcrypto</code> is an optional prerequisite</h3>
-<p>pg_timetable never installs, requires, or probes for <code>pgcrypto</code>. The
-migration and the <code>timetable</code> schema both apply cleanly on a database
-without <code>pgcrypto</code> and whose role could not install one. The extension is
-the responsibility of the database administrator; the only place it is
-looked up is inside <code>timetable.resolve_secret()</code> at call time.</p>
-<h3 id="schema-objects">Schema objects</h3>
-<p>The table and function definitions appear via the <code>ddl.sql</code> pymdownx
-snippet above. In summary:</p>
+<h1 id="design-philosophy">Design Philosophy</h1>
+<p>pg_timetable was created to solve a recurring set of operational frustrations
+with existing PostgreSQL schedulers. It is not merely another cron-in-the-database
+— it is an opinionated orchestration engine designed around a few core beliefs
+about how database automation should work.</p>
+<h2 id="chains-not-cron">Chains, Not Cron</h2>
+<p>Traditional schedulers — pg_cron, pgAgent, even OS-level cron — follow the
+"fire and forget" model: at a given time, run a given command, done. This works
+for <code>VACUUM</code> at midnight, but it breaks down as soon as you need <em>sequencing</em>:
+run an ETL extract, wait, transform, wait, load, wait, then send a success
+email. Or, on failure, send an alert instead and skip the subsequent steps.</p>
+<p>pg_timetable's fundamental unit is the <strong>chain</strong>: an ordered sequence of tasks
+where each step's outcome determines what happens next. A task can point to
+another task to run on success, and a different one on error. This turns
+scheduling into workflow orchestration — you are not just triggering isolated
+statements; you are defining control flow that lives in the database alongside
+your data.</p>
+<p>The chain model also enables <strong>autonomous tasks</strong>: a step that fires and
+detaches, letting the chain continue without waiting. This is not a cron
+concept at all — it is an admission that real-world automation often involves
+steps whose completion is irrelevant to the parent workflow.</p>
+<h2 id="database-driven-not-database-locked">Database-Driven, Not Database-Locked</h2>
+<p>Every PostgreSQL scheduler stores job metadata in the database. But most
+require a PostgreSQL extension, which means <code>shared_preload_libraries</code>,
+a server restart, and a dependency on a specific PostgreSQL major version.</p>
+<p>pg_timetable is a <strong>standalone Go binary</strong>. It connects to PostgreSQL like any
+other client — over libpq, with a connection string. No extension to install,
+no server restart, no coupling to a single PostgreSQL version or deployment
+model. If you can <code>psql</code> into it, pg_timetable can schedule on it.</p>
+<p>This architecture has a second, more subtle consequence: <strong>remote database
+execution</strong>. A single pg_timetable instance can schedule jobs across multiple
+PostgreSQL servers, including servers on different hosts, different versions,
+and different cloud providers. Most competitors are either restricted to the
+local server (pg_cron, as a background worker) or can reach remote hosts but
+require complex setup (pgAgent). pg_timetable treats every connection string as
+a peer — a first-class scheduling target with its own chains, its own execution
+context, and its own logging namespace.</p>
+<p>Being in Go rather than C or C++ also means a single statically-linked binary
+that runs identically on Linux, macOS, Windows, and every BSD — no runtime,
+no dynamic linking surprises, no compiler toolchain required for deployment.</p>
+<h2 id="batteries-included">Batteries Included</h2>
+<p>pg_timetable accumulates features that other PostgreSQL schedulers leave to
+external tooling. This is deliberate.</p>
+<p><strong>Built-in tasks.</strong> Only pg_timetable ships with predefined operations —
+<code>SendMail</code>, <code>Download</code>, <code>CopyFromFile</code>, <code>Sleep</code>, <code>Log</code>, and more — that are
+directly addressable as chain steps. You do not need to escape to a shell
+script to send an email when an ETL chain fails; you add a <code>SendMail</code> task
+with the right parameters and wire it to the error path.</p>
+<p><strong>Task parameters.</strong> Only pg_timetable supports parameterized tasks. A
+<code>my_func($1, $2)</code> definition can receive different arguments depending on the
+chain that invokes it, which enables task reuse across chains without
+duplication. Combined with the YAML or JSON <code>COMMAND_CONFIG</code> format, this also
+means built-in tasks accept structured configuration — not opaque shell
+strings.</p>
+<p><strong>Granular logging.</strong> Other schedulers either log to a single destination or
+leave logging details undocumented. pg_timetable logs at three levels (session,
+job, task) to three destinations simultaneously: stdout/stderr, file, and
+database tables. The database logger writes structured rows to
+<code>timetable.log</code>, which means execution history is queryable with SQL — you can
+<code>SELECT</code> your scheduler's audit trail with the same tool you use to inspect
+your application data.</p>
+<p><strong>Execution control.</strong> Job-level and task-level timeouts prevent runaway
+processes. Concurrency protection (<code>max_instances</code>) prevents overlapping runs
+of the same chain. Manual start and kill operations enable debugging workflows
+that most schedulers simply do not support. None of these are glamorous, but
+their absence is felt immediately in production — and pg_timetable is the only
+PostgreSQL scheduler that provides all of them.</p>
+<h2 id="operator-first-design">Operator-First Design</h2>
+<p>pg_timetable assumes its primary user is a DBA or operations engineer who
+already knows cron syntax, already works in SQL, and wants their scheduling
+configuration to be as version-controllable and reviewable as their schema
+migrations.</p>
+<p><strong>No GUI dependency.</strong> pgAgent requires a graphical interface
+to define schedules — cron syntax is not accepted as input. This is a
+deliberate inversion: pg_timetable schedules are always expressed as cron
+expressions, interval strings, or cron-like tokens (<code>@reboot</code>, <code>@every</code>),
+whether you define them via <code>timetable.add_job()</code> in SQL or via a YAML file.
+There is no checkbox-to-cron translation layer because there are no checkboxes.</p>
+<p><strong>Config-as-code.</strong> Chains can be defined in SQL (call <code>add_job()</code> and
+friends) or in YAML files loaded at startup. Both are plain text, both can
+live in version control, both can be reviewed in a pull request. The YAML path
+is the recommended approach for production: it separates scheduling
+configuration from runtime state, makes bulk updates safe, and integrates
+naturally with CI/CD pipelines.</p>
+<p><strong>Scheduling richness.</strong> pg_timetable is the only PostgreSQL scheduler
+supporting standard cron, interval-based scheduling, <code>@reboot</code>
+execution, manual start, manual kill, job timeouts, task timeouts, job
+disabling, and self-destructive (run-once-then-delete) jobs — all
+simultaneously. This is not feature checklisting; it reflects a philosophy that
+scheduling is a spectrum of operational needs, and the tool should not force
+you to switch to another scheduler just because your use case changed from
+"run every Tuesday" to "run once when I restart the scheduler" to "run now
+because I'm debugging."</p>
+<h2 id="what-pg_timetable-is-not">What pg_timetable Is Not</h2>
+<p>pg_timetable is not a distributed workflow engine. It does not coordinate
+chains across multiple scheduler instances, it does not implement leader
+election, and it does not provide a distributed lock manager. If you need
+horizontally-scaled job execution with failover, you are looking for something
+closer to Apache Airflow or Temporal. pg_timetable is designed for the
+single-scheduler-per-database-cluster operational model that covers the vast
+majority of PostgreSQL deployments.</p>
+<p>pg_timetable is not a replacement for OS-level cron when the task has nothing
+to do with the database. If you are scheduling filesystem cleanup or system
+reboots, use cron. pg_timetable earns its complexity when the scheduled work
+touches PostgreSQL — directly (SQL tasks), indirectly (shell tasks that connect
+back to PostgreSQL), or operationally (built-in tasks that depend on database
+state).</p>
+<p>pg_timetable is not a monitoring system. It has OpenTelemetry export and
+database-level logging, but it does not replace Prometheus alert rules or
+Grafana dashboards. It tells you what it ran and whether it succeeded; you
+bring the alerting.</p>
+<h2 id="why-go-why-standalone">Why Go? Why Standalone?</h2>
+<p>The choice of Go as the implementation language was not arbitrary. A
+PostgreSQL scheduler must manage concurrent database connections, long-running
+task goroutines, timeout enforcement, and signal handling — all of which map
+naturally to Go's concurrency primitives. A single statically-linked binary
+eliminates the runtime dependency issues that plague C/C++ schedulers (libpq
+version drift, compiler ABI changes) and the JVM footprint concerns that make
+Java-based schedulers heavy for a sidecar process.</p>
+<p>The standalone architecture — as opposed to a PostgreSQL background worker —
+means pg_timetable can be deployed as a systemd service, a Docker container, a
+Kubernetes sidecar, or a Nomad job without touching the PostgreSQL server
+configuration. It also means the scheduler can be restarted, upgraded, or moved
+to a different host without affecting the database server — a property that
+matters when the database is a managed cloud service where you cannot modify
+<code>shared_preload_libraries</code>.</p>
+<h2 id="further-reading">Further Reading</h2>
 <ul>
-<li><code>timetable.secret(client_name TEXT NOT NULL, secret_name TEXT NOT NULL,
-  value_enc BYTEA NOT NULL, created_at / updated_at TIMESTAMPTZ NOT NULL
-  DEFAULT now(), updated_by TEXT NOT NULL DEFAULT session_user)</code>.
-  <code>PRIMARY KEY (client_name, secret_name)</code> — no surrogate <code>secret_id</code>.
-  <code>CHECK (secret_name ~ '^[A-Za-z0-9_.-]+$')</code>. <code>REVOKE ALL FROM PUBLIC</code>;
-  no default grants to other roles.</li>
-<li><code>timetable.secret_touch()</code> — <code>BEFORE UPDATE</code> trigger that refreshes
-  <code>updated_at</code> / <code>updated_by</code> so manual <code>UPDATE</code>s cannot leave stale audit
-  data. Created with <code>EXECUTE PROCEDURE</code> (compatible with every PostgreSQL
-  in the supported matrix) and a plain <code>CREATE TRIGGER</code>.</li>
-<li><code>timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-  RETURNS TEXT</code> — <code>LANGUAGE plpgsql</code>, <code>SECURITY DEFINER</code>, <code>STRICT</code>,
-  <code>STABLE</code>, <code>SET search_path = pg_catalog, timetable</code>. The pgcrypto lookup
-  and the decrypt call live in dynamic SQL. The function locates the
-  extension's schema at call time from <code>pg_catalog.pg_extension</code> /
-  <code>pg_catalog.pg_namespace</code>, so <code>public</code>, a private schema, and a schema
-  set via <code>ALTER EXTENSION pgcrypto SET SCHEMA ...</code> all work. Returns
-  <code>NULL</code> when the <code>(client_name, secret_name)</code> pair does not exist
-  (without requiring pgcrypto). Raises <code>feature_not_supported</code> (SQLSTATE
-  <code>0A000</code>) when pgcrypto is absent — that single task fails, the scheduler
-  keeps running. Raises <code>Wrong key or corrupt data</code> on a wrong key.
-  <code>LANGUAGE plpgsql</code> is required (not <code>LANGUAGE sql</code>) so the function
-  creates successfully on a database without pgcrypto.</li>
-<li><code>timetable.secret_count() RETURNS BIGINT</code> — <code>LANGUAGE sql</code>,
-  <code>SECURITY DEFINER</code>, <code>STABLE</code>. Returns <code>count(*)</code> over <code>timetable.secret</code>.
-  Used by the scheduler startup check when no encryption key is configured;
-  does not require <code>pgcrypto</code>. Returns <code>0</code> when no secrets exist, including
-  on a database without <code>pgcrypto</code> installed.</li>
-</ul>
-<h3 id="reference-syntax">Reference syntax</h3>
-<p><code>${secret:name}</code> in <code>timetable.parameter.value</code> (jsonb string leaves) or
-<code>timetable.task.database_connection</code> is replaced at execution time with
-the decrypted value of the matching <code>timetable.secret</code> row for the
-running client. Resolved values are masked from <code>execution_log.params</code>,
-<code>timetable.log</code>, and the pgx tracer's <code>args</code> field; see the masking
-contract in the spec.</p>
-<p>The store is opt-in syntax. Chains created before this feature, whose
-<code>parameter.value</code> holds a literal password, continue to work unchanged.</p>
-<h3 id="permission-model">Permission model</h3>
-<ul>
-<li><code>PUBLIC</code> has no privileges on the table or the functions.</li>
-<li>The owning role (the scheduler's connection role) can read <code>value_enc</code>
-  directly — the key, not the grant model, is the confidentiality boundary.</li>
-<li>No new role is created by the schema. Operators who want a separate
-  secret-administration role must <code>GRANT INSERT, UPDATE, DELETE ON
-  timetable.secret TO admin_role</code> themselves; this is an operator step,
-  not a schema-managed role.</li>
-<li>The scheduler startup check (<code>CheckSecretConfig</code>) calls
-  <code>timetable.secret_count()</code> exactly once when the encryption key is unset,
-  and skips it entirely when the key is set. A failure of the check itself
-  is logged, never fatal.</li>
+<li><a href="../explanation-scheduling-model/">The Scheduling Model</a> — the three-tier
+  abstraction (command → task → chain) and how they compose</li>
+<li><a href="../reference-commands-tasks-chains/">Commands, Tasks, and Chains Reference</a>
+  — the exact fields and parameter formats for each tier</li>
+<li><a href="https://www.cybertec-postgresql.com/en/postgresql-schedulers-comparison-table/">PostgreSQL schedulers: comparison table</a>
+  — the feature matrix that motivated many of these design decisions</li>
+<li><a href="https://cds.cern.ch/record/2706921">CERN talk: PostgreSQL Job Scheduling</a>
+  — Pavlo Golub's 2020 presentation on the landscape that pg_timetable was
+  designed for</li>
 </ul>
 
 
@@ -1713,7 +1849,7 @@ contract in the spec.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../database_schema/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Database Schema">
+          <a href="../explanation-scheduling-model/" class="md-footer__link md-footer__link--prev" aria-label="Previous: The Scheduling Model">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1723,20 +1859,20 @@ contract in the spec.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Database Schema
+                The Scheduling Model
               </div>
             </div>
           </a>
         
         
           
-          <a href="../reference-opentelemetry/" class="md-footer__link md-footer__link--next" aria-label="Next: OpenTelemetry Reference">
+          <a href="../explanation-secret-store-security-model/" class="md-footer__link md-footer__link--next" aria-label="Next: Secret Store Security Model">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                OpenTelemetry Reference
+                Secret Store Security Model
               </div>
             </div>
             <div class="md-footer__button md-icon">

@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/secret_store/">
+        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/reference-cli-options/">
       
       
-        <link rel="prev" href="../database_schema/">
+        <link rel="prev" href="../api/">
       
       
-        <link rel="next" href="../reference-opentelemetry/">
+        <link rel="next" href="../reference-commands-tasks-chains/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Secret Store - 🕰️ pg_timetable</title>
+        <title>Command-Line Reference - 🕰️ pg_timetable</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secret-store" class="md-skip">
+        <a href="#command-line-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Secret Store
+              Command-Line Reference
             
           </span>
         </div>
@@ -994,10 +994,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../reference-cli-options/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1013,6 +1022,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1106,37 +1116,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Secret Store
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
         
   
   
@@ -1152,70 +1135,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1538,58 +1457,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1608,74 +1475,58 @@
   
 
 
-<h1 id="secret-store">Secret Store</h1>
-<p>The secret store is introduced by migration <code>00820</code> and lives entirely in
-the <code>timetable</code> schema. The schema applies unchanged on a database without
-<code>pgcrypto</code> installed; the extension is needed only by sessions that
-actually resolve a secret.</p>
-<p>For the write-only design rationale and the threat model this raises the bar against, see <a href="../explanation-secret-store-security-model/">Secret Store Security Model</a>.</p>
-<h3 id="pgcrypto-is-an-optional-prerequisite"><code>pgcrypto</code> is an optional prerequisite</h3>
-<p>pg_timetable never installs, requires, or probes for <code>pgcrypto</code>. The
-migration and the <code>timetable</code> schema both apply cleanly on a database
-without <code>pgcrypto</code> and whose role could not install one. The extension is
-the responsibility of the database administrator; the only place it is
-looked up is inside <code>timetable.resolve_secret()</code> at call time.</p>
-<h3 id="schema-objects">Schema objects</h3>
-<p>The table and function definitions appear via the <code>ddl.sql</code> pymdownx
-snippet above. In summary:</p>
-<ul>
-<li><code>timetable.secret(client_name TEXT NOT NULL, secret_name TEXT NOT NULL,
-  value_enc BYTEA NOT NULL, created_at / updated_at TIMESTAMPTZ NOT NULL
-  DEFAULT now(), updated_by TEXT NOT NULL DEFAULT session_user)</code>.
-  <code>PRIMARY KEY (client_name, secret_name)</code> — no surrogate <code>secret_id</code>.
-  <code>CHECK (secret_name ~ '^[A-Za-z0-9_.-]+$')</code>. <code>REVOKE ALL FROM PUBLIC</code>;
-  no default grants to other roles.</li>
-<li><code>timetable.secret_touch()</code> — <code>BEFORE UPDATE</code> trigger that refreshes
-  <code>updated_at</code> / <code>updated_by</code> so manual <code>UPDATE</code>s cannot leave stale audit
-  data. Created with <code>EXECUTE PROCEDURE</code> (compatible with every PostgreSQL
-  in the supported matrix) and a plain <code>CREATE TRIGGER</code>.</li>
-<li><code>timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-  RETURNS TEXT</code> — <code>LANGUAGE plpgsql</code>, <code>SECURITY DEFINER</code>, <code>STRICT</code>,
-  <code>STABLE</code>, <code>SET search_path = pg_catalog, timetable</code>. The pgcrypto lookup
-  and the decrypt call live in dynamic SQL. The function locates the
-  extension's schema at call time from <code>pg_catalog.pg_extension</code> /
-  <code>pg_catalog.pg_namespace</code>, so <code>public</code>, a private schema, and a schema
-  set via <code>ALTER EXTENSION pgcrypto SET SCHEMA ...</code> all work. Returns
-  <code>NULL</code> when the <code>(client_name, secret_name)</code> pair does not exist
-  (without requiring pgcrypto). Raises <code>feature_not_supported</code> (SQLSTATE
-  <code>0A000</code>) when pgcrypto is absent — that single task fails, the scheduler
-  keeps running. Raises <code>Wrong key or corrupt data</code> on a wrong key.
-  <code>LANGUAGE plpgsql</code> is required (not <code>LANGUAGE sql</code>) so the function
-  creates successfully on a database without pgcrypto.</li>
-<li><code>timetable.secret_count() RETURNS BIGINT</code> — <code>LANGUAGE sql</code>,
-  <code>SECURITY DEFINER</code>, <code>STABLE</code>. Returns <code>count(*)</code> over <code>timetable.secret</code>.
-  Used by the scheduler startup check when no encryption key is configured;
-  does not require <code>pgcrypto</code>. Returns <code>0</code> when no secrets exist, including
-  on a database without <code>pgcrypto</code> installed.</li>
-</ul>
-<h3 id="reference-syntax">Reference syntax</h3>
-<p><code>${secret:name}</code> in <code>timetable.parameter.value</code> (jsonb string leaves) or
-<code>timetable.task.database_connection</code> is replaced at execution time with
-the decrypted value of the matching <code>timetable.secret</code> row for the
-running client. Resolved values are masked from <code>execution_log.params</code>,
-<code>timetable.log</code>, and the pgx tracer's <code>args</code> field; see the masking
-contract in the spec.</p>
-<p>The store is opt-in syntax. Chains created before this feature, whose
-<code>parameter.value</code> holds a literal password, continue to work unchanged.</p>
-<h3 id="permission-model">Permission model</h3>
-<ul>
-<li><code>PUBLIC</code> has no privileges on the table or the functions.</li>
-<li>The owning role (the scheduler's connection role) can read <code>value_enc</code>
-  directly — the key, not the grant model, is the confidentiality boundary.</li>
-<li>No new role is created by the schema. Operators who want a separate
-  secret-administration role must <code>GRANT INSERT, UPDATE, DELETE ON
-  timetable.secret TO admin_role</code> themselves; this is an operator step,
-  not a schema-managed role.</li>
-<li>The scheduler startup check (<code>CheckSecretConfig</code>) calls
-  <code>timetable.secret_count()</code> exactly once when the encryption key is unset,
-  and skips it entirely when the key is set. A failure of the check itself
-  is logged, never fatal.</li>
-</ul>
+<h1 id="command-line-reference">Command-Line Reference</h1>
+<p>Complete list of pg_timetable command-line flags and their environment-variable equivalents.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># ./pg_timetable</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Application<span class="w"> </span>Options:
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-c,<span class="w"> </span>--clientname<span class="o">=</span><span class="w">                                </span>Unique<span class="w"> </span>name<span class="w"> </span><span class="k">for</span><span class="w"> </span>application<span class="w"> </span>instance<span class="w"> </span><span class="o">[</span><span class="nv">$PGTT_CLIENTNAME</span><span class="o">]</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span>--config<span class="o">=</span><span class="w">                                    </span>YAML<span class="w"> </span>configuration<span class="w"> </span>file
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span>--no-program-tasks<span class="w">                           </span>Disable<span class="w"> </span>executing<span class="w"> </span>of<span class="w"> </span>PROGRAM<span class="w"> </span>tasks<span class="w"> </span><span class="o">[</span><span class="nv">$PGTT_NOPROGRAMTASKS</span><span class="o">]</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>-v,<span class="w"> </span>--version<span class="w">                                    </span>Output<span class="w"> </span>detailed<span class="w"> </span>version<span class="w"> </span>information<span class="w"> </span><span class="o">[</span><span class="nv">$PGTT_VERSION</span><span class="o">]</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span>--connstr<span class="w">                                    </span>PostgreSQL<span class="w"> </span>connection<span class="w"> </span>string<span class="w"> </span><span class="o">[</span><span class="nv">$PGTT_CONNSTR</span><span class="o">]</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>Logging:
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">      </span>--log-level<span class="o">=[</span>debug<span class="p">|</span>info<span class="p">|</span>error<span class="o">]</span><span class="w">               </span>Verbosity<span class="w"> </span>level<span class="w"> </span><span class="k">for</span><span class="w"> </span>stdout<span class="w"> </span>and<span class="w"> </span>log<span class="w"> </span>file<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>info<span class="o">)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span>--log-database-level<span class="o">=[</span>debug<span class="p">|</span>info<span class="p">|</span>error<span class="p">|</span>none<span class="o">]</span><span class="w"> </span>Verbosity<span class="w"> </span>level<span class="w"> </span><span class="k">for</span><span class="w"> </span>database<span class="w"> </span>storing<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>info<span class="o">)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span>--log-file<span class="o">=</span><span class="w">                                  </span>File<span class="w"> </span>name<span class="w"> </span>to<span class="w"> </span>store<span class="w"> </span>logs
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span>--log-file-format<span class="o">=[</span>json<span class="p">|</span>text<span class="o">]</span><span class="w">                </span>Format<span class="w"> </span>of<span class="w"> </span>file<span class="w"> </span>logs<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>json<span class="o">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span>--log-file-rotate<span class="w">                            </span>Rotate<span class="w"> </span>log<span class="w"> </span>files
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span>--log-file-size<span class="o">=</span><span class="w">                             </span>Maximum<span class="w"> </span>size<span class="w"> </span><span class="k">in</span><span class="w"> </span>MB<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>log<span class="w"> </span>file<span class="w"> </span>before<span class="w"> </span>it<span class="w"> </span>gets<span class="w"> </span>rotated<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">100</span><span class="o">)</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span>--log-file-age<span class="o">=</span><span class="w">                              </span>Number<span class="w"> </span>of<span class="w"> </span>days<span class="w"> </span>to<span class="w"> </span>retain<span class="w"> </span>old<span class="w"> </span>log<span class="w"> </span>files,<span class="w"> </span><span class="m">0</span><span class="w"> </span>means<span class="w"> </span>forever<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span><span class="o">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">      </span>--log-file-number<span class="o">=</span><span class="w">                           </span>Maximum<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>old<span class="w"> </span>log<span class="w"> </span>files<span class="w"> </span>to<span class="w"> </span>retain,<span class="w"> </span><span class="m">0</span><span class="w"> </span>to<span class="w"> </span>retain<span class="w"> </span>all<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span><span class="o">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>Start:
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span>-f,<span class="w"> </span>--file<span class="o">=</span><span class="w">                                      </span>SQL<span class="w"> </span>script<span class="w"> </span>or<span class="w"> </span>YAML<span class="w"> </span>chain<span class="w"> </span>definition<span class="w"> </span>file<span class="w"> </span>to<span class="w"> </span>execute<span class="w"> </span>during
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">                                                   </span>startup<span class="p">;</span><span class="w"> </span>may<span class="w"> </span>be<span class="w"> </span>specified<span class="w"> </span>multiple<span class="w"> </span><span class="nb">times</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span>--replace<span class="w">                                    </span>Replace<span class="w"> </span>existing<span class="w"> </span>chains<span class="w"> </span>when<span class="w"> </span>loading<span class="w"> </span>YAML<span class="w"> </span>files
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span>--validate<span class="w">                                   </span>Only<span class="w"> </span>validate<span class="w"> </span>YAML<span class="w"> </span>file<span class="w"> </span>without<span class="w"> </span>importing<span class="w"> </span>chains
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">      </span>--init<span class="w">                                       </span>Initialize<span class="w"> </span>database<span class="w"> </span>schema<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>latest<span class="w"> </span>version<span class="w"> </span>and<span class="w"> </span>exit.<span class="w"> </span>Can<span class="w"> </span>be<span class="w"> </span>used
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">                                                   </span>with<span class="w"> </span>--upgrade
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span>--upgrade<span class="w">                                    </span>Upgrade<span class="w"> </span>database<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>latest<span class="w"> </span>version
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">      </span>--debug<span class="w">                                      </span>Run<span class="w"> </span><span class="k">in</span><span class="w"> </span>debug<span class="w"> </span>mode.<span class="w"> </span>Only<span class="w"> </span>asynchronous<span class="w"> </span>chains<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>executed
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>Resource:
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span>--cron-workers<span class="o">=</span><span class="w">                              </span>Number<span class="w"> </span>of<span class="w"> </span>parallel<span class="w"> </span>workers<span class="w"> </span><span class="k">for</span><span class="w"> </span>scheduled<span class="w"> </span>chains<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">16</span><span class="o">)</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="w">      </span>--interval-workers<span class="o">=</span><span class="w">                          </span>Number<span class="w"> </span>of<span class="w"> </span>parallel<span class="w"> </span>workers<span class="w"> </span><span class="k">for</span><span class="w"> </span>interval<span class="w"> </span>chains<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">16</span><span class="o">)</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span>--chain-timeout<span class="o">=</span><span class="w">                             </span>Abort<span class="w"> </span>any<span class="w"> </span>chain<span class="w"> </span>that<span class="w"> </span>takes<span class="w"> </span>more<span class="w"> </span>than<span class="w"> </span>the<span class="w"> </span>specified<span class="w"> </span>number<span class="w"> </span>of
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">                                                   </span>milliseconds
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">      </span>--task-timeout<span class="o">=</span><span class="w">                              </span>Abort<span class="w"> </span>any<span class="w"> </span>task<span class="w"> </span>within<span class="w"> </span>a<span class="w"> </span>chain<span class="w"> </span>that<span class="w"> </span>takes<span class="w"> </span>more<span class="w"> </span>than<span class="w"> </span>the<span class="w"> </span>specified<span class="w"> </span>number
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">                                                   </span>of<span class="w"> </span>milliseconds
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>REST:
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">      </span>--rest-port<span class="o">=</span><span class="w">                                 </span>REST<span class="w"> </span>API<span class="w"> </span>port<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">0</span><span class="o">)</span><span class="w"> </span><span class="o">[</span><span class="nv">$PGTT_RESTPORT</span><span class="o">]</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>OTel:
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">      </span>--otel-endpoint<span class="o">=</span><span class="w">                             </span>OTLP<span class="w"> </span>exporter<span class="w"> </span>endpoint<span class="w"> </span>URL<span class="w"> </span><span class="o">(</span>grpc://,<span class="w"> </span>http://,<span class="w"> </span>https://<span class="o">)</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span>--otel-traces<span class="w">                                </span>Enable<span class="w"> </span>OpenTelemetry<span class="w"> </span>distributed<span class="w"> </span>tracing
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span>--otel-metrics<span class="w">                               </span>Enable<span class="w"> </span>OpenTelemetry<span class="w"> </span>metrics<span class="w"> </span><span class="nb">export</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span>--otel-service-name<span class="o">=</span><span class="w">                         </span>OTel<span class="w"> </span>service.name<span class="w"> </span>resource<span class="w"> </span>attribute<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span>pg_timetable<span class="o">)</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="w">      </span>--otel-insecure<span class="w">                              </span>Disable<span class="w"> </span>TLS<span class="w"> </span><span class="k">for</span><span class="w"> </span>OTLP<span class="w"> </span>connection<span class="w"> </span><span class="o">(</span>dev/test<span class="w"> </span>only<span class="o">)</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span>--otel-sample-ratio<span class="o">=</span><span class="w">                         </span>Trace<span class="w"> </span>sampling<span class="w"> </span>ratio<span class="w"> </span><span class="m">0</span>.0-1.0<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">1</span>.0<span class="o">)</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span>--otel-metric-period<span class="o">=</span><span class="w">                        </span>Metrics<span class="w"> </span><span class="nb">export</span><span class="w"> </span>interval<span class="w"> </span><span class="k">in</span><span class="w"> </span>seconds<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">30</span><span class="o">)</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span>--otel-shutdown-timeout<span class="o">=</span><span class="w">                     </span>OTel<span class="w"> </span>provider<span class="w"> </span>flush<span class="w"> </span>timeout<span class="w"> </span><span class="k">in</span><span class="w"> </span>seconds<span class="w"> </span>on<span class="w"> </span>shutdown<span class="w"> </span><span class="o">(</span>default:<span class="w"> </span><span class="m">5</span><span class="o">)</span>
+</code></pre></div>
 
 
 
@@ -1713,7 +1564,7 @@ contract in the spec.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../database_schema/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Database Schema">
+          <a href="../api/" class="md-footer__link md-footer__link--prev" aria-label="Previous: REST API">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1723,20 +1574,20 @@ contract in the spec.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Database Schema
+                REST API
               </div>
             </div>
           </a>
         
         
           
-          <a href="../reference-opentelemetry/" class="md-footer__link md-footer__link--next" aria-label="Next: OpenTelemetry Reference">
+          <a href="../reference-commands-tasks-chains/" class="md-footer__link md-footer__link--next" aria-label="Next: Commands, Tasks, and Chains">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                OpenTelemetry Reference
+                Commands, Tasks, and Chains
               </div>
             </div>
             <div class="md-footer__button md-icon">

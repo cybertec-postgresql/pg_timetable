@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/secret_store/">
+        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/explanation-scheduling-model/">
       
       
-        <link rel="prev" href="../database_schema/">
+        <link rel="prev" href="../reference-opentelemetry/">
       
       
-        <link rel="next" href="../reference-opentelemetry/">
+        <link rel="next" href="../explanation-design-philosophy/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Secret Store - 🕰️ pg_timetable</title>
+        <title>The Scheduling Model - 🕰️ pg_timetable</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secret-store" class="md-skip">
+        <a href="#the-scheduling-model" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Secret Store
+              The Scheduling Model
             
           </span>
         </div>
@@ -289,12 +289,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../api/" class="md-tabs__link">
           
   
@@ -311,11 +309,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../explanation-scheduling-model/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -909,31 +909,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -951,7 +948,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1106,37 +1103,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Secret Store
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
         
   
   
@@ -1152,70 +1122,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1260,28 +1166,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
             
   
   
@@ -1299,7 +1208,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1314,10 +1223,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../explanation-scheduling-model/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1333,6 +1251,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1538,58 +1457,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1608,74 +1475,12 @@
   
 
 
-<h1 id="secret-store">Secret Store</h1>
-<p>The secret store is introduced by migration <code>00820</code> and lives entirely in
-the <code>timetable</code> schema. The schema applies unchanged on a database without
-<code>pgcrypto</code> installed; the extension is needed only by sessions that
-actually resolve a secret.</p>
-<p>For the write-only design rationale and the threat model this raises the bar against, see <a href="../explanation-secret-store-security-model/">Secret Store Security Model</a>.</p>
-<h3 id="pgcrypto-is-an-optional-prerequisite"><code>pgcrypto</code> is an optional prerequisite</h3>
-<p>pg_timetable never installs, requires, or probes for <code>pgcrypto</code>. The
-migration and the <code>timetable</code> schema both apply cleanly on a database
-without <code>pgcrypto</code> and whose role could not install one. The extension is
-the responsibility of the database administrator; the only place it is
-looked up is inside <code>timetable.resolve_secret()</code> at call time.</p>
-<h3 id="schema-objects">Schema objects</h3>
-<p>The table and function definitions appear via the <code>ddl.sql</code> pymdownx
-snippet above. In summary:</p>
-<ul>
-<li><code>timetable.secret(client_name TEXT NOT NULL, secret_name TEXT NOT NULL,
-  value_enc BYTEA NOT NULL, created_at / updated_at TIMESTAMPTZ NOT NULL
-  DEFAULT now(), updated_by TEXT NOT NULL DEFAULT session_user)</code>.
-  <code>PRIMARY KEY (client_name, secret_name)</code> — no surrogate <code>secret_id</code>.
-  <code>CHECK (secret_name ~ '^[A-Za-z0-9_.-]+$')</code>. <code>REVOKE ALL FROM PUBLIC</code>;
-  no default grants to other roles.</li>
-<li><code>timetable.secret_touch()</code> — <code>BEFORE UPDATE</code> trigger that refreshes
-  <code>updated_at</code> / <code>updated_by</code> so manual <code>UPDATE</code>s cannot leave stale audit
-  data. Created with <code>EXECUTE PROCEDURE</code> (compatible with every PostgreSQL
-  in the supported matrix) and a plain <code>CREATE TRIGGER</code>.</li>
-<li><code>timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-  RETURNS TEXT</code> — <code>LANGUAGE plpgsql</code>, <code>SECURITY DEFINER</code>, <code>STRICT</code>,
-  <code>STABLE</code>, <code>SET search_path = pg_catalog, timetable</code>. The pgcrypto lookup
-  and the decrypt call live in dynamic SQL. The function locates the
-  extension's schema at call time from <code>pg_catalog.pg_extension</code> /
-  <code>pg_catalog.pg_namespace</code>, so <code>public</code>, a private schema, and a schema
-  set via <code>ALTER EXTENSION pgcrypto SET SCHEMA ...</code> all work. Returns
-  <code>NULL</code> when the <code>(client_name, secret_name)</code> pair does not exist
-  (without requiring pgcrypto). Raises <code>feature_not_supported</code> (SQLSTATE
-  <code>0A000</code>) when pgcrypto is absent — that single task fails, the scheduler
-  keeps running. Raises <code>Wrong key or corrupt data</code> on a wrong key.
-  <code>LANGUAGE plpgsql</code> is required (not <code>LANGUAGE sql</code>) so the function
-  creates successfully on a database without pgcrypto.</li>
-<li><code>timetable.secret_count() RETURNS BIGINT</code> — <code>LANGUAGE sql</code>,
-  <code>SECURITY DEFINER</code>, <code>STABLE</code>. Returns <code>count(*)</code> over <code>timetable.secret</code>.
-  Used by the scheduler startup check when no encryption key is configured;
-  does not require <code>pgcrypto</code>. Returns <code>0</code> when no secrets exist, including
-  on a database without <code>pgcrypto</code> installed.</li>
-</ul>
-<h3 id="reference-syntax">Reference syntax</h3>
-<p><code>${secret:name}</code> in <code>timetable.parameter.value</code> (jsonb string leaves) or
-<code>timetable.task.database_connection</code> is replaced at execution time with
-the decrypted value of the matching <code>timetable.secret</code> row for the
-running client. Resolved values are masked from <code>execution_log.params</code>,
-<code>timetable.log</code>, and the pgx tracer's <code>args</code> field; see the masking
-contract in the spec.</p>
-<p>The store is opt-in syntax. Chains created before this feature, whose
-<code>parameter.value</code> holds a literal password, continue to work unchanged.</p>
-<h3 id="permission-model">Permission model</h3>
-<ul>
-<li><code>PUBLIC</code> has no privileges on the table or the functions.</li>
-<li>The owning role (the scheduler's connection role) can read <code>value_enc</code>
-  directly — the key, not the grant model, is the confidentiality boundary.</li>
-<li>No new role is created by the schema. Operators who want a separate
-  secret-administration role must <code>GRANT INSERT, UPDATE, DELETE ON
-  timetable.secret TO admin_role</code> themselves; this is an operator step,
-  not a schema-managed role.</li>
-<li>The scheduler startup check (<code>CheckSecretConfig</code>) calls
-  <code>timetable.secret_count()</code> exactly once when the encryption key is unset,
-  and skips it entirely when the key is set. A failure of the check itself
-  is logged, never fatal.</li>
-</ul>
+<h1 id="the-scheduling-model">The Scheduling Model</h1>
+<p>The scheduling in <strong>pg_timetable</strong> encompasses three different abstraction levels to facilitate the reuse with other parameters or additional schedules.</p>
+<p><strong>Command:</strong> The base level, <strong>command</strong>, defines <em>what</em> to do.</p>
+<p><strong>Task:</strong> The second level, <strong>task</strong>, represents a chain element (step) to run one of the commands. With <strong>tasks</strong> we define order of commands, arguments passed (if any), and how errors are handled.</p>
+<p><strong>Chain:</strong> The third level represents a connected tasks forming a chain of tasks. <strong>Chain</strong> defines <em>if</em>, <em>when</em>, and <em>how often</em> a job should be executed.</p>
+<p>The exact fields, kinds, and parameter formats for each level are documented in the <a href="../reference-commands-tasks-chains/">Commands, Tasks, and Chains Reference</a>.</p>
 
 
 
@@ -1713,7 +1518,7 @@ contract in the spec.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../database_schema/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Database Schema">
+          <a href="../reference-opentelemetry/" class="md-footer__link md-footer__link--prev" aria-label="Previous: OpenTelemetry Reference">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1723,20 +1528,20 @@ contract in the spec.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Database Schema
+                OpenTelemetry Reference
               </div>
             </div>
           </a>
         
         
           
-          <a href="../reference-opentelemetry/" class="md-footer__link md-footer__link--next" aria-label="Next: OpenTelemetry Reference">
+          <a href="../explanation-design-philosophy/" class="md-footer__link md-footer__link--next" aria-label="Next: Design Philosophy">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                OpenTelemetry Reference
+                Design Philosophy
               </div>
             </div>
             <div class="md-footer__button md-icon">

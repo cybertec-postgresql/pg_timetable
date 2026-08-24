@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/secret_store/">
+        <link rel="canonical" href="https://cybertec-postgresql.github.io/pg_timetable/devel/tutorial-manual-chain-start-stop/">
       
       
-        <link rel="prev" href="../database_schema/">
+        <link rel="prev" href="../tutorial-handling-chain-errors/">
       
       
-        <link rel="next" href="../reference-opentelemetry/">
+        <link rel="next" href="../tutorial-storing-a-secret/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Secret Store - 🕰️ pg_timetable</title>
+        <title>Starting and Stopping Chains Manually - 🕰️ pg_timetable</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secret-store" class="md-skip">
+        <a href="#starting-and-stopping-chains-manually" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Secret Store
+              Starting and Stopping Chains Manually
             
           </span>
         </div>
@@ -249,10 +249,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../tutorial-first-chain/" class="md-tabs__link">
           
   
@@ -289,12 +291,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../api/" class="md-tabs__link">
           
   
@@ -423,28 +423,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   
@@ -462,7 +465,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -561,10 +564,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../tutorial-manual-chain-start-stop/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -580,6 +592,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -909,31 +922,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -951,7 +961,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1106,37 +1116,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Secret Store
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../secret_store/" class="md-nav__link">
         
   
   
@@ -1152,70 +1135,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1538,58 +1457,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pgcrypto-is-an-optional-prerequisite" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pgcrypto is an optional prerequisite
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#schema-objects" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Schema objects
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference syntax
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#permission-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Permission model
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1608,74 +1475,107 @@
   
 
 
-<h1 id="secret-store">Secret Store</h1>
-<p>The secret store is introduced by migration <code>00820</code> and lives entirely in
-the <code>timetable</code> schema. The schema applies unchanged on a database without
-<code>pgcrypto</code> installed; the extension is needed only by sessions that
-actually resolve a secret.</p>
-<p>For the write-only design rationale and the threat model this raises the bar against, see <a href="../explanation-secret-store-security-model/">Secret Store Security Model</a>.</p>
-<h3 id="pgcrypto-is-an-optional-prerequisite"><code>pgcrypto</code> is an optional prerequisite</h3>
-<p>pg_timetable never installs, requires, or probes for <code>pgcrypto</code>. The
-migration and the <code>timetable</code> schema both apply cleanly on a database
-without <code>pgcrypto</code> and whose role could not install one. The extension is
-the responsibility of the database administrator; the only place it is
-looked up is inside <code>timetable.resolve_secret()</code> at call time.</p>
-<h3 id="schema-objects">Schema objects</h3>
-<p>The table and function definitions appear via the <code>ddl.sql</code> pymdownx
-snippet above. In summary:</p>
+<h1 id="starting-and-stopping-chains-manually">Starting and Stopping Chains Manually</h1>
+<p>In this tutorial we'll run pg_timetable in debug mode — where all automatic scheduling is disabled
+and chains only fire when you trigger them by hand. This is the workflow you'll use during
+development, debugging, and test runs.</p>
+<ol>
+<li>
+<p>Make sure you completed <a href="../tutorial-first-chain/">Your First Scheduled Chain</a> — we'll reuse
+   the same <code>scheduler</code> role and <code>my_database</code>.</p>
+</li>
+<li>
+<p>Create a chain that sleeps for 30 seconds. This gives us time to stop it mid-flight:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="n">job_name</span><span class="w">          </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">'sleepy-chain'</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="n">job_schedule</span><span class="w">      </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">'* * * * *'</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="n">job_command</span><span class="w">       </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">'SELECT pg_sleep(30)'</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="n">job_live</span><span class="w">          </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">TRUE</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="n">job_ignore_errors</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">TRUE</span><span class="p">);</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a> add_job
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>---------
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>       5
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>(1 row)
+</code></pre></div>
+<p>The output is your <strong>chain ID</strong> — you'll need it below. Yours may differ; substitute it
+wherever you see <code>5</code> in the examples.</p>
+</li>
+<li>
+<p>Run <strong>pg_timetable</strong> with the <code>--debug</code> flag:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pg_timetable<span class="w"> </span>--debug<span class="w"> </span>--clientname<span class="o">=</span>debugger<span class="w"> </span>postgresql://scheduler:somestrong@localhost/my_database
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>2024-01-01 12:00:00.000 [LOG]: Connection established...
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>2024-01-01 12:00:00.010 [LOG]: Configuration schema created...
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>2024-01-01 12:00:00.020 [LOG]: Accepting asynchronous chains execution requests...
+</code></pre></div>
+<p>Notice what's missing: no "Checking for task chains", no "Number of chains to be executed".
+<code>--debug</code> skips the entire scheduling loop — cron expressions, intervals, and <code>@reboot</code> are
+all ignored. The scheduler only listens for your manual commands.</p>
+</li>
+<li>
+<p>Start the chain by hand:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_start</span><span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="n">chain_id</span><span class="w">    </span><span class="o">=&gt;</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="n">worker_name</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="s1">'debugger'</span><span class="p">);</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a> notify_chain_start
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>--------------------
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>(1 row)
+</code></pre></div>
+<p>Back in the <strong>pg_timetable</strong> terminal:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>2024-01-01 12:05:00.000 [LOG]: Adding asynchronous chain to working queue: {5 START …}
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>2024-01-01 12:05:00.010 [LOG]: Starting chain ID: 5; configuration ID: 5
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>2024-01-01 12:05:30.020 [LOG]: Executed successfully chain ID: 5; configuration ID: 5
+</code></pre></div>
+<p>The chain ran <strong>once</strong> and stopped — manual starts always execute a single run, regardless
+of what <code>job_schedule</code> says.</p>
+</li>
+<li>
+<p>Now start it again, and this time stop it mid-flight. From your SQL client, fire the chain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_start</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="s1">'debugger'</span><span class="p">);</span>
+</code></pre></div>
+<p>Wait a few seconds, then cancel it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">notify_chain_stop</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="s1">'debugger'</span><span class="p">);</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a> notify_chain_stop
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>--------------------
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>(1 row)
+</code></pre></div>
+<p>The <strong>pg_timetable</strong> terminal shows the cancellation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>2024-01-01 12:07:00.000 [LOG]: Adding asynchronous chain to working queue: {5 START …}
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>2024-01-01 12:07:00.010 [LOG]: Starting chain ID: 5; configuration ID: 5
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>2024-01-01 12:07:08.050 [LOG]: Adding asynchronous chain to working queue: {5 STOP …}
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>2024-01-01 12:07:08.051 [ERROR]: Task execution failed: …; Error: read tcp …: i/o timeout
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>2024-01-01 12:07:08.052 [LOG]: Executed successfully chain ID: 5; configuration ID: 5
+</code></pre></div>
+<p>The task error is expected — you interrupted <code>pg_sleep</code>. The chain itself still reports
+success because we set <code>job_ignore_errors =&gt; TRUE</code> in step 2.</p>
+</li>
+<li>
+<p>PROFIT! You can now start and stop chains on demand.</p>
+</li>
+</ol>
+<p>A few things to remember:</p>
 <ul>
-<li><code>timetable.secret(client_name TEXT NOT NULL, secret_name TEXT NOT NULL,
-  value_enc BYTEA NOT NULL, created_at / updated_at TIMESTAMPTZ NOT NULL
-  DEFAULT now(), updated_by TEXT NOT NULL DEFAULT session_user)</code>.
-  <code>PRIMARY KEY (client_name, secret_name)</code> — no surrogate <code>secret_id</code>.
-  <code>CHECK (secret_name ~ '^[A-Za-z0-9_.-]+$')</code>. <code>REVOKE ALL FROM PUBLIC</code>;
-  no default grants to other roles.</li>
-<li><code>timetable.secret_touch()</code> — <code>BEFORE UPDATE</code> trigger that refreshes
-  <code>updated_at</code> / <code>updated_by</code> so manual <code>UPDATE</code>s cannot leave stale audit
-  data. Created with <code>EXECUTE PROCEDURE</code> (compatible with every PostgreSQL
-  in the supported matrix) and a plain <code>CREATE TRIGGER</code>.</li>
-<li><code>timetable.resolve_secret(p_name TEXT, p_client TEXT, p_key TEXT)
-  RETURNS TEXT</code> — <code>LANGUAGE plpgsql</code>, <code>SECURITY DEFINER</code>, <code>STRICT</code>,
-  <code>STABLE</code>, <code>SET search_path = pg_catalog, timetable</code>. The pgcrypto lookup
-  and the decrypt call live in dynamic SQL. The function locates the
-  extension's schema at call time from <code>pg_catalog.pg_extension</code> /
-  <code>pg_catalog.pg_namespace</code>, so <code>public</code>, a private schema, and a schema
-  set via <code>ALTER EXTENSION pgcrypto SET SCHEMA ...</code> all work. Returns
-  <code>NULL</code> when the <code>(client_name, secret_name)</code> pair does not exist
-  (without requiring pgcrypto). Raises <code>feature_not_supported</code> (SQLSTATE
-  <code>0A000</code>) when pgcrypto is absent — that single task fails, the scheduler
-  keeps running. Raises <code>Wrong key or corrupt data</code> on a wrong key.
-  <code>LANGUAGE plpgsql</code> is required (not <code>LANGUAGE sql</code>) so the function
-  creates successfully on a database without pgcrypto.</li>
-<li><code>timetable.secret_count() RETURNS BIGINT</code> — <code>LANGUAGE sql</code>,
-  <code>SECURITY DEFINER</code>, <code>STABLE</code>. Returns <code>count(*)</code> over <code>timetable.secret</code>.
-  Used by the scheduler startup check when no encryption key is configured;
-  does not require <code>pgcrypto</code>. Returns <code>0</code> when no secrets exist, including
-  on a database without <code>pgcrypto</code> installed.</li>
+<li><code>--debug</code> disables <strong>all</strong> automatic scheduling. Chains with <code>run_at</code>, <code>@every</code>, or
+  <code>@reboot</code> will not fire unless you trigger them manually. This is the cleanest way to
+  isolate a single chain during development.</li>
+<li>In production, you can get the same effect for a single chain without <code>--debug</code>: set
+  <code>live = FALSE</code> on its config, then start it manually when needed. A disabled chain still
+  responds to <code>notify_chain_start</code>.</li>
+<li><code>notify_chain_start</code> takes a <strong>chain execution config ID</strong> — but <code>add_job()</code> creates one
+  config per chain, so the numbers match until you add additional configs.</li>
+<li><code>worker_name</code> must match the <code>--clientname</code> of a running <strong>pg_timetable</strong> instance.
+  If no client with that name is connected, the notification is silently dropped.</li>
+<li>Manual starts accept an optional <code>start_delay</code> — see the
+  <a href="../reference-commands-tasks-chains/">Commands, Tasks, and Chains Reference</a> for details.</li>
 </ul>
-<h3 id="reference-syntax">Reference syntax</h3>
-<p><code>${secret:name}</code> in <code>timetable.parameter.value</code> (jsonb string leaves) or
-<code>timetable.task.database_connection</code> is replaced at execution time with
-the decrypted value of the matching <code>timetable.secret</code> row for the
-running client. Resolved values are masked from <code>execution_log.params</code>,
-<code>timetable.log</code>, and the pgx tracer's <code>args</code> field; see the masking
-contract in the spec.</p>
-<p>The store is opt-in syntax. Chains created before this feature, whose
-<code>parameter.value</code> holds a literal password, continue to work unchanged.</p>
-<h3 id="permission-model">Permission model</h3>
-<ul>
-<li><code>PUBLIC</code> has no privileges on the table or the functions.</li>
-<li>The owning role (the scheduler's connection role) can read <code>value_enc</code>
-  directly — the key, not the grant model, is the confidentiality boundary.</li>
-<li>No new role is created by the schema. Operators who want a separate
-  secret-administration role must <code>GRANT INSERT, UPDATE, DELETE ON
-  timetable.secret TO admin_role</code> themselves; this is an operator step,
-  not a schema-managed role.</li>
-<li>The scheduler startup check (<code>CheckSecretConfig</code>) calls
-  <code>timetable.secret_count()</code> exactly once when the encryption key is unset,
-  and skips it entirely when the key is set. A failure of the check itself
-  is logged, never fatal.</li>
-</ul>
+<p>Ready-to-run examples with longer chains and error handlers live in
+<a href="../samples/">Samples</a> — try <code>samples/basic.sql</code> and
+<a href="https://github.com/cybertec-postgresql/pg_timetable/blob/master/samples/DelayedRetry.sql"><code>samples/DelayedRetry.sql</code></a>.</p>
 
 
 
@@ -1713,7 +1613,7 @@ contract in the spec.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../database_schema/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Database Schema">
+          <a href="../tutorial-handling-chain-errors/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Handling Chain Errors">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1723,20 +1623,20 @@ contract in the spec.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Database Schema
+                Handling Chain Errors
               </div>
             </div>
           </a>
         
         
           
-          <a href="../reference-opentelemetry/" class="md-footer__link md-footer__link--next" aria-label="Next: OpenTelemetry Reference">
+          <a href="../tutorial-storing-a-secret/" class="md-footer__link md-footer__link--next" aria-label="Next: Storing a Secret">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                OpenTelemetry Reference
+                Storing a Secret
               </div>
             </div>
             <div class="md-footer__button md-icon">

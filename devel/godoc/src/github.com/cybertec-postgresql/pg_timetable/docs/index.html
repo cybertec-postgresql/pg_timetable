@@ -65,87 +65,25 @@ It is completely database driven and provides a couple of advanced concepts.</p>
 <li>Task and chain can have execution timeout settings</li>
 <li>OpenTelemetry tracing and metrics export (opt-in)</li>
 </ul>
-<h2>Quick Start</h2>
-<ol>
-<li>
-<p>Download pg_timetable executable</p>
-</li>
-<li>
-<p>Make sure your PostgreSQL server is up and running and has a role with <code>CREATE</code> privilege
-for a target database, e.g.</p>
-<pre><code class="language-sql">my_database=&gt; CREATE ROLE scheduler PASSWORD &#39;somestrong&#39;;
-my_database=&gt; GRANT CREATE ON DATABASE my_database TO scheduler;
-</code></pre>
-</li>
-<li>
-<p>Create a new job, e.g. run <code>VACUUM</code> each night at 00:30 Postgres server time zone</p>
-<pre><code class="language-sql">my_database=&gt; SELECT timetable.add_job(&#39;frequent-vacuum&#39;, &#39;30 0 * * *&#39;, &#39;VACUUM&#39;);
-add_job
----------
-      3
-(1 row)
-</code></pre>
-</li>
-<li>
-<p>Run the <strong>pg_timetable</strong></p>
-<pre><code class="language-bash"># pg_timetable postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
-</code></pre>
-</li>
-<li>
-<p>PROFIT!</p>
-</li>
-</ol>
-<h2>Command line options</h2>
-<pre><code class="language-bash"># ./pg_timetable
-
-Application Options:
-  -c, --clientname=                                Unique name for application instance [$PGTT_CLIENTNAME]
-      --config=                                    YAML configuration file
-      --no-program-tasks                           Disable executing of PROGRAM tasks [$PGTT_NOPROGRAMTASKS]
-  -v, --version                                    Output detailed version information [$PGTT_VERSION]
-      --connstr                                    PostgreSQL connection string [$PGTT_CONNSTR]
-
-Logging:
-      --log-level=[debug|info|error]               Verbosity level for stdout and log file (default: info)
-      --log-database-level=[debug|info|error|none] Verbosity level for database storing (default: info)
-      --log-file=                                  File name to store logs
-      --log-file-format=[json|text]                Format of file logs (default: json)
-      --log-file-rotate                            Rotate log files
-      --log-file-size=                             Maximum size in MB of the log file before it gets rotated (default: 100)
-      --log-file-age=                              Number of days to retain old log files, 0 means forever (default: 0)
-      --log-file-number=                           Maximum number of old log files to retain, 0 to retain all (default: 0)
-
-Start:
-  -f, --file=                                      SQL script or YAML chain definition file to execute during
-                                                   startup; may be specified multiple times
-      --replace                                    Replace existing chains when loading YAML files
-      --validate                                   Only validate YAML file without importing chains
-      --init                                       Initialize database schema to the latest version and exit. Can be used
-                                                   with --upgrade
-      --upgrade                                    Upgrade database to the latest version
-      --debug                                      Run in debug mode. Only asynchronous chains will be executed
-
-Resource:
-      --cron-workers=                              Number of parallel workers for scheduled chains (default: 16)
-      --interval-workers=                          Number of parallel workers for interval chains (default: 16)
-      --chain-timeout=                             Abort any chain that takes more than the specified number of
-                                                   milliseconds
-      --task-timeout=                              Abort any task within a chain that takes more than the specified number
-                                                   of milliseconds
-
-REST:
-      --rest-port=                                 REST API port (default: 0) [$PGTT_RESTPORT]
-
-OTel:
-      --otel-endpoint=                             OTLP exporter endpoint URL (grpc://, http://, https://)
-      --otel-traces                                Enable OpenTelemetry distributed tracing
-      --otel-metrics                               Enable OpenTelemetry metrics export
-      --otel-service-name=                         OTel service.name resource attribute (default: pg_timetable)
-      --otel-insecure                              Disable TLS for OTLP connection (dev/test only)
-      --otel-sample-ratio=                         Trace sampling ratio 0.0-1.0 (default: 1.0)
-      --otel-metric-period=                        Metrics export interval in seconds (default: 30)
-      --otel-shutdown-timeout=                     OTel provider flush timeout in seconds on shutdown (default: 5)
-</code></pre>
+<p>New to pg_timetable? Follow the <a href="tutorial-first-chain.md">tutorial</a> to schedule your first job in a few minutes.</p>
+<h2>Learn More</h2>
+<ul>
+<li><strong>Tutorials</strong>: <a href="tutorial-first-chain.md">Your First Scheduled Chain</a> ·
+<a href="tutorial-your-first-yaml-chain.md">Your First YAML Chain</a> ·
+<a href="tutorial-handling-chain-errors.md">Handling Chain Errors</a> ·
+<a href="tutorial-manual-chain-start-stop.md">Starting and Stopping Chains Manually</a> ·
+<a href="tutorial-storing-a-secret.md">Storing a Secret</a></li>
+<li><strong>Chain scheduling</strong>: <a href="how-to-schedule-common-jobs.md">Schedule Common Jobs</a> ·
+<a href="reference-commands-tasks-chains.md">Commands, Tasks, and Chains Reference</a></li>
+<li><strong>YAML authoring</strong>: <a href="how-to-write-yaml-chains.md">Define Chains in YAML</a> ·
+<a href="yaml-format.md">YAML Chain Schema</a></li>
+<li><strong>Secrets</strong>: <a href="how-to-use-secret-store.md">Use the Secret Store</a> ·
+<a href="explanation-secret-store-security-model.md">Secret Store Security Model</a></li>
+<li><strong>Observability</strong>: <a href="how-to-enable-opentelemetry.md">Enable OpenTelemetry</a> ·
+<a href="reference-opentelemetry.md">OpenTelemetry Reference</a></li>
+<li><strong>Concept</strong>: <a href="explanation-design-philosophy.md">Design Philosophy</a> · <a href="explanation-scheduling-model.md">The Scheduling Model</a></li>
+</ul>
+<p>See the sidebar navigation for the complete Reference and How-to Guides sections.</p>
 <h2>Contributing</h2>
 <p>If you want to contribute to <strong>pg_timetable</strong> and help make it better, feel free to open an
 <a href="https://github.com/cybertec-postgresql/pg_timetable/issues">issue</a> or even consider submitting a
@@ -153,7 +91,9 @@ OTel:
 <a href="https://github.com/cybertec-postgresql/pg_timetable/stargazers">star</a> to <strong>pg_timetable</strong> project,
 and to tell the world about it.</p>
 <h2>Support</h2>
-<p>For professional support, please contact <a href="https://www.cybertec-postgresql.com/">Cybertec</a>.</p>
+<p><strong>pg_timetable</strong> started in 2019 for internal scheduling needs at Cybertec, which also provides
+commercial 9-to-5 and 24/7 support for pg_timetable — contact
+<a href="https://www.cybertec-postgresql.com/">Cybertec</a> for details.</p>
 <h2>Authors</h2>
 <p><strong>Implementation:</strong> <a href="https://github.com/pashagolub">Pavlo Golub</a></p>
 <p><strong>Initial idea and draft design:</strong> <a href="https://github.com/postgresql007">Hans-Jürgen Schönig</a></p>
