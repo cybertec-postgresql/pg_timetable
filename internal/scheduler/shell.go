@@ -50,10 +50,10 @@ func (sch *Scheduler) ExecuteProgramCommand(ctx context.Context, task *pgengine.
 		out, e := Cmd.CombinedOutput(ctx, command, params...) // #nosec
 		if e != nil {
 			exitCode = -1
-			err = errors.Join(err, e) // accumulate errors for all param sets
-			if exitError, ok := err.(*exec.ExitError); ok {
-				exitCode = exitError.ExitCode()
+			if exitErr, isOK := errors.AsType[*exec.ExitError](e); isOK {
+				exitCode = exitErr.ExitCode()
 			}
+			err = errors.Join(err, e) // accumulate errors for all param sets
 		}
 		sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
 	}
