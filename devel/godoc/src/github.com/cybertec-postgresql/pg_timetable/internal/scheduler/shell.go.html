@@ -117,10 +117,10 @@
 <span id="L60" class="ln">    60  </span>		out, e := Cmd.CombinedOutput(ctx, command, params...) <span class="comment">// #nosec</span>
 <span id="L61" class="ln">    61  </span>		if e != nil {
 <span id="L62" class="ln">    62  </span>			exitCode = -1
-<span id="L63" class="ln">    63  </span>			err = errors.Join(err, e) <span class="comment">// accumulate errors for all param sets</span>
-<span id="L64" class="ln">    64  </span>			if exitError, ok := err.(*exec.ExitError); ok {
-<span id="L65" class="ln">    65  </span>				exitCode = exitError.ExitCode()
-<span id="L66" class="ln">    66  </span>			}
+<span id="L63" class="ln">    63  </span>			if exitErr, isOK := errors.AsType[*exec.ExitError](e); isOK {
+<span id="L64" class="ln">    64  </span>				exitCode = exitErr.ExitCode()
+<span id="L65" class="ln">    65  </span>			}
+<span id="L66" class="ln">    66  </span>			err = errors.Join(err, e) <span class="comment">// accumulate errors for all param sets</span>
 <span id="L67" class="ln">    67  </span>		}
 <span id="L68" class="ln">    68  </span>		sch.pgengine.LogTaskExecution(context.Background(), task, exitCode, string(out), val)
 <span id="L69" class="ln">    69  </span>	}

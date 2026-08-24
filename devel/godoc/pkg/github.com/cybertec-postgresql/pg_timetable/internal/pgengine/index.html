@@ -714,7 +714,7 @@ secret_name_format CHECK constraint on the timetable.secret table.
 		
 			
 			
-			<h2 id="escapeConnInfo">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L261">escapeConnInfo</a>
+			<h2 id="escapeConnInfo">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L258">escapeConnInfo</a>
 				<a class="permalink" href="#escapeConnInfo">&#xb6;</a>
 				
 				
@@ -727,7 +727,7 @@ secret_name_format CHECK constraint on the timetable.secret table.
 		
 			
 			
-			<h2 id="extractRefNames">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L138">extractRefNames</a>
+			<h2 id="extractRefNames">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L135">extractRefNames</a>
 				<a class="permalink" href="#extractRefNames">&#xb6;</a>
 				
 				
@@ -743,7 +743,7 @@ which only dedupes an already-extracted, comma-joined list of names.
 		
 			
 			
-			<h2 id="isAlreadySingleQuoted">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L268">isAlreadySingleQuoted</a>
+			<h2 id="isAlreadySingleQuoted">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L265">isAlreadySingleQuoted</a>
 				<a class="permalink" href="#isAlreadySingleQuoted">&#xb6;</a>
 				
 				
@@ -818,7 +818,7 @@ e.g. &quot;42|Import Chain From S3&quot;. If the name is empty only the ID is re
 		
 			
 			
-			<h2 id="quoteConnInfoValue">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L247">quoteConnInfoValue</a>
+			<h2 id="quoteConnInfoValue">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L244">quoteConnInfoValue</a>
 				<a class="permalink" href="#quoteConnInfoValue">&#xb6;</a>
 				
 				
@@ -850,7 +850,7 @@ followed by whitespace would swallow the next token.
 		
 			
 			
-			<h2 id="quoteJSONLeaf">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L197">quoteJSONLeaf</a>
+			<h2 id="quoteJSONLeaf">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L194">quoteJSONLeaf</a>
 				<a class="permalink" href="#quoteJSONLeaf">&#xb6;</a>
 				
 				
@@ -866,7 +866,7 @@ verbatim. The secret&apos;s escaping is performed by json.Marshal.
 		
 			
 			
-			<h2 id="uniqueRefNames">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L118">uniqueRefNames</a>
+			<h2 id="uniqueRefNames">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L115">uniqueRefNames</a>
 				<a class="permalink" href="#uniqueRefNames">&#xb6;</a>
 				
 				
@@ -879,7 +879,7 @@ verbatim. The secret&apos;s escaping is performed by json.Marshal.
 		
 			
 			
-			<h2 id="walkJSON">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L203">walkJSON</a>
+			<h2 id="walkJSON">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L200">walkJSON</a>
 				<a class="permalink" href="#walkJSON">&#xb6;</a>
 				
 				
@@ -1252,7 +1252,7 @@ We assume here all checks for proper schema validation are done beforehannd
 				
 			
 				
-				<h3 id="PgEngine.CheckSecretConfig">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L278">CheckSecretConfig</a>
+				<h3 id="PgEngine.CheckSecretConfig">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L275">CheckSecretConfig</a>
 					<a class="permalink" href="#PgEngine.CheckSecretConfig">&#xb6;</a>
 					
 					
@@ -1722,7 +1722,7 @@ where all IDs are the same across all running containers, e.g. 1
 				
 			
 				
-				<h3 id="PgEngine.ResolveSecretsConnString">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L235">ResolveSecretsConnString</a>
+				<h3 id="PgEngine.ResolveSecretsConnString">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L232">ResolveSecretsConnString</a>
 					<a class="permalink" href="#PgEngine.ResolveSecretsConnString">&#xb6;</a>
 					
 					
@@ -1737,7 +1737,7 @@ Same short-circuit contract as ResolveSecretsJSON.
 				
 			
 				
-				<h3 id="PgEngine.ResolveSecretsJSON">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L155">ResolveSecretsJSON</a>
+				<h3 id="PgEngine.ResolveSecretsJSON">func (*PgEngine) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/pgengine/secrets.go.html#L152">ResolveSecretsJSON</a>
 					<a class="permalink" href="#PgEngine.ResolveSecretsJSON">&#xb6;</a>
 					
 					
