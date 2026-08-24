@@ -168,6 +168,13 @@ var Migrations func() migrator.Option = func() migrator.Option {
 		// adding new migration here, update "timetable"."migration" in "sql/init.sql"
 		// and "dbapi" variable in main.go!
 
+		&migrator.Migration{
+			Name: "00820 Add timetable.secret store",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00820.sql")
+			},
+		},
+
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",
 		// 	Func: func(ctx context.Context, tx pgx.Tx) error {

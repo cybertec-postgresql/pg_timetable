@@ -2,25 +2,20 @@
 
 **pg_timetable** is compatible with all supported [PostgreSQL versions](https://www.postgresql.org/support/versioning/).
 
-!!! note "Older PostgreSQL versions (9.5, 9.6, and 10)"
+!!! note "PostgreSQL extensions"
 
-    If you want to use **pg_timetable** with older versions (9.5, 9.6 and 10), please execute this SQL command before running pg_timetable:
+    **No extension is required to run pg_timetable.** The secret store
+    (`timetable.secret`, introduced by migration `00820`) is the only
+    feature with an extension dependency: it uses `pgcrypto`'s
+    `pgp_sym_encrypt` / `pgp_sym_decrypt`. `pgcrypto` is installed by
+    whoever deploys the database — pg_timetable never installs, requires,
+    or probes for it. A database without `pgcrypto` runs pg_timetable
+    normally with only the secret store unavailable.
 
-    ```sql
-    CREATE OR REPLACE FUNCTION starts_with(text, text)
-    RETURNS bool AS 
-    $$
-    SELECT 
-        CASE WHEN length($2) > length($1) THEN 
-            FALSE 
-        ELSE 
-            left($1, length($2)) = $2 
-        END
-    $$
-    LANGUAGE SQL
-    IMMUTABLE STRICT PARALLEL SAFE
-    COST 5;
-    ```
+    Since PostgreSQL 13, `pgcrypto` is a **trusted** extension and can
+    be installed by any role holding `CREATE` on the database, so
+    managed services (RDS, Azure, Cloud SQL, Supabase and similar)
+    need no superuser.
 
 ## Official release packages
 

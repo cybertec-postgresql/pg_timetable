@@ -55,7 +55,7 @@ var (
 	commit  = "000000"
 	version = "master"
 	date    = "unknown"
-	dbapi   = "00797"
+	dbapi   = "00820"
 )
 
 func printVersion() {
@@ -96,6 +96,13 @@ func run(ctx context.Context, cmdOpts *config.CmdOptions, logger log.LoggerHooke
 	}
 	if cmdOpts.Start.Init {
 		return ExitCodeOK
+	}
+
+	// Verify the secret-store configuration before any chain runs.
+	// Failures of the check itself are logged, not fatal — see
+	// CheckSecretConfig.
+	if err := pge.CheckSecretConfig(ctx); err != nil {
+		logger.WithError(err).Warn("Secret configuration check failed")
 	}
 
 	// Initialise OTel provider (noop when not configured)

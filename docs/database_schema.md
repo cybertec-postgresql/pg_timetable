@@ -23,5 +23,3 @@
 ## ER-Diagram
 
 ![Database Schema](timetable_schema.png)
-
-*ER-Diagram showing the database structure*

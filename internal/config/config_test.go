@@ -107,3 +107,22 @@ func TestValidateOTel(t *testing.T) {
 		})
 	}
 }
+
+func TestSecretKeyConfigBinding(t *testing.T) {
+	// NewConfig MUST bind --secret-key and PGTT_SECRET_KEY
+	// to ConfigOptions.SecretEncryptionKey. This guards the mandatory
+	// mapstructure tag.
+	const want = "the-test-secret-key"
+
+	os.Args = []string{"config_test", "--clientname=worker", "--secret-key=" + want}
+	conf, err := NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, want, conf.SecretEncryptionKey)
+
+	assert.NoError(t, os.Setenv("PGTT_SECRET_KEY", want))
+	defer os.Unsetenv("PGTT_SECRET_KEY")
+	os.Args = []string{"config_test", "--clientname=worker"}
+	conf, err = NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, want, conf.SecretEncryptionKey)
+}

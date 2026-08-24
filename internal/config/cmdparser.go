@@ -22,11 +22,11 @@ type LoggingOpts struct {
 // StartOpts specifies the application startup options
 type StartOpts struct {
 	File     []string `short:"f" long:"file" description:"SQL script or YAML chain definition file to execute during startup"`
-	Replace  bool   `long:"replace" description:"Replace existing chains when loading YAML files"`
-	Validate bool   `long:"validate" description:"Only validate YAML file without importing chains"`
-	Init     bool   `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
-	Upgrade  bool   `long:"upgrade" description:"Upgrade database to the latest version"`
-	Debug    bool   `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
+	Replace  bool     `long:"replace" description:"Replace existing chains when loading YAML files"`
+	Validate bool     `long:"validate" description:"Only validate YAML file without importing chains"`
+	Init     bool     `long:"init" description:"Initialize database schema to the latest version and exit. Can be used with --upgrade"`
+	Upgrade  bool     `long:"upgrade" description:"Upgrade database to the latest version"`
+	Debug    bool     `long:"debug" description:"Run in debug mode. Only asynchronous chains will be executed"`
 }
 
 // ResourceOpts specifies the maximum resources available to application
@@ -57,17 +57,18 @@ type OTelOpts struct {
 
 // CmdOptions holds command line options passed
 type CmdOptions struct {
-	ClientName     string       `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
-	Config         string       `long:"config" description:"YAML configuration file"`
-	ConnStr        string       `long:"connstr" description:"Connection string" env:"PGTT_CONNSTR"`
-	Logging        LoggingOpts  `group:"Logging" mapstructure:"Logging"`
-	Start          StartOpts    `group:"Start" mapstructure:"Start"`
-	Resource       ResourceOpts `group:"Resource" mapstructure:"Resource"`
-	RESTApi        RestAPIOpts  `group:"REST" mapstructure:"REST"`
-	OTel           OTelOpts     `group:"OTel" mapstructure:"OTel"`
-	NoProgramTasks bool         `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
-	NoHelpMessage  bool         `long:"no-help" mapstructure:"no-help" hidden:"system use"`
-	Version        bool         `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
+	ClientName          string       `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
+	Config              string       `long:"config" description:"YAML configuration file"`
+	ConnStr             string       `long:"connstr" description:"Connection string" env:"PGTT_CONNSTR"`
+	Logging             LoggingOpts  `group:"Logging" mapstructure:"Logging"`
+	Start               StartOpts    `group:"Start" mapstructure:"Start"`
+	Resource            ResourceOpts `group:"Resource" mapstructure:"Resource"`
+	RESTApi             RestAPIOpts  `group:"REST" mapstructure:"REST"`
+	OTel                OTelOpts     `group:"OTel" mapstructure:"OTel"`
+	NoProgramTasks      bool         `long:"no-program-tasks" mapstructure:"no-program-tasks" description:"Disable executing of PROGRAM tasks" env:"PGTT_NOPROGRAMTASKS"`
+	SecretEncryptionKey string       `long:"secret-key" mapstructure:"secret-key" description:"Symmetric key used to decrypt timetable.secret values" env:"PGTT_SECRET_KEY"`
+	NoHelpMessage       bool         `long:"no-help" mapstructure:"no-help" hidden:"system use"`
+	Version             bool         `short:"v" long:"version" mapstructure:"version" description:"Output detailed version information" env:"PGTT_VERSION"`
 }
 
 // Verbose returns true if the debug log is enabled

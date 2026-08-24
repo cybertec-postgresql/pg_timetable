@@ -425,3 +425,35 @@ Error: chain 1: chain name is required
 ```
 
 → Check all required fields are present
+
+## Secrets
+
+YAML-authored chains do **not** support `${secret:name}` references in v1.
+The reference syntax is a string-substitution feature implemented in the
+Go runtime after `parameter.value` is materialized into the database; the
+YAML loader does not perform secret resolution. A YAML chain that needs a
+secret must either:
+
+- reference a `timetable.task` row whose `parameter.value` already contains
+  `${secret:name}` (i.e., the chain was originally created via SQL using
+  `samples/Mail.sql` or `samples/RemoteDB.sql` as a template), or
+- use a connection-string literal in `database_connection` and accept the
+  trade-off documented in [`docs/samples.md`](samples.md#secrets) (the
+  password is then visible to DB readers, backups, and dumps).
+
+### What you need to enable the secret store
+
+`pgcrypto` is **not** installed by pg_timetable. To use `${secret:name}`
+references, the database administrator must install `pgcrypto` once per
+database (any schema; since PostgreSQL 13 it is a **trusted** extension
+and can be installed by any role holding `CREATE` on the database). The
+scheduler is configured with `--secret-key` (or `PGTT_SECRET_KEY`) and
+secret rows are inserted with `pgp_sym_encrypt` from the same schema.
+
+The store is opt-in syntax: chains whose `parameter.value` holds a literal
+password continue to work unchanged.
+
+See [`docs/samples.md`](samples.md#secrets) for the trust boundary, the
+honest confidentiality model (the key — not the grant model — is the
+boundary), the PROGRAM argv exposure, the debug-level caveat, and the
+trade-off between `${secret:name}` references and inline literals.
