@@ -108,11 +108,8 @@ func isWrongKey(err error) bool {
 // (feature_not_supported) raised by timetable.resolve_secret when the
 // pgcrypto extension is not installed.
 func isMissingPgcrypto(err error) bool {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == "0A000"
-	}
-	return false
+	pgErr, ok := errors.AsType[*pgconn.PgError](err)
+	return ok && pgErr.Code == "0A000"
 }
 
 func uniqueRefNames(s string) []string {
