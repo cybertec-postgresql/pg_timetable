@@ -107,7 +107,7 @@ Possible choices are:
 
 ## Quick Start
 
-Complete usage guide can be found in the [documentation](https://cybertec-postgresql.github.io/pg_timetable/latest/basic_jobs/).
+Complete usage guide can be found in the [documentation](https://cybertec-postgresql.github.io/pg_timetable/latest/how-to-schedule-common-jobs/).
 
 1. Download **pg_timetable** executable
 

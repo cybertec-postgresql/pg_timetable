@@ -1,26 +1,11 @@
-## Secret store
+# Secret Store
 
 The secret store is introduced by migration `00820` and lives entirely in
 the `timetable` schema. The schema applies unchanged on a database without
 `pgcrypto` installed; the extension is needed only by sessions that
 actually resolve a secret.
 
-### Trust and trust boundary
-
-The store is **write-only by design**: there is no plaintext read path;
-values are encrypted at rest with `pgp_sym_encrypt` (from the `pgcrypto`
-extension) and decrypted only by the `SECURITY DEFINER` function
-`timetable.resolve_secret()` when the caller supplies the encryption key.
-There is no surrogate `secret_id`; rows are addressed by
-`(client_name, secret_name)` only.
-
-The running scheduler process is the trusted execution boundary. The store
-raises the bar against other database roles, logical-replica subscribers,
-and `pg_dump` archives taken without the encryption key; it does not raise
-the bar against a compromised worker host, `ps` / auditd argv inspection,
-or any party that holds both `value_enc` and `PGTT_SECRET_KEY`. The
-scheduler's connection role can read `value_enc` directly; confidentiality
-rests on possession of the encryption key, which the database never stores.
+For the write-only design rationale and the threat model this raises the bar against, see [Secret Store Security Model](explanation-secret-store-security-model.md).
 
 ### `pgcrypto` is an optional prerequisite
 
@@ -61,7 +46,8 @@ snippet above. In summary:
 - `timetable.secret_count() RETURNS BIGINT` — `LANGUAGE sql`,
   `SECURITY DEFINER`, `STABLE`. Returns `count(*)` over `timetable.secret`.
   Used by the scheduler startup check when no encryption key is configured;
-  does not require `pgcrypto`.
+  does not require `pgcrypto`. Returns `0` when no secrets exist, including
+  on a database without `pgcrypto` installed.
 
 ### Reference syntax
 
