@@ -1,6 +1,6 @@
 # Secret Store Security Model
 
-The secret store is **write-only by design** — there is no plaintext read path; values are encrypted at rest with `pgcrypto.pgp_sym_encrypt`, decrypted only by the `SECURITY DEFINER` function `timetable.resolve_secret()` when the caller supplies the encryption key, and never exposed back to SQL as plaintext outside the resolved parameter. There is no surrogate `secret_id`; rows are addressed by `(client_name, secret_name)` only.
+The secret store is **write-only by design** — there is no plaintext read path; values are encrypted at rest with `pgp_sym_encrypt` (from the `pgcrypto` extension), decrypted only by the `SECURITY DEFINER` function `timetable.resolve_secret()` when the caller supplies the encryption key, and never exposed back to SQL as plaintext outside the resolved parameter. There is no surrogate `secret_id`; rows are addressed by `(client_name, secret_name)` only.
 
 The running scheduler process is the trusted execution boundary. The secret
 store raises the bar against:
