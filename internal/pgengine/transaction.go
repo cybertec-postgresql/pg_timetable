@@ -118,6 +118,7 @@ func (pge *PgEngine) ExecRemoteSQLTask(ctx context.Context, task *ChainTask, par
 		func() (PgxConnIface, error) { return pge.GetRemoteDBConnection(ctx, resolvedConn) },
 		task, paramValues)
 }
+
 // ExecAutonomousSQLTask executes autonomous task in an acquired connection from pool
 func (pge *PgEngine) ExecAutonomousSQLTask(ctx context.Context, task *ChainTask, paramValues []string) error {
 	log.GetLogger(ctx).Info("Switching to autonomous task mode")
@@ -155,7 +156,10 @@ func (pge *PgEngine) ExecuteSQLCommand(ctx context.Context, executor executor, t
 			return rerr
 		}
 		if parseErr := json.Unmarshal([]byte(resolved), &params); parseErr != nil {
-			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", resolved, parseErr))
+			// Use the original (unresolved) val here: resolved may contain
+			// decrypted secret plaintext, which must never reach an error
+			// message that gets logged.
+			err = errors.Join(err, fmt.Errorf("failed to parse parameter %s: %w", val, parseErr))
 			return
 		}
 		execCtx := ctx

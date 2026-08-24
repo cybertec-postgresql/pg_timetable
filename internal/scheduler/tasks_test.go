@@ -10,7 +10,9 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
+	gomail "github.com/ory/mail/v3"
 	"github.com/pashagolub/pgxmock/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -76,12 +78,21 @@ func TestExecuteTask(t *testing.T) {
 	a.NoError(et("Shutdown", []string{}))
 }
 
+// fakeDialer implements tasks.Dialer and captures nothing itself; the
+// password is captured by the tasks.NewDialer override in
+// TestSendMailResolvesSecret.
+type fakeDialer struct{}
+
+func (fakeDialer) DialAndSend(context.Context, ...*gomail.Message) error { return nil }
+
 // TestSendMailResolvesSecret stores a secret for the running client, calls
-// taskSendMail with a reference, and asserts that the plaintext reaches
-// EmailConn (verified indirectly via the SendMail boundary: we let the
-// resolver succeed and then trigger the SMTP call which fails fast on a
-// non-listening port — what matters is that the JSON unmarshal succeeded,
-// i.e. the reference was replaced with the stored plaintext).
+// taskSendMail (the actual code path executed by the scheduler) with a
+// reference, and asserts that the *decrypted* plaintext — not the literal
+// ${secret:...} reference — is what reaches the tasks.SendMail boundary.
+// tasks.NewDialer is overridden to capture the password argument instead of
+// performing a real SMTP dial, so a regression where taskSendMail stops
+// calling the resolver (and passes the unresolved reference through) is
+// caught here, unlike a test that exercises ResolveSecretsJSON directly.
 func TestSendMailResolvesSecret(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()
@@ -100,20 +111,18 @@ func TestSendMailResolvesSecret(t *testing.T) {
 
 	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
-	// The JSON parameter carries only the reference; we verify the resolver
-	// substitutes the plaintext before the SendMail call. SendMail itself
-	// will fail on a non-existent SMTP host, but only AFTER plaintext was
-	// substituted.
-	param := `{"ServerHost":"127.0.0.1","ServerPort":1,"Username":"u","SenderAddr":"u@x","ToAddr":["u@x"],"Subject":"s","MsgBody":"b","password":"${secret:` + name + `}"}`
-	// We can't import net/mail in test boundaries cheaply; instead, drive the
-	// resolver directly via taskSendMail's underlying pge and confirm the
-	// resolved parameter parses to the original plaintext.
-	resolved, names, err := pge.ResolveSecretsJSON(ctx, param)
-	require.NoError(t, err)
-	require.Equal(t, []string{name}, names)
-	assert.Contains(t, resolved, pw)
+	var gotPassword string
+	origNewDialer := tasks.NewDialer
+	tasks.NewDialer = func(_ string, _ int, _, password string) tasks.Dialer {
+		gotPassword = password
+		return fakeDialer{}
+	}
+	defer func() { tasks.NewDialer = origNewDialer }()
 
-	_ = sch // sch kept for future direct invocation; today we exercise the resolver path used by taskSendMail.
+	param := `{"serverhost":"127.0.0.1","serverport":1,"username":"u","senderaddr":"u@x","toaddr":["u@x"],"subject":"s","msgbody":"b","password":"${secret:` + name + `}"}`
+	_, err = taskSendMail(ctx, sch, param)
+	require.NoError(t, err)
+	assert.Equal(t, pw, gotPassword, "taskSendMail must pass the decrypted secret, not the literal reference, to SendMail")
 }
 
 // TestBuiltinDebugLogOmitsParamValues — the debug log emitted by

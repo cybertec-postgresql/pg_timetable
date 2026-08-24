@@ -42,9 +42,10 @@ func (pge *PgEngine) resolveRefs(
 	// Pre-flight: if any reference is present and the key is empty, fail fast
 	// with a descriptive error.
 	if pge.SecretEncryptionKey == "" {
-		return "", uniqueRefNames(s), fmt.Errorf(
+		refNames := extractRefNames(s)
+		return "", refNames, fmt.Errorf(
 			"secret references found (%s) but SecretEncryptionKey is not configured; set PGTT_SECRET_KEY/--secret-key",
-			strings.Join(uniqueRefNames(s), ", "))
+			strings.Join(refNames, ", "))
 	}
 	markedCtx := log.WithoutQueryArgs(ctx)
 	var (
@@ -78,8 +79,8 @@ func (pge *PgEngine) resolveRefs(
 				"secret %q: %w", name, err)
 		}
 		if plaintext == nil {
-		// Missing secret (one row containing NULL). Indistinguishable
-		// across client scopes.
+			// Missing secret (one row containing NULL). Indistinguishable
+			// across client scopes.
 			return "", append(names, name), fmt.Errorf(
 				`secret %q not found for client %q`, name, pge.ClientName)
 		}
@@ -131,6 +132,20 @@ func uniqueRefNames(s string) []string {
 	return out
 }
 
+// extractRefNames extracts the unique ${secret:name} identifiers referenced
+// in s (which may be arbitrary JSON or conninfo text), unlike uniqueRefNames
+// which only dedupes an already-extracted, comma-joined list of names.
+func extractRefNames(s string) []string {
+	matches := secretRefPattern.FindAllStringSubmatch(s, -1)
+	names := make([]string, 0, len(matches))
+	for _, m := range matches {
+		if len(m) > 1 {
+			names = append(names, m[1])
+		}
+	}
+	return uniqueRefNames(strings.Join(names, ","))
+}
+
 // ResolveSecretsJSON resolves ${secret:name} references inside the string
 // leaves of a jsonb-encoded parameter value and returns the re-encoded JSON.
 // Resolved values are never re-scanned.
@@ -142,7 +157,7 @@ func (pge *PgEngine) ResolveSecretsJSON(ctx context.Context, s string) (resolved
 		return s, nil, nil
 	}
 	if pge.SecretEncryptionKey == "" {
-		return "", nil, fmt.Errorf(
+		return "", extractRefNames(s), fmt.Errorf(
 			"secret references found but SecretEncryptionKey is not configured; set PGTT_SECRET_KEY/--secret-key")
 	}
 	var doc any
@@ -227,7 +242,7 @@ func (pge *PgEngine) ResolveSecretsConnString(ctx context.Context, s string) (re
 // value. If the reference in the template is already delimited by single
 // quotes (e.g. `password='${secret:pw}'`), the wrapping is omitted and only
 // `\` and `'` are escaped, so the existing delimiters are not doubled.
-// An empty value is emitted as `''` because a bare `password=`
+// An empty value is emitted as `”` because a bare `password=`
 // followed by whitespace would swallow the next token.
 func quoteConnInfoValue(value string, in string, m []int) string {
 	if value == "" {

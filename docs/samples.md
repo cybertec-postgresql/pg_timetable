@@ -66,10 +66,11 @@ conninfo string is replaced at execution time with the decrypted value of the
 matching `timetable.secret` row for the running client.
 
 The store is **write-only by design** — values are encrypted at rest with
-`pgcrypto.pgp_sym_encrypt`, decrypted only by the `SECURITY DEFINER` function
-`timetable.resolve_secret()`, and never exposed back to SQL as plaintext
-outside the resolved parameter. There is no surrogate `secret_id`; rows are
-addressed by `(client_name, secret_name)` only.
+`pgp_sym_encrypt` (from the `pgcrypto` extension), decrypted only by the
+`SECURITY DEFINER` function `timetable.resolve_secret()`, and never exposed
+back to SQL as plaintext outside the resolved parameter. There is no
+surrogate `secret_id`; rows are addressed by `(client_name, secret_name)`
+only.
 
 ### `pgcrypto` is an optional prerequisite
 

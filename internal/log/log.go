@@ -22,7 +22,7 @@ type (
 
 	loggerKey      struct{}
 	noQueryArgsKey struct{}
- )
+)
 
 func getLogFileWriter(opts config.LoggingOpts) any {
 	if opts.LogFileRotate {

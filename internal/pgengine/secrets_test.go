@@ -46,7 +46,6 @@ func installPgcrypto(ctx context.Context, t *testing.T, pge *pgengine.PgEngine) 
 	require.NoError(t, err, "installing pgcrypto must succeed in the test fixture")
 }
 
-
 // newSchedulerFor builds a minimal scheduler bound to `pge`. Used by the
 // PROGRAM path test, which needs ExecuteProgramCommand on *Scheduler.
 func newSchedulerFor(t *testing.T, pge *pgengine.PgEngine) *scheduler.Scheduler {
@@ -63,7 +62,6 @@ func newSchedulerFor(t *testing.T, pge *pgengine.PgEngine) *scheduler.Scheduler 
 func shellForOS() string {
 	return "/bin/sh"
 }
-
 
 // captureBuf is a thread-safe buffer that captures logrus output for the
 // PgxLogger test.

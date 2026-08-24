@@ -8,10 +8,11 @@ actually resolve a secret.
 ### Trust and trust boundary
 
 The store is **write-only by design**: there is no plaintext read path;
-values are encrypted at rest with `pgcrypto.pgp_sym_encrypt` and decrypted
-only by the `SECURITY DEFINER` function `timetable.resolve_secret()` when
-the caller supplies the encryption key. There is no surrogate `secret_id`;
-rows are addressed by `(client_name, secret_name)` only.
+values are encrypted at rest with `pgp_sym_encrypt` (from the `pgcrypto`
+extension) and decrypted only by the `SECURITY DEFINER` function
+`timetable.resolve_secret()` when the caller supplies the encryption key.
+There is no surrogate `secret_id`; rows are addressed by
+`(client_name, secret_name)` only.
 
 The running scheduler process is the trusted execution boundary. The store
 raises the bar against other database roles, logical-replica subscribers,
