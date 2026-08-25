@@ -4,12 +4,15 @@ package main
 
 import (
 	"context"
+	"os"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/windows/svc"
+	"golang.org/x/sys/windows/svc/mgr"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/notify"
@@ -100,6 +103,9 @@ func TestNewServiceConfig(t *testing.T) {
 	assert.Empty(t, cfg.ServiceStartName, "no account given means LocalSystem")
 	assert.Empty(t, cfg.Password)
 	assert.True(t, cfg.DelayedAutoStart)
+	assert.Equal(t, uint32(mgr.StartAutomatic), cfg.StartType, "service must start automatically")
+	assert.Equal(t, "pg_timetable", cfg.DisplayName, "display name defaults to the service name")
+	assert.Equal(t, serviceDescription, cfg.Description)
 
 	cmdOpts = config.NewCmdOptions(
 		"--service-name=my-svc",
@@ -133,6 +139,9 @@ func TestServiceStateString(t *testing.T) {
 	assert.Equal(t, "stopped", serviceStateString(svc.Stopped))
 	assert.Equal(t, "start pending", serviceStateString(svc.StartPending))
 	assert.Equal(t, "stop pending", serviceStateString(svc.StopPending))
+	assert.Equal(t, "continue pending", serviceStateString(svc.ContinuePending))
+	assert.Equal(t, "pause pending", serviceStateString(svc.PausePending))
+	assert.Equal(t, "paused", serviceStateString(svc.Paused))
 	assert.Equal(t, "unknown", serviceStateString(svc.State(99)))
 }
 
@@ -234,4 +243,87 @@ func boolToUint32(b bool) uint32 {
 		return 1
 	}
 	return 0
+}
+
+// requireSCM skips the test unless the process can reach the Service Control
+// Manager, which normally means it is running with administrative rights.
+// Unlike a hard failure, skipping keeps ordinary `go test` runs green on
+// unprivileged machines.
+func requireSCM(t *testing.T) {
+	t.Helper()
+	m, err := connectManager()
+	if err != nil {
+		t.Skipf("skipping test: %v", err)
+	}
+	_ = m.Disconnect()
+}
+
+// TestServiceControlMissingService checks that every control action against a
+// service pg_timetable never installed reports ExitCodeFatalError rather than
+// panicking. Opening a non-existent service does not require admin rights, so
+// this runs wherever the SCM is reachable.
+func TestServiceControlMissingService(t *testing.T) {
+	requireSCM(t)
+	const name = "pg_timetable_missing_svc_test"
+	for _, action := range []string{"start", "stop", "restart", "status"} {
+		t.Run(action, func(t *testing.T) {
+			assert.Equal(t, ExitCodeFatalError, serviceControl(name, action))
+		})
+	}
+	assert.Equal(t, ExitCodeFatalError, serviceUninstall(name),
+		"uninstalling a missing service must fail")
+}
+
+// TestHandleServiceCommandMissingService drives the public --service dispatcher
+// so the executable-path lookup and command routing are covered end to end.
+func TestHandleServiceCommandMissingService(t *testing.T) {
+	requireSCM(t)
+	cmdOpts := config.NewCmdOptions(
+		"--service=status",
+		"--service-name=pg_timetable_missing_svc_test",
+	)
+	assert.Equal(t, ExitCodeFatalError, handleServiceCommand(cmdOpts))
+}
+
+// TestServiceLifecycle exercises pg_timetable's own install/query/uninstall
+// path against a real service. Everything goes through the package's public
+// surface (serviceInstall, serviceControl, serviceUninstall) so the test
+// verifies pg_timetable behavior rather than the underlying svc/mgr library.
+// Because it registers and deletes a real service, it is opt-in: set
+// PGTT_TEST_SERVICES=1 and run with administrative rights to enable it.
+func TestServiceLifecycle(t *testing.T) {
+	if os.Getenv("PGTT_TEST_SERVICES") == "" {
+		t.Skip("skipping test that modifies system services: set PGTT_TEST_SERVICES=1 to enable")
+	}
+	requireSCM(t)
+
+	const name = "pg_timetable_lifecycle_test"
+	exePath, err := os.Executable()
+	require.NoError(t, err)
+
+	cmdOpts := config.NewCmdOptions(
+		"--service=install",
+		"--service-name="+name,
+		"postgresql://localhost/timetable",
+	)
+
+	// Clear any stale instance left by an interrupted previous run.
+	_ = serviceUninstall(name)
+
+	// Install through the real entry point and always clean up afterwards.
+	require.Equal(t, ExitCodeOK, serviceInstall(name, cmdOpts, exePath), "install must succeed")
+	t.Cleanup(func() { _ = serviceUninstall(name) })
+
+	// A freshly installed service must answer status queries cleanly.
+	assert.Equal(t, ExitCodeOK, serviceControl(name, "status"), "status of installed service")
+
+	// Installing the same service twice must be rejected, not silently retried.
+	assert.Equal(t, ExitCodeFatalError, serviceInstall(name, cmdOpts, exePath),
+		"installing an existing service must fail")
+
+	// Uninstall through the real entry point and confirm it is gone by asking
+	// for its status again.
+	require.Equal(t, ExitCodeOK, serviceUninstall(name), "uninstall must succeed")
+	assert.Equal(t, ExitCodeFatalError, serviceControl(name, "status"),
+		"service must be gone after uninstall")
 }
