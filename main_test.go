@@ -20,33 +20,6 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// cancelStateSnapshot captures the package-level cancellation state so tests
-// can mutate it and restore the original afterwards.
-type cancelStateSnapshot struct {
-	fn    *context.CancelFunc
-	ready chan struct{}
-	once  *sync.Once
-}
-
-// saveCancelState snapshots the current cancellation state.
-func saveCancelState() cancelStateSnapshot {
-	return cancelStateSnapshot{fn: cancelFn.Load(), ready: cancelReady, once: cancelOnce}
-}
-
-// restore puts the snapshotted cancellation state back.
-func (s cancelStateSnapshot) restore() {
-	cancelFn.Store(s.fn)
-	cancelReady = s.ready
-	cancelOnce = s.once
-}
-
-// resetCancelState clears the cancellation state to its pristine, unset form.
-func resetCancelState() {
-	cancelFn.Store(nil)
-	cancelReady = make(chan struct{})
-	cancelOnce = new(sync.Once)
-}
-
 // requireDocker skips the current test unless a Docker daemon capable of
 // running the Linux test containers is reachable through the same client
 // testcontainers uses (honoring DOCKER_HOST, docker:// / tcp:// / npipe://
