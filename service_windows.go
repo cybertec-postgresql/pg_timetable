@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/mgr"
 
@@ -251,10 +252,15 @@ func serviceControl(name, action string) int {
 }
 
 // stopService requests the service to stop and waits until it reports the
-// stopped state or the timeout expires.
+// stopped state or the timeout expires. A service that is already stopped is
+// reported by the SCM as ERROR_SERVICE_NOT_ACTIVE, which is treated as success
+// so that stop, restart, and uninstall work on an installed but idle service.
 func stopService(s *mgr.Service) error {
 	status, err := s.Control(svc.Stop)
 	if err != nil {
+		if errors.Is(err, windows.ERROR_SERVICE_NOT_ACTIVE) {
+			return nil
+		}
 		return err
 	}
 	if status.State == svc.Stopped {
