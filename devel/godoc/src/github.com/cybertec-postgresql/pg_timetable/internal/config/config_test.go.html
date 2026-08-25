@@ -101,7 +101,7 @@
 <span id="L44" class="ln">    44  </span>			os.Args = []string{0: &#34;config_test&#34;, &#34;--service=&#34; + action, &#34;--otel-sample-ratio=42&#34;}
 <span id="L45" class="ln">    45  </span>			conf, err := NewConfig(nil)
 <span id="L46" class="ln">    46  </span>			assert.NoError(t, err, &#34;service operations must skip daemon-only validation&#34;)
-<span id="L47" class="ln">    47  </span>			assert.Equal(t, action, conf.Service)
+<span id="L47" class="ln">    47  </span>			assert.Equal(t, action, conf.Service.Service)
 <span id="L48" class="ln">    48  </span>			assert.Empty(t, conf.ClientName)
 <span id="L49" class="ln">    49  </span>		})
 <span id="L50" class="ln">    50  </span>	}

@@ -173,7 +173,7 @@
 <span id="L116" class="ln">   116  </span>	<span class="comment">// empty string ([&#34;&#34;]) when no --file is provided. Strip empty entries so</span>
 <span id="L117" class="ln">   117  </span>	<span class="comment">// startup file processing is not triggered for non-existent paths.</span>
 <span id="L118" class="ln">   118  </span>	conf.Start.File = filterEmpty(conf.Start.File)
-<span id="L119" class="ln">   119  </span>	if conf.Service &gt; &#34;&#34; {
+<span id="L119" class="ln">   119  </span>	if conf.Service.Service &gt; &#34;&#34; {
 <span id="L120" class="ln">   120  </span>		<span class="comment">// Service management operations neither connect to the database nor</span>
 <span id="L121" class="ln">   121  </span>		<span class="comment">// export telemetry, so daemon-only requirements are skipped.</span>
 <span id="L122" class="ln">   122  </span>		return conf, nil

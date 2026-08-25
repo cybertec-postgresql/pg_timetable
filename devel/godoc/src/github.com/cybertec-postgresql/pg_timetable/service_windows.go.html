@@ -168,13 +168,13 @@
 <span id="L111" class="ln">   111  </span>		fmt.Println(&#34;Cannot determine executable path:&#34;, err)
 <span id="L112" class="ln">   112  </span>		return ExitCodeFatalError
 <span id="L113" class="ln">   113  </span>	}
-<span id="L114" class="ln">   114  </span>	switch cmdOpts.Service {
+<span id="L114" class="ln">   114  </span>	switch cmdOpts.Service.Service {
 <span id="L115" class="ln">   115  </span>	case &#34;install&#34;:
-<span id="L116" class="ln">   116  </span>		return serviceInstall(cmdOpts.ServiceName, cmdOpts, exePath)
+<span id="L116" class="ln">   116  </span>		return serviceInstall(cmdOpts.Service.ServiceName, cmdOpts, exePath)
 <span id="L117" class="ln">   117  </span>	case &#34;uninstall&#34;:
-<span id="L118" class="ln">   118  </span>		return serviceUninstall(cmdOpts.ServiceName)
+<span id="L118" class="ln">   118  </span>		return serviceUninstall(cmdOpts.Service.ServiceName)
 <span id="L119" class="ln">   119  </span>	default:
-<span id="L120" class="ln">   120  </span>		return serviceControl(cmdOpts.ServiceName, cmdOpts.Service)
+<span id="L120" class="ln">   120  </span>		return serviceControl(cmdOpts.Service.ServiceName, cmdOpts.Service.Service)
 <span id="L121" class="ln">   121  </span>	}
 <span id="L122" class="ln">   122  </span>}
 <span id="L123" class="ln">   123  </span>
@@ -191,7 +191,7 @@
 <span id="L134" class="ln">   134  </span><span class="comment">// line arguments are persisted so that the service runs the daemon with the</span>
 <span id="L135" class="ln">   135  </span><span class="comment">// same connection settings used during installation.</span>
 <span id="L136" class="ln">   136  </span>func serviceInstall(name string, cmdOpts *config.CmdOptions, exePath string) int {
-<span id="L137" class="ln">   137  </span>	if err := validateServiceAccount(cmdOpts.ServiceUser, cmdOpts.ServicePassword); err != nil {
+<span id="L137" class="ln">   137  </span>	if err := validateServiceAccount(cmdOpts.Service.ServiceUser, cmdOpts.Service.ServicePassword); err != nil {
 <span id="L138" class="ln">   138  </span>		fmt.Println(err)
 <span id="L139" class="ln">   139  </span>		return ExitCodeFatalError
 <span id="L140" class="ln">   140  </span>	}
@@ -233,8 +233,8 @@
 <span id="L176" class="ln">   176  </span>		DelayedAutoStart: true,
 <span id="L177" class="ln">   177  </span>		DisplayName:      name,
 <span id="L178" class="ln">   178  </span>		Description:      serviceDescription,
-<span id="L179" class="ln">   179  </span>		ServiceStartName: cmdOpts.ServiceUser,
-<span id="L180" class="ln">   180  </span>		Password:         cmdOpts.ServicePassword,
+<span id="L179" class="ln">   179  </span>		ServiceStartName: cmdOpts.Service.ServiceUser,
+<span id="L180" class="ln">   180  </span>		Password:         cmdOpts.Service.ServicePassword,
 <span id="L181" class="ln">   181  </span>	}
 <span id="L182" class="ln">   182  </span>}
 <span id="L183" class="ln">   183  </span>
