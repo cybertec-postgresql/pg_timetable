@@ -31,6 +31,25 @@ func TestConfig(t *testing.T) {
 	assert.NoError(t, os.Unsetenv("PGTT_CLIENTNAME"))
 }
 
+// TestConfigServiceSkipsDaemonRequirements covers the service-management early
+// return in NewConfig: when --service is given, the config is returned without
+// requiring --clientname or validating OTel, because those operations neither
+// connect to the database nor export telemetry.
+func TestConfigServiceSkipsDaemonRequirements(t *testing.T) {
+	for _, action := range []string{"install", "uninstall", "start", "stop", "restart", "status"} {
+		t.Run(action, func(t *testing.T) {
+			// No --clientname and a deliberately invalid OTel sample ratio:
+			// both would fail for a normal daemon start but must be skipped
+			// for a --service operation.
+			os.Args = []string{0: "config_test", "--service=" + action, "--otel-sample-ratio=42"}
+			conf, err := NewConfig(nil)
+			assert.NoError(t, err, "service operations must skip daemon-only validation")
+			assert.Equal(t, action, conf.Service)
+			assert.Empty(t, conf.ClientName)
+		})
+	}
+}
+
 func TestConfigFileFlag(t *testing.T) {
 	// No --file should result in an empty slice, not [""] or ["[]"]
 	os.Args = []string{0: "config_test", "--clientname=worker"}
