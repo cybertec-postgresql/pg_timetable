@@ -129,7 +129,7 @@ func serviceInstall(name string, cmdOpts *config.CmdOptions, exePath string) int
 		fmt.Println(err)
 		return ExitCodeFatalError
 	}
-	defer m.Disconnect()
+	defer func() { _ = m.Disconnect() }()
 
 	if s, err := m.OpenService(name); err == nil {
 		s.Close()
@@ -183,7 +183,7 @@ func serviceUninstall(name string) int {
 		fmt.Println(err)
 		return ExitCodeFatalError
 	}
-	defer m.Disconnect()
+	defer func() { _ = m.Disconnect() }()
 
 	s, err := m.OpenService(name)
 	if err != nil {
@@ -210,7 +210,7 @@ func serviceControl(name, action string) int {
 		fmt.Println(err)
 		return ExitCodeFatalError
 	}
-	defer m.Disconnect()
+	defer func() { _ = m.Disconnect() }()
 
 	s, err := m.OpenService(name)
 	if err != nil {
