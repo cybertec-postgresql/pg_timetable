@@ -1749,12 +1749,12 @@ of the service account you are using. Install the service with a passwordless co
 </li>
 <li>
 <p>Run <strong>pg_timetable</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>go<span class="w"> </span>run<span class="w"> </span>./cmd/pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>Alternatively, build a binary and run it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>go<span class="w"> </span>build
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>go<span class="w"> </span>build<span class="w"> </span>./cmd/pg_timetable
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
