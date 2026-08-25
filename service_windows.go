@@ -48,6 +48,11 @@ type winServiceRunner struct{}
 func (winServiceRunner) Execute(_ []string, request <-chan svc.ChangeRequest, status chan<- svc.Status) (bool, uint32) {
 	notify.SetGlobalStatus(status)
 	status <- svc.Status{State: svc.StartPending}
+	// Report Running with the controls we accept so the SCM stops showing the
+	// service as "Starting" and offers a working Stop command. Without this the
+	// service is stuck in StartPending and svc.Stop fails with
+	// ERROR_INVALID_SERVICE_CONTROL.
+	status <- svc.Status{State: svc.Running, Accepts: svc.AcceptStop | svc.AcceptShutdown}
 	for req := range request {
 		switch req.Cmd {
 		case svc.Interrogate:
@@ -258,7 +263,12 @@ func serviceControl(name, action string) int {
 func stopService(s *mgr.Service) error {
 	status, err := s.Control(svc.Stop)
 	if err != nil {
-		if errors.Is(err, windows.ERROR_SERVICE_NOT_ACTIVE) {
+		// A service that is already stopped reports ERROR_SERVICE_NOT_ACTIVE.
+		// A service stuck in StartPending (or otherwise unable to accept a
+		// stop) reports ERROR_INVALID_SERVICE_CONTROL. Neither should block
+		// removal, so treat both as "nothing left to stop".
+		if errors.Is(err, windows.ERROR_SERVICE_NOT_ACTIVE) ||
+			errors.Is(err, windows.ERROR_INVALID_SERVICE_CONTROL) {
 			return nil
 		}
 		return err

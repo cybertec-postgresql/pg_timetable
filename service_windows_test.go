@@ -173,6 +173,17 @@ func TestWinServiceRunnerExecute(t *testing.T) {
 		t.Fatal("no initial status reported")
 	}
 
+	// Immediately after StartPending the handler must report Running and
+	// advertise that it accepts Stop and Shutdown, otherwise the SCM keeps the
+	// service in the Starting state and refuses control requests.
+	select {
+	case st := <-statuses:
+		assert.Equal(t, svc.Running, st.State)
+		assert.Equal(t, svc.AcceptStop|svc.AcceptShutdown, st.Accepts)
+	case <-time.After(time.Second):
+		t.Fatal("no running status reported")
+	}
+
 	requests <- svc.ChangeRequest{Cmd: svc.Interrogate, CurrentStatus: svc.Status{State: svc.Running}}
 	select {
 	case st := <-statuses:
@@ -342,19 +353,75 @@ func TestServiceLifecycle(t *testing.T) {
 	assert.Equal(t, ExitCodeFatalError, serviceInstall(name, cmdOpts, exePath),
 		"installing an existing service must fail")
 
-	// Drive start/restart/stop so every serviceControl branch and the running
-	// path of stopService are exercised. The installed binary is the test
-	// executable, which is not a real service, so the SCM may report a start
-	// timeout; accept either outcome and always leave the service stopped.
-	for _, action := range []string{"start", "restart", "stop"} {
-		code := serviceControl(name, action)
-		assert.Contains(t, []int{ExitCodeOK, ExitCodeFatalError}, code,
-			"%s must return a defined exit code", action)
-	}
-
 	// Uninstall through the real entry point and confirm it is gone by asking
 	// for its status again.
 	require.Equal(t, ExitCodeOK, serviceUninstall(name), "uninstall must succeed")
 	assert.Equal(t, ExitCodeFatalError, serviceControl(name, "status"),
 		"service must be gone after uninstall")
+}
+
+// TestServiceRealStartStop answers "can we start a real application in tests?"
+// with yes: it installs the test binary as a service and actually starts it.
+// The test binary is svc.Run-aware because it shares this package's init(),
+// which launches winServiceRunner when the SCM starts the process. TestMain
+// (below) detects that service launch, installs a cancel function so Stop is
+// instant, and blocks so the test suite itself does not run in the service
+// process. The service therefore reaches Running and honours Start/Stop just
+// like a production pg_timetable service.
+//
+// Opt-in and admin-only, like TestServiceLifecycle.
+func TestServiceRealStartStop(t *testing.T) {
+	if os.Getenv("PGTT_TEST_SERVICES") == "" {
+		t.Skip("skipping test that modifies system services: set PGTT_TEST_SERVICES=1 to enable")
+	}
+	requireSCM(t)
+
+	const name = "pg_timetable_realsvc_test"
+	exePath, err := os.Executable()
+	require.NoError(t, err)
+
+	// Install a minimal service. The persisted arguments are irrelevant here
+	// because TestMain short-circuits before the daemon ever connects to a DB.
+	cmdOpts := config.NewCmdOptions("--service=install", "--service-name="+name)
+	_ = serviceUninstall(name)
+	require.Equal(t, ExitCodeOK, serviceInstall(name, cmdOpts, exePath), "install must succeed")
+	t.Cleanup(func() { _ = serviceUninstall(name) })
+
+	m, err := connectManager()
+	require.NoError(t, err)
+	defer func() { _ = m.Disconnect() }()
+	s, err := m.OpenService(name)
+	require.NoError(t, err)
+	defer s.Close()
+
+	// Start the real service and wait until the SCM reports it Running.
+	require.Equal(t, ExitCodeOK, serviceControl(name, "start"), "start must succeed")
+	require.Eventually(t, func() bool {
+		st, qerr := s.Query()
+		return qerr == nil && st.State == svc.Running
+	}, 15*time.Second, servicePollingInterval, "service must reach Running")
+
+	// Stop it through the real entry point; stopService waits for Stopped.
+	require.Equal(t, ExitCodeOK, serviceControl(name, "stop"), "stop must succeed")
+	st, err := s.Query()
+	require.NoError(t, err)
+	assert.Equal(t, svc.Stopped, st.State, "service must be stopped")
+
+	require.Equal(t, ExitCodeOK, serviceUninstall(name), "uninstall must succeed")
+}
+
+// TestMain intercepts the case where the Service Control Manager launched this
+// test binary as a Windows service (see TestServiceRealStartStop). In that
+// process the package init() has already called svc.Run(winServiceRunner{}),
+// which drives the service. We only need to make a graceful Stop instant by
+// providing a cancel function, then block forever so the normal test suite
+// does not execute inside the service process. Any other invocation runs the
+// tests as usual.
+func TestMain(m *testing.M) {
+	if isService, _ := svc.IsWindowsService(); isService {
+		// Unblock cancelApplication immediately on Stop/Shutdown.
+		setCancelFn(func() {})
+		select {} // let winServiceRunner (started in init) own the lifecycle
+	}
+	os.Exit(m.Run())
 }
