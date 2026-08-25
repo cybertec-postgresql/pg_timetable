@@ -53,13 +53,40 @@ func (winServiceRunner) Execute(_ []string, request <-chan svc.ChangeRequest, st
 			status <- req.CurrentStatus
 		case svc.Stop, svc.Shutdown:
 			status <- svc.Status{State: svc.StopPending}
-			if cancelFn != nil {
-				cancelFn()
-			}
+			cancelApplication(status)
 			return false, 0
 		}
 	}
 	return false, 0
+}
+
+// cancelApplication triggers a graceful shutdown of the running daemon. The
+// Service Control Manager may request a stop while main is still starting up
+// and has not assigned the cancellation function yet, so wait until it is
+// ready (bounded by serviceStopTimeout), reporting StopPending heartbeats so
+// the SCM does not consider the service hung.
+func cancelApplication(status chan<- svc.Status) {
+	deadline := time.After(serviceStopTimeout)
+	ticker := time.NewTicker(servicePollingInterval)
+	defer ticker.Stop()
+	for {
+		if cancel := getCancelFn(); cancel != nil {
+			cancel()
+			return
+		}
+		select {
+		case <-cancelReady:
+			if cancel := getCancelFn(); cancel != nil {
+				cancel()
+			}
+			return
+		case <-deadline:
+			// Give up waiting; the process will be terminated by the SCM.
+			return
+		case <-ticker.C:
+			status <- svc.Status{State: svc.StopPending}
+		}
+	}
 }
 
 // handleServiceCommand performs the requested --service action and returns

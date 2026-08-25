@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/api"
@@ -29,7 +31,37 @@ var pge *pgengine.PgEngine
 // cancelFn stores the cancellation function for the application context.
 // It is set by SetupCloseHandler and invoked by the Windows service handler
 // when the Service Control Manager requests the service to stop.
-var cancelFn context.CancelFunc
+//
+// The Windows service handler runs on a separate goroutine (started from
+// init) that may read cancelFn before or concurrently with main assigning
+// it, so cancelFn is an atomic pointer. cancelReady is closed exactly once
+// (guarded by cancelOnce) when the cancel function first becomes available,
+// letting the service handler wait for a graceful shutdown target instead of
+// silently dropping an early stop request.
+var (
+	cancelFn    atomic.Pointer[context.CancelFunc]
+	cancelReady = make(chan struct{})
+	cancelOnce  = new(sync.Once)
+)
+
+// setCancelFn stores the application cancellation function and signals, once,
+// that it is ready to be used by other goroutines.
+func setCancelFn(cancel context.CancelFunc) {
+	if cancel == nil {
+		cancelFn.Store(nil)
+		return
+	}
+	cancelFn.Store(&cancel)
+	cancelOnce.Do(func() { close(cancelReady) })
+}
+
+// getCancelFn returns the current application cancellation function safely.
+func getCancelFn() context.CancelFunc {
+	if p := cancelFn.Load(); p != nil {
+		return *p
+	}
+	return nil
+}
 
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
 // program if it receives an interrupt from the OS. We then handle this by calling
@@ -37,7 +69,7 @@ var cancelFn context.CancelFunc
 func SetupCloseHandler(cancel context.CancelFunc) {
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	cancelFn = cancel
+	setCancelFn(cancel)
 	go func() {
 		<-c
 		cancel()

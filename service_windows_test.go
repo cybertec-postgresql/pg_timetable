@@ -115,10 +115,10 @@ func TestWinServiceRunnerExecute(t *testing.T) {
 	statuses := make(chan svc.Status, 8)
 	cancelled := make(chan struct{})
 
-	prevCancel := cancelFn
-	cancelFn = func() { close(cancelled) }
+	prev := saveCancelState()
+	setCancelFn(func() { close(cancelled) })
 	defer func() {
-		cancelFn = prevCancel
+		prev.restore()
 		notify.SetGlobalStatus(nil)
 	}()
 
@@ -158,6 +158,45 @@ func TestWinServiceRunnerExecute(t *testing.T) {
 	case <-cancelled:
 	case <-time.After(time.Second):
 		t.Fatal("cancellation function was not called")
+	}
+}
+
+// TestCancelApplicationWaitsForReadiness verifies that a stop request arriving
+// before main has assigned the cancellation function does not get dropped:
+// cancelApplication must wait until setCancelFn signals readiness and then run
+// the cancellation, emitting StopPending heartbeats in the meantime.
+func TestCancelApplicationWaitsForReadiness(t *testing.T) {
+	prev := saveCancelState()
+	resetCancelState()
+	defer prev.restore()
+
+	cancelled := make(chan struct{})
+	statuses := make(chan svc.Status, 8)
+
+	done := make(chan struct{})
+	go func() {
+		cancelApplication(statuses)
+		close(done)
+	}()
+
+	// The handler must still be waiting because cancelFn is not ready yet.
+	select {
+	case <-done:
+		t.Fatal("cancelApplication returned before the cancel function was ready")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	setCancelFn(func() { close(cancelled) })
+
+	select {
+	case <-cancelled:
+	case <-time.After(time.Second):
+		t.Fatal("cancellation function was not called once ready")
+	}
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("cancelApplication did not return after cancelling")
 	}
 }
 
