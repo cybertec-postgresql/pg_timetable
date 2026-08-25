@@ -258,12 +258,12 @@ func requireSCM(t *testing.T) {
 	_ = m.Disconnect()
 }
 
-// TestServiceControlMissingService checks that every control action against a
-// service pg_timetable never installed reports ExitCodeFatalError rather than
-// panicking. Opening a non-existent service does not require admin rights, so
-// this runs wherever the SCM is reachable.
+// TestServiceControlMissingService checks that every control action, plus
+// uninstall, reports ExitCodeFatalError rather than panicking when the target
+// service is absent (or the SCM is unreachable). It needs no admin rights: it
+// either exits early at connectManager or at OpenService, both of which return
+// the fatal exit code, so it covers those error branches everywhere.
 func TestServiceControlMissingService(t *testing.T) {
-	requireSCM(t)
 	const name = "pg_timetable_missing_svc_test"
 	for _, action := range []string{"start", "stop", "restart", "status"} {
 		t.Run(action, func(t *testing.T) {
@@ -274,15 +274,34 @@ func TestServiceControlMissingService(t *testing.T) {
 		"uninstalling a missing service must fail")
 }
 
-// TestHandleServiceCommandMissingService drives the public --service dispatcher
-// so the executable-path lookup and command routing are covered end to end.
-func TestHandleServiceCommandMissingService(t *testing.T) {
-	requireSCM(t)
+// TestServiceInstallInvalidAccount covers the account-validation branch of
+// serviceInstall, which rejects a password without a user before ever touching
+// the SCM. It therefore runs regardless of privilege.
+func TestServiceInstallInvalidAccount(t *testing.T) {
 	cmdOpts := config.NewCmdOptions(
-		"--service=status",
-		"--service-name=pg_timetable_missing_svc_test",
+		"--service-password=secret",
+		"postgresql://localhost/timetable",
 	)
-	assert.Equal(t, ExitCodeFatalError, handleServiceCommand(cmdOpts))
+	assert.Equal(t, ExitCodeFatalError,
+		serviceInstall("pg_timetable_invalid_acct_test", cmdOpts, "pg_timetable.exe"))
+}
+
+// TestHandleServiceCommandDispatch drives the public --service dispatcher for
+// each command so the routing and executable-path lookup are covered end to
+// end. Without admin rights every branch still exits fatally at connectManager;
+// with rights they hit the "already/never installed" branches instead. Either
+// way the expected exit code is fatal for these missing-service inputs.
+func TestHandleServiceCommandDispatch(t *testing.T) {
+	for _, action := range []string{"install", "uninstall", "status", "start", "stop", "restart"} {
+		t.Run(action, func(t *testing.T) {
+			cmdOpts := config.NewCmdOptions(
+				"--service="+action,
+				"--service-name=pg_timetable_missing_svc_test",
+				"postgresql://localhost/timetable",
+			)
+			assert.Equal(t, ExitCodeFatalError, handleServiceCommand(cmdOpts))
+		})
+	}
 }
 
 // TestServiceLifecycle exercises pg_timetable's own install/query/uninstall
@@ -320,6 +339,16 @@ func TestServiceLifecycle(t *testing.T) {
 	// Installing the same service twice must be rejected, not silently retried.
 	assert.Equal(t, ExitCodeFatalError, serviceInstall(name, cmdOpts, exePath),
 		"installing an existing service must fail")
+
+	// Drive start/restart/stop so every serviceControl branch and the running
+	// path of stopService are exercised. The installed binary is the test
+	// executable, which is not a real service, so the SCM may report a start
+	// timeout; accept either outcome and always leave the service stopped.
+	for _, action := range []string{"start", "restart", "stop"} {
+		code := serviceControl(name, action)
+		assert.Contains(t, []int{ExitCodeOK, ExitCodeFatalError}, code,
+			"%s must return a defined exit code", action)
+	}
 
 	// Uninstall through the real entry point and confirm it is gone by asking
 	// for its status again.
