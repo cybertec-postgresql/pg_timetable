@@ -44,7 +44,7 @@ func TestConfigServiceSkipsDaemonRequirements(t *testing.T) {
 			os.Args = []string{0: "config_test", "--service=" + action, "--otel-sample-ratio=42"}
 			conf, err := NewConfig(nil)
 			assert.NoError(t, err, "service operations must skip daemon-only validation")
-			assert.Equal(t, action, conf.Service)
+			assert.Equal(t, action, conf.Service.Service)
 			assert.Empty(t, conf.ClientName)
 		})
 	}

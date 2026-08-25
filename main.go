@@ -184,7 +184,7 @@ func main() {
 		printVersion()
 	}
 
-	if cmdOpts.Service > "" {
+	if cmdOpts.Service.Service > "" {
 		os.Exit(handleServiceCommand(cmdOpts))
 	}
 

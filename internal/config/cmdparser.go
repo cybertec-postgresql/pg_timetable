@@ -42,6 +42,14 @@ type RestAPIOpts struct {
 	Port int `long:"rest-port" mapstructure:"rest-port" description:"REST API port" env:"PGTT_RESTPORT" default:"0"`
 }
 
+// ServiceOpts specifies Windows service management options
+type ServiceOpts struct {
+	Service         string `long:"service" mapstructure:"service" description:"Manage the Windows service and exit" choice:"install" choice:"uninstall" choice:"start" choice:"stop" choice:"restart" choice:"status"`
+	ServiceName     string `long:"service-name" mapstructure:"service-name" description:"Windows service name used by --service operations" default:"pg_timetable"`
+	ServiceUser     string `long:"service-user" mapstructure:"service-user" description:"Windows account to run the service under (DOMAIN\\user or .\\user), default: LocalSystem" env:"PGTT_SERVICEUSER"`
+	ServicePassword string `long:"service-password" mapstructure:"service-password" description:"Password for the service account" env:"PGTT_SERVICEPASSWORD"`
+}
+
 // OTelOpts specifies OpenTelemetry configuration
 type OTelOpts struct {
 	Endpoint        string            `long:"otel-endpoint" mapstructure:"otel-endpoint" description:"OTLP exporter endpoint URL (grpc://, http://, https://)"`
@@ -60,10 +68,7 @@ type CmdOptions struct {
 	ClientName          string       `short:"c" long:"clientname" description:"Unique name for application instance" env:"PGTT_CLIENTNAME"`
 	Config              string       `long:"config" description:"YAML configuration file"`
 	ConnStr             string       `long:"connstr" description:"Connection string" env:"PGTT_CONNSTR"`
-	Service             string       `long:"service" mapstructure:"service" description:"Manage the Windows service and exit" choice:"install" choice:"uninstall" choice:"start" choice:"stop" choice:"restart" choice:"status"`
-	ServiceName         string       `long:"service-name" mapstructure:"service-name" description:"Windows service name used by --service operations" default:"pg_timetable"`
-	ServiceUser         string       `long:"service-user" mapstructure:"service-user" description:"Windows account to run the service under (DOMAIN\\user or .\\user), default: LocalSystem" env:"PGTT_SERVICEUSER"`
-	ServicePassword     string       `long:"service-password" mapstructure:"service-password" description:"Password for the service account" env:"PGTT_SERVICEPASSWORD"`
+	Service             ServiceOpts  `group:"Service" mapstructure:"Service"`
 	Logging             LoggingOpts  `group:"Logging" mapstructure:"Logging"`
 	Start               StartOpts    `group:"Start" mapstructure:"Start"`
 	Resource            ResourceOpts `group:"Resource" mapstructure:"Resource"`

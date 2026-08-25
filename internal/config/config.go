@@ -116,7 +116,7 @@ func NewConfig(writer io.Writer) (*CmdOptions, error) {
 	// empty string ([""]) when no --file is provided. Strip empty entries so
 	// startup file processing is not triggered for non-existent paths.
 	conf.Start.File = filterEmpty(conf.Start.File)
-	if conf.Service > "" {
+	if conf.Service.Service > "" {
 		// Service management operations neither connect to the database nor
 		// export telemetry, so daemon-only requirements are skipped.
 		return conf, nil
