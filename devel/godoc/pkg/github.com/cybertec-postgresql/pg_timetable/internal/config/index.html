@@ -229,7 +229,7 @@
 		
 			
 			
-			<h2 id="Parse">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L94">Parse</a>
+			<h2 id="Parse">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L98">Parse</a>
 				<a class="permalink" href="#Parse">&#xb6;</a>
 				
 				
@@ -243,7 +243,7 @@
 		
 			
 			
-			<h2 id="ValidateOTel">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L143">ValidateOTel</a>
+			<h2 id="ValidateOTel">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L148">ValidateOTel</a>
 				<a class="permalink" href="#ValidateOTel">&#xb6;</a>
 				
 				
@@ -283,7 +283,7 @@
 		
 			
 			
-			<h2 id="filterEmpty">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L132">filterEmpty</a>
+			<h2 id="filterEmpty">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/config.go.html#L137">filterEmpty</a>
 				<a class="permalink" href="#filterEmpty">&#xb6;</a>
 				
 				
@@ -310,6 +310,10 @@ strings removed and surrounding whitespace trimmed from the rest.
 <span id="CmdOptions.ClientName"></span>    ClientName          <a href="https://pkg.go.dev/builtin/#string">string</a>       `short:&#34;c&#34; long:&#34;clientname&#34; description:&#34;Unique name for application instance&#34; env:&#34;PGTT_CLIENTNAME&#34;`
 <span id="CmdOptions.Config"></span>    Config              <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;config&#34; description:&#34;YAML configuration file&#34;`
 <span id="CmdOptions.ConnStr"></span>    ConnStr             <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;connstr&#34; description:&#34;Connection string&#34; env:&#34;PGTT_CONNSTR&#34;`
+<span id="CmdOptions.Service"></span>    Service             <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;service&#34; mapstructure:&#34;service&#34; description:&#34;Manage the Windows service and exit&#34; choice:&#34;install&#34; choice:&#34;uninstall&#34; choice:&#34;start&#34; choice:&#34;stop&#34; choice:&#34;restart&#34; choice:&#34;status&#34;`
+<span id="CmdOptions.ServiceName"></span>    ServiceName         <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;service-name&#34; mapstructure:&#34;service-name&#34; description:&#34;Windows service name used by --service operations&#34; default:&#34;pg_timetable&#34;`
+<span id="CmdOptions.ServiceUser"></span>    ServiceUser         <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;service-user&#34; mapstructure:&#34;service-user&#34; description:&#34;Windows account to run the service under (DOMAIN\\user or .\\user), default: LocalSystem&#34; env:&#34;PGTT_SERVICEUSER&#34;`
+<span id="CmdOptions.ServicePassword"></span>    ServicePassword     <a href="https://pkg.go.dev/builtin/#string">string</a>       `long:&#34;service-password&#34; mapstructure:&#34;service-password&#34; description:&#34;Password for the service account&#34; env:&#34;PGTT_SERVICEPASSWORD&#34;`
 <span id="CmdOptions.Logging"></span>    Logging             <a href="#LoggingOpts">LoggingOpts</a>  `group:&#34;Logging&#34; mapstructure:&#34;Logging&#34;`
 <span id="CmdOptions.Start"></span>    Start               <a href="#StartOpts">StartOpts</a>    `group:&#34;Start&#34; mapstructure:&#34;Start&#34;`
 <span id="CmdOptions.Resource"></span>    Resource            <a href="#ResourceOpts">ResourceOpts</a> `group:&#34;Resource&#34; mapstructure:&#34;Resource&#34;`
@@ -332,7 +336,7 @@ strings removed and surrounding whitespace trimmed from the rest.
 
 			
 				
-				<h3 id="NewCmdOptions">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L85">NewCmdOptions</a>
+				<h3 id="NewCmdOptions">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L89">NewCmdOptions</a>
 					<a class="permalink" href="#NewCmdOptions">&#xb6;</a>
 					
 					
@@ -358,7 +362,7 @@ strings removed and surrounding whitespace trimmed from the rest.
 
 			
 				
-				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L75">Verbose</a>
+				<h3 id="CmdOptions.Verbose">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L79">Verbose</a>
 					<a class="permalink" href="#CmdOptions.Verbose">&#xb6;</a>
 					
 					
@@ -371,7 +375,7 @@ strings removed and surrounding whitespace trimmed from the rest.
 				
 			
 				
-				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L80">VersionOnly</a>
+				<h3 id="CmdOptions.VersionOnly">func (CmdOptions) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/config/cmdparser.go.html#L84">VersionOnly</a>
 					<a class="permalink" href="#CmdOptions.VersionOnly">&#xb6;</a>
 					
 					

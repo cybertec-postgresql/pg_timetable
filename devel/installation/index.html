@@ -766,6 +766,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#running-as-a-windows-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running as a Windows service
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running as a Windows service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-under-a-dedicated-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running under a dedicated account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-the-database-password-in-pgpassconf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storing the database password in pgpass.conf
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#build-from-sources" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1556,6 +1595,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#running-as-a-windows-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running as a Windows service
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running as a Windows service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-under-a-dedicated-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running under a dedicated account
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-the-database-password-in-pgpassconf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storing the database password in pgpass.conf
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#build-from-sources" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1623,31 +1701,68 @@ Published tags include a multi-architecture manifest for both <code>linux/amd64<
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>cybertecpostgresql/pg_timetable:latest<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>-c<span class="w"> </span>worker001
 </code></pre></div>
+<h2 id="running-as-a-windows-service">Running as a Windows service</h2>
+<p>On Windows, <strong>pg_timetable</strong> integrates with the Service Control Manager and ships with built-in service management commands. All commands require an elevated (Administrator) terminal.</p>
+<p>By default the service runs as <em>LocalSystem</em>. </p>
+<p>Install the service with the same options you would use to run the scheduler interactively — they are persisted into the service command line.
+Replace <em>pgtt</em> and <em>pgtt_db</em> with your database user name and database name. If your postgresql service is remote, make sure to replace localhost:5432 as well.</p>
+<p>For LocalSystem (or to share a fixed location), point at the <a href="https://www.postgresql.org/docs/current/libpq-pgpass.html">pgpass.conf</a> file explicitly either with a <code>passfile</code> connection parameter or the <code>PGPASSFILE</code> environment variable:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pg_timetable.exe --service install -c worker001 --log-file=C:\pg_timetable\pg_timetable.log --log-file-rotate <span class="s2">"postgresql://pgtt@localhost:5432/pgtt_db?passfile=C:\pg_timetable\pgpass.conf"</span>
+</code></pre></div>
+<p>Manage the service afterwards:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pg_timetable.exe --service start
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pg_timetable.exe --service status
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>pg_timetable.exe --service stop
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>pg_timetable.exe --service restart
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>pg_timetable.exe --service uninstall
+</code></pre></div>
+<p>The service is registered for automatic (delayed) startup and configured to restart after a failure. Use <code>--service-name</code> if you install multiple instances, e.g., one per <code>--clientname</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pg_timetable.exe --service install --service-name=pg_timetable_worker002 -c worker002 ...
+</code></pre></div>
+<h3 id="running-under-a-dedicated-account">Running under a dedicated account</h3>
+<p>To run it under a specific Windows account, use <code>--service-user</code> and <code>--service-password</code> (the account name may be given as <code>DOMAIN\user</code> or <code>.\user</code> for a local account):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pg_timetable.exe --service install --service-user=.\svc_pg_timetable --service-password=S3cret ...
+</code></pre></div>
+<ul>
+<li>The account requires the <strong>Log on as a service</strong> right; otherwise the service fails to start with error 1069. Grant it via <em>Local Security Policy → User Rights Assignment</em> or <code>secpol.msc</code>.</li>
+<li>A password may be omitted for accounts that do not need one, e.g., <a href="https://learn.microsoft.com/en-us/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview">group managed service accounts</a> (gMSA).</li>
+<li>Instead of <code>--service-password</code>, the password can be supplied through the environment variable <code>PGTT_SERVICEPASSWORD</code> to keep it out of shell history and process listings.</li>
+<li>Service management flags are never persisted into the installed service command line, so account credentials do not end up in the registry.</li>
+</ul>
+<p><strong>NOTE:</strong>
+A Windows service has no console, so anything written to stdout is discarded. Always configure a log file (<code>--log-file</code>, optionally with <code>--log-file-rotate</code>) when installing the service.</p>
+<p><strong>NOTE:</strong> When started by the service manager, the working directory is set to the directory containing the executable. Prefer absolute paths for <code>--config</code>, <code>--file</code> and <code>--log-file</code>.</p>
+<h3 id="storing-the-database-password-in-pgpassconf">Storing the database password in pgpass.conf</h3>
+<p>The database password does not have to be part of the connection string. Like <code>psql</code>, <strong>pg_timetable</strong> reads a PostgreSQL password file when no password is given — on Windows this file is <code>%APPDATA%\postgresql\pgpass.conf</code>
+of the service account you are using. Install the service with a passwordless connection string:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>pg_timetable.exe --service install -c worker001 postgresql://pgtt@localhost:5432/pgtt_db
+</code></pre></div>
+<p>Alternatively, the service can be managed with the standard <code>sc.exe</code> utility, e.g.: <code>sc.exe create pg_timetable start= auto binPath= "\"C:\path\to\pg_timetable.exe\" --clientname=worker001 ..."</code></p>
 <h2 id="build-from-sources">Build from sources</h2>
 <ol>
 <li>Download and install <a href="https://golang.org/doc/install">Go</a> on your system.</li>
 <li>
 <p>Clone <strong>pg_timetable</strong> repo:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cybertec-postgresql/pg_timetable.git
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>pg_timetable
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cybertec-postgresql/pg_timetable.git
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">cd</span><span class="w"> </span>pg_timetable
 </code></pre></div>
 </li>
 <li>
 <p>Run <strong>pg_timetable</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>go<span class="w"> </span>run<span class="w"> </span>main.go<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>Alternatively, build a binary and run it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>go<span class="w"> </span>build
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>go<span class="w"> </span>build
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./pg_timetable<span class="w"> </span>--clientname<span class="o">=</span>worker001<span class="w"> </span>postgresql://scheduler:strongpwd@localhost:5432/dbname
 </code></pre></div>
 </li>
 <li>
 <p>(Optional) Run tests in all sub-folders of the project:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>psql<span class="w"> </span>--command<span class="o">=</span><span class="s2">"CREATE USER scheduler PASSWORD 'somestrong'"</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>createdb<span class="w"> </span>--owner<span class="o">=</span>scheduler<span class="w"> </span>timetable
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-failfast<span class="w"> </span>-timeout<span class="o">=</span>300s<span class="w"> </span>-count<span class="o">=</span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>psql<span class="w"> </span>--command<span class="o">=</span><span class="s2">"CREATE USER scheduler PASSWORD 'somestrong'"</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>createdb<span class="w"> </span>--owner<span class="o">=</span>scheduler<span class="w"> </span>timetable
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-failfast<span class="w"> </span>-timeout<span class="o">=</span>300s<span class="w"> </span>-count<span class="o">=</span><span class="m">1</span><span class="w"> </span>-p<span class="w"> </span><span class="m">1</span><span class="w"> </span>./...
 </code></pre></div>
 </li>
 </ol>

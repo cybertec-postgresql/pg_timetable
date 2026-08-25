@@ -173,55 +173,60 @@
 <span id="L116" class="ln">   116  </span>	<span class="comment">// empty string ([&#34;&#34;]) when no --file is provided. Strip empty entries so</span>
 <span id="L117" class="ln">   117  </span>	<span class="comment">// startup file processing is not triggered for non-existent paths.</span>
 <span id="L118" class="ln">   118  </span>	conf.Start.File = filterEmpty(conf.Start.File)
-<span id="L119" class="ln">   119  </span>	if conf.ClientName == &#34;&#34; {
-<span id="L120" class="ln">   120  </span>		buf := bytes.NewBufferString(&#34;The required flag `-c, --clientname` was not specified\n&#34;)
-<span id="L121" class="ln">   121  </span>		p.WriteHelp(buf)
-<span id="L122" class="ln">   122  </span>		return conf, errors.New(buf.String())
+<span id="L119" class="ln">   119  </span>	if conf.Service &gt; &#34;&#34; {
+<span id="L120" class="ln">   120  </span>		<span class="comment">// Service management operations neither connect to the database nor</span>
+<span id="L121" class="ln">   121  </span>		<span class="comment">// export telemetry, so daemon-only requirements are skipped.</span>
+<span id="L122" class="ln">   122  </span>		return conf, nil
 <span id="L123" class="ln">   123  </span>	}
-<span id="L124" class="ln">   124  </span>	if err := ValidateOTel(conf.OTel); err != nil {
-<span id="L125" class="ln">   125  </span>		return conf, err
-<span id="L126" class="ln">   126  </span>	}
-<span id="L127" class="ln">   127  </span>	return conf, nil
-<span id="L128" class="ln">   128  </span>}
-<span id="L129" class="ln">   129  </span>
-<span id="L130" class="ln">   130  </span><span class="comment">// filterEmpty returns a new slice with blank (empty or whitespace-only)</span>
-<span id="L131" class="ln">   131  </span><span class="comment">// strings removed and surrounding whitespace trimmed from the rest.</span>
-<span id="L132" class="ln">   132  </span>func filterEmpty(in []string) []string {
-<span id="L133" class="ln">   133  </span>	out := in[:0]
-<span id="L134" class="ln">   134  </span>	for _, s := range in {
-<span id="L135" class="ln">   135  </span>		if s = strings.TrimSpace(s); s != &#34;&#34; {
-<span id="L136" class="ln">   136  </span>			out = append(out, s)
-<span id="L137" class="ln">   137  </span>		}
-<span id="L138" class="ln">   138  </span>	}
-<span id="L139" class="ln">   139  </span>	return out
-<span id="L140" class="ln">   140  </span>}
-<span id="L141" class="ln">   141  </span>
-<span id="L142" class="ln">   142  </span><span class="comment">// ValidateOTel validates OTelOpts fields and returns an error for invalid values.</span>
-<span id="L143" class="ln">   143  </span>func ValidateOTel(opts OTelOpts) error {
-<span id="L144" class="ln">   144  </span>	if opts.SampleRatio &lt; 0.0 || opts.SampleRatio &gt; 1.0 {
-<span id="L145" class="ln">   145  </span>		return errors.New(&#34;otel-sample-ratio must be between 0.0 and 1.0&#34;)
-<span id="L146" class="ln">   146  </span>	}
-<span id="L147" class="ln">   147  </span>	if opts.MetricPeriod &lt;= 0 {
-<span id="L148" class="ln">   148  </span>		return errors.New(&#34;otel-metric-period must be &gt; 0&#34;)
-<span id="L149" class="ln">   149  </span>	}
-<span id="L150" class="ln">   150  </span>	if opts.ShutdownTimeout &lt;= 0 {
-<span id="L151" class="ln">   151  </span>		return errors.New(&#34;otel-shutdown-timeout must be &gt; 0&#34;)
-<span id="L152" class="ln">   152  </span>	}
-<span id="L153" class="ln">   153  </span>	if opts.Endpoint != &#34;&#34; {
-<span id="L154" class="ln">   154  </span>		u, err := url.Parse(opts.Endpoint)
-<span id="L155" class="ln">   155  </span>		if err != nil {
-<span id="L156" class="ln">   156  </span>			return fmt.Errorf(&#34;otel: invalid endpoint URL: %w&#34;, err)
-<span id="L157" class="ln">   157  </span>		}
-<span id="L158" class="ln">   158  </span>		switch u.Scheme {
-<span id="L159" class="ln">   159  </span>		case &#34;grpc&#34;, &#34;http&#34;, &#34;https&#34;:
-<span id="L160" class="ln">   160  </span>			<span class="comment">// valid</span>
-<span id="L161" class="ln">   161  </span>		default:
-<span id="L162" class="ln">   162  </span>			return fmt.Errorf(&#34;unsupported OTel endpoint scheme: %s&#34;, u.Scheme)
-<span id="L163" class="ln">   163  </span>		}
-<span id="L164" class="ln">   164  </span>	}
-<span id="L165" class="ln">   165  </span>	return nil
-<span id="L166" class="ln">   166  </span>}
-<span id="L167" class="ln">   167  </span>
+<span id="L124" class="ln">   124  </span>	if conf.ClientName == &#34;&#34; {
+<span id="L125" class="ln">   125  </span>		buf := bytes.NewBufferString(&#34;The required flag `-c, --clientname` was not specified\n&#34;)
+<span id="L126" class="ln">   126  </span>		p.WriteHelp(buf)
+<span id="L127" class="ln">   127  </span>		return conf, errors.New(buf.String())
+<span id="L128" class="ln">   128  </span>	}
+<span id="L129" class="ln">   129  </span>	if err := ValidateOTel(conf.OTel); err != nil {
+<span id="L130" class="ln">   130  </span>		return conf, err
+<span id="L131" class="ln">   131  </span>	}
+<span id="L132" class="ln">   132  </span>	return conf, nil
+<span id="L133" class="ln">   133  </span>}
+<span id="L134" class="ln">   134  </span>
+<span id="L135" class="ln">   135  </span><span class="comment">// filterEmpty returns a new slice with blank (empty or whitespace-only)</span>
+<span id="L136" class="ln">   136  </span><span class="comment">// strings removed and surrounding whitespace trimmed from the rest.</span>
+<span id="L137" class="ln">   137  </span>func filterEmpty(in []string) []string {
+<span id="L138" class="ln">   138  </span>	out := in[:0]
+<span id="L139" class="ln">   139  </span>	for _, s := range in {
+<span id="L140" class="ln">   140  </span>		if s = strings.TrimSpace(s); s != &#34;&#34; {
+<span id="L141" class="ln">   141  </span>			out = append(out, s)
+<span id="L142" class="ln">   142  </span>		}
+<span id="L143" class="ln">   143  </span>	}
+<span id="L144" class="ln">   144  </span>	return out
+<span id="L145" class="ln">   145  </span>}
+<span id="L146" class="ln">   146  </span>
+<span id="L147" class="ln">   147  </span><span class="comment">// ValidateOTel validates OTelOpts fields and returns an error for invalid values.</span>
+<span id="L148" class="ln">   148  </span>func ValidateOTel(opts OTelOpts) error {
+<span id="L149" class="ln">   149  </span>	if opts.SampleRatio &lt; 0.0 || opts.SampleRatio &gt; 1.0 {
+<span id="L150" class="ln">   150  </span>		return errors.New(&#34;otel-sample-ratio must be between 0.0 and 1.0&#34;)
+<span id="L151" class="ln">   151  </span>	}
+<span id="L152" class="ln">   152  </span>	if opts.MetricPeriod &lt;= 0 {
+<span id="L153" class="ln">   153  </span>		return errors.New(&#34;otel-metric-period must be &gt; 0&#34;)
+<span id="L154" class="ln">   154  </span>	}
+<span id="L155" class="ln">   155  </span>	if opts.ShutdownTimeout &lt;= 0 {
+<span id="L156" class="ln">   156  </span>		return errors.New(&#34;otel-shutdown-timeout must be &gt; 0&#34;)
+<span id="L157" class="ln">   157  </span>	}
+<span id="L158" class="ln">   158  </span>	if opts.Endpoint != &#34;&#34; {
+<span id="L159" class="ln">   159  </span>		u, err := url.Parse(opts.Endpoint)
+<span id="L160" class="ln">   160  </span>		if err != nil {
+<span id="L161" class="ln">   161  </span>			return fmt.Errorf(&#34;otel: invalid endpoint URL: %w&#34;, err)
+<span id="L162" class="ln">   162  </span>		}
+<span id="L163" class="ln">   163  </span>		switch u.Scheme {
+<span id="L164" class="ln">   164  </span>		case &#34;grpc&#34;, &#34;http&#34;, &#34;https&#34;:
+<span id="L165" class="ln">   165  </span>			<span class="comment">// valid</span>
+<span id="L166" class="ln">   166  </span>		default:
+<span id="L167" class="ln">   167  </span>			return fmt.Errorf(&#34;unsupported OTel endpoint scheme: %s&#34;, u.Scheme)
+<span id="L168" class="ln">   168  </span>		}
+<span id="L169" class="ln">   169  </span>	}
+<span id="L170" class="ln">   170  </span>	return nil
+<span id="L171" class="ln">   171  </span>}
+<span id="L172" class="ln">   172  </span>
 </pre><p></p>
 
 <div id="footer">

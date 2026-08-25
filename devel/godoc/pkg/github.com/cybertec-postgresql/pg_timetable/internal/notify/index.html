@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>notify - GoPages</title>
+
+<link type="text/css" rel="stylesheet" href="/pg_timetable/devel/godoc/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/jquery.js" defer></script>
+
+
+
+
+<script>var goVersion = "go1.26.6";</script>
+<script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer></script>
+
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages | Auto-generated docs</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pg_timetable/devel/godoc/pkg/github.com/cybertec-postgresql/pg_timetable/">GoPages</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package notify
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "github.com/cybertec-postgresql/pg_timetable/internal/notify"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				<p>Package notify reports application lifecycle states to the Windows Service
+Control Manager. It is a no-op on other platforms and when the process is
+not started by the service manager.
+
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#Ready">func Ready()</a></dd>
+			
+				
+				<dd><a href="#SetGlobalStatus">func SetGlobalStatus(any)</a></dd>
+			
+				
+				<dd><a href="#Stopping">func Stopping()</a></dd>
+			
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/notify/notify_other.go.html">notify_other.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+		
+			
+			
+			<h2 id="Ready">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/notify/notify_other.go.html#L12">Ready</a>
+				<a class="permalink" href="#Ready">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func Ready()</pre>
+			<p>Ready is a no-op on non-Windows platforms.
+
+			
+			
+
+		
+			
+			
+			<h2 id="SetGlobalStatus">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/notify/notify_other.go.html#L9">SetGlobalStatus</a>
+				<a class="permalink" href="#SetGlobalStatus">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func SetGlobalStatus(<a href="https://pkg.go.dev/builtin/#any">any</a>)</pre>
+			<p>SetGlobalStatus is a no-op on non-Windows platforms.
+
+			
+			
+
+		
+			
+			
+			<h2 id="Stopping">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/notify/notify_other.go.html#L15">Stopping</a>
+				<a class="permalink" href="#Stopping">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func Stopping()</pre>
+			<p>Stopping is a no-op on non-Windows platforms.
+
+			
+			
+
+		
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.26.6.<br>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>
