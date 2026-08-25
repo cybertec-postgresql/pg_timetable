@@ -93,7 +93,7 @@ jobs:
     - name: Test Windows units
       env:
         PGTT_TEST_SERVICES: "1"
-      run: go test -failfast -v -timeout=120s -coverprofile='profile.cov' . ./internal/notify
+      run: go test -failfast -v -timeout=120s -coverprofile='profile.cov' ./cmd/pg_timetable ./internal/notify
 
     - name: Send coverage to Coveralls (parallel)
       uses: coverallsapp/github-action@v2

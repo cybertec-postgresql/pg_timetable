@@ -122,13 +122,13 @@ Alternatively, the service can be managed with the standard `sc.exe` utility, e.
 3. Run **pg_timetable**:
 
     ```bash
-    go run main.go --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
+    go run ./cmd/pg_timetable --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
     ```
 
 4. Alternatively, build a binary and run it:
 
     ```bash
-    go build
+    go build ./cmd/pg_timetable
     ./pg_timetable --clientname=worker001 postgresql://scheduler:strongpwd@localhost:5432/dbname
     ```
 
