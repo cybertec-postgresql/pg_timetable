@@ -287,12 +287,14 @@ func TestServiceInstallInvalidAccount(t *testing.T) {
 }
 
 // TestHandleServiceCommandDispatch drives the public --service dispatcher for
-// each command so the routing and executable-path lookup are covered end to
-// end. Without admin rights every branch still exits fatally at connectManager;
-// with rights they hit the "already/never installed" branches instead. Either
-// way the expected exit code is fatal for these missing-service inputs.
+// the non-mutating commands against a service that does not exist, covering the
+// routing and executable-path lookup end to end. Without admin rights every
+// branch exits fatally at connectManager; with rights they hit the "not
+// installed" branch instead. Either way the exit code is fatal, and none of
+// these actions create state. Install is covered separately because it mutates
+// the system and must clean up after itself.
 func TestHandleServiceCommandDispatch(t *testing.T) {
-	for _, action := range []string{"install", "uninstall", "status", "start", "stop", "restart"} {
+	for _, action := range []string{"uninstall", "status", "start", "stop", "restart"} {
 		t.Run(action, func(t *testing.T) {
 			cmdOpts := config.NewCmdOptions(
 				"--service="+action,
