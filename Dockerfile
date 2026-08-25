@@ -27,7 +27,7 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN go build -buildvcs=false -ldflags "-X main.commit=${COMMIT} -X main.version=${VERSION} -X main.date=${DATE}" -o pg_timetable .
+RUN go build -buildvcs=false -ldflags "-X main.commit=${COMMIT} -X main.version=${VERSION} -X main.date=${DATE}" -o pg_timetable ./cmd/pg_timetable
 
 FROM alpine
 

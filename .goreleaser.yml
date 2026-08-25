@@ -7,6 +7,7 @@ before:
 builds:
 - env:
     - CGO_ENABLED=0
+  main: ./cmd/pg_timetable
   goos:
     - linux
     - darwin
