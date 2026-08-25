@@ -17,8 +17,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true    
 
-# This workflow uses testcontainers-go for PostgreSQL testing
-# Docker provides consistent environment - only Ubuntu needed
+# The Linux job uses testcontainers-go for full PostgreSQL integration testing.
+# The Windows job covers the OS-specific code paths (service/notify) that are
+# guarded by //go:build windows and cannot be exercised on Linux. It runs only
+# the Docker-free unit tests, since Windows runners have no Linux containers.
+# Both jobs feed Coveralls as parallel builds that are finalized in `coverage`.
 
 jobs:
 
@@ -49,12 +52,12 @@ jobs:
     - name: Test with Testcontainers
       run: go test -failfast -v -timeout=300s -coverprofile=profile.cov ./...
 
-    - name: Upload coverage profile
-      uses: actions/upload-artifact@v7
+    - name: Send coverage to Coveralls (parallel)
+      uses: coverallsapp/github-action@v2
       with:
-        name: coverage-profile-${{ github.run_id }}
-        path: profile.cov
-        retention-days: 1
+        file: profile.cov
+        flag-name: linux
+        parallel: true
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v7
@@ -62,22 +65,52 @@ jobs:
         version: latest
         args: release --snapshot --skip=publish --clean --config .goreleaser.ci.yml
 
-  coverage:
+  test-windows:
     if: true # false to skip job during debug
-    name: Coverage Report
-    runs-on: ubuntu-latest
-    needs: [test]
+    name: Test Windows-specific code
+    runs-on: windows-latest
     steps:
 
-    - name: Download coverage profile
-      uses: actions/download-artifact@v8
-      with:
-        name: coverage-profile-${{ github.run_id }}
+    - name: Check out code
+      uses: actions/checkout@v7
 
-    - name: Send coverage to Coveralls
+    - name: Set up Golang
+      uses: actions/setup-go@v7
+      with:
+        go-version: '1.26'
+
+    - name: Get dependencies
+      run: |
+        go mod download
+        go version
+
+    # Only the packages that carry //go:build windows code and whose tests do
+    # not require Docker. The DB integration tests (testcontainers) live in the
+    # other packages and are already covered by the Linux job.
+    - name: Test Windows units
+      run: >-
+        go test -failfast -v -timeout=120s -coverprofile=profile.cov
+        . ./internal/notify/...
+
+    - name: Send coverage to Coveralls (parallel)
       uses: coverallsapp/github-action@v2
       with:
         file: profile.cov
+        flag-name: windows
+        parallel: true
+
+  coverage:
+    if: always()
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [test, test-windows]
+    steps:
+
+    - name: Finalize parallel Coveralls build
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel-finished: true
+        carryforward: "linux,windows"
 
   build-docs:
     if: true # false to skip job during debug
