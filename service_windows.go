@@ -111,13 +111,13 @@ func handleServiceCommand(cmdOpts *config.CmdOptions) int {
 		fmt.Println("Cannot determine executable path:", err)
 		return ExitCodeFatalError
 	}
-	switch cmdOpts.Service {
+	switch cmdOpts.Service.Service {
 	case "install":
-		return serviceInstall(cmdOpts.ServiceName, cmdOpts, exePath)
+		return serviceInstall(cmdOpts.Service.ServiceName, cmdOpts, exePath)
 	case "uninstall":
-		return serviceUninstall(cmdOpts.ServiceName)
+		return serviceUninstall(cmdOpts.Service.ServiceName)
 	default:
-		return serviceControl(cmdOpts.ServiceName, cmdOpts.Service)
+		return serviceControl(cmdOpts.Service.ServiceName, cmdOpts.Service.Service)
 	}
 }
 
@@ -134,7 +134,7 @@ func connectManager() (*mgr.Mgr, error) {
 // line arguments are persisted so that the service runs the daemon with the
 // same connection settings used during installation.
 func serviceInstall(name string, cmdOpts *config.CmdOptions, exePath string) int {
-	if err := validateServiceAccount(cmdOpts.ServiceUser, cmdOpts.ServicePassword); err != nil {
+	if err := validateServiceAccount(cmdOpts.Service.ServiceUser, cmdOpts.Service.ServicePassword); err != nil {
 		fmt.Println(err)
 		return ExitCodeFatalError
 	}
@@ -176,8 +176,8 @@ func newServiceConfig(name string, cmdOpts *config.CmdOptions) mgr.Config {
 		DelayedAutoStart: true,
 		DisplayName:      name,
 		Description:      serviceDescription,
-		ServiceStartName: cmdOpts.ServiceUser,
-		Password:         cmdOpts.ServicePassword,
+		ServiceStartName: cmdOpts.Service.ServiceUser,
+		Password:         cmdOpts.Service.ServicePassword,
 	}
 }
 
