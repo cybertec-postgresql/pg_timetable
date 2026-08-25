@@ -413,15 +413,17 @@ func TestServiceRealStartStop(t *testing.T) {
 // TestMain intercepts the case where the Service Control Manager launched this
 // test binary as a Windows service (see TestServiceRealStartStop). In that
 // process the package init() has already called svc.Run(winServiceRunner{}),
-// which drives the service. We only need to make a graceful Stop instant by
-// providing a cancel function, then block forever so the normal test suite
-// does not execute inside the service process. Any other invocation runs the
-// tests as usual.
+// which drives the service. We provide a no-op cancel function so a graceful
+// Stop returns immediately, then wait for the service dispatcher to finish and
+// exit the process. Exiting is essential: it releases the .test.exe file so
+// the Go toolchain can delete it, and it prevents the normal test suite from
+// running inside the service process. Any other invocation runs the tests as
+// usual.
 func TestMain(m *testing.M) {
 	if isService, _ := svc.IsWindowsService(); isService {
-		// Unblock cancelApplication immediately on Stop/Shutdown.
 		setCancelFn(func() {})
-		select {} // let winServiceRunner (started in init) own the lifecycle
+		<-serviceDone // wait until the SCM has stopped the service
+		os.Exit(0)
 	}
 	os.Exit(m.Run())
 }

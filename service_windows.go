@@ -26,6 +26,13 @@ const (
 	serviceDescription     = "Advanced scheduler for PostgreSQL"
 )
 
+// serviceDone is closed once the Windows service dispatcher (svc.Run) has
+// returned, i.e. after the Service Control Manager stopped the service. In the
+// production binary main() drives the shutdown and exits the process, so this
+// is unused there; the test binary uses it to terminate the process it was
+// launched as, releasing the executable file so the toolchain can clean it up.
+var serviceDone = make(chan struct{})
+
 func init() {
 	isService, err := svc.IsWindowsService()
 	if err != nil || !isService {
@@ -38,6 +45,7 @@ func init() {
 	}
 	go func() {
 		_ = svc.Run("", winServiceRunner{})
+		close(serviceDone)
 	}()
 }
 
