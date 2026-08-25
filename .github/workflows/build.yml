@@ -87,8 +87,13 @@ jobs:
     # Only the packages that carry //go:build windows code and whose tests do
     # not require Docker. The DB integration tests (testcontainers) live in the
     # other packages and are already covered by the Linux job.
+    # PGTT_TEST_SERVICES enables the opt-in Windows service lifecycle test; the
+    # GitHub-hosted windows-latest runner is elevated, so it can register and
+    # remove a real service through the Service Control Manager.
     - name: Test Windows units
-      run: go test -failfast -v -timeout=120s -coverprofile='profile.cov' .
+      env:
+        PGTT_TEST_SERVICES: "1"
+      run: go test -failfast -v -timeout=120s -coverprofile='profile.cov' . ./internal/notify
 
     - name: Send coverage to Coveralls (parallel)
       uses: coverallsapp/github-action@v2
