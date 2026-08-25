@@ -136,7 +136,7 @@ func assertNoExtensionDMLInDDL(t *testing.T) {
 		// commented out. The simplest correct check is: no top-level
 		// `CREATE EXTENSION` or `ALTER EXTENSION` statement — i.e. a line
 		// beginning with either keyword, ignoring leading whitespace.
-		for _, line := range strings.Split(s, "\n") {
+		for line := range strings.SplitSeq(s, "\n") {
 			trimmed := strings.TrimSpace(line)
 			upper := strings.ToUpper(trimmed)
 			if strings.HasPrefix(upper, "CREATE EXTENSION") ||

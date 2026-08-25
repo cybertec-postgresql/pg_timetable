@@ -305,8 +305,8 @@ func relativePathWarnings(args []string) []string {
 		arg := args[i]
 		name, value := strings.TrimLeft(arg, "-"), ""
 		hasValue := false
-		if eq := strings.IndexByte(arg, '='); eq >= 0 {
-			name, value, hasValue = strings.TrimLeft(arg[:eq], "-"), arg[eq+1:], true
+		if before, after, ok := strings.Cut(arg, "="); ok {
+			name, value, hasValue = strings.TrimLeft(before, "-"), after, true
 		} else if filePathFlags[name] && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
 			value, hasValue = args[i+1], true
 			i++
