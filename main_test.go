@@ -12,12 +12,44 @@ import (
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+// requireDocker skips the current test unless a Docker daemon capable of
+// running the Linux test containers is reachable through the same client
+// testcontainers uses (honoring DOCKER_HOST, docker:// / tcp:// / npipe://
+// endpoints and TESTCONTAINERS_* settings).
+//
+// The check is capability-based rather than OS-based: it queries the daemon's
+// OSType and only skips when it is not "linux". A Windows developer running
+// Docker Desktop with the WSL2/Linux backend therefore runs the full suite,
+// while a Windows-container-only engine (as on the windows-latest CI runner)
+// is skipped and covered by the Linux job instead.
+func requireDocker(t *testing.T) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	provider, err := testcontainers.NewDockerProvider()
+	if err != nil {
+		t.Skipf("no Docker provider available; skipping testcontainer-based test: %v", err)
+	}
+	defer func() { _ = provider.Close() }()
+	if err := provider.Health(ctx); err != nil {
+		t.Skipf("Docker daemon not reachable; skipping testcontainer-based test: %v", err)
+	}
+	info, err := provider.Client().Info(ctx, client.InfoOptions{})
+	if err != nil {
+		t.Skipf("cannot query Docker daemon info; skipping testcontainer-based test: %v", err)
+	}
+	if info.Info.OSType != "linux" {
+		t.Skipf("Docker daemon runs %q containers, not linux; skipping testcontainer-based test", info.Info.OSType)
+	}
+}
 
 // newTestLogger returns a silent logger suitable for use in tests.
 func newTestLogger() log.LoggerHookerIface {
@@ -30,6 +62,7 @@ func newTestLogger() log.LoggerHookerIface {
 // run() can perform that step itself.
 func setupTestContainer(t *testing.T) (connStr string, cleanup func()) {
 	t.Helper()
+	requireDocker(t)
 	ctx := context.Background()
 	c, err := postgres.Run(
 		ctx,

@@ -7,6 +7,7 @@ require (
 	github.com/cybertec-postgresql/pgx-migrator v1.4.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jessevdk/go-flags v1.6.1
+	github.com/moby/moby/client v0.5.1
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
 	github.com/pashagolub/pgxmock/v5 v5.1.0
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
@@ -62,7 +63,6 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.3.3 // indirect
 	github.com/moby/moby/api v1.55.0 // indirect
-	github.com/moby/moby/client v0.5.1 // indirect
 	github.com/moby/patternmatcher v0.6.1 // indirect
 	github.com/moby/sys/sequential v0.7.0 // indirect
 	github.com/moby/sys/user v0.4.1 // indirect
