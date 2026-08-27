@@ -2,102 +2,102 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/api/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/database_schema/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/explanation-design-philosophy/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/explanation-scheduling-model/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/explanation-secret-store-security-model/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/how-to-enable-opentelemetry/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/how-to-limit-database-sessions/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/how-to-schedule-common-jobs/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/how-to-use-secret-store/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/how-to-write-yaml-chains/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/installation/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/license/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/migration/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/reference-cli-options/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/reference-commands-tasks-chains/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/reference-opentelemetry/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/samples/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/secret_store/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/tutorial-first-chain/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/tutorial-handling-chain-errors/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/tutorial-manual-chain-start-stop/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/tutorial-storing-a-secret/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/tutorial-your-first-yaml-chain/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
     <url>
          <loc>https://cybertec-postgresql.github.io/pg_timetable/devel/yaml-format/</loc>
-         <lastmod>2026-08-26</lastmod>
+         <lastmod>2026-08-27</lastmod>
     </url>
 </urlset>
