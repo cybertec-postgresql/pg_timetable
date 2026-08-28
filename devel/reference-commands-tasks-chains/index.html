@@ -2296,7 +2296,7 @@ In most cases, they have to be brought to live by passing input parameters to th
 <tr>
 <td><code>run_at</code></td>
 <td><code>timetable.cron</code></td>
-<td>Standard <em>cron</em>-style value at Postgres server time zone or <code>@after</code>, <code>@every</code>, <code>@reboot</code> clause. <code>NULL</code> means the chain is started at every scheduler loop tick (every 60 seconds by default)</td>
+<td>Standard <em>cron</em>-style value at Postgres server time zone or <code>@after</code>, <code>@every</code>, <code>@reboot</code> clause. If <code>NULL</code>, the chain runs every minute</td>
 </tr>
 <tr>
 <td><code>max_instances</code></td>
