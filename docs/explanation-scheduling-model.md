@@ -8,4 +8,7 @@ The scheduling in **pg_timetable** encompasses three different abstraction level
 
 **Chain:** The third level represents a connected tasks forming a chain of tasks. **Chain** defines *if*, *when*, and *how often* a job should be executed.
 
+!!! note
+    If a chain's `run_at` (schedule) is `NULL`, it will execute on every scheduler tick (by default, every minute). This is equivalent to a `* * * * *` cron schedule.
+
 The exact fields, kinds, and parameter formats for each level are documented in the [Commands, Tasks, and Chains Reference](reference-commands-tasks-chains.md).
