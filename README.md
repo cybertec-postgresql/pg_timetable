@@ -25,6 +25,9 @@ SELECT timetable.add_job('refresh-matview', '@every 2 hours',
 -- Clear log table after pg_timetable restart:
 SELECT timetable.add_job('clear-log', '@reboot', 'TRUNCATE public.log');
 
+-- Run a job at every scheduler loop tick (every 60 seconds by default):
+SELECT timetable.add_job('every-minute', NULL, 'SELECT 1');
+
 -- Reindex at midnight on Sundays with reindexdb utility:
 
 --  using default database under default user (no command line arguments)

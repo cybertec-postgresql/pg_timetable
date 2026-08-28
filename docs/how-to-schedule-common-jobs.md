@@ -60,3 +60,12 @@ For the full `timetable.add_job()` parameter reference, see [Database Schema](da
             '["-c", "PGPASSWORD=5m3R7K4754p4m reindexdb -U postgres -h 192.168.0.221 -v"]'::jsonb, 
             'PROGRAM');
         ```
+
+6. Run a job at every scheduler loop tick (every 60 seconds by default) — pass `NULL` as the schedule:
+
+    ```sql
+    SELECT timetable.add_job('frequent-job', NULL, 'SELECT 1');
+    ```
+
+   The job is started automatically on every tick and can additionally be triggered on demand with
+   [timetable.notify_chain_start()](tutorial-manual-chain-start-stop.md).
