@@ -235,7 +235,7 @@ Once tasks have been arranged, they have to be scheduled as a **chain**. For thi
 | Field | Type | Description |
 |-------|------|-------------|
 | `chain_name` | `text` | The unique name of the chain |
-| `run_at` | `timetable.cron` | Standard *cron*-style value at Postgres server time zone or `@after`, `@every`, `@reboot` clause |
+| `run_at` | `timetable.cron` | Standard *cron*-style value at Postgres server time zone or `@after`, `@every`, `@reboot` clause. `NULL` means the chain is started at every scheduler loop tick (every 60 seconds by default) |
 | `max_instances` | `integer` | The amount of instances that this chain may have running at the same time |
 | `timeout` | `integer` | Abort any chain that takes more than the specified number of milliseconds |
 | `live` | `boolean` | Control if the chain may be executed once it reaches its schedule |

@@ -25,7 +25,7 @@ Creates a simple one-task chain
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `job_name` | `text` | The unique name of the **chain** and **command** | Required |
-| `job_schedule` | `timetable.cron` | Time schedule in сron syntax at Postgres server time zone | Required |
+| `job_schedule` | `timetable.cron` | Time schedule in cron syntax at Postgres server time zone; pass `NULL` to start the job at every scheduler loop tick (every 60 seconds by default) | Required |
 | `job_command` | `text` | The SQL which will be executed | Required |
 | `job_parameters` | `jsonb` | Arguments for the chain **command** | `NULL` |
 | `job_kind` | `timetable.command_kind` | Kind of the command: *SQL*, *PROGRAM* or *BUILTIN* | `SQL` |
