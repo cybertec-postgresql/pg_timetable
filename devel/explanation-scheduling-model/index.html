@@ -1479,7 +1479,7 @@
 <p>The scheduling in <strong>pg_timetable</strong> encompasses three different abstraction levels to facilitate the reuse with other parameters or additional schedules.</p>
 <p><strong>Command:</strong> The base level, <strong>command</strong>, defines <em>what</em> to do.</p>
 <p><strong>Task:</strong> The second level, <strong>task</strong>, represents a chain element (step) to run one of the commands. With <strong>tasks</strong> we define order of commands, arguments passed (if any), and how errors are handled.</p>
-<p><strong>Chain:</strong> The third level represents a connected tasks forming a chain of tasks. <strong>Chain</strong> defines <em>if</em>, <em>when</em>, and <em>how often</em> a job should be executed.</p>
+<p><strong>Chain:</strong> The third level represents connected tasks forming a chain of tasks. <strong>Chain</strong> defines <em>if</em>, <em>when</em>, and <em>how often</em> a job should be executed. A chain with a <code>NULL</code> schedule (no <code>run_at</code> value) is started at every scheduler loop tick — every 60 seconds by default — so it effectively runs every minute.</p>
 <p>The exact fields, kinds, and parameter formats for each level are documented in the <a href="../reference-commands-tasks-chains/">Commands, Tasks, and Chains Reference</a>.</p>
 
 

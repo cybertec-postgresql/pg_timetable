@@ -1597,7 +1597,14 @@
 </li>
 </ul>
 </li>
+<li>
+<p>Run a job at every scheduler loop tick (every 60 seconds by default) — pass <code>NULL</code> as the schedule:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'frequent-job'</span><span class="p">,</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"> </span><span class="s1">'SELECT 1'</span><span class="p">);</span>
+</code></pre></div>
+</li>
 </ol>
+<p>The job is started automatically on every tick and can additionally be triggered on demand with
+   <a href="../tutorial-manual-chain-start-stop/">timetable.notify_chain_start()</a>.</p>
 
 
 
