@@ -45,7 +45,7 @@ chains:
 | YAML Field | DB Column | Type | Default | Description |
 |------------|-----------|------|---------|-------------|
 | `name` | `chain_name` | TEXT | **required** | Unique chain identifier |
-| `schedule` | `run_at` | cron | **required** | Cron-style schedule |
+| `schedule` | `run_at` | cron | **required** | Cron-style schedule. If omitted or empty, defaults to `* * * * *` (every minute) |
 | `live` | `live` | BOOLEAN | `false` | Whether chain is active |
 | `max_instances` | `max_instances` | INTEGER | `null` | Max parallel instances |
 | `timeout` | `timeout` | INTEGER | `0` | Chain timeout (ms) |
