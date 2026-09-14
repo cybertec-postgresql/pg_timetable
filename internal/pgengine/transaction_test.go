@@ -89,7 +89,7 @@ func TestExecuteSQLTask(t *testing.T) {
 
 	t.Run("Check autonomous SQL task", func(t *testing.T) {
 		err := pge.ExecuteSQLTask(ctx, nil, &pgengine.ChainTask{Autonomous: true}, []string{})
-		assert.ErrorContains(t, err, "pgpool.Acquire() method is not implemented")
+		assert.ErrorContains(t, err, "pgxmock: handing out a *pgxpool.Conn is not supported")
 	})
 
 	t.Run("Check remote SQL task", func(t *testing.T) {
