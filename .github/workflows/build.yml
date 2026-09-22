@@ -129,7 +129,7 @@ jobs:
         go-version: '1.27'
 
     - name: Install pgcov
-      run: go install github.com/cybertec-postgresql/pgcov/cmd/pgcov@30871eea554b76a0b2c58b53e2f2dfea3bef65fa
+      run: go install github.com/cybertec-postgresql/pgcov/cmd/pgcov@0.1
 
     # The *_test.sql files next to the schema scripts run in a temporary
     # database per file; --source keeps the bootstrap order from bootstrap.go.
