@@ -3,7 +3,7 @@
 #     --build-arg COMMIT=`git show -s --format=%H HEAD` \
 #     --build-arg VERSION=`git describe --tags --abbrev=0` \
 #     --build-arg DATE=`git show -s --format=%cI HEAD` .
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 ARG COMMIT
 ARG VERSION

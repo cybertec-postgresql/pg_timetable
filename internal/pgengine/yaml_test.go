@@ -326,16 +326,12 @@ func TestParseYamlFile(t *testing.T) {
 func TestYamlChainValidation(t *testing.T) {
 	t.Run("Valid chain", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
-			Schedule: "0 * * * *",
+			ChainName: "test-chain",
+			Schedule:  "0 * * * *",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "SELECT 1",
-						Kind:    "SQL",
-					},
+					Command: "SELECT 1",
+					Kind:    "SQL",
 				},
 			},
 		}
@@ -349,10 +345,8 @@ func TestYamlChainValidation(t *testing.T) {
 			Schedule: "0 * * * *",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "SELECT 1",
-						Kind:    "SQL",
-					},
+					Command: "SELECT 1",
+					Kind:    "SQL",
 				},
 			},
 		}
@@ -364,15 +358,11 @@ func TestYamlChainValidation(t *testing.T) {
 
 	t.Run("Missing schedule", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
+			ChainName: "test-chain",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "SELECT 1",
-						Kind:    "SQL",
-					},
+					Command: "SELECT 1",
+					Kind:    "SQL",
 				},
 			},
 		}
@@ -384,16 +374,12 @@ func TestYamlChainValidation(t *testing.T) {
 
 	t.Run("Invalid cron format", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
-			Schedule: "invalid cron",
+			ChainName: "test-chain",
+			Schedule:  "invalid cron",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "SELECT 1",
-						Kind:    "SQL",
-					},
+					Command: "SELECT 1",
+					Kind:    "SQL",
 				},
 			},
 		}
@@ -407,16 +393,12 @@ func TestYamlChainValidation(t *testing.T) {
 		specialSchedules := []string{"@reboot", "@after", "@every"}
 		for _, schedule := range specialSchedules {
 			chain := &pgengine.YamlChain{
-				Chain: pgengine.Chain{
-					ChainName: "test-chain",
-				},
-				Schedule: schedule,
+				ChainName: "test-chain",
+				Schedule:  schedule,
 				Tasks: []pgengine.YamlTask{
 					{
-						ChainTask: pgengine.ChainTask{
-							Command: "SELECT 1",
-							Kind:    "SQL",
-						},
+						Command: "SELECT 1",
+						Kind:    "SQL",
 					},
 				},
 			}
@@ -428,11 +410,9 @@ func TestYamlChainValidation(t *testing.T) {
 
 	t.Run("No tasks", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
-			Schedule: "0 * * * *",
-			Tasks:    []pgengine.YamlTask{},
+			ChainName: "test-chain",
+			Schedule:  "0 * * * *",
+			Tasks:     []pgengine.YamlTask{},
 		}
 
 		err := chain.ValidateChain()
@@ -442,16 +422,12 @@ func TestYamlChainValidation(t *testing.T) {
 
 	t.Run("Task validation error", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
-			Schedule: "0 * * * *",
+			ChainName: "test-chain",
+			Schedule:  "0 * * * *",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "", // Invalid empty command
-						Kind:    "SQL",
-					},
+					Command: "", // Invalid empty command
+					Kind:    "SQL",
 				},
 			},
 		}
@@ -466,11 +442,9 @@ func TestYamlChainValidation(t *testing.T) {
 func TestYamlTaskValidation(t *testing.T) {
 	t.Run("Valid task", func(t *testing.T) {
 		task := &pgengine.YamlTask{
-			ChainTask: pgengine.ChainTask{
-				Command: "SELECT 1",
-				Kind:    "SQL",
-				Timeout: 60,
-			},
+			Command: "SELECT 1",
+			Kind:    "SQL",
+			Timeout: 60,
 		}
 
 		err := task.ValidateTask()
@@ -479,9 +453,7 @@ func TestYamlTaskValidation(t *testing.T) {
 
 	t.Run("Missing command", func(t *testing.T) {
 		task := &pgengine.YamlTask{
-			ChainTask: pgengine.ChainTask{
-				Kind: "SQL",
-			},
+			Kind: "SQL",
 		}
 
 		err := task.ValidateTask()
@@ -493,10 +465,8 @@ func TestYamlTaskValidation(t *testing.T) {
 		validKinds := []string{"", "SQL", "PROGRAM", "BUILTIN", "sql", "program", "builtin"}
 		for _, kind := range validKinds {
 			task := &pgengine.YamlTask{
-				ChainTask: pgengine.ChainTask{
-					Command: "SELECT 1",
-					Kind:    kind,
-				},
+				Command: "SELECT 1",
+				Kind:    kind,
 			}
 
 			err := task.ValidateTask()
@@ -506,10 +476,8 @@ func TestYamlTaskValidation(t *testing.T) {
 
 	t.Run("Invalid kind", func(t *testing.T) {
 		task := &pgengine.YamlTask{
-			ChainTask: pgengine.ChainTask{
-				Command: "SELECT 1",
-				Kind:    "INVALID",
-			},
+			Command: "SELECT 1",
+			Kind:    "INVALID",
 		}
 
 		err := task.ValidateTask()
@@ -519,11 +487,9 @@ func TestYamlTaskValidation(t *testing.T) {
 
 	t.Run("Negative timeout", func(t *testing.T) {
 		task := &pgengine.YamlTask{
-			ChainTask: pgengine.ChainTask{
-				Command: "SELECT 1",
-				Kind:    "SQL",
-				Timeout: -1,
-			},
+			Command: "SELECT 1",
+			Kind:    "SQL",
+			Timeout: -1,
 		}
 
 		err := task.ValidateTask()
@@ -535,14 +501,10 @@ func TestYamlTaskValidation(t *testing.T) {
 func TestYamlChainSetDefaults(t *testing.T) {
 	t.Run("Set default schedule", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
+			ChainName: "test-chain",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "SELECT 1",
-					},
+					Command: "SELECT 1",
 				},
 			},
 		}
@@ -557,16 +519,12 @@ func TestYamlChainSetDefaults(t *testing.T) {
 
 	t.Run("Keep existing values", func(t *testing.T) {
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
-			Schedule: "0 0 * * *",
+			ChainName: "test-chain",
+			Schedule:  "0 0 * * *",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "echo hello",
-						Kind:    "PROGRAM",
-					},
+					Command: "echo hello",
+					Kind:    "PROGRAM",
 				},
 			},
 		}
@@ -579,15 +537,11 @@ func TestYamlChainSetDefaults(t *testing.T) {
 	t.Run("Keep disabled task", func(t *testing.T) {
 		disabled := false
 		chain := &pgengine.YamlChain{
-			Chain: pgengine.Chain{
-				ChainName: "test-chain",
-			},
+			ChainName: "test-chain",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask: pgengine.ChainTask{
-						Command: "SELECT 1",
-					},
-					Live: &disabled,
+					Command: "SELECT 1",
+					Live:    &disabled,
 				},
 			},
 		}
@@ -1215,10 +1169,10 @@ func TestCreateChainFromYamlErrors(t *testing.T) {
 			WillReturnError(fmt.Errorf("simulated DB error on task"))
 
 		_, err := mockpge.CreateChainFromYaml(ctx, &pgengine.YamlChain{
-			Chain:    pgengine.Chain{ChainName: "test-chain"},
-			Schedule: "0 0 * * *",
+			ChainName: "test-chain",
+			Schedule:  "0 0 * * *",
 			Tasks: []pgengine.YamlTask{
-				{ChainTask: pgengine.ChainTask{Command: "SELECT 1", Kind: "SQL"}},
+				{Command: "SELECT 1", Kind: "SQL"},
 			},
 		})
 		assert.Error(t, err)
@@ -1234,11 +1188,11 @@ func TestCreateChainFromYamlErrors(t *testing.T) {
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 
 		_, err := mockpge.CreateChainFromYaml(ctx, &pgengine.YamlChain{
-			Chain:    pgengine.Chain{ChainName: "test-chain"},
-			Schedule: "0 0 * * *",
+			ChainName: "test-chain",
+			Schedule:  "0 0 * * *",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask:  pgengine.ChainTask{Command: "SELECT 1", Kind: "SQL"},
+					Command: "SELECT 1", Kind: "SQL",
 					Parameters: []any{func() {}}, // functions cannot be marshalled to JSON
 				},
 			},
@@ -1259,11 +1213,11 @@ func TestCreateChainFromYamlErrors(t *testing.T) {
 			WillReturnError(fmt.Errorf("simulated DB error on parameter"))
 
 		_, err := mockpge.CreateChainFromYaml(ctx, &pgengine.YamlChain{
-			Chain:    pgengine.Chain{ChainName: "test-chain"},
-			Schedule: "0 0 * * *",
+			ChainName: "test-chain",
+			Schedule:  "0 0 * * *",
 			Tasks: []pgengine.YamlTask{
 				{
-					ChainTask:  pgengine.ChainTask{Command: "SELECT 1", Kind: "SQL"},
+					Command: "SELECT 1", Kind: "SQL",
 					Parameters: []any{"foo"},
 				},
 			},
