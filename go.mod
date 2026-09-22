@@ -1,6 +1,6 @@
 module github.com/cybertec-postgresql/pg_timetable
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
