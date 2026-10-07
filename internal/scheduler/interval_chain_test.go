@@ -8,7 +8,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/log"
 	"github.com/cybertec-postgresql/pg_timetable/internal/otel"
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
-	"github.com/pashagolub/pgxmock/v5"
+	"github.com/pashagolub/pgxmock/v6"
 	"github.com/stretchr/testify/assert"
 )
 

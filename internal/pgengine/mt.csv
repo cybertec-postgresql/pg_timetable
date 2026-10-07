@@ -1,0 +1,87 @@
+city,lat,lng,country,iso2,admin_name,capital,population,population_proper
+Valletta,35.8978,14.5125,Malta,MT,Valletta,primary,480134,6444
+Saint Paul’s Bay,35.9483,14.4017,Malta,MT,San Pawl il-Baħar,admin,40204,40204
+Mosta,35.9000,14.4333,Malta,MT,Mosta,admin,25496,25496
+Birkirkara,35.9000,14.4667,Malta,MT,Birkirkara,admin,24356,24356
+Sliema,35.9125,14.5019,Malta,MT,Sliema,admin,22591,22224
+Qormi,35.8794,14.4722,Malta,MT,Qormi,admin,20041,20041
+Żabbar,35.8772,14.5381,Malta,MT,Żabbar,admin,17962,17962
+Imsida,35.8978,14.4894,Malta,MT,Imsida,admin,16609,16609
+Marsaskala,35.8625,14.5675,Malta,MT,Marsaskala,admin,15579,15579
+Swieqi,35.9208,14.4800,Malta,MT,Pembroke,admin,15398,15398
+Żebbuġ,35.8733,14.4417,Malta,MT,Żebbuġ,admin,15017,15017
+Naxxar,35.9136,14.4436,Malta,MT,Naxxar,admin,14890,14890
+San Ġwann,35.9056,14.4761,Malta,MT,San Ġwann,admin,14720,15882
+Mellieħa,35.9500,14.3667,Malta,MT,Mellieħa,admin,14288,14288
+Fgura,35.8725,14.5228,Malta,MT,Fgura,admin,13986,13986
+San Ġiljan,35.9184,14.4898,Malta,MT,Swieqi,admin,13792,14709
+Żejtun,35.8556,14.5333,Malta,MT,Żejtun,admin,12858,12858
+Birżebbuġa,35.8267,14.5278,Malta,MT,Birżebbuġa,admin,12601,12601
+Rabat,35.8817,14.3989,Malta,MT,Rabat,admin,12352,12352
+Attard,35.9000,14.4500,Malta,MT,Attard,admin,12268,12268
+Ħamrun,35.8847,14.4844,Malta,MT,Ħamrun,admin,11936,11936
+Żurrieq,35.8292,14.4744,Malta,MT,Żurrieq,admin,10823,10823
+Tarxien,35.8650,14.5111,Malta,MT,Tarxien,admin,10048,10048
+Paola,35.8731,14.4989,Malta,MT,Marsa,admin,9815,9815
+Santa Venera,35.8903,14.4778,Malta,MT,Santa Venera,admin,9758,9758
+Siġġiewi,35.8542,14.4383,Malta,MT,Siġġiewi,admin,9756,9756
+Marsa,35.8833,14.4947,Malta,MT,Marsa,admin,8036,8036
+Gżira,35.9050,14.4939,Malta,MT,San Ġiljan,admin,8029,8029
+Luqa,35.8597,14.4892,Malta,MT,Luqa,admin,7128,7128
+Pietà,35.8833,14.4833,Malta,MT,Ta’ Xbiex,admin,7087,7087
+Victoria,36.0444,14.2397,Malta,MT,Rabat (Ghawdex),admin,6901,6901
+Għaxaq,35.8483,14.5172,Malta,MT,Għaxaq,admin,5865,5865
+Cospicua,35.8822,14.5222,Malta,MT,Birgu,admin,5657,5657
+Xagħra,36.0503,14.2675,Malta,MT,Xagħra,admin,5359,5359
+Balzan,35.8975,14.4533,Malta,MT,Iklin,admin,5070,5070
+Nadur,36.0381,14.2950,Malta,MT,Nadur,admin,4630,4630
+Marsaxlokk,35.8417,14.5447,Malta,MT,Marsaxlokk,admin,4245,4245
+Għargħur,35.9241,14.4534,Malta,MT,Għargħur,admin,4001,4001
+Dingli,35.8603,14.3814,Malta,MT,Dingli,admin,3941,3941
+Lija,35.9014,14.4472,Malta,MT,Lija,admin,3793,3793
+Għajnsielem,36.0269,14.2903,Malta,MT,Għajnsielem,admin,3764,3764
+Iklin,35.9042,14.4544,Malta,MT,Iklin,admin,3741,3741
+Pembroke,35.9264,14.4808,Malta,MT,Pembroke,admin,3735,3735
+Xgħajra,35.8864,14.5472,Malta,MT,Xgħajra,admin,3712,3712
+Xewkija,36.0331,14.2583,Malta,MT,Xewkija,admin,3712,3712
+Imqabba,35.8442,14.4669,Malta,MT,Imqabba,admin,3685,3685
+Imġarr,35.9197,14.3664,Malta,MT,Imġarr,admin,3629,3629
+Gudja,35.8483,14.5025,Malta,MT,Gudja,admin,3483,3483
+Qrendi,35.8342,14.4589,Malta,MT,Qrendi,admin,3321,3321
+Kalkara,35.8892,14.5294,Malta,MT,Kalkara,admin,3014,3014
+Safi,35.8333,14.4850,Malta,MT,Safi,admin,2965,2965
+Żebbuġ,36.0722,14.2358,Malta,MT,Żebbuġ (Ghawdex),admin,2956,2956
+Senglea,35.8878,14.5169,Malta,MT,Isla,admin,2784,2784
+Kirkop,35.8419,14.4850,Malta,MT,Kirkop,admin,2656,2656
+Vittoriosa,35.8881,14.5225,Malta,MT,Birgu,admin,2629,2629
+Imtarfa,35.8908,14.3969,Malta,MT,Rabat,admin,2572,2572
+Ta’ Xbiex,35.8992,14.4981,Malta,MT,Gżira,admin,2508,2508
+Qala,36.0353,14.3103,Malta,MT,Qala,admin,2284,2284
+Sannat,36.0244,14.2458,Malta,MT,Sannat,admin,2260,2260
+Floriana,35.8933,14.5058,Malta,MT,Valletta,admin,2205,2205
+Kerċem,36.0406,14.2297,Malta,MT,Kerċem,admin,1938,1938
+Għarb,36.0611,14.2092,Malta,MT,Għarb,admin,1590,1590
+Munxar,36.0303,14.2353,Malta,MT,Munxar,admin,1454,1454
+Fontana,36.0375,14.2361,Malta,MT,Fontana,admin,922,922
+San Lawrenz,36.0550,14.2042,Malta,MT,San Lawrenz,admin,796,796
+Għasri,36.0578,14.2264,Malta,MT,Għasri,admin,424,424
+Il-Bidni,35.9269,14.3983,Malta,MT,Marsaskala,,308,308
+Imdina,35.8858,14.4031,Malta,MT,Imtarfa,admin,250,250
+Il-Qattara,35.9025,14.4089,Malta,MT,Mosta,,,
+Santa Luċija,36.0431,14.2172,Malta,MT,Kerċem,admin,,
+Tal-Borġ,35.8711,14.5147,Malta,MT,Fgura,,,
+Il- Gżira,35.9000,14.5000,Malta,MT,Gżira,,,
+Ta’ San Ġwakkin,35.8867,14.4658,Malta,MT,Birkirkara,,,
+Msieraħ,35.9000,14.4833,Malta,MT,Imsida,,,
+Tal-Mejda,35.9161,14.4689,Malta,MT,Swieqi,,,
+Il-Ħammieri,35.8822,14.4608,Malta,MT,Qormi,,,
+Tal-Ħandaq,35.8708,14.4681,Malta,MT,Qormi,,,
+Beżbeżija,35.9122,14.4086,Malta,MT,San Pawl il-Baħar,,,
+Wied l-Arkata,35.9247,14.4144,Malta,MT,San Pawl il-Baħar,,,
+Ħas-Sajd,35.8708,14.5433,Malta,MT,Żabbar,,,
+Ta’ Ċantar,35.8697,14.5367,Malta,MT,Żabbar,,,
+Il-Madliena,35.9333,14.4667,Malta,MT,Pembroke,,,
+Il-Ħofra,35.8819,14.5447,Malta,MT,Xgħajra,,,
+Ta’ l-Ibraġ,35.9156,14.4644,Malta,MT,Swieqi,,,
+San Leonardo,35.8783,14.5558,Malta,MT,Żabbar,,,
+Żonqor,35.8708,14.5650,Malta,MT,Marsaskala,,,
