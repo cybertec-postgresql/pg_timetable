@@ -33,17 +33,16 @@ func TestExecuteChainCancelledContextCleansUp(t *testing.T) {
 		VALUES ($1, 1, 'SQL', 'SELECT pg_sleep(0.5)')`, chainID)
 	require.NoError(t, err)
 
-	// Simulate what chainWorker does before calling executeChain.
-	require.True(t, pge.InsertChainRunStatus(ctx, chainID, 16), "chain run status should be inserted")
-
-	// Cancel the context while the task is sleeping, mimicking notify_chain_stop().
+	// Cancel the worker context while the task is sleeping, mimicking notify_chain_stop().
 	execCtx, cancel := context.WithCancel(ctx)
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		cancel()
 	}()
 
-	sch.executeChain(execCtx, Chain{ChainID: chainID, MaxInstances: 16})
+	chains := make(chan Chain, 1)
+	chains <- Chain{ChainID: chainID, MaxInstances: 16}
+	sch.chainWorker(execCtx, chains)
 
 	// The stale active_chain row must be gone: cleanup must succeed despite the
 	// cancelled context.
