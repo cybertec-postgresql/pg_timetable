@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/config"
 	"github.com/jackc/pgx/v5/tracelog"
@@ -117,6 +118,15 @@ func noQueryArgs(ctx context.Context) bool {
 // combination with logger.WithField(s) for great effect
 func WithLogger(ctx context.Context, logger LoggerIface) context.Context {
 	return context.WithValue(ctx, loggerKey{}, logger)
+}
+
+// DetachedTimeout bounds cleanup work that must run even when the caller's context is cancelled.
+const DetachedTimeout = 30 * time.Second
+
+// DetachedContext returns a context that survives cancellation of ctx but keeps its logger,
+// bounded by DetachedTimeout so a dead database cannot block the caller forever.
+func DetachedContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(ctx), DetachedTimeout)
 }
 
 // FallbackLogger is an alias for the standard logger

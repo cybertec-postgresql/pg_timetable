@@ -91,6 +91,7 @@ func (sch *Scheduler) intervalChainWorker(ctx context.Context, ichains <-chan In
 				}
 				sch.Lock(ichain.ExclusiveExecution)
 				sch.executeChain(chainContext, ichain.Chain)
+				sch.removeChainRunStatus(chainContext, ichain.ChainID)
 				sch.Unlock(ichain.ExclusiveExecution)
 				if ichain.RepeatAfter {
 					go sch.reschedule(chainContext, ichain)

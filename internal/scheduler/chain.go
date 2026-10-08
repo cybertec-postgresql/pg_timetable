@@ -159,6 +159,7 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 				chainContext, cancel := context.WithCancel(chainContext)
 				sch.addActiveChain(chain.ChainID, cancel)
 				sch.executeChain(chainContext, chain)
+				sch.removeChainRunStatus(chainContext, chain.ChainID)
 				sch.deleteActiveChain(chain.ChainID)
 				cancel()
 				sch.Unlock(chain.ExclusiveExecution)
@@ -178,8 +179,16 @@ func getTimeoutContext(ctx context.Context, globalTimeout int, customTimeout int
 	return ctx, nil
 }
 
+// removeChainRunStatus frees the chain's active_chain slot. Runs detached so it
+// survives a cancelled scheduler context and cannot hang on a dead database.
+func (sch *Scheduler) removeChainRunStatus(ctx context.Context, chainID int) {
+	bctx, cancel := log.DetachedContext(ctx)
+	defer cancel()
+	sch.pgengine.RemoveChainRunStatus(bctx, chainID)
+}
+
 func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
-	if ctx.Err() != nil || chain.OnError == "" {
+	if chain.OnError == "" {
 		return
 	}
 	l := sch.l.WithField("chain", chain)
@@ -202,8 +211,6 @@ func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 /* execute a chain of tasks */
 func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
-	var bctx context.Context
-	var cancel context.CancelFunc
 	var vxid int64
 
 	// OTel tracing: create root span for this chain execution
@@ -224,21 +231,31 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 
 	chainL := sch.l.WithField("chain", chain)
+	// cleanup (rollback, commit, on_error) must run even if ctx is cancelled, e.g. by notify_chain_stop()
+	bctx, bcancel := log.DetachedContext(log.WithLogger(ctx, chainL))
+	defer bcancel()
+
+	chainFailed := func(msg string) {
+		chainL.Error(msg)
+		chainSpan.SetStatus(codes.Error, msg)
+		sch.provider.RecordChainFailed(bctx, sch.Config().ClientName)
+		sch.executeOnErrorHandler(bctx, chain)
+	}
+
 	tx, vxid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
-		bctx = log.WithLogger(context.WithoutCancel(ctx), chainL)
-		sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
+		chainFailed("Chain failed to start")
 		return
 	}
 	chainL = chainL.WithField("vxid", vxid)
+	bctx = log.WithLogger(bctx, chainL)
 
 	err = sch.pgengine.GetChainElements(chainCtx, &ChainTasks, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Failed to retrieve chain elements")
-		bctx = log.WithLogger(context.WithoutCancel(ctx), chainL)
 		sch.pgengine.RollbackTransaction(bctx, tx)
-		sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
+		chainFailed("Chain failed to load tasks")
 		return
 	}
 
@@ -256,29 +273,19 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 			l.Info("Task executed successfully")
 		}
 
-		// we detach the context from cancellation here because the current one
-		// (chainCtx and its parent ctx) might be cancelled, e.g. by notify_chain_stop().
-		// Cleanup operations below must still run to keep timetable.active_chain consistent.
-		bctx = log.WithLogger(context.WithoutCancel(ctx), l)
 		if err != nil {
 			if !task.IgnoreError {
-				chainL.Error("Chain failed")
-				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
-				sch.pgengine.RollbackTransaction(bctx, tx)
-				chainSpan.SetStatus(codes.Error, "chain failed")
-				sch.provider.RecordChainFailed(bctx, sch.Config().ClientName)
-				sch.executeOnErrorHandler(bctx, chain)
+				sch.pgengine.RollbackTransaction(log.WithLogger(bctx, l), tx)
+				chainFailed("Chain failed")
 				return
 			}
 			l.Info("Ignoring task failure")
 		}
 	}
-	bctx = log.WithLogger(context.WithoutCancel(chainCtx), chainL)
 	sch.pgengine.CommitTransaction(bctx, tx)
 	sch.provider.RecordChainDuration(ctx, time.Since(chainStart).Seconds(), sch.Config().ClientName)
 	chainL.Info("Chain executed successfully")
 	sch.provider.RecordChainCompleted(ctx, sch.Config().ClientName)
-	sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 	if chain.SelfDestruct {
 		sch.pgengine.DeleteChain(bctx, chain.ChainID)
 	}
