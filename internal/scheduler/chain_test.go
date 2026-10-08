@@ -103,6 +103,63 @@ func TestExecuteChain(t *testing.T) {
 	sch.executeChain(t.Context(), Chain{Timeout: 1})
 }
 
+func TestExecuteChainRemovesRunStatusOnEarlyReturn(t *testing.T) {
+	const clientName = "scheduler_unit_test"
+	c := Chain{ChainID: 42, MaxInstances: 16}
+
+	tests := []struct {
+		name   string
+		ctx    func() context.Context
+		expect func(mock pgxmock.PgxPoolIface)
+	}{
+		{
+			name: "cannot start transaction",
+			ctx:  context.Background,
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectBegin().WillReturnError(errors.New("query_wait_timeout"))
+			},
+		},
+		{
+			name: "cannot start transaction with cancelled context",
+			ctx: func() context.Context {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx
+			},
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectBegin()
+			},
+		},
+		{
+			name: "failed to retrieve chain elements",
+			ctx:  context.Background,
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectBegin()
+				mock.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"vxid"}).AddRow(int64(42)))
+				mock.ExpectQuery("FROM timetable\\.task").WithArgs(c.ChainID).WillReturnError(errors.New("query_wait_timeout"))
+				mock.ExpectRollback()
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool()
+			assert.NoError(t, err)
+			pge := pgengine.NewDB(mock, "-c", clientName)
+			sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
+
+			tc.expect(mock)
+			mock.ExpectExec("DELETE FROM timetable\\.active_chain").
+				WithArgs(c.ChainID, clientName).
+				WillReturnResult(pgxmock.NewResult("DELETE", 1))
+
+			sch.executeChain(tc.ctx(), c)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
 func TestExecuteChainElement(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	assert.NoError(t, err)

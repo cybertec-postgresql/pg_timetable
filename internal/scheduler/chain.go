@@ -227,6 +227,8 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	tx, vxid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
+		bctx = log.WithLogger(context.WithoutCancel(ctx), chainL)
+		sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 		return
 	}
 	chainL = chainL.WithField("vxid", vxid)
@@ -234,7 +236,9 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	err = sch.pgengine.GetChainElements(chainCtx, &ChainTasks, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Failed to retrieve chain elements")
-		sch.pgengine.RollbackTransaction(chainCtx, tx)
+		bctx = log.WithLogger(context.WithoutCancel(ctx), chainL)
+		sch.pgengine.RollbackTransaction(bctx, tx)
+		sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 		return
 	}
 
