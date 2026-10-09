@@ -174,6 +174,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00820.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00850 Fix error hint in timetable.cron_split_to_arrays",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00850.sql")
+			},
+		},
 
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",
