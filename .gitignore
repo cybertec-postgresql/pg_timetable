@@ -13,3 +13,6 @@ dist
 
 # delve debugger file
 debug
+
+# pgcov coverage data
+.pgcov/
