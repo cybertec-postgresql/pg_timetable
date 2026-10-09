@@ -13,7 +13,7 @@ import (
 	"github.com/cybertec-postgresql/pg_timetable/internal/tasks"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	gomail "github.com/ory/mail/v3"
-	"github.com/pashagolub/pgxmock/v5"
+	"github.com/pashagolub/pgxmock/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
