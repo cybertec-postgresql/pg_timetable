@@ -13,7 +13,7 @@
 
 
 
-<script>var goVersion = "go1.27.1";</script>
+<script>var goVersion = "go1.27.2";</script>
 <script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
 
 </head>
@@ -60,64 +60,89 @@
 <span id="L3" class="ln">     3  </span>import (
 <span id="L4" class="ln">     4  </span>	&#34;context&#34;
 <span id="L5" class="ln">     5  </span>	_ &#34;embed&#34;
-<span id="L6" class="ln">     6  </span>	&#34;testing&#34;
-<span id="L7" class="ln">     7  </span>
-<span id="L8" class="ln">     8  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
-<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
-<span id="L10" class="ln">    10  </span>	migrator &#34;github.com/cybertec-postgresql/pgx-migrator&#34;
-<span id="L11" class="ln">    11  </span>	&#34;github.com/stretchr/testify/assert&#34;
-<span id="L12" class="ln">    12  </span>)
-<span id="L13" class="ln">    13  </span>
-<span id="L14" class="ln">    14  </span><span class="comment">//go:embed sql/migrations/00000.sql</span>
-<span id="L15" class="ln">    15  </span>var initialsql string
+<span id="L6" class="ln">     6  </span>	&#34;errors&#34;
+<span id="L7" class="ln">     7  </span>	&#34;testing&#34;
+<span id="L8" class="ln">     8  </span>
+<span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
+<span id="L11" class="ln">    11  </span>	migrator &#34;github.com/cybertec-postgresql/pgx-migrator&#34;
+<span id="L12" class="ln">    12  </span>	&#34;github.com/jackc/pgx/v5/pgconn&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L14" class="ln">    14  </span>	&#34;github.com/stretchr/testify/require&#34;
+<span id="L15" class="ln">    15  </span>)
 <span id="L16" class="ln">    16  </span>
-<span id="L17" class="ln">    17  </span>func TestMigrations(t *testing.T) {
-<span id="L18" class="ln">    18  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L19" class="ln">    19  </span>	defer cleanup()
-<span id="L20" class="ln">    20  </span>
-<span id="L21" class="ln">    21  </span>	ctx := context.Background()
-<span id="L22" class="ln">    22  </span>	pge := container.Engine
-<span id="L23" class="ln">    23  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
-<span id="L24" class="ln">    24  </span>	assert.NoError(t, err)
-<span id="L25" class="ln">    25  </span>	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
-<span id="L26" class="ln">    26  </span>	assert.NoError(t, err)
-<span id="L27" class="ln">    27  </span>	ok, err := pge.CheckNeedMigrateDb(ctx)
-<span id="L28" class="ln">    28  </span>	assert.NoError(t, err)
-<span id="L29" class="ln">    29  </span>	assert.True(t, ok, &#34;Should need migrations&#34;)
-<span id="L30" class="ln">    30  </span>	assert.NoError(t, pge.MigrateDb(ctx), &#34;Migrations should be applied&#34;)
-<span id="L31" class="ln">    31  </span>
-<span id="L32" class="ln">    32  </span>	<span class="comment">// 00820 applies over every prior migration and the</span>
-<span id="L33" class="ln">    33  </span>	<span class="comment">// timetable.secret store is created.</span>
-<span id="L34" class="ln">    34  </span>	var hasSecret bool
-<span id="L35" class="ln">    35  </span>	assert.NoError(t, pge.ConfigDb.QueryRow(ctx,
-<span id="L36" class="ln">    36  </span>		`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c
-<span id="L37" class="ln">    37  </span>		                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-<span id="L38" class="ln">    38  </span>		                WHERE n.nspname=&#39;timetable&#39; AND c.relname=&#39;secret&#39;)`).Scan(&amp;hasSecret))
-<span id="L39" class="ln">    39  </span>	assert.True(t, hasSecret, &#34;00820 must create timetable.secret&#34;)
-<span id="L40" class="ln">    40  </span>}
-<span id="L41" class="ln">    41  </span>func TestExecuteMigrationScript(t *testing.T) {
-<span id="L42" class="ln">    42  </span>	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, &#34;foo&#34;), &#34;File does not exist&#34;)
-<span id="L43" class="ln">    43  </span>}
-<span id="L44" class="ln">    44  </span>
-<span id="L45" class="ln">    45  </span>func TestInitMigrator(t *testing.T) {
-<span id="L46" class="ln">    46  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L47" class="ln">    47  </span>	defer cleanup()
-<span id="L48" class="ln">    48  </span>	pgengine.Migrations = func() migrator.Option {
-<span id="L49" class="ln">    49  </span>		return migrator.Migrations()
-<span id="L50" class="ln">    50  </span>	}
-<span id="L51" class="ln">    51  </span>
-<span id="L52" class="ln">    52  </span>	ctx := context.Background()
-<span id="L53" class="ln">    53  </span>	pge := container.Engine
-<span id="L54" class="ln">    54  </span>	err := pge.MigrateDb(ctx)
-<span id="L55" class="ln">    55  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
-<span id="L56" class="ln">    56  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
-<span id="L57" class="ln">    57  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
-<span id="L58" class="ln">    58  </span>}
-<span id="L59" class="ln">    59  </span>
+<span id="L17" class="ln">    17  </span><span class="comment">//go:embed sql/migrations/00000.sql</span>
+<span id="L18" class="ln">    18  </span>var initialsql string
+<span id="L19" class="ln">    19  </span>
+<span id="L20" class="ln">    20  </span>func TestMigrations(t *testing.T) {
+<span id="L21" class="ln">    21  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L22" class="ln">    22  </span>	defer cleanup()
+<span id="L23" class="ln">    23  </span>
+<span id="L24" class="ln">    24  </span>	ctx := context.Background()
+<span id="L25" class="ln">    25  </span>	pge := container.Engine
+<span id="L26" class="ln">    26  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
+<span id="L27" class="ln">    27  </span>	assert.NoError(t, err)
+<span id="L28" class="ln">    28  </span>	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
+<span id="L29" class="ln">    29  </span>	assert.NoError(t, err)
+<span id="L30" class="ln">    30  </span>	ok, err := pge.CheckNeedMigrateDb(ctx)
+<span id="L31" class="ln">    31  </span>	assert.NoError(t, err)
+<span id="L32" class="ln">    32  </span>	assert.True(t, ok, &#34;Should need migrations&#34;)
+<span id="L33" class="ln">    33  </span>	assert.NoError(t, pge.MigrateDb(ctx), &#34;Migrations should be applied&#34;)
+<span id="L34" class="ln">    34  </span>
+<span id="L35" class="ln">    35  </span>	<span class="comment">// 00820 applies over every prior migration and the</span>
+<span id="L36" class="ln">    36  </span>	<span class="comment">// timetable.secret store is created.</span>
+<span id="L37" class="ln">    37  </span>	var hasSecret bool
+<span id="L38" class="ln">    38  </span>	assert.NoError(t, pge.ConfigDb.QueryRow(ctx,
+<span id="L39" class="ln">    39  </span>		`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c
+<span id="L40" class="ln">    40  </span>		                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+<span id="L41" class="ln">    41  </span>		                WHERE n.nspname=&#39;timetable&#39; AND c.relname=&#39;secret&#39;)`).Scan(&amp;hasSecret))
+<span id="L42" class="ln">    42  </span>	assert.True(t, hasSecret, &#34;00820 must create timetable.secret&#34;)
+<span id="L43" class="ln">    43  </span>
+<span id="L44" class="ln">    44  </span>	<span class="comment">// 00850 replaces timetable.cron_split_to_arrays on existing installs.</span>
+<span id="L45" class="ln">    45  </span>	assertCronSplitRejectsValue(t, pge)
+<span id="L46" class="ln">    46  </span>}
+<span id="L47" class="ln">    47  </span>
+<span id="L48" class="ln">    48  </span><span class="comment">// TestCronSplitToArraysUnknownValue checks the function created by cron.sql on a fresh install.</span>
+<span id="L49" class="ln">    49  </span>func TestCronSplitToArraysUnknownValue(t *testing.T) {
+<span id="L50" class="ln">    50  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L51" class="ln">    51  </span>	defer cleanup()
+<span id="L52" class="ln">    52  </span>	assertCronSplitRejectsValue(t, container.Engine)
+<span id="L53" class="ln">    53  </span>}
+<span id="L54" class="ln">    54  </span>
+<span id="L55" class="ln">    55  </span><span class="comment">// assertCronSplitRejectsValue expects the &#34;not recognized&#34; exception, not the</span>
+<span id="L56" class="ln">    56  </span><span class="comment">// 42725 error the old `text + text` hint raised.</span>
+<span id="L57" class="ln">    57  </span>func assertCronSplitRejectsValue(t *testing.T, pge *pgengine.PgEngine) {
+<span id="L58" class="ln">    58  </span>	t.Helper()
+<span id="L59" class="ln">    59  </span>	_, err := pge.ConfigDb.Exec(context.Background(), &#34;SELECT timetable.cron_split_to_arrays(&#39;foo * * * *&#39;)&#34;)
+<span id="L60" class="ln">    60  </span>	var pgErr *pgconn.PgError
+<span id="L61" class="ln">    61  </span>	require.True(t, errors.As(err, &amp;pgErr), &#34;expected a PostgreSQL error, got %v&#34;, err)
+<span id="L62" class="ln">    62  </span>	assert.Equal(t, &#34;P0001&#34;, pgErr.Code)
+<span id="L63" class="ln">    63  </span>	assert.Equal(t, `Value (&#34;foo&#34;) not recognized`, pgErr.Message)
+<span id="L64" class="ln">    64  </span>	assert.Contains(t, pgErr.Hint, &#34;fields separated by space or tab. Values allowed&#34;)
+<span id="L65" class="ln">    65  </span>}
+<span id="L66" class="ln">    66  </span>func TestExecuteMigrationScript(t *testing.T) {
+<span id="L67" class="ln">    67  </span>	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, &#34;foo&#34;), &#34;File does not exist&#34;)
+<span id="L68" class="ln">    68  </span>}
+<span id="L69" class="ln">    69  </span>
+<span id="L70" class="ln">    70  </span>func TestInitMigrator(t *testing.T) {
+<span id="L71" class="ln">    71  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L72" class="ln">    72  </span>	defer cleanup()
+<span id="L73" class="ln">    73  </span>	pgengine.Migrations = func() migrator.Option {
+<span id="L74" class="ln">    74  </span>		return migrator.Migrations()
+<span id="L75" class="ln">    75  </span>	}
+<span id="L76" class="ln">    76  </span>
+<span id="L77" class="ln">    77  </span>	ctx := context.Background()
+<span id="L78" class="ln">    78  </span>	pge := container.Engine
+<span id="L79" class="ln">    79  </span>	err := pge.MigrateDb(ctx)
+<span id="L80" class="ln">    80  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
+<span id="L81" class="ln">    81  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
+<span id="L82" class="ln">    82  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
+<span id="L83" class="ln">    83  </span>}
+<span id="L84" class="ln">    84  </span>
 </pre><p></p>
 
 <div id="footer">
-Build version go1.27.1.<br/>
+Build version go1.27.2.<br/>
 </div>
 
 </div><!-- .container -->
