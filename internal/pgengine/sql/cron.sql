@@ -48,9 +48,9 @@ BEGIN
                 a_res := array_cat(a_res, a_range);
             ELSE
                 RAISE EXCEPTION 'Value ("%") not recognized', a_element[i_index]
-                    USING HINT = 'fields separated by space or tab.'+
-                       'Values allowed: numbers (value list with ","), '+
-                    'any value with "*", range of value with "-" and step values with "/"!';
+                    USING HINT = 'fields separated by space or tab. ' ||
+                        'Values allowed: numbers (value list with ","), ' ||
+                        'any value with "*", range of value with "-" and step values with "/"!';
             END IF;
         END LOOP;
         SELECT
