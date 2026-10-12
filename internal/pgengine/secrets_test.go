@@ -123,7 +123,7 @@ func assertNoExtensionDMLInDDL(t *testing.T) {
 		if d.IsDir() {
 			return nil
 		}
-		if !strings.HasSuffix(path, ".sql") {
+		if !strings.HasSuffix(path, ".sql") || strings.HasSuffix(path, "_test.sql") { // test scripts are not shipped
 			return nil
 		}
 		b, rerr := os.ReadFile(path)
