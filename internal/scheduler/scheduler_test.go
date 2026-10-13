@@ -53,6 +53,41 @@ func TestExecuteChainCancelledContextCleansUp(t *testing.T) {
 	assert.Zero(t, count, "active_chain entry must be removed even when the execution context was cancelled")
 }
 
+func TestExecuteChainCommitsAfterDetachedTimeout(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+
+	// A chain that runs longer than DetachedTimeout must still commit:
+	// the timeout bounds cleanup, not the chain.
+	defer func(d time.Duration) { log.DetachedTimeout = d }(log.DetachedTimeout)
+	log.DetachedTimeout = 200 * time.Millisecond
+
+	pge := container.Engine
+	ctx := context.Background()
+	sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
+
+	_, err := pge.ConfigDb.Exec(ctx, "CREATE TABLE detached_timeout_test (id int)")
+	require.NoError(t, err)
+
+	var chainID int
+	err = pge.ConfigDb.QueryRow(ctx, `
+		INSERT INTO timetable.chain(chain_name, max_instances)
+		VALUES ('detached_timeout_test', 16) RETURNING chain_id`).Scan(&chainID)
+	require.NoError(t, err)
+
+	_, err = pge.ConfigDb.Exec(ctx, `
+		INSERT INTO timetable.task(chain_id, task_order, kind, command, autonomous)
+		VALUES ($1, 1, 'SQL', 'INSERT INTO detached_timeout_test SELECT 1 FROM pg_sleep(0.5)', false)`, chainID)
+	require.NoError(t, err)
+
+	sch.executeChain(ctx, Chain{ChainID: chainID, MaxInstances: 16})
+
+	var count int
+	err = pge.ConfigDb.QueryRow(ctx, "SELECT count(*) FROM detached_timeout_test").Scan(&count)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count, "chain transaction must be committed")
+}
+
 func TestRun(t *testing.T) {
 	container, cleanup := testutils.SetupPostgresContainer(t)
 	defer cleanup()

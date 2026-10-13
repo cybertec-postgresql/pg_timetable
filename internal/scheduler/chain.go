@@ -231,11 +231,16 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 
 	chainL := sch.l.WithField("chain", chain)
-	// cleanup (rollback, commit, on_error) must run even if ctx is cancelled, e.g. by notify_chain_stop()
-	bctx, bcancel := log.DetachedContext(log.WithLogger(ctx, chainL))
-	defer bcancel()
+	cleanupContext := func(l log.LoggerIface) (context.Context, context.CancelFunc) {
+		return log.DetachedContext(log.WithLogger(ctx, l))
+	}
 
-	chainFailed := func(msg string) {
+	chainFailed := func(l log.LoggerIface, tx pgx.Tx, msg string) {
+		bctx, cancel := cleanupContext(l)
+		defer cancel()
+		if tx != nil {
+			sch.pgengine.RollbackTransaction(bctx, tx)
+		}
 		chainL.Error(msg)
 		chainSpan.SetStatus(codes.Error, msg)
 		sch.provider.RecordChainFailed(bctx, sch.Config().ClientName)
@@ -245,17 +250,15 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	tx, vxid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
 		chainL.WithError(err).Error("Cannot start transaction")
-		chainFailed("Chain failed to start")
+		chainFailed(chainL, nil, "Chain failed to start")
 		return
 	}
 	chainL = chainL.WithField("vxid", vxid)
-	bctx = log.WithLogger(bctx, chainL)
 
 	err = sch.pgengine.GetChainElements(chainCtx, &ChainTasks, chain.ChainID)
 	if err != nil {
 		chainL.WithError(err).Error("Failed to retrieve chain elements")
-		sch.pgengine.RollbackTransaction(bctx, tx)
-		chainFailed("Chain failed to load tasks")
+		chainFailed(chainL, tx, "Chain failed to load tasks")
 		return
 	}
 
@@ -275,13 +278,14 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 
 		if err != nil {
 			if !task.IgnoreError {
-				sch.pgengine.RollbackTransaction(log.WithLogger(bctx, l), tx)
-				chainFailed("Chain failed")
+				chainFailed(l, tx, "Chain failed")
 				return
 			}
 			l.Info("Ignoring task failure")
 		}
 	}
+	bctx, bcancel := cleanupContext(chainL)
+	defer bcancel()
 	sch.pgengine.CommitTransaction(bctx, tx)
 	sch.provider.RecordChainDuration(ctx, time.Since(chainStart).Seconds(), sch.Config().ClientName)
 	chainL.Info("Chain executed successfully")

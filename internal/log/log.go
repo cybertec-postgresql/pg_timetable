@@ -121,7 +121,7 @@ func WithLogger(ctx context.Context, logger LoggerIface) context.Context {
 }
 
 // DetachedTimeout bounds cleanup work that must run even when the caller's context is cancelled.
-const DetachedTimeout = 30 * time.Second
+var DetachedTimeout = 30 * time.Second
 
 // DetachedContext returns a context that survives cancellation of ctx but keeps its logger,
 // bounded by DetachedTimeout so a dead database cannot block the caller forever.
