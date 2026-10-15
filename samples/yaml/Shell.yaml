@@ -11,14 +11,14 @@ chains:
         kind: "PROGRAM"
         command: "psql"
         parameters:
-          - "-h"
-          - "localhost"  # Will be replaced with actual host at runtime
-          - "-p" 
-          - "5432"       # Will be replaced with actual port at runtime
-          - "-d"
-          - "postgres"   # Will be replaced with actual database at runtime
-          - "-U"
-          - "postgres"   # Will be replaced with actual user at runtime
-          - "-w"
-          - "-c"
-          - "SELECT now();"
+          - - "-h"
+            - "localhost"  # Replace with the target host
+            - "-p"
+            - "5432"       # Replace with the target port
+            - "-d"
+            - "postgres"   # Replace with the target database
+            - "-U"
+            - "postgres"   # Replace with the target user
+            - "-w"
+            - "-c"
+            - "SELECT now();"

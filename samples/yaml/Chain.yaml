@@ -24,17 +24,17 @@ chains:
       - name: "Log chain start"
         kind: "SQL" 
         command: "INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)"
-        parameters: ["Chain started"]
+        parameters: [["Chain started"]]
         ignore_error: true
         
       - name: "Log chain processing"
         kind: "SQL"
         command: "INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)"
-        parameters: ["Chain processing"]
+        parameters: [["Chain processing"]]
         ignore_error: true
         
       - name: "Log chain completion"
         kind: "SQL"
         command: "INSERT INTO timetable.chain_log (EVENT, time) VALUES ($1, CURRENT_TIMESTAMP)"
-        parameters: ["Chain completed"] 
+        parameters: [["Chain completed"]]
         ignore_error: true

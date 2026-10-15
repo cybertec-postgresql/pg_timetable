@@ -28,7 +28,7 @@ Published tags include a multi-architecture manifest for both `linux/amd64` and 
 
 !!! note
 
-    The `latest` tag is up to date with the `master` branch thanks to [this github action](https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/docker.yml). In production you probably want to use the latest [stable tag](https://hub.docker.com/r/cybertecpostgresql/pg_timetable/tags).
+    Docker images are published by the [release workflow](https://github.com/cybertec-postgresql/pg_timetable/blob/master/.github/workflows/release.yml), which assigns `latest` to stable releases. The `latest` tag does not track every `master` commit. In production, pin a [stable version tag](https://hub.docker.com/r/cybertecpostgresql/pg_timetable/tags).
 
 Run **pg_timetable** in Docker:
 

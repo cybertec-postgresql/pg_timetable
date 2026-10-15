@@ -34,7 +34,7 @@ chains:
       - name: "task-2"
         kind: "PROGRAM"
         command: "bash"
-        parameters: ["-c", "echo hello"]
+        parameters: [["-c", "echo hello"]]
         ignore_error: true
 ```
 
@@ -69,6 +69,13 @@ chains:
 | `timeout` | `timeout` | INTEGER | `0` | Task timeout (ms) |
 | `live` | `live` | BOOLEAN | `true` | Whether task is executed; disabled tasks are skipped |
 
+## Task Parameters
+
+For SQL and PROGRAM tasks, each `parameters` entry is an array of arguments for one
+execution. For example, `parameters: [["value"]]` runs once with one argument, while
+`parameters: ["value"]` stores a scalar and fails when the task tries to read its
+argument array. BUILTIN commands use their command-specific parameter formats.
+
 ## Task Ordering
 
 Tasks are ordered sequentially within a chain based on their array position. The system will automatically assign appropriate `task_order` values with spacing (e.g., 10, 20, 30) to allow future insertions.
@@ -100,7 +107,7 @@ chains:
     tasks:
       - name: "extract-data"
         command: "SELECT extract_sales_data($1)"
-        parameters: ["2023-01-01"]
+        parameters: [["2023-01-01"]]
         
       - name: "transform-data"  
         command: "CALL transform_sales_data()"
