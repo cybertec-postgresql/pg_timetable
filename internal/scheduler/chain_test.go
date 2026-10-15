@@ -108,9 +108,10 @@ func TestExecuteChainEarlyReturn(t *testing.T) {
 	vxidRows := func() *pgxmock.Rows { return pgxmock.NewRows([]string{"vxid"}).AddRow(int64(42)) }
 
 	tests := []struct {
-		name   string
-		ctx    func() context.Context
-		expect func(mock pgxmock.PgxPoolIface)
+		name    string
+		ctx     func() context.Context
+		expect  func(mock pgxmock.PgxPoolIface)
+		onError bool
 	}{
 		{
 			name: "cannot start transaction",
@@ -118,9 +119,10 @@ func TestExecuteChainEarlyReturn(t *testing.T) {
 			expect: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectBegin().WillReturnError(errors.New("query_wait_timeout"))
 			},
+			onError: true,
 		},
 		{
-			name: "cannot start transaction with cancelled context",
+			name: "chain stopped before start",
 			ctx: func() context.Context {
 				ctx, cancel := context.WithCancel(context.Background())
 				cancel()
@@ -138,6 +140,7 @@ func TestExecuteChainEarlyReturn(t *testing.T) {
 				mock.ExpectQuery("FROM pg_locks").WillReturnError(errors.New("query_wait_timeout"))
 				mock.ExpectRollback()
 			},
+			onError: true,
 		},
 		{
 			name: "failed to retrieve chain elements",
@@ -148,6 +151,7 @@ func TestExecuteChainEarlyReturn(t *testing.T) {
 				mock.ExpectQuery("FROM timetable\\.task").WithArgs(c.ChainID).WillReturnError(errors.New("query_wait_timeout"))
 				mock.ExpectRollback()
 			},
+			onError: true,
 		},
 	}
 
@@ -159,17 +163,62 @@ func TestExecuteChainEarlyReturn(t *testing.T) {
 			sch := New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop())
 
 			tc.expect(mock)
-			// on_error handler must run even when the chain context is already cancelled
-			mock.ExpectBegin()
-			mock.ExpectQuery("FROM pg_locks").WillReturnRows(vxidRows())
-			mock.ExpectExec("SELECT set_config").WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("SELECT", 1))
-			mock.ExpectExec("FOO").WillReturnResult(pgxmock.NewResult("FOO", 1))
-			mock.ExpectCommit()
+			if tc.onError {
+				expectOnError(mock)
+			} else {
+				mock.ExpectBegin() // must stay unconsumed: no on_error for a stopped chain
+			}
 
 			sch.executeChain(tc.ctx(), c)
-			assert.NoError(t, mock.ExpectationsWereMet())
+			if tc.onError {
+				assert.NoError(t, mock.ExpectationsWereMet())
+			} else {
+				assert.Error(t, mock.ExpectationsWereMet())
+			}
 		})
 	}
+}
+
+func expectOnError(mock pgxmock.PgxPoolIface) {
+	mock.ExpectBegin()
+	mock.ExpectQuery("FROM pg_locks").WillReturnRows(pgxmock.NewRows([]string{"vxid"}).AddRow(int64(42)))
+	mock.ExpectExec("SELECT set_config").WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).WillReturnResult(pgxmock.NewResult("SELECT", 1))
+	mock.ExpectExec("FOO").WillReturnResult(pgxmock.NewResult("FOO", 1))
+	mock.ExpectCommit()
+}
+
+func TestExecuteChainCommit(t *testing.T) {
+	c := Chain{ChainID: 42, OnError: "FOO", SelfDestruct: true}
+	expectChain := func(mock pgxmock.PgxPoolIface) *pgxmock.ExpectedCommit {
+		mock.ExpectBegin()
+		mock.ExpectQuery("FROM pg_locks").WillReturnRows(pgxmock.NewRows([]string{"vxid"}).AddRow(int64(42)))
+		mock.ExpectQuery("FROM timetable\\.task").WithArgs(c.ChainID).WillReturnRows(pgxmock.NewRows([]string{"task_id"}))
+		return mock.ExpectCommit()
+	}
+	newScheduler := func(t *testing.T) (*Scheduler, pgxmock.PgxPoolIface) {
+		mock, err := pgxmock.NewPool()
+		assert.NoError(t, err)
+		pge := pgengine.NewDB(mock, "-c", "scheduler_unit_test")
+		return New(pge, log.Init(config.LoggingOpts{LogLevel: "panic", LogDBLevel: "none"}), otel.NewNoop()), mock
+	}
+
+	t.Run("commit is not bounded by DetachedTimeout", func(t *testing.T) {
+		defer func(d time.Duration) { log.DetachedTimeout = d }(log.DetachedTimeout)
+		log.DetachedTimeout = 50 * time.Millisecond
+		sch, mock := newScheduler(t)
+		expectChain(mock).WillDelayFor(150 * time.Millisecond)
+		mock.ExpectExec("DELETE FROM timetable\\.chain").WithArgs(c.ChainID).WillReturnResult(pgxmock.NewResult("DELETE", 1))
+		sch.executeChain(t.Context(), c)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("commit failure runs on_error and keeps chain", func(t *testing.T) {
+		sch, mock := newScheduler(t)
+		expectChain(mock).WillReturnError(errors.New("serialization failure"))
+		expectOnError(mock)
+		sch.executeChain(t.Context(), c)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 func TestChainWorkerRemovesRunStatusOnEarlyReturn(t *testing.T) {
@@ -191,13 +240,14 @@ func TestChainWorkerRemovesRunStatusOnEarlyReturn(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	chains := make(chan Chain, 1)
 	chains <- c
+	done := make(chan struct{})
 	go func() {
-		// let the worker pick up the chain, then shut the scheduler down
-		time.Sleep(100 * time.Millisecond)
-		cancel()
+		sch.chainWorker(ctx, chains)
+		close(done)
 	}()
-	sch.chainWorker(ctx, chains)
-	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.Eventually(t, func() bool { return mock.ExpectationsWereMet() == nil }, 5*time.Second, 10*time.Millisecond)
+	cancel()
+	<-done
 }
 
 func TestExecuteChainElement(t *testing.T) {
@@ -232,7 +282,6 @@ func TestExecuteOnErrorHandler(t *testing.T) {
 	t.Run("check error handler if context cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		mock.ExpectBegin().WillReturnError(context.Canceled)
 		sch.executeOnErrorHandler(ctx, c)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})

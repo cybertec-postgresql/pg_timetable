@@ -66,14 +66,8 @@ func TestMustTransaction(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectCommit().WillReturnError(errors.New("error"))
-	tx, err := mockPool.Begin(context.Background())
-	assert.NoError(t, err)
-	pge.CommitTransaction(ctx, tx)
-
-	mockPool.ExpectBegin()
 	mockPool.ExpectRollback().WillReturnError(errors.New("error"))
-	tx, err = mockPool.Begin(context.Background())
+	tx, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
 	pge.RollbackTransaction(ctx, tx)
 

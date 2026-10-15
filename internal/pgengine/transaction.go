@@ -31,14 +31,6 @@ WHERE pid = pg_backend_pid() AND virtualxid IS NOT NULL`).Scan(&vxid)
 	return tx, vxid, nil
 }
 
-// CommitTransaction commits transaction and log error in the case of error
-func (pge *PgEngine) CommitTransaction(ctx context.Context, tx pgx.Tx) {
-	err := tx.Commit(ctx)
-	if err != nil {
-		log.GetLogger(ctx).WithError(err).Error("Application cannot commit after job finished")
-	}
-}
-
 // RollbackTransaction rollbacks transaction and log error in the case of error
 func (pge *PgEngine) RollbackTransaction(ctx context.Context, tx pgx.Tx) {
 	err := tx.Rollback(ctx)
