@@ -159,6 +159,7 @@ func (sch *Scheduler) chainWorker(ctx context.Context, chains <-chan Chain) {
 				chainContext, cancel := context.WithCancel(chainContext)
 				sch.addActiveChain(chain.ChainID, cancel)
 				sch.executeChain(chainContext, chain)
+				sch.removeChainRunStatus(chainContext, chain.ChainID)
 				sch.deleteActiveChain(chain.ChainID)
 				cancel()
 				sch.Unlock(chain.ExclusiveExecution)
@@ -178,6 +179,14 @@ func getTimeoutContext(ctx context.Context, globalTimeout int, customTimeout int
 	return ctx, nil
 }
 
+// removeChainRunStatus frees the chain's active_chain slot. Runs detached so it
+// survives a cancelled scheduler context and cannot hang on a dead database.
+func (sch *Scheduler) removeChainRunStatus(ctx context.Context, chainID int) {
+	bctx, cancel := log.DetachedContext(ctx)
+	defer cancel()
+	sch.pgengine.RemoveChainRunStatus(bctx, chainID)
+}
+
 func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 	if ctx.Err() != nil || chain.OnError == "" {
 		return
@@ -191,9 +200,8 @@ func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 	}
 	sch.pgengine.SetCurrentTaskContext(ctx, tx, chain.ChainID, 0)
 	_, err = tx.Exec(ctx, chain.OnError)
-	sch.pgengine.CommitTransaction(ctx, tx)
-	if err != nil {
-		l.Info("Error handler failed")
+	if err = cmp.Or(err, tx.Commit(ctx)); err != nil {
+		l.WithError(err).Info("Error handler failed")
 		return
 	}
 	l.Info("Error handler executed successfully")
@@ -202,8 +210,6 @@ func (sch *Scheduler) executeOnErrorHandler(ctx context.Context, chain Chain) {
 /* execute a chain of tasks */
 func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	var ChainTasks []pgengine.ChainTask
-	var bctx context.Context
-	var cancel context.CancelFunc
 	var vxid int64
 
 	// OTel tracing: create root span for this chain execution
@@ -224,17 +230,29 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 	}
 
 	chainL := sch.l.WithField("chain", chain)
+	chainFailed := func(l log.LoggerIface, tx pgx.Tx, err error, msg string) {
+		l.WithError(err).Error(msg)
+		chainSpan.SetStatus(codes.Error, msg)
+		lctx := log.WithLogger(ctx, l)
+		if tx != nil {
+			bctx, cancel := log.DetachedContext(lctx)
+			sch.pgengine.RollbackTransaction(bctx, tx)
+			cancel()
+		}
+		sch.provider.RecordChainFailed(context.WithoutCancel(lctx), sch.Config().ClientName)
+		sch.executeOnErrorHandler(lctx, chain) // skipped if the chain was stopped
+	}
+
 	tx, vxid, err := sch.pgengine.StartTransaction(chainCtx)
 	if err != nil {
-		chainL.WithError(err).Error("Cannot start transaction")
+		chainFailed(chainL, nil, err, "Chain failed to start")
 		return
 	}
 	chainL = chainL.WithField("vxid", vxid)
 
 	err = sch.pgengine.GetChainElements(chainCtx, &ChainTasks, chain.ChainID)
 	if err != nil {
-		chainL.WithError(err).Error("Failed to retrieve chain elements")
-		sch.pgengine.RollbackTransaction(chainCtx, tx)
+		chainFailed(chainL, tx, err, "Chain failed to load tasks")
 		return
 	}
 
@@ -252,30 +270,25 @@ func (sch *Scheduler) executeChain(ctx context.Context, chain Chain) {
 			l.Info("Task executed successfully")
 		}
 
-		// we detach the context from cancellation here because the current one
-		// (chainCtx and its parent ctx) might be cancelled, e.g. by notify_chain_stop().
-		// Cleanup operations below must still run to keep timetable.active_chain consistent.
-		bctx = log.WithLogger(context.WithoutCancel(ctx), l)
 		if err != nil {
 			if !task.IgnoreError {
-				chainL.Error("Chain failed")
-				sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
-				sch.pgengine.RollbackTransaction(bctx, tx)
-				chainSpan.SetStatus(codes.Error, "chain failed")
-				sch.provider.RecordChainFailed(bctx, sch.Config().ClientName)
-				sch.executeOnErrorHandler(bctx, chain)
+				chainFailed(l, tx, err, "Chain failed")
 				return
 			}
 			l.Info("Ignoring task failure")
 		}
 	}
-	bctx = log.WithLogger(context.WithoutCancel(chainCtx), chainL)
-	sch.pgengine.CommitTransaction(bctx, tx)
+	// commit even if the chain was stopped meanwhile: all its tasks have succeeded
+	if err = tx.Commit(log.WithLogger(context.WithoutCancel(ctx), chainL)); err != nil {
+		chainFailed(chainL, nil, err, "Chain failed to commit")
+		return
+	}
 	sch.provider.RecordChainDuration(ctx, time.Since(chainStart).Seconds(), sch.Config().ClientName)
 	chainL.Info("Chain executed successfully")
 	sch.provider.RecordChainCompleted(ctx, sch.Config().ClientName)
-	sch.pgengine.RemoveChainRunStatus(bctx, chain.ChainID)
 	if chain.SelfDestruct {
+		bctx, cancel := log.DetachedContext(log.WithLogger(ctx, chainL))
+		defer cancel()
 		sch.pgengine.DeleteChain(bctx, chain.ChainID)
 	}
 }

@@ -44,8 +44,17 @@ func TestStartTransaction(t *testing.T) {
 	assert.Error(t, err)
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+	mockPool.ExpectQuery("SELECT").WillReturnError(errors.New("foo"))
+	mockPool.ExpectRollback()
 	tx, txid, err := pge.StartTransaction(ctx)
+	assert.Nil(t, tx, "half-started transaction must be rolled back, not returned")
+	assert.Zero(t, txid)
+	assert.Error(t, err)
+	assert.NoError(t, mockPool.ExpectationsWereMet())
+
+	mockPool.ExpectBegin()
+	mockPool.ExpectQuery("SELECT").WillReturnRows(pgxmock.NewRows([]string{"txid"}).AddRow(int64(42)))
+	tx, txid, err = pge.StartTransaction(ctx)
 	assert.NotNil(t, tx)
 	assert.EqualValues(t, 42, txid)
 	assert.NoError(t, err)
@@ -57,14 +66,8 @@ func TestMustTransaction(t *testing.T) {
 	pge := pgengine.NewDB(mockPool, "pgengine_unit_test")
 
 	mockPool.ExpectBegin()
-	mockPool.ExpectCommit().WillReturnError(errors.New("error"))
-	tx, err := mockPool.Begin(context.Background())
-	assert.NoError(t, err)
-	pge.CommitTransaction(ctx, tx)
-
-	mockPool.ExpectBegin()
 	mockPool.ExpectRollback().WillReturnError(errors.New("error"))
-	tx, err = mockPool.Begin(context.Background())
+	tx, err := mockPool.Begin(context.Background())
 	assert.NoError(t, err)
 	pge.RollbackTransaction(ctx, tx)
 

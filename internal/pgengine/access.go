@@ -66,8 +66,13 @@ SELECT $1, $2 WHERE
 	return res.RowsAffected() == 1
 }
 
+// RemoveChainRunStatus frees one run's slot, so other running instances keep theirs
 func (pge *PgEngine) RemoveChainRunStatus(ctx context.Context, chainID int) {
-	const sqlRemoveRunStatus = `DELETE FROM timetable.active_chain WHERE chain_id = $1 and client_name = $2`
+	const sqlRemoveRunStatus = `DELETE FROM timetable.active_chain WHERE ctid = (
+	SELECT ctid FROM timetable.active_chain
+	WHERE chain_id = $1 AND client_name = $2
+	LIMIT 1 FOR UPDATE SKIP LOCKED
+)`
 	_, err := pge.ConfigDb.Exec(ctx, sqlRemoveRunStatus, chainID, pge.ClientName)
 	if err != nil {
 		pge.l.WithError(err).Error("Cannot save information about the chain run status")
