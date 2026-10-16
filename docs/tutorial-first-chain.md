@@ -13,8 +13,8 @@ In this tutorial we'll initialize pg_timetable and schedule a nightly job.
 
     This uses the simplest path — a downloaded binary. For Docker or building from source, see [Installation](installation.md).
 
-3. Initialize the scheduling schema. The `--init` flag creates the schema and exits
-   without starting the scheduler:
+3. Initialize the scheduling schema (optional if it is already initialized).
+   The `--init` flag creates the schema and exits without starting the scheduler:
 
     ```bash
     pg_timetable --init postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
