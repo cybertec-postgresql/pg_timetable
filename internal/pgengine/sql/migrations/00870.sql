@@ -1,4 +1,4 @@
--- 00868 Check parameter value shape
+-- 00870 Check parameter value shape
 CREATE OR REPLACE FUNCTION timetable.parameter_shape_error(kind timetable.command_kind, command TEXT, value JSONB)
 RETURNS TEXT AS
 $CODE$

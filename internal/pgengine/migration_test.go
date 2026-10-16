@@ -44,7 +44,7 @@ func TestMigrations(t *testing.T) {
 	// 00850 replaces timetable.cron_split_to_arrays on existing installs.
 	assertCronSplitRejectsValue(t, pge)
 
-	// 00868 adds the check_parameter trigger.
+	// 00870 adds the check_parameter trigger.
 	assertScalarParameterRejected(t, pge)
 }
 

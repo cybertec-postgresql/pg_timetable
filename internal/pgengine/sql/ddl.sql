@@ -78,7 +78,7 @@ CREATE TABLE timetable.parameter(
 COMMENT ON TABLE timetable.parameter IS
     'Stores parameters passed as arguments to a chain task';
 
--- 00868 Check parameter value shape (mirrors migrations/00868.sql).
+-- 00870 Check parameter value shape (mirrors migrations/00870.sql).
 CREATE OR REPLACE FUNCTION timetable.parameter_shape_error(kind timetable.command_kind, command TEXT, value JSONB)
 RETURNS TEXT AS
 $CODE$

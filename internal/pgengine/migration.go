@@ -181,9 +181,9 @@ var Migrations func() migrator.Option = func() migrator.Option {
 			},
 		},
 		&migrator.Migration{
-			Name: "00868 Check parameter value shape",
+			Name: "00870 Check parameter value shape",
 			Func: func(ctx context.Context, tx pgx.Tx) error {
-				return ExecuteMigrationScript(ctx, tx, "00868.sql")
+				return ExecuteMigrationScript(ctx, tx, "00870.sql")
 			},
 		},
 
