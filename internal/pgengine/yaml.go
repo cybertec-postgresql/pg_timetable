@@ -199,9 +199,15 @@ func (t *YamlTask) ValidateTask() error {
 	}
 
 	// Validate kind
-	switch strings.ToUpper(t.Kind) {
-	case "", "SQL", "PROGRAM", "BUILTIN":
-		// Valid kinds
+	switch kind := strings.ToUpper(t.Kind); kind {
+	case "", "SQL", "PROGRAM":
+		for i, param := range t.Parameters {
+			if err := validateArgs(kind, param); err != nil {
+				return fmt.Errorf("parameter %d: %w", i+1, err)
+			}
+		}
+	case "BUILTIN":
+		// BUILTIN parameter formats are command-specific and checked by the database
 	default:
 		return fmt.Errorf("invalid task kind: %s (must be SQL, PROGRAM, or BUILTIN)", t.Kind)
 	}
@@ -211,6 +217,25 @@ func (t *YamlTask) ValidateTask() error {
 		return fmt.Errorf("task timeout must be non-negative")
 	}
 
+	return nil
+}
+
+// validateArgs checks that one SQL or PROGRAM execution parameter is an argument array
+func validateArgs(kind string, param any) error {
+	if param == nil {
+		return nil
+	}
+	args, ok := param.([]any)
+	if !ok {
+		return fmt.Errorf("must be an array of arguments, e.g. [%#v]", param)
+	}
+	if kind == "PROGRAM" {
+		for _, arg := range args {
+			if _, ok := arg.(string); !ok {
+				return fmt.Errorf("PROGRAM arguments must be strings, got %#v", arg)
+			}
+		}
+	}
 	return nil
 }
 

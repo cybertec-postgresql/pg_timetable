@@ -180,6 +180,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00850.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00868 Check parameter value shape",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00868.sql")
+			},
+		},
 
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",

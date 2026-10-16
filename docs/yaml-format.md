@@ -73,8 +73,8 @@ chains:
 
 For SQL and PROGRAM tasks, each `parameters` entry is an array of arguments for one
 execution. For example, `parameters: [["value"]]` runs once with one argument, while
-`parameters: ["value"]` stores a scalar and fails when the task tries to read its
-argument array. BUILTIN commands use their command-specific parameter formats.
+`parameters: ["value"]` is rejected on import. PROGRAM arguments must be strings.
+BUILTIN commands use their [command-specific formats](reference-commands-tasks-chains.md#parameter-value-format).
 
 ## Task Ordering
 

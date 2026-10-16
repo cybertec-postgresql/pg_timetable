@@ -43,6 +43,24 @@ func TestMigrations(t *testing.T) {
 
 	// 00850 replaces timetable.cron_split_to_arrays on existing installs.
 	assertCronSplitRejectsValue(t, pge)
+
+	// 00868 adds the check_parameter trigger.
+	assertScalarParameterRejected(t, pge)
+}
+
+func assertScalarParameterRejected(t *testing.T, pge *pgengine.PgEngine) {
+	t.Helper()
+	ctx := context.Background()
+	var chainID int64
+	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+		"SELECT timetable.add_job('scalar-param', '* * * * *', 'SELECT $1', '[\"ok\"]')").Scan(&chainID))
+	defer func() { _, _ = pge.ConfigDb.Exec(ctx, "SELECT timetable.delete_job('scalar-param')") }()
+	_, err := pge.ConfigDb.Exec(ctx,
+		`UPDATE timetable.parameter p SET value = '"ok"' FROM timetable.task t
+		 WHERE p.task_id = t.task_id AND t.chain_id = $1`, chainID)
+	var pgErr *pgconn.PgError
+	require.True(t, errors.As(err, &pgErr), "expected a PostgreSQL error, got %v", err)
+	assert.Equal(t, "23514", pgErr.Code)
 }
 
 // TestCronSplitToArraysUnknownValue checks the function created by cron.sql on a fresh install.
