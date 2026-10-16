@@ -1,0 +1,19 @@
+chains:
+  - name: "etl-pipeline"
+    schedule: "0 2 * * *"  # 2 AM daily
+    live: true
+    max_instances: 1
+    timeout: 3600000  # 1 hour
+
+    tasks:
+      - name: "extract-data"
+        command: "SELECT extract_sales_data($1)"
+        parameters: [["2023-01-01"]]
+
+      - name: "transform-data"
+        command: "CALL transform_sales_data()"
+        autonomous: true
+
+      - name: "load-data"
+        command: "CALL load_to_warehouse()"
+        ignore_error: false
