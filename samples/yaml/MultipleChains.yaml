@@ -20,7 +20,7 @@ chains:
       - name: "Check disk space"
         kind: "PROGRAM" 
         command: "df"
-        parameters: ["-h", "/var/lib/postgresql"]
+        parameters: [["-h", "/var/lib/postgresql"]]
         ignore_error: true
         
       - name: "Log health check"

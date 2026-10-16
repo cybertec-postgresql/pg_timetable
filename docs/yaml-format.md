@@ -34,7 +34,7 @@ chains:
       - name: "task-2"
         kind: "PROGRAM"
         command: "bash"
-        parameters: ["-c", "echo hello"]
+        parameters: [["-c", "echo hello"]]
         ignore_error: true
 ```
 
@@ -69,6 +69,13 @@ chains:
 | `timeout` | `timeout` | INTEGER | `0` | Task timeout (ms) |
 | `live` | `live` | BOOLEAN | `true` | Whether task is executed; disabled tasks are skipped |
 
+## Task Parameters
+
+For SQL and PROGRAM tasks, each `parameters` entry is an array of arguments for one
+execution. For example, `parameters: [["value"]]` runs once with one argument, while
+`parameters: ["value"]` is rejected on import. PROGRAM arguments must be strings.
+BUILTIN commands use their [command-specific formats](reference-commands-tasks-chains.md#parameter-value-format).
+
 ## Task Ordering
 
 Tasks are ordered sequentially within a chain based on their array position. The system will automatically assign appropriate `task_order` values with spacing (e.g., 10, 20, 30) to allow future insertions.
@@ -78,53 +85,19 @@ Tasks are ordered sequentially within a chain based on their array position. The
 ### Simple SQL Job
 
 ```yaml
-chains:
-  - name: "daily-report"
-    schedule: "0 9 * * *"  # 9 AM daily
-    live: true
-    tasks:
-      - name: "generate-report"
-        command: "CALL generate_daily_report()"
+--8<-- "samples/yaml/DailyReport.yaml"
 ```
 
 ### Multi-task Chain
 
 ```yaml
-chains:
-  - name: "etl-pipeline"
-    schedule: "0 2 * * *"  # 2 AM daily
-    live: true
-    max_instances: 1
-    timeout: 3600000  # 1 hour
-    
-    tasks:
-      - name: "extract-data"
-        command: "SELECT extract_sales_data($1)"
-        parameters: ["2023-01-01"]
-        
-      - name: "transform-data"  
-        command: "CALL transform_sales_data()"
-        autonomous: true
-        
-      - name: "load-data"
-        command: "CALL load_to_warehouse()"
-        ignore_error: false
+--8<-- "samples/yaml/MultiTask.yaml"
 ```
 
 ### Program Task
 
-```yaml  
-chains:
-  - name: "backup-job"
-    schedule: "0 3 * * 0"  # Sunday 3 AM
-    live: true
-    
-    tasks:
-      - name: "pg-dump"
-        kind: "PROGRAM"
-        command: "pg_dump"
-        parameters: 
-          - ["-h", "localhost", "-U", "postgres", "-d", "mydb", "-f", "/backups/mydb.sql"]
+```yaml
+--8<-- "samples/yaml/ProgramTask.yaml"
 ```
 
 ## Validation Rules
@@ -133,5 +106,5 @@ chains:
 2. **Unique Names**: Chain names must be unique across the database
 3. **Valid Cron**: Schedule must be valid cron format (5 fields)
 4. **Valid Kind**: Task kind must be one of: SQL, PROGRAM, BUILTIN
-5. **Parameter Types**: Parameters can be any JSON-compatible type (strings, numbers, booleans, arrays, objects) and are stored as individual JSONB values
+5. **Parameter Types**: Each parameter entry is stored as an individual JSONB value; SQL and PROGRAM entries must be arrays (see [Task Parameters](#task-parameters))
 6. **Timeout Values**: Must be non-negative integers (milliseconds)

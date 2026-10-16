@@ -1,0 +1,11 @@
+chains:
+  - name: "backup-job"
+    schedule: "0 3 * * 0"  # Sunday 3 AM
+    live: true
+
+    tasks:
+      - name: "pg-dump"
+        kind: "PROGRAM"
+        command: "pg_dump"
+        parameters:
+          - ["-h", "localhost", "-U", "postgres", "-d", "mydb", "-f", "/backups/mydb.sql"]

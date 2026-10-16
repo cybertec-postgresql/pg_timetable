@@ -32,4 +32,5 @@ VALUES
     (16, '00792 Add ability to enable and disable tasks'),
     (17, '00797 Add indexes to timetable.execution_log'),
     (18, '00820 Add timetable.secret store'),
-    (19, '00850 Fix error hint in timetable.cron_split_to_arrays');
+    (19, '00850 Fix error hint in timetable.cron_split_to_arrays'),
+    (20, '00870 Check parameter value shape');

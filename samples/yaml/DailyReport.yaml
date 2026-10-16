@@ -1,0 +1,7 @@
+chains:
+  - name: "daily-report"
+    schedule: "0 9 * * *"  # 9 AM daily
+    live: true
+    tasks:
+      - name: "generate-report"
+        command: "CALL generate_daily_report()"
