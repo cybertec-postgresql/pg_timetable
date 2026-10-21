@@ -13,7 +13,7 @@
 
 
 
-<script>var goVersion = "go1.27.2";</script>
+<script>var goVersion = "go1.27.3";</script>
 <script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
 
 </head>
@@ -166,7 +166,7 @@
 <span id="L109" class="ln">   109  </span>		assert.Greater(t, txid, int64(0), &#34;Should return transaction id&#34;)
 <span id="L110" class="ln">   110  </span>		assert.NoError(t, pge.GetChainElements(ctx, &amp;chains, 0), &#34;Should no error in clean database&#34;)
 <span id="L111" class="ln">   111  </span>		assert.Empty(t, chains, &#34;Should be empty in clean database&#34;)
-<span id="L112" class="ln">   112  </span>		pge.CommitTransaction(ctx, tx)
+<span id="L112" class="ln">   112  </span>		assert.NoError(t, tx.Commit(ctx))
 <span id="L113" class="ln">   113  </span>	})
 <span id="L114" class="ln">   114  </span>
 <span id="L115" class="ln">   115  </span>	t.Run(&#34;Check GetChainElements returns only live tasks&#34;, func(t *testing.T) {
@@ -194,7 +194,7 @@
 <span id="L137" class="ln">   137  </span>			TaskID:  0,
 <span id="L138" class="ln">   138  </span>			ChainID: 0}), &#34;Should no error in clean database&#34;)
 <span id="L139" class="ln">   139  </span>		assert.Empty(t, paramVals, &#34;Should be empty in clean database&#34;)
-<span id="L140" class="ln">   140  </span>		pge.CommitTransaction(ctx, tx)
+<span id="L140" class="ln">   140  </span>		assert.NoError(t, tx.Commit(ctx))
 <span id="L141" class="ln">   141  </span>	})
 <span id="L142" class="ln">   142  </span>
 <span id="L143" class="ln">   143  </span>	t.Run(&#34;Check InsertChainRunStatus function&#34;, func(t *testing.T) {
@@ -204,72 +204,84 @@
 <span id="L147" class="ln">   147  </span>		assert.True(t, res, &#34;Active chain should be inserted&#34;)
 <span id="L148" class="ln">   148  </span>	})
 <span id="L149" class="ln">   149  </span>
-<span id="L150" class="ln">   150  </span>	t.Run(&#34;Check ExecuteSQLCommand function&#34;, func(t *testing.T) {
-<span id="L151" class="ln">   151  </span>		tx, txid, err := pge.StartTransaction(ctx)
-<span id="L152" class="ln">   152  </span>		assert.NoError(t, err, &#34;Should start transaction&#34;)
-<span id="L153" class="ln">   153  </span>		assert.Greater(t, txid, int64(0), &#34;Should return transaction id&#34;)
-<span id="L154" class="ln">   154  </span>		f := func(sql string, params []string) error {
-<span id="L155" class="ln">   155  </span>			err := pge.ExecuteSQLCommand(ctx, tx, &amp;pgengine.ChainTask{Command: sql}, params)
-<span id="L156" class="ln">   156  </span>			return err
-<span id="L157" class="ln">   157  </span>		}
-<span id="L158" class="ln">   158  </span>		assert.Error(t, f(&#34;&#34;, nil), &#34;Should error for empty script&#34;)
-<span id="L159" class="ln">   159  </span>		assert.Error(t, f(&#34; 	&#34;, nil), &#34;Should error for whitespace only script&#34;)
-<span id="L160" class="ln">   160  </span>		assert.NoError(t, f(&#34;;&#34;, nil), &#34;Simple query with nil as parameters argument&#34;)
-<span id="L161" class="ln">   161  </span>		assert.NoError(t, f(&#34;;&#34;, []string{}), &#34;Simple query with empty slice as parameters argument&#34;)
-<span id="L162" class="ln">   162  </span>		assert.NoError(t, f(&#34;SELECT $1::int4&#34;, []string{&#34;[42]&#34;}), &#34;Simple query with non empty parameters&#34;)
-<span id="L163" class="ln">   163  </span>		assert.NoError(t, f(&#34;SELECT $1::int4&#34;, []string{&#34;[42]&#34;, `[14]`}), &#34;Simple query with doubled parameters&#34;)
-<span id="L164" class="ln">   164  </span>		assert.NoError(t, f(&#34;SELECT $1::int4, $2::text&#34;, []string{`[42, &#34;hey&#34;]`}), &#34;Simple query with two parameters&#34;)
-<span id="L165" class="ln">   165  </span>
-<span id="L166" class="ln">   166  </span>		pge.CommitTransaction(ctx, tx)
-<span id="L167" class="ln">   167  </span>	})
-<span id="L168" class="ln">   168  </span>
-<span id="L169" class="ln">   169  </span>}
-<span id="L170" class="ln">   170  </span>
-<span id="L171" class="ln">   171  </span>func TestGetRemoteDBTransaction(t *testing.T) {
-<span id="L172" class="ln">   172  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L173" class="ln">   173  </span>	defer cleanup()
-<span id="L174" class="ln">   174  </span>	ctx := context.Background()
-<span id="L175" class="ln">   175  </span>	pge := container.Engine
-<span id="L176" class="ln">   176  </span>	remoteDb, err := pge.GetRemoteDBConnection(context.Background(), container.ConnStr)
-<span id="L177" class="ln">   177  </span>	defer pge.FinalizeDBConnection(ctx, remoteDb)
-<span id="L178" class="ln">   178  </span>	require.NoError(t, err, &#34;remoteDB should be initialized&#34;)
-<span id="L179" class="ln">   179  </span>	require.NotNil(t, remoteDb, &#34;remoteDB should be initialized&#34;)
+<span id="L150" class="ln">   150  </span>	t.Run(&#34;Check RemoveChainRunStatus removes one instance only&#34;, func(t *testing.T) {
+<span id="L151" class="ln">   151  </span>		const chainID = 4242
+<span id="L152" class="ln">   152  </span>		require.True(t, pge.InsertChainRunStatus(ctx, chainID, 16))
+<span id="L153" class="ln">   153  </span>		require.True(t, pge.InsertChainRunStatus(ctx, chainID, 16))
+<span id="L154" class="ln">   154  </span>		pge.RemoveChainRunStatus(ctx, chainID)
+<span id="L155" class="ln">   155  </span>		var count int
+<span id="L156" class="ln">   156  </span>		require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+<span id="L157" class="ln">   157  </span>			&#34;SELECT count(*) FROM timetable.active_chain WHERE chain_id = $1&#34;, chainID).Scan(&amp;count))
+<span id="L158" class="ln">   158  </span>		assert.Equal(t, 1, count, &#34;Other running instance must keep its slot&#34;)
+<span id="L159" class="ln">   159  </span>		pge.RemoveChainRunStatus(ctx, chainID)
+<span id="L160" class="ln">   160  </span>	})
+<span id="L161" class="ln">   161  </span>
+<span id="L162" class="ln">   162  </span>	t.Run(&#34;Check ExecuteSQLCommand function&#34;, func(t *testing.T) {
+<span id="L163" class="ln">   163  </span>		tx, txid, err := pge.StartTransaction(ctx)
+<span id="L164" class="ln">   164  </span>		assert.NoError(t, err, &#34;Should start transaction&#34;)
+<span id="L165" class="ln">   165  </span>		assert.Greater(t, txid, int64(0), &#34;Should return transaction id&#34;)
+<span id="L166" class="ln">   166  </span>		f := func(sql string, params []string) error {
+<span id="L167" class="ln">   167  </span>			err := pge.ExecuteSQLCommand(ctx, tx, &amp;pgengine.ChainTask{Command: sql}, params)
+<span id="L168" class="ln">   168  </span>			return err
+<span id="L169" class="ln">   169  </span>		}
+<span id="L170" class="ln">   170  </span>		assert.Error(t, f(&#34;&#34;, nil), &#34;Should error for empty script&#34;)
+<span id="L171" class="ln">   171  </span>		assert.Error(t, f(&#34; 	&#34;, nil), &#34;Should error for whitespace only script&#34;)
+<span id="L172" class="ln">   172  </span>		assert.NoError(t, f(&#34;;&#34;, nil), &#34;Simple query with nil as parameters argument&#34;)
+<span id="L173" class="ln">   173  </span>		assert.NoError(t, f(&#34;;&#34;, []string{}), &#34;Simple query with empty slice as parameters argument&#34;)
+<span id="L174" class="ln">   174  </span>		assert.NoError(t, f(&#34;SELECT $1::int4&#34;, []string{&#34;[42]&#34;}), &#34;Simple query with non empty parameters&#34;)
+<span id="L175" class="ln">   175  </span>		assert.NoError(t, f(&#34;SELECT $1::int4&#34;, []string{&#34;[42]&#34;, `[14]`}), &#34;Simple query with doubled parameters&#34;)
+<span id="L176" class="ln">   176  </span>		assert.NoError(t, f(&#34;SELECT $1::int4, $2::text&#34;, []string{`[42, &#34;hey&#34;]`}), &#34;Simple query with two parameters&#34;)
+<span id="L177" class="ln">   177  </span>
+<span id="L178" class="ln">   178  </span>		assert.NoError(t, tx.Commit(ctx))
+<span id="L179" class="ln">   179  </span>	})
 <span id="L180" class="ln">   180  </span>
-<span id="L181" class="ln">   181  </span>	assert.NoError(t, pge.SetRole(ctx, remoteDb, &#34;scheduler&#34;),
-<span id="L182" class="ln">   182  </span>		&#34;Set Role failed&#34;)
-<span id="L183" class="ln">   183  </span>	assert.NotPanics(t, func() { pge.ResetRole(ctx, remoteDb) }, &#34;Reset Role failed&#34;)
-<span id="L184" class="ln">   184  </span>	pge.FinalizeDBConnection(ctx, remoteDb)
-<span id="L185" class="ln">   185  </span>	assert.NotNil(t, remoteDb, &#34;Connection isn&#39;t closed properly&#34;)
-<span id="L186" class="ln">   186  </span>}
-<span id="L187" class="ln">   187  </span>
-<span id="L188" class="ln">   188  </span>func TestSamplesScripts(t *testing.T) {
-<span id="L189" class="ln">   189  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L190" class="ln">   190  </span>	defer cleanup()
-<span id="L191" class="ln">   191  </span>
-<span id="L192" class="ln">   192  </span>	files, err := os.ReadDir(&#34;../../samples&#34;)
-<span id="L193" class="ln">   193  </span>	assert.NoError(t, err, &#34;Cannot read samples directory&#34;)
-<span id="L194" class="ln">   194  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;})
-<span id="L195" class="ln">   195  </span>	pge := container.Engine
-<span id="L196" class="ln">   196  </span>	for _, f := range files {
-<span id="L197" class="ln">   197  </span>		if f.IsDir() {
-<span id="L198" class="ln">   198  </span>			continue
-<span id="L199" class="ln">   199  </span>		}
-<span id="L200" class="ln">   200  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-<span id="L201" class="ln">   201  </span>		defer cancel()
-<span id="L202" class="ln">   202  </span>		assert.NoError(t, pge.ExecuteCustomScripts(ctx, &#34;../../samples/&#34;+f.Name()),
-<span id="L203" class="ln">   203  </span>			&#34;Sample query failed: &#34;, f.Name())
-<span id="L204" class="ln">   204  </span>		<span class="comment">// either context should be cancelled or &#39;shutdown.sql&#39; will terminate the session</span>
-<span id="L205" class="ln">   205  </span>		assert.True(t, scheduler.New(pge, l, otel.NewNoop()).Run(ctx) &gt; scheduler.RunningStatus)
-<span id="L206" class="ln">   206  </span>		_, err = pge.ConfigDb.Exec(context.Background(),
-<span id="L207" class="ln">   207  </span>			&#34;TRUNCATE timetable.task, timetable.chain CASCADE&#34;)
-<span id="L208" class="ln">   208  </span>		assert.NoError(t, err)
-<span id="L209" class="ln">   209  </span>	}
-<span id="L210" class="ln">   210  </span>}
-<span id="L211" class="ln">   211  </span>
+<span id="L181" class="ln">   181  </span>}
+<span id="L182" class="ln">   182  </span>
+<span id="L183" class="ln">   183  </span>func TestGetRemoteDBTransaction(t *testing.T) {
+<span id="L184" class="ln">   184  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L185" class="ln">   185  </span>	defer cleanup()
+<span id="L186" class="ln">   186  </span>	ctx := context.Background()
+<span id="L187" class="ln">   187  </span>	pge := container.Engine
+<span id="L188" class="ln">   188  </span>	remoteDb, err := pge.GetRemoteDBConnection(context.Background(), container.ConnStr)
+<span id="L189" class="ln">   189  </span>	defer pge.FinalizeDBConnection(ctx, remoteDb)
+<span id="L190" class="ln">   190  </span>	require.NoError(t, err, &#34;remoteDB should be initialized&#34;)
+<span id="L191" class="ln">   191  </span>	require.NotNil(t, remoteDb, &#34;remoteDB should be initialized&#34;)
+<span id="L192" class="ln">   192  </span>
+<span id="L193" class="ln">   193  </span>	assert.NoError(t, pge.SetRole(ctx, remoteDb, &#34;scheduler&#34;),
+<span id="L194" class="ln">   194  </span>		&#34;Set Role failed&#34;)
+<span id="L195" class="ln">   195  </span>	assert.NotPanics(t, func() { pge.ResetRole(ctx, remoteDb) }, &#34;Reset Role failed&#34;)
+<span id="L196" class="ln">   196  </span>	pge.FinalizeDBConnection(ctx, remoteDb)
+<span id="L197" class="ln">   197  </span>	assert.NotNil(t, remoteDb, &#34;Connection isn&#39;t closed properly&#34;)
+<span id="L198" class="ln">   198  </span>}
+<span id="L199" class="ln">   199  </span>
+<span id="L200" class="ln">   200  </span>func TestSamplesScripts(t *testing.T) {
+<span id="L201" class="ln">   201  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L202" class="ln">   202  </span>	defer cleanup()
+<span id="L203" class="ln">   203  </span>
+<span id="L204" class="ln">   204  </span>	files, err := os.ReadDir(&#34;../../samples&#34;)
+<span id="L205" class="ln">   205  </span>	assert.NoError(t, err, &#34;Cannot read samples directory&#34;)
+<span id="L206" class="ln">   206  </span>	l := log.Init(config.LoggingOpts{LogLevel: &#34;panic&#34;, LogDBLevel: &#34;none&#34;})
+<span id="L207" class="ln">   207  </span>	pge := container.Engine
+<span id="L208" class="ln">   208  </span>	for _, f := range files {
+<span id="L209" class="ln">   209  </span>		if f.IsDir() {
+<span id="L210" class="ln">   210  </span>			continue
+<span id="L211" class="ln">   211  </span>		}
+<span id="L212" class="ln">   212  </span>		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+<span id="L213" class="ln">   213  </span>		defer cancel()
+<span id="L214" class="ln">   214  </span>		assert.NoError(t, pge.ExecuteCustomScripts(ctx, &#34;../../samples/&#34;+f.Name()),
+<span id="L215" class="ln">   215  </span>			&#34;Sample query failed: &#34;, f.Name())
+<span id="L216" class="ln">   216  </span>		<span class="comment">// either context should be cancelled or &#39;shutdown.sql&#39; will terminate the session</span>
+<span id="L217" class="ln">   217  </span>		assert.True(t, scheduler.New(pge, l, otel.NewNoop()).Run(ctx) &gt; scheduler.RunningStatus)
+<span id="L218" class="ln">   218  </span>		_, err = pge.ConfigDb.Exec(context.Background(),
+<span id="L219" class="ln">   219  </span>			&#34;TRUNCATE timetable.task, timetable.chain CASCADE&#34;)
+<span id="L220" class="ln">   220  </span>		assert.NoError(t, err)
+<span id="L221" class="ln">   221  </span>	}
+<span id="L222" class="ln">   222  </span>}
+<span id="L223" class="ln">   223  </span>
 </pre><p></p>
 
 <div id="footer">
-Build version go1.27.2.<br/>
+Build version go1.27.3.<br/>
 </div>
 
 </div><!-- .container -->

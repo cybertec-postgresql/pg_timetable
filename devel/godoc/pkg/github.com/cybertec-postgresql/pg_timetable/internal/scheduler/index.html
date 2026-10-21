@@ -15,7 +15,7 @@
 
 
 
-<script>var goVersion = "go1.27.2";</script>
+<script>var goVersion = "go1.27.3";</script>
 <script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer></script>
 
 </head>
@@ -236,6 +236,9 @@
 					<dd>&nbsp; &nbsp; <a href="#Scheduler.processAsyncChain">func (sch *Scheduler) processAsyncChain(ctx context.Context, chainSignal ChainSignal) error</a></dd>
 				
 					
+					<dd>&nbsp; &nbsp; <a href="#Scheduler.removeChainRunStatus">func (sch *Scheduler) removeChainRunStatus(ctx context.Context, chainID int)</a></dd>
+				
+					
 					<dd>&nbsp; &nbsp; <a href="#Scheduler.reschedule">func (sch *Scheduler) reschedule(ctx context.Context, ichain IntervalChain)</a></dd>
 				
 					
@@ -326,7 +329,7 @@
 		
 			
 			
-			<h2 id="getTimeoutContext">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L173">getTimeoutContext</a>
+			<h2 id="getTimeoutContext">func <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L174">getTimeoutContext</a>
 				<a class="permalink" href="#getTimeoutContext">&#xb6;</a>
 				
 				
@@ -815,7 +818,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.executeChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L203">executeChain</a>
+				<h3 id="Scheduler.executeChain">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L211">executeChain</a>
 					<a class="permalink" href="#Scheduler.executeChain">&#xb6;</a>
 					
 					
@@ -828,7 +831,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.executeOnErrorHandler">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L181">executeOnErrorHandler</a>
+				<h3 id="Scheduler.executeOnErrorHandler">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L190">executeOnErrorHandler</a>
 					<a class="permalink" href="#Scheduler.executeOnErrorHandler">&#xb6;</a>
 					
 					
@@ -840,7 +843,7 @@ There are only two possibilities: dropped connection and cancelled context.
 				
 			
 				
-				<h3 id="Scheduler.executeTask">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L284">executeTask</a>
+				<h3 id="Scheduler.executeTask">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L297">executeTask</a>
 					<a class="permalink" href="#Scheduler.executeTask">&#xb6;</a>
 					
 					
@@ -884,6 +887,20 @@ There are only two possibilities: dropped connection and cancelled context.
 				</h3>
 				<pre>func (sch *<a href="#Scheduler">Scheduler</a>) processAsyncChain(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, chainSignal <a href="#ChainSignal">ChainSignal</a>) <a href="https://pkg.go.dev/builtin/#error">error</a></pre>
 				
+				
+				
+				
+			
+				
+				<h3 id="Scheduler.removeChainRunStatus">func (*Scheduler) <a href="/pg_timetable/devel/godoc/src/github.com/cybertec-postgresql/pg_timetable/internal/scheduler/chain.go.html#L184">removeChainRunStatus</a>
+					<a class="permalink" href="#Scheduler.removeChainRunStatus">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (sch *<a href="#Scheduler">Scheduler</a>) removeChainRunStatus(ctx <a href="https://pkg.go.dev/context/">context</a>.<a href="https://pkg.go.dev/context/#Context">Context</a>, chainID <a href="https://pkg.go.dev/builtin/#int">int</a>)</pre>
+				<p>removeChainRunStatus frees the chain&apos;s active_chain slot. Runs detached so it
+survives a cancelled scheduler context and cannot hang on a dead database.
+
 				
 				
 				
@@ -1024,7 +1041,7 @@ There are only two possibilities: dropped connection and cancelled context.
 
 
 <div id="footer">
-Build version go1.27.2.<br>
+Build version go1.27.3.<br>
 </div>
 
 </div><!-- .container -->

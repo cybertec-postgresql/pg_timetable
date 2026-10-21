@@ -13,7 +13,7 @@
 
 
 
-<script>var goVersion = "go1.27.2";</script>
+<script>var goVersion = "go1.27.3";</script>
 <script src="/pg_timetable/devel/godoc/lib/godoc/godocs.js" defer=""></script>
 
 </head>
@@ -148,21 +148,22 @@
 <span id="L91" class="ln">    91  </span>				}
 <span id="L92" class="ln">    92  </span>				sch.Lock(ichain.ExclusiveExecution)
 <span id="L93" class="ln">    93  </span>				sch.executeChain(chainContext, ichain.Chain)
-<span id="L94" class="ln">    94  </span>				sch.Unlock(ichain.ExclusiveExecution)
-<span id="L95" class="ln">    95  </span>				if ichain.RepeatAfter {
-<span id="L96" class="ln">    96  </span>					go sch.reschedule(chainContext, ichain)
-<span id="L97" class="ln">    97  </span>				}
-<span id="L98" class="ln">    98  </span>			case &lt;-ctx.Done():
-<span id="L99" class="ln">    99  </span>				return
-<span id="L100" class="ln">   100  </span>			}
-<span id="L101" class="ln">   101  </span>		}
-<span id="L102" class="ln">   102  </span>	}
-<span id="L103" class="ln">   103  </span>}
-<span id="L104" class="ln">   104  </span>
+<span id="L94" class="ln">    94  </span>				sch.removeChainRunStatus(chainContext, ichain.ChainID)
+<span id="L95" class="ln">    95  </span>				sch.Unlock(ichain.ExclusiveExecution)
+<span id="L96" class="ln">    96  </span>				if ichain.RepeatAfter {
+<span id="L97" class="ln">    97  </span>					go sch.reschedule(chainContext, ichain)
+<span id="L98" class="ln">    98  </span>				}
+<span id="L99" class="ln">    99  </span>			case &lt;-ctx.Done():
+<span id="L100" class="ln">   100  </span>				return
+<span id="L101" class="ln">   101  </span>			}
+<span id="L102" class="ln">   102  </span>		}
+<span id="L103" class="ln">   103  </span>	}
+<span id="L104" class="ln">   104  </span>}
+<span id="L105" class="ln">   105  </span>
 </pre><p></p>
 
 <div id="footer">
-Build version go1.27.2.<br/>
+Build version go1.27.3.<br/>
 </div>
 
 </div><!-- .container -->
