@@ -109,7 +109,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.Greater(t, txid, int64(0), "Should return transaction id")
 		assert.NoError(t, pge.GetChainElements(ctx, &chains, 0), "Should no error in clean database")
 		assert.Empty(t, chains, "Should be empty in clean database")
-		pge.CommitTransaction(ctx, tx)
+		assert.NoError(t, tx.Commit(ctx))
 	})
 
 	t.Run("Check GetChainElements returns only live tasks", func(t *testing.T) {
@@ -137,7 +137,7 @@ func TestSchedulerFunctions(t *testing.T) {
 			TaskID:  0,
 			ChainID: 0}), "Should no error in clean database")
 		assert.Empty(t, paramVals, "Should be empty in clean database")
-		pge.CommitTransaction(ctx, tx)
+		assert.NoError(t, tx.Commit(ctx))
 	})
 
 	t.Run("Check InsertChainRunStatus function", func(t *testing.T) {
@@ -145,6 +145,18 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NotPanics(t, func() { res = pge.InsertChainRunStatus(ctx, 0, 1) },
 			"Should no error in clean database")
 		assert.True(t, res, "Active chain should be inserted")
+	})
+
+	t.Run("Check RemoveChainRunStatus removes one instance only", func(t *testing.T) {
+		const chainID = 4242
+		require.True(t, pge.InsertChainRunStatus(ctx, chainID, 16))
+		require.True(t, pge.InsertChainRunStatus(ctx, chainID, 16))
+		pge.RemoveChainRunStatus(ctx, chainID)
+		var count int
+		require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+			"SELECT count(*) FROM timetable.active_chain WHERE chain_id = $1", chainID).Scan(&count))
+		assert.Equal(t, 1, count, "Other running instance must keep its slot")
+		pge.RemoveChainRunStatus(ctx, chainID)
 	})
 
 	t.Run("Check ExecuteSQLCommand function", func(t *testing.T) {
@@ -163,7 +175,7 @@ func TestSchedulerFunctions(t *testing.T) {
 		assert.NoError(t, f("SELECT $1::int4", []string{"[42]", `[14]`}), "Simple query with doubled parameters")
 		assert.NoError(t, f("SELECT $1::int4, $2::text", []string{`[42, "hey"]`}), "Simple query with two parameters")
 
-		pge.CommitTransaction(ctx, tx)
+		assert.NoError(t, tx.Commit(ctx))
 	})
 
 }

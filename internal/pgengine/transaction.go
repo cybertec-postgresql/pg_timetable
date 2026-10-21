@@ -16,21 +16,19 @@ import (
 // StartTransaction returns transaction object, virtual transaction id and error
 func (pge *PgEngine) StartTransaction(ctx context.Context) (tx pgx.Tx, vxid int64, err error) {
 	if tx, err = pge.ConfigDb.Begin(ctx); err != nil {
-		return
+		return nil, 0, err
 	}
 	err = tx.QueryRow(ctx, `SELECT 
 (split_part(virtualxid, '/', 1)::int8 << 32) | split_part(virtualxid, '/', 2)::int8
 FROM pg_locks 
 WHERE pid = pg_backend_pid() AND virtualxid IS NOT NULL`).Scan(&vxid)
-	return
-}
-
-// CommitTransaction commits transaction and log error in the case of error
-func (pge *PgEngine) CommitTransaction(ctx context.Context, tx pgx.Tx) {
-	err := tx.Commit(ctx)
 	if err != nil {
-		log.GetLogger(ctx).WithError(err).Error("Application cannot commit after job finished")
+		bctx, cancel := log.DetachedContext(ctx)
+		defer cancel()
+		pge.RollbackTransaction(bctx, tx)
+		return nil, 0, err
 	}
+	return tx, vxid, nil
 }
 
 // RollbackTransaction rollbacks transaction and log error in the case of error
