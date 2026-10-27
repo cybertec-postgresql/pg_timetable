@@ -79,7 +79,7 @@ chains:
     tasks:
       - name: "Extract data"
         command: "SELECT extract_sales_data($1)"
-        parameters: ["yesterday"]
+        parameters: [["yesterday"]]
         
       - name: "Transform data"
         command: "CALL transform_sales_data()"
@@ -117,11 +117,17 @@ Complete usage guide can be found in the [documentation](https://cybertec-postgr
 1. Make sure your **PostgreSQL** server is up and running and has a role with `CREATE` privilege for a target database, e.g.
 
     ```sql
-    my_database=> CREATE ROLE scheduler PASSWORD 'somestrong';
+    my_database=> CREATE ROLE scheduler LOGIN PASSWORD 'somestrong';
     my_database=> GRANT CREATE ON DATABASE my_database TO scheduler;
     ```
 
-1. Create a new job, e.g. run `VACUUM` each night at 00:30
+1. Initialize the scheduling schema before creating jobs:
+
+    ```terminal
+    pg_timetable --init postgresql://scheduler:somestrong@localhost/my_database --clientname=vacuumer
+    ```
+
+1. Create a new job as `scheduler`, e.g. run `VACUUM` each night at 00:30
 
     ```sql
     my_database=> SELECT timetable.add_job('frequent-vacuum', '30 0 * * *', 'VACUUM');
