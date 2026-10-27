@@ -242,7 +242,7 @@ func TestParseYamlFile(t *testing.T) {
       - name: "test-task"
         kind: "SQL"
         command: "SELECT 1"
-        parameters: ["param1", 42, true]
+        parameters: [["param1", 42, true]]
         ignore_error: false
         autonomous: false
         timeout: 60
@@ -496,6 +496,31 @@ func TestYamlTaskValidation(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "task timeout must be non-negative")
 	})
+
+	t.Run("Parameter shape", func(t *testing.T) {
+		tests := []struct {
+			kind   string
+			params []any
+			errMsg string
+		}{
+			{"", []any{[]any{"a", 1}}, ""},
+			{"SQL", []any{nil}, ""},
+			{"sql", []any{"a"}, "parameter 1: must be an array of arguments"},
+			{"PROGRAM", []any{[]any{"-n", "5"}}, ""},
+			{"PROGRAM", []any{[]any{"-n"}, []any{"-n", 5}}, "parameter 2: PROGRAM arguments must be strings"},
+			{"PROGRAM", []any{"-h"}, "parameter 1: must be an array of arguments"},
+			{"BUILTIN", []any{5, "msg", map[string]any{"k": "v"}}, ""},
+		}
+		for _, tc := range tests {
+			task := &pgengine.YamlTask{Command: "x", Kind: tc.kind, Parameters: tc.params}
+			err := task.ValidateTask()
+			if tc.errMsg == "" {
+				assert.NoError(t, err, "%s %v", tc.kind, tc.params)
+			} else {
+				assert.ErrorContains(t, err, tc.errMsg, "%s %v", tc.kind, tc.params)
+			}
+		}
+	})
 }
 
 func TestYamlChainSetDefaults(t *testing.T) {
@@ -566,8 +591,8 @@ func TestParameterStorageIntegration(t *testing.T) {
     schedule: "0 0 * * *"
     tasks:
       - name: "mixed-params"
-        kind: "SQL"
-        command: "SELECT $1, $2, $3, $4, $5"
+        kind: "BUILTIN"
+        command: "Log"
         parameters:
           - "hello world"
           - 42
@@ -755,14 +780,14 @@ func TestLoadYamlChainsMultiTask(t *testing.T) {
         timeout: 60
         run_as: "postgres"
         database_connection: "main"
-        parameters: ["param1", 42]
+        parameters: [["param1", 42]]
       - name: "second-task"
         kind: "PROGRAM"
         command: "echo"
         ignore_error: true
         autonomous: true
         timeout: 30
-        parameters: ["hello", "world"]`
+        parameters: [["hello", "world"]]`
 
 		tmpfile := createTempYamlFile(t, yamlContent)
 		defer removeTempFile(t, tmpfile)
@@ -779,21 +804,19 @@ func TestLoadYamlChainsMultiTask(t *testing.T) {
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
 			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
-		// Mock first task parameters (2 parameters)
+		// Mock first task parameters (1 execution)
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
-			WillReturnResult(pgxmock.NewResult("INSERT", 1)).
-			Times(2)
+			WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 		// Mock second task creation
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
 			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(2))
-		// Mock second task parameters (2 parameters)
+		// Mock second task parameters (1 execution)
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
-			WillReturnResult(pgxmock.NewResult("INSERT", 1)).
-			Times(2)
+			WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 		err := mockpge.LoadYamlChains(context.Background(), tmpfile, false)
 		require.NoError(t, err)
@@ -920,7 +943,7 @@ func TestCreateChainFromYamlEdgeCases(t *testing.T) {
         kind: "SQL"
         command: "SELECT $1::jsonb"
         parameters:
-          - {"key": "value", "number": 42, "nested": {"inner": true}}`
+          - [{"key": "value", "number": 42, "nested": {"inner": true}}]`
 
 		tmpfile := createTempYamlFile(t, yamlContent)
 		defer removeTempFile(t, tmpfile)
@@ -959,7 +982,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
       - name: "first-task"
         kind: "SQL"
         command: "SELECT 1"
-        parameters: [{"invalid": {"deeply": {"nested": "value"}}}]
+        parameters: [[{"invalid": {"deeply": {"nested": "value"}}}]]
       - name: "second-task"
         kind: "SQL"
         command: "SELECT 2"`
@@ -1009,7 +1032,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
       - name: "sql-task"
         kind: "SQL"
         command: "SELECT $1, $2"
-        parameters: ["string", 123]
+        parameters: [["string", 123]]
         ignore_error: true
         autonomous: false
         timeout: 120
@@ -1018,7 +1041,7 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
       - name: "program-task"  
         kind: "PROGRAM"
         command: "echo"
-        parameters: ["hello", "world"]
+        parameters: [["hello", "world"]]
         ignore_error: false
         autonomous: true
         timeout: 60
@@ -1041,23 +1064,21 @@ func TestCreateChainFromYamlErrorHandling(t *testing.T) {
 			WithArgs(anyArgs(9)...).
 			WillReturnRows(pgxmock.NewRows([]string{"chain_id"}).AddRow(1))
 
-		// Mock sql-task creation with 2 parameters
+		// Mock sql-task creation with 1 execution
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
 			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(1))
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
-			WillReturnResult(pgxmock.NewResult("INSERT", 1)).
-			Times(2)
+			WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
-		// Mock program-task creation with 2 parameters
+		// Mock program-task creation with 1 execution
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
 			WithArgs(anyArgs(11)...).
 			WillReturnRows(pgxmock.NewRows([]string{"task_id"}).AddRow(2))
 		mockPool.ExpectExec(`INSERT INTO timetable\.parameter`).
 			WithArgs(anyArgs(3)...).
-			WillReturnResult(pgxmock.NewResult("INSERT", 1)).
-			Times(2)
+			WillReturnResult(pgxmock.NewResult("INSERT", 1))
 
 		// Mock builtin-task creation with 1 parameter
 		mockPool.ExpectQuery(`INSERT INTO timetable\.task`).
