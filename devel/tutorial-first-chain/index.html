@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -1476,30 +1476,37 @@
 
 
 <h1 id="your-first-scheduled-chain">Your First Scheduled Chain</h1>
-<p>In this tutorial we'll install pg_timetable, schedule a one-off job, and watch it run.</p>
+<p>In this tutorial we'll initialize pg_timetable and schedule a nightly job.</p>
 <ol>
 <li>Download pg_timetable executable.</li>
 <li>
 <p>Make sure your PostgreSQL server is up and running and has a role with <code>CREATE</code> privilege
    for a target database, e.g.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">ROLE</span><span class="w"> </span><span class="n">scheduler</span><span class="w"> </span><span class="n">PASSWORD</span><span class="w"> </span><span class="s1">'somestrong'</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">ROLE</span><span class="w"> </span><span class="n">scheduler</span><span class="w"> </span><span class="n">LOGIN</span><span class="w"> </span><span class="n">PASSWORD</span><span class="w"> </span><span class="s1">'somestrong'</span><span class="p">;</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">GRANT</span><span class="w"> </span><span class="k">CREATE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">DATABASE</span><span class="w"> </span><span class="n">my_database</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">scheduler</span><span class="p">;</span>
 </code></pre></div>
 <p>This uses the simplest path — a downloaded binary. For Docker or building from source, see <a href="../installation/">Installation</a>.</p>
 </li>
 <li>
-<p>Create a new job, e.g. run <code>VACUUM</code> each night at 00:30 Postgres server time zone</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'frequent-vacuum'</span><span class="p">,</span><span class="w"> </span><span class="s1">'30 0 * * *'</span><span class="p">,</span><span class="w"> </span><span class="s1">'VACUUM'</span><span class="p">);</span>
+<p>Initialize the scheduling schema (optional if it is already initialized).
+   The <code>--init</code> flag creates the schema and exits without starting the scheduler:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pg_timetable<span class="w"> </span>--init<span class="w"> </span>postgresql://scheduler:somestrong@localhost/my_database<span class="w"> </span>--clientname<span class="o">=</span>vacuumer
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>add_job
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>---------
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>      3
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>(1 row)
+</li>
+<li>
+<p>Connect to <code>my_database</code> as <code>scheduler</code> and create a job, e.g. run <code>VACUUM</code> each night
+   at 00:30 Postgres server time zone</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">timetable</span><span class="p">.</span><span class="n">add_job</span><span class="p">(</span><span class="s1">'frequent-vacuum'</span><span class="p">,</span><span class="w"> </span><span class="s1">'30 0 * * *'</span><span class="p">,</span><span class="w"> </span><span class="s1">'VACUUM'</span><span class="p">);</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>add_job
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>---------
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>      3
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>(1 row)
 </code></pre></div>
 </li>
 <li>
 <p>Run the <strong>pg_timetable</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pg_timetable<span class="w"> </span>postgresql://scheduler:somestrong@localhost/my_database<span class="w"> </span>--clientname<span class="o">=</span>vacuumer
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pg_timetable<span class="w"> </span>postgresql://scheduler:somestrong@localhost/my_database<span class="w"> </span>--clientname<span class="o">=</span>vacuumer
 </code></pre></div>
 </li>
 <li>
@@ -1607,10 +1614,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "navigation.instant", "navigation.tracking", "search.highlight", "search.share", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "navigation.instant", "navigation.tracking", "search.highlight", "search.share", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
