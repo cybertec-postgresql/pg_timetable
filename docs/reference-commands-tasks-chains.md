@@ -84,6 +84,8 @@ In most cases, they have to be brought to live by passing input parameters to th
 ### Parameter value format
 
 Depending on the **command** kind argument can be represented by different *JSON* values.
+The `check_parameter` trigger rejects values that do not match the schema below with
+SQLSTATE `23514`, also when a task's kind or command changes. `NULL` and JSON `null` are always accepted.
 
 #### `SQL`
 

@@ -1,40 +1,40 @@
 package pgengine_test
 
 import (
+	"context"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	"github.com/stretchr/testify/require"
 )
 
-// SQL and PROGRAM parameters are execution sets, not a flat argument list.
-func TestYamlSampleParameters(t *testing.T) {
+func yamlSamples(t *testing.T) []string {
 	paths, err := filepath.Glob("../../samples/yaml/*.yaml")
 	require.NoError(t, err)
 	require.NotEmpty(t, paths)
-	for _, path := range paths {
+	return paths
+}
+
+func TestYamlSamplesParse(t *testing.T) {
+	for _, path := range yamlSamples(t) {
 		t.Run(filepath.Base(path), func(t *testing.T) {
-			cfg, err := pgengine.ParseYamlFile(path)
+			_, err := pgengine.ParseYamlFile(path)
 			require.NoError(t, err)
-			for _, chain := range cfg.Chains {
-				for _, task := range chain.Tasks {
-					kind := strings.ToUpper(task.Kind)
-					if kind == "BUILTIN" {
-						continue
-					}
-					for _, param := range task.Parameters {
-						args, ok := param.([]any)
-						require.True(t, ok, "%s / %s: parameter %v is not an array", chain.ChainName, task.TaskName, param)
-						if kind == "PROGRAM" {
-							for _, arg := range args {
-								require.IsType(t, "", arg, "%s / %s", chain.ChainName, task.TaskName)
-							}
-						}
-					}
-				}
-			}
 		})
 	}
+}
+
+// Loads every sample into a real database without running it, so the
+// check_parameter trigger and schema constraints see the samples too.
+func TestYamlSamplesLoad(t *testing.T) {
+	container, cleanup := testutils.SetupPostgresContainer(t)
+	defer cleanup()
+	for _, path := range yamlSamples(t) {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			require.NoError(t, container.Engine.LoadYamlChains(context.Background(), path, true))
+		})
+	}
+	assertScalarParameterRejected(t, container.Engine)
 }
