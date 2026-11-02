@@ -2188,7 +2188,9 @@ In most cases, they have to be brought to live by passing input parameters to th
 </tbody>
 </table>
 <h3 id="parameter-value-format">Parameter value format</h3>
-<p>Depending on the <strong>command</strong> kind argument can be represented by different <em>JSON</em> values.</p>
+<p>Depending on the <strong>command</strong> kind argument can be represented by different <em>JSON</em> values.
+The <code>check_parameter</code> trigger rejects values that do not match the schema below with
+SQLSTATE <code>23514</code>, also when a task's kind or command changes. <code>NULL</code> and JSON <code>null</code> are always accepted.</p>
 <h4 id="sql_1"><code>SQL</code></h4>
 <p>Schema: <code>array</code></p>
 <p>Example:</p>

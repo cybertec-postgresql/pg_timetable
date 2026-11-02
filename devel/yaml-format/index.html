@@ -1986,8 +1986,8 @@
 <h2 id="task-parameters">Task Parameters</h2>
 <p>For SQL and PROGRAM tasks, each <code>parameters</code> entry is an array of arguments for one
 execution. For example, <code>parameters: [["value"]]</code> runs once with one argument, while
-<code>parameters: ["value"]</code> stores a scalar and fails when the task tries to read its
-argument array. BUILTIN commands use their command-specific parameter formats.</p>
+<code>parameters: ["value"]</code> is rejected on import. PROGRAM arguments must be strings.
+BUILTIN commands use their <a href="../reference-commands-tasks-chains/#parameter-value-format">command-specific formats</a>.</p>
 <h2 id="task-ordering">Task Ordering</h2>
 <p>Tasks are ordered sequentially within a chain based on their array position. The system will automatically assign appropriate <code>task_order</code> values with spacing (e.g., 10, 20, 30) to allow future insertions.</p>
 <h2 id="examples">Examples</h2>

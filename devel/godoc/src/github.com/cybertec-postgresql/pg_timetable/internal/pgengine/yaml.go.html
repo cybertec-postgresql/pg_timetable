@@ -256,73 +256,98 @@
 <span id="L199" class="ln">   199  </span>	}
 <span id="L200" class="ln">   200  </span>
 <span id="L201" class="ln">   201  </span>	<span class="comment">// Validate kind</span>
-<span id="L202" class="ln">   202  </span>	switch strings.ToUpper(t.Kind) {
-<span id="L203" class="ln">   203  </span>	case &#34;&#34;, &#34;SQL&#34;, &#34;PROGRAM&#34;, &#34;BUILTIN&#34;:
-<span id="L204" class="ln">   204  </span>		<span class="comment">// Valid kinds</span>
-<span id="L205" class="ln">   205  </span>	default:
-<span id="L206" class="ln">   206  </span>		return fmt.Errorf(&#34;invalid task kind: %s (must be SQL, PROGRAM, or BUILTIN)&#34;, t.Kind)
-<span id="L207" class="ln">   207  </span>	}
-<span id="L208" class="ln">   208  </span>
-<span id="L209" class="ln">   209  </span>	<span class="comment">// Validate timeout is non-negative</span>
-<span id="L210" class="ln">   210  </span>	if t.Timeout &lt; 0 {
-<span id="L211" class="ln">   211  </span>		return fmt.Errorf(&#34;task timeout must be non-negative&#34;)
-<span id="L212" class="ln">   212  </span>	}
-<span id="L213" class="ln">   213  </span>
-<span id="L214" class="ln">   214  </span>	return nil
-<span id="L215" class="ln">   215  </span>}
-<span id="L216" class="ln">   216  </span>
-<span id="L217" class="ln">   217  </span><span class="comment">// SetDefaults sets default values for optional fields</span>
-<span id="L218" class="ln">   218  </span>func (c *YamlChain) SetDefaults() {
-<span id="L219" class="ln">   219  </span>	<span class="comment">// Chain defaults</span>
-<span id="L220" class="ln">   220  </span>	if c.Schedule == &#34;&#34; {
-<span id="L221" class="ln">   221  </span>		c.Schedule = &#34;* * * * *&#34; <span class="comment">// Default to every minute</span>
-<span id="L222" class="ln">   222  </span>	}
-<span id="L223" class="ln">   223  </span>
-<span id="L224" class="ln">   224  </span>	<span class="comment">// Task defaults</span>
-<span id="L225" class="ln">   225  </span>	for i := range c.Tasks {
-<span id="L226" class="ln">   226  </span>		task := &amp;c.Tasks[i]
-<span id="L227" class="ln">   227  </span>		if task.Kind == &#34;&#34; {
-<span id="L228" class="ln">   228  </span>			task.Kind = &#34;SQL&#34;
-<span id="L229" class="ln">   229  </span>		}
-<span id="L230" class="ln">   230  </span>		<span class="comment">// Tasks are live by default, unlike chains</span>
-<span id="L231" class="ln">   231  </span>		if task.Live == nil {
-<span id="L232" class="ln">   232  </span>			live := true
-<span id="L233" class="ln">   233  </span>			task.Live = &amp;live
-<span id="L234" class="ln">   234  </span>		}
-<span id="L235" class="ln">   235  </span>	}
-<span id="L236" class="ln">   236  </span>}
-<span id="L237" class="ln">   237  </span>
-<span id="L238" class="ln">   238  </span><span class="comment">// ParseYamlFile parses a YAML file and returns the configuration</span>
-<span id="L239" class="ln">   239  </span>func ParseYamlFile(filePath string) (*YamlConfig, error) {
-<span id="L240" class="ln">   240  </span>	<span class="comment">// Check if file exists</span>
-<span id="L241" class="ln">   241  </span>	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-<span id="L242" class="ln">   242  </span>		return nil, fmt.Errorf(&#34;file not found: %s&#34;, filePath)
-<span id="L243" class="ln">   243  </span>	}
-<span id="L244" class="ln">   244  </span>
-<span id="L245" class="ln">   245  </span>	<span class="comment">// Read file</span>
-<span id="L246" class="ln">   246  </span>	data, err := os.ReadFile(filePath)
-<span id="L247" class="ln">   247  </span>	if err != nil {
-<span id="L248" class="ln">   248  </span>		return nil, fmt.Errorf(&#34;failed to read file: %w&#34;, err)
-<span id="L249" class="ln">   249  </span>	}
-<span id="L250" class="ln">   250  </span>
-<span id="L251" class="ln">   251  </span>	<span class="comment">// Parse YAML</span>
-<span id="L252" class="ln">   252  </span>	var config YamlConfig
-<span id="L253" class="ln">   253  </span>	if err := yaml.Unmarshal(data, &amp;config); err != nil {
-<span id="L254" class="ln">   254  </span>		return nil, fmt.Errorf(&#34;failed to parse YAML: %w&#34;, err)
-<span id="L255" class="ln">   255  </span>	}
-<span id="L256" class="ln">   256  </span>
-<span id="L257" class="ln">   257  </span>	<span class="comment">// Set defaults and validate</span>
-<span id="L258" class="ln">   258  </span>	for i := range config.Chains {
-<span id="L259" class="ln">   259  </span>		chain := &amp;config.Chains[i]
-<span id="L260" class="ln">   260  </span>		chain.SetDefaults()
-<span id="L261" class="ln">   261  </span>		if err := chain.ValidateChain(); err != nil {
-<span id="L262" class="ln">   262  </span>			return nil, fmt.Errorf(&#34;chain %d (%s): %w&#34;, i+1, chain.ChainName, err)
-<span id="L263" class="ln">   263  </span>		}
-<span id="L264" class="ln">   264  </span>	}
-<span id="L265" class="ln">   265  </span>
-<span id="L266" class="ln">   266  </span>	return &amp;config, nil
-<span id="L267" class="ln">   267  </span>}
-<span id="L268" class="ln">   268  </span>
+<span id="L202" class="ln">   202  </span>	switch kind := strings.ToUpper(t.Kind); kind {
+<span id="L203" class="ln">   203  </span>	case &#34;&#34;, &#34;SQL&#34;, &#34;PROGRAM&#34;:
+<span id="L204" class="ln">   204  </span>		for i, param := range t.Parameters {
+<span id="L205" class="ln">   205  </span>			if err := validateArgs(kind, param); err != nil {
+<span id="L206" class="ln">   206  </span>				return fmt.Errorf(&#34;parameter %d: %w&#34;, i+1, err)
+<span id="L207" class="ln">   207  </span>			}
+<span id="L208" class="ln">   208  </span>		}
+<span id="L209" class="ln">   209  </span>	case &#34;BUILTIN&#34;:
+<span id="L210" class="ln">   210  </span>		<span class="comment">// BUILTIN parameter formats are command-specific and checked by the database</span>
+<span id="L211" class="ln">   211  </span>	default:
+<span id="L212" class="ln">   212  </span>		return fmt.Errorf(&#34;invalid task kind: %s (must be SQL, PROGRAM, or BUILTIN)&#34;, t.Kind)
+<span id="L213" class="ln">   213  </span>	}
+<span id="L214" class="ln">   214  </span>
+<span id="L215" class="ln">   215  </span>	<span class="comment">// Validate timeout is non-negative</span>
+<span id="L216" class="ln">   216  </span>	if t.Timeout &lt; 0 {
+<span id="L217" class="ln">   217  </span>		return fmt.Errorf(&#34;task timeout must be non-negative&#34;)
+<span id="L218" class="ln">   218  </span>	}
+<span id="L219" class="ln">   219  </span>
+<span id="L220" class="ln">   220  </span>	return nil
+<span id="L221" class="ln">   221  </span>}
+<span id="L222" class="ln">   222  </span>
+<span id="L223" class="ln">   223  </span><span class="comment">// validateArgs checks that one SQL or PROGRAM execution parameter is an argument array</span>
+<span id="L224" class="ln">   224  </span>func validateArgs(kind string, param any) error {
+<span id="L225" class="ln">   225  </span>	if param == nil {
+<span id="L226" class="ln">   226  </span>		return nil
+<span id="L227" class="ln">   227  </span>	}
+<span id="L228" class="ln">   228  </span>	args, ok := param.([]any)
+<span id="L229" class="ln">   229  </span>	if !ok {
+<span id="L230" class="ln">   230  </span>		return fmt.Errorf(&#34;must be an array of arguments, e.g. [%#v]&#34;, param)
+<span id="L231" class="ln">   231  </span>	}
+<span id="L232" class="ln">   232  </span>	if kind == &#34;PROGRAM&#34; {
+<span id="L233" class="ln">   233  </span>		for _, arg := range args {
+<span id="L234" class="ln">   234  </span>			if _, ok := arg.(string); !ok {
+<span id="L235" class="ln">   235  </span>				return fmt.Errorf(&#34;PROGRAM arguments must be strings, got %#v&#34;, arg)
+<span id="L236" class="ln">   236  </span>			}
+<span id="L237" class="ln">   237  </span>		}
+<span id="L238" class="ln">   238  </span>	}
+<span id="L239" class="ln">   239  </span>	return nil
+<span id="L240" class="ln">   240  </span>}
+<span id="L241" class="ln">   241  </span>
+<span id="L242" class="ln">   242  </span><span class="comment">// SetDefaults sets default values for optional fields</span>
+<span id="L243" class="ln">   243  </span>func (c *YamlChain) SetDefaults() {
+<span id="L244" class="ln">   244  </span>	<span class="comment">// Chain defaults</span>
+<span id="L245" class="ln">   245  </span>	if c.Schedule == &#34;&#34; {
+<span id="L246" class="ln">   246  </span>		c.Schedule = &#34;* * * * *&#34; <span class="comment">// Default to every minute</span>
+<span id="L247" class="ln">   247  </span>	}
+<span id="L248" class="ln">   248  </span>
+<span id="L249" class="ln">   249  </span>	<span class="comment">// Task defaults</span>
+<span id="L250" class="ln">   250  </span>	for i := range c.Tasks {
+<span id="L251" class="ln">   251  </span>		task := &amp;c.Tasks[i]
+<span id="L252" class="ln">   252  </span>		if task.Kind == &#34;&#34; {
+<span id="L253" class="ln">   253  </span>			task.Kind = &#34;SQL&#34;
+<span id="L254" class="ln">   254  </span>		}
+<span id="L255" class="ln">   255  </span>		<span class="comment">// Tasks are live by default, unlike chains</span>
+<span id="L256" class="ln">   256  </span>		if task.Live == nil {
+<span id="L257" class="ln">   257  </span>			live := true
+<span id="L258" class="ln">   258  </span>			task.Live = &amp;live
+<span id="L259" class="ln">   259  </span>		}
+<span id="L260" class="ln">   260  </span>	}
+<span id="L261" class="ln">   261  </span>}
+<span id="L262" class="ln">   262  </span>
+<span id="L263" class="ln">   263  </span><span class="comment">// ParseYamlFile parses a YAML file and returns the configuration</span>
+<span id="L264" class="ln">   264  </span>func ParseYamlFile(filePath string) (*YamlConfig, error) {
+<span id="L265" class="ln">   265  </span>	<span class="comment">// Check if file exists</span>
+<span id="L266" class="ln">   266  </span>	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+<span id="L267" class="ln">   267  </span>		return nil, fmt.Errorf(&#34;file not found: %s&#34;, filePath)
+<span id="L268" class="ln">   268  </span>	}
+<span id="L269" class="ln">   269  </span>
+<span id="L270" class="ln">   270  </span>	<span class="comment">// Read file</span>
+<span id="L271" class="ln">   271  </span>	data, err := os.ReadFile(filePath)
+<span id="L272" class="ln">   272  </span>	if err != nil {
+<span id="L273" class="ln">   273  </span>		return nil, fmt.Errorf(&#34;failed to read file: %w&#34;, err)
+<span id="L274" class="ln">   274  </span>	}
+<span id="L275" class="ln">   275  </span>
+<span id="L276" class="ln">   276  </span>	<span class="comment">// Parse YAML</span>
+<span id="L277" class="ln">   277  </span>	var config YamlConfig
+<span id="L278" class="ln">   278  </span>	if err := yaml.Unmarshal(data, &amp;config); err != nil {
+<span id="L279" class="ln">   279  </span>		return nil, fmt.Errorf(&#34;failed to parse YAML: %w&#34;, err)
+<span id="L280" class="ln">   280  </span>	}
+<span id="L281" class="ln">   281  </span>
+<span id="L282" class="ln">   282  </span>	<span class="comment">// Set defaults and validate</span>
+<span id="L283" class="ln">   283  </span>	for i := range config.Chains {
+<span id="L284" class="ln">   284  </span>		chain := &amp;config.Chains[i]
+<span id="L285" class="ln">   285  </span>		chain.SetDefaults()
+<span id="L286" class="ln">   286  </span>		if err := chain.ValidateChain(); err != nil {
+<span id="L287" class="ln">   287  </span>			return nil, fmt.Errorf(&#34;chain %d (%s): %w&#34;, i+1, chain.ChainName, err)
+<span id="L288" class="ln">   288  </span>		}
+<span id="L289" class="ln">   289  </span>	}
+<span id="L290" class="ln">   290  </span>
+<span id="L291" class="ln">   291  </span>	return &amp;config, nil
+<span id="L292" class="ln">   292  </span>}
+<span id="L293" class="ln">   293  </span>
 </pre><p></p>
 
 <div id="footer">
