@@ -5,11 +5,11 @@ go 1.27.0
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/cybertec-postgresql/pgx-migrator v1.4.0
-	github.com/jackc/pgx/v5 v5.11.0
+	github.com/jackc/pgx/v5 v5.12.0
 	github.com/jessevdk/go-flags v1.6.1
 	github.com/moby/moby/client v0.6.2
 	github.com/ory/mail/v3 v3.0.1-0.20210418065910-7f033ddea8dc
-	github.com/pashagolub/pgxmock/v6 v6.0.0-beta
+	github.com/pashagolub/pgxmock/v6 v6.0.0-beta2
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/sethvargo/go-retry v0.5.0
 	github.com/sirupsen/logrus v1.10.2
@@ -91,8 +91,8 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
-	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
