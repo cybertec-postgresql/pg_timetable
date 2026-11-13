@@ -112,3 +112,24 @@ BEGIN
     UPDATE timetable.task SET command = 'NoOp' WHERE task_id = v_task;
 END;
 $$;
+
+-- unknown BUILTIN command names are rejected, known ones accepted (keep in sync with scheduler.BuiltinTasks)
+DO $$
+DECLARE
+    v_chain BIGINT;
+    v_task  BIGINT;
+    c       TEXT;
+BEGIN
+    INSERT INTO timetable.chain (chain_name, run_at) VALUES ('builtin-names', '@reboot') RETURNING chain_id INTO v_chain;
+    ASSERT pg_temp.raises(format('INSERT INTO timetable.task (chain_id, task_order, kind, command) VALUES (%s, 1, %L, %L)', v_chain, 'BUILTIN', 'Slep'), '23514')
+        LIKE '%task_builtin_command_known%';
+    PERFORM pg_temp.raises(format('SELECT timetable.add_job(%L, %L, %L, NULL, %L)', 'typo', '@reboot', 'sleep', 'BUILTIN'), '23514');
+    FOREACH c IN ARRAY ARRAY['NoOp', 'Sleep', 'Log', 'SendMail', 'Download', 'CopyFromFile', 'CopyToFile', 'CopyToProgram', 'CopyFromProgram', 'Shutdown'] LOOP
+        INSERT INTO timetable.task (chain_id, task_order, kind, command) VALUES (v_chain, 1, 'BUILTIN', c);
+    END LOOP;
+    -- the check applies to BUILTIN only, and to updates of kind/command
+    INSERT INTO timetable.task (chain_id, task_order, kind, command) VALUES (v_chain, 1, 'SQL', 'Slep') RETURNING task_id INTO v_task;
+    PERFORM pg_temp.raises(format('UPDATE timetable.task SET kind = %L WHERE task_id = %s', 'BUILTIN', v_task), '23514');
+    UPDATE timetable.task SET command = 'SELECT 1' WHERE task_id = v_task;
+END;
+$$;
