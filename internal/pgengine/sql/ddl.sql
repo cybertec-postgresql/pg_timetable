@@ -389,3 +389,6 @@ COMMENT ON FUNCTION timetable.secret_count() IS
     'Number of stored secrets, used by the scheduler startup check when no encryption key is configured. Exposes no secret material and does not require pgcrypto.';
 
 REVOKE ALL ON FUNCTION timetable.secret_count() FROM PUBLIC;
+
+-- 00876 Reject unknown BUILTIN command names (mirrors migrations/00876.sql).
+ALTER TABLE timetable.task ADD CONSTRAINT task_builtin_command_known CHECK (kind <> 'BUILTIN' OR command IN ('NoOp','Sleep','Log','SendMail','Download','CopyFromFile','CopyToFile','CopyToProgram','CopyFromProgram','Shutdown'));

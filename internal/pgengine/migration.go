@@ -186,6 +186,12 @@ var Migrations func() migrator.Option = func() migrator.Option {
 				return ExecuteMigrationScript(ctx, tx, "00870.sql")
 			},
 		},
+		&migrator.Migration{
+			Name: "00876 Reject unknown BUILTIN command names",
+			Func: func(ctx context.Context, tx pgx.Tx) error {
+				return ExecuteMigrationScript(ctx, tx, "00876.sql")
+			},
+		},
 
 		// &migrator.Migration{
 		// 	Name: "000XX Short description of a migration",
