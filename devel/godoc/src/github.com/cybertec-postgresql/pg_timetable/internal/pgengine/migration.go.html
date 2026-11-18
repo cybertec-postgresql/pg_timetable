@@ -243,30 +243,36 @@
 <span id="L186" class="ln">   186  </span>				return ExecuteMigrationScript(ctx, tx, &#34;00870.sql&#34;)
 <span id="L187" class="ln">   187  </span>			},
 <span id="L188" class="ln">   188  </span>		},
-<span id="L189" class="ln">   189  </span>
-<span id="L190" class="ln">   190  </span>		<span class="comment">// &amp;migrator.Migration{</span>
-<span id="L191" class="ln">   191  </span>		<span class="comment">// 	Name: &#34;000XX Short description of a migration&#34;,</span>
-<span id="L192" class="ln">   192  </span>		<span class="comment">// 	Func: func(ctx context.Context, tx pgx.Tx) error {</span>
-<span id="L193" class="ln">   193  </span>		<span class="comment">// 		return executeMigrationScript(ctx, tx, &#34;000XX.sql&#34;)</span>
-<span id="L194" class="ln">   194  </span>		<span class="comment">// 	},</span>
-<span id="L195" class="ln">   195  </span>		<span class="comment">// },</span>
-<span id="L196" class="ln">   196  </span>	)
-<span id="L197" class="ln">   197  </span>}
-<span id="L198" class="ln">   198  </span>
-<span id="L199" class="ln">   199  </span>func (pge *PgEngine) initMigrator() (*migrator.Migrator, error) {
-<span id="L200" class="ln">   200  </span>	m, err := migrator.New(
-<span id="L201" class="ln">   201  </span>		migrator.TableName(&#34;timetable.migration&#34;),
-<span id="L202" class="ln">   202  </span>		migrator.SetNotice(func(s string) {
-<span id="L203" class="ln">   203  </span>			pge.l.Info(s)
-<span id="L204" class="ln">   204  </span>		}),
-<span id="L205" class="ln">   205  </span>		Migrations(),
-<span id="L206" class="ln">   206  </span>	)
-<span id="L207" class="ln">   207  </span>	if err != nil {
-<span id="L208" class="ln">   208  </span>		pge.l.WithError(err).Error(&#34;Cannot initialize migration&#34;)
-<span id="L209" class="ln">   209  </span>	}
-<span id="L210" class="ln">   210  </span>	return m, err
-<span id="L211" class="ln">   211  </span>}
-<span id="L212" class="ln">   212  </span>
+<span id="L189" class="ln">   189  </span>		&amp;migrator.Migration{
+<span id="L190" class="ln">   190  </span>			Name: &#34;00876 Reject unknown BUILTIN command names&#34;,
+<span id="L191" class="ln">   191  </span>			Func: func(ctx context.Context, tx pgx.Tx) error {
+<span id="L192" class="ln">   192  </span>				return ExecuteMigrationScript(ctx, tx, &#34;00876.sql&#34;)
+<span id="L193" class="ln">   193  </span>			},
+<span id="L194" class="ln">   194  </span>		},
+<span id="L195" class="ln">   195  </span>
+<span id="L196" class="ln">   196  </span>		<span class="comment">// &amp;migrator.Migration{</span>
+<span id="L197" class="ln">   197  </span>		<span class="comment">// 	Name: &#34;000XX Short description of a migration&#34;,</span>
+<span id="L198" class="ln">   198  </span>		<span class="comment">// 	Func: func(ctx context.Context, tx pgx.Tx) error {</span>
+<span id="L199" class="ln">   199  </span>		<span class="comment">// 		return executeMigrationScript(ctx, tx, &#34;000XX.sql&#34;)</span>
+<span id="L200" class="ln">   200  </span>		<span class="comment">// 	},</span>
+<span id="L201" class="ln">   201  </span>		<span class="comment">// },</span>
+<span id="L202" class="ln">   202  </span>	)
+<span id="L203" class="ln">   203  </span>}
+<span id="L204" class="ln">   204  </span>
+<span id="L205" class="ln">   205  </span>func (pge *PgEngine) initMigrator() (*migrator.Migrator, error) {
+<span id="L206" class="ln">   206  </span>	m, err := migrator.New(
+<span id="L207" class="ln">   207  </span>		migrator.TableName(&#34;timetable.migration&#34;),
+<span id="L208" class="ln">   208  </span>		migrator.SetNotice(func(s string) {
+<span id="L209" class="ln">   209  </span>			pge.l.Info(s)
+<span id="L210" class="ln">   210  </span>		}),
+<span id="L211" class="ln">   211  </span>		Migrations(),
+<span id="L212" class="ln">   212  </span>	)
+<span id="L213" class="ln">   213  </span>	if err != nil {
+<span id="L214" class="ln">   214  </span>		pge.l.WithError(err).Error(&#34;Cannot initialize migration&#34;)
+<span id="L215" class="ln">   215  </span>	}
+<span id="L216" class="ln">   216  </span>	return m, err
+<span id="L217" class="ln">   217  </span>}
+<span id="L218" class="ln">   218  </span>
 </pre><p></p>
 
 <div id="footer">

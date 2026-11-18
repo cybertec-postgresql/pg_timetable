@@ -64,99 +64,119 @@
 <span id="L7" class="ln">     7  </span>	&#34;testing&#34;
 <span id="L8" class="ln">     8  </span>
 <span id="L9" class="ln">     9  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/pgengine&#34;
-<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
-<span id="L11" class="ln">    11  </span>	migrator &#34;github.com/cybertec-postgresql/pgx-migrator&#34;
-<span id="L12" class="ln">    12  </span>	&#34;github.com/jackc/pgx/v5/pgconn&#34;
-<span id="L13" class="ln">    13  </span>	&#34;github.com/stretchr/testify/assert&#34;
-<span id="L14" class="ln">    14  </span>	&#34;github.com/stretchr/testify/require&#34;
-<span id="L15" class="ln">    15  </span>)
-<span id="L16" class="ln">    16  </span>
-<span id="L17" class="ln">    17  </span><span class="comment">//go:embed sql/migrations/00000.sql</span>
-<span id="L18" class="ln">    18  </span>var initialsql string
-<span id="L19" class="ln">    19  </span>
-<span id="L20" class="ln">    20  </span>func TestMigrations(t *testing.T) {
-<span id="L21" class="ln">    21  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L22" class="ln">    22  </span>	defer cleanup()
-<span id="L23" class="ln">    23  </span>
-<span id="L24" class="ln">    24  </span>	ctx := context.Background()
-<span id="L25" class="ln">    25  </span>	pge := container.Engine
-<span id="L26" class="ln">    26  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
-<span id="L27" class="ln">    27  </span>	assert.NoError(t, err)
-<span id="L28" class="ln">    28  </span>	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
-<span id="L29" class="ln">    29  </span>	assert.NoError(t, err)
-<span id="L30" class="ln">    30  </span>	ok, err := pge.CheckNeedMigrateDb(ctx)
-<span id="L31" class="ln">    31  </span>	assert.NoError(t, err)
-<span id="L32" class="ln">    32  </span>	assert.True(t, ok, &#34;Should need migrations&#34;)
-<span id="L33" class="ln">    33  </span>	assert.NoError(t, pge.MigrateDb(ctx), &#34;Migrations should be applied&#34;)
-<span id="L34" class="ln">    34  </span>
-<span id="L35" class="ln">    35  </span>	<span class="comment">// 00820 applies over every prior migration and the</span>
-<span id="L36" class="ln">    36  </span>	<span class="comment">// timetable.secret store is created.</span>
-<span id="L37" class="ln">    37  </span>	var hasSecret bool
-<span id="L38" class="ln">    38  </span>	assert.NoError(t, pge.ConfigDb.QueryRow(ctx,
-<span id="L39" class="ln">    39  </span>		`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c
-<span id="L40" class="ln">    40  </span>		                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-<span id="L41" class="ln">    41  </span>		                WHERE n.nspname=&#39;timetable&#39; AND c.relname=&#39;secret&#39;)`).Scan(&amp;hasSecret))
-<span id="L42" class="ln">    42  </span>	assert.True(t, hasSecret, &#34;00820 must create timetable.secret&#34;)
-<span id="L43" class="ln">    43  </span>
-<span id="L44" class="ln">    44  </span>	<span class="comment">// 00850 replaces timetable.cron_split_to_arrays on existing installs.</span>
-<span id="L45" class="ln">    45  </span>	assertCronSplitRejectsValue(t, pge)
-<span id="L46" class="ln">    46  </span>
-<span id="L47" class="ln">    47  </span>	<span class="comment">// 00870 adds the check_parameter trigger.</span>
-<span id="L48" class="ln">    48  </span>	assertScalarParameterRejected(t, pge)
-<span id="L49" class="ln">    49  </span>}
+<span id="L10" class="ln">    10  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/scheduler&#34;
+<span id="L11" class="ln">    11  </span>	&#34;github.com/cybertec-postgresql/pg_timetable/internal/testutils&#34;
+<span id="L12" class="ln">    12  </span>	migrator &#34;github.com/cybertec-postgresql/pgx-migrator&#34;
+<span id="L13" class="ln">    13  </span>	&#34;github.com/jackc/pgx/v5/pgconn&#34;
+<span id="L14" class="ln">    14  </span>	&#34;github.com/stretchr/testify/assert&#34;
+<span id="L15" class="ln">    15  </span>	&#34;github.com/stretchr/testify/require&#34;
+<span id="L16" class="ln">    16  </span>)
+<span id="L17" class="ln">    17  </span>
+<span id="L18" class="ln">    18  </span><span class="comment">//go:embed sql/migrations/00000.sql</span>
+<span id="L19" class="ln">    19  </span>var initialsql string
+<span id="L20" class="ln">    20  </span>
+<span id="L21" class="ln">    21  </span>func TestMigrations(t *testing.T) {
+<span id="L22" class="ln">    22  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L23" class="ln">    23  </span>	defer cleanup()
+<span id="L24" class="ln">    24  </span>
+<span id="L25" class="ln">    25  </span>	ctx := context.Background()
+<span id="L26" class="ln">    26  </span>	pge := container.Engine
+<span id="L27" class="ln">    27  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;DROP SCHEMA IF EXISTS timetable CASCADE&#34;)
+<span id="L28" class="ln">    28  </span>	assert.NoError(t, err)
+<span id="L29" class="ln">    29  </span>	_, err = pge.ConfigDb.Exec(ctx, string(initialsql))
+<span id="L30" class="ln">    30  </span>	assert.NoError(t, err)
+<span id="L31" class="ln">    31  </span>	ok, err := pge.CheckNeedMigrateDb(ctx)
+<span id="L32" class="ln">    32  </span>	assert.NoError(t, err)
+<span id="L33" class="ln">    33  </span>	assert.True(t, ok, &#34;Should need migrations&#34;)
+<span id="L34" class="ln">    34  </span>	assert.NoError(t, pge.MigrateDb(ctx), &#34;Migrations should be applied&#34;)
+<span id="L35" class="ln">    35  </span>
+<span id="L36" class="ln">    36  </span>	<span class="comment">// 00820 applies over every prior migration and the</span>
+<span id="L37" class="ln">    37  </span>	<span class="comment">// timetable.secret store is created.</span>
+<span id="L38" class="ln">    38  </span>	var hasSecret bool
+<span id="L39" class="ln">    39  </span>	assert.NoError(t, pge.ConfigDb.QueryRow(ctx,
+<span id="L40" class="ln">    40  </span>		`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_class c
+<span id="L41" class="ln">    41  </span>		                JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+<span id="L42" class="ln">    42  </span>		                WHERE n.nspname=&#39;timetable&#39; AND c.relname=&#39;secret&#39;)`).Scan(&amp;hasSecret))
+<span id="L43" class="ln">    43  </span>	assert.True(t, hasSecret, &#34;00820 must create timetable.secret&#34;)
+<span id="L44" class="ln">    44  </span>
+<span id="L45" class="ln">    45  </span>	<span class="comment">// 00850 replaces timetable.cron_split_to_arrays on existing installs.</span>
+<span id="L46" class="ln">    46  </span>	assertCronSplitRejectsValue(t, pge)
+<span id="L47" class="ln">    47  </span>
+<span id="L48" class="ln">    48  </span>	<span class="comment">// 00870 adds the check_parameter trigger.</span>
+<span id="L49" class="ln">    49  </span>	assertScalarParameterRejected(t, pge)
 <span id="L50" class="ln">    50  </span>
-<span id="L51" class="ln">    51  </span>func assertScalarParameterRejected(t *testing.T, pge *pgengine.PgEngine) {
-<span id="L52" class="ln">    52  </span>	t.Helper()
-<span id="L53" class="ln">    53  </span>	ctx := context.Background()
-<span id="L54" class="ln">    54  </span>	var chainID int64
-<span id="L55" class="ln">    55  </span>	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
-<span id="L56" class="ln">    56  </span>		&#34;SELECT timetable.add_job(&#39;scalar-param&#39;, &#39;* * * * *&#39;, &#39;SELECT $1&#39;, &#39;[\&#34;ok\&#34;]&#39;)&#34;).Scan(&amp;chainID))
-<span id="L57" class="ln">    57  </span>	defer func() { _, _ = pge.ConfigDb.Exec(ctx, &#34;SELECT timetable.delete_job(&#39;scalar-param&#39;)&#34;) }()
-<span id="L58" class="ln">    58  </span>	_, err := pge.ConfigDb.Exec(ctx,
-<span id="L59" class="ln">    59  </span>		`UPDATE timetable.parameter p SET value = &#39;&#34;ok&#34;&#39; FROM timetable.task t
-<span id="L60" class="ln">    60  </span>		 WHERE p.task_id = t.task_id AND t.chain_id = $1`, chainID)
-<span id="L61" class="ln">    61  </span>	var pgErr *pgconn.PgError
-<span id="L62" class="ln">    62  </span>	require.True(t, errors.As(err, &amp;pgErr), &#34;expected a PostgreSQL error, got %v&#34;, err)
-<span id="L63" class="ln">    63  </span>	assert.Equal(t, &#34;23514&#34;, pgErr.Code)
-<span id="L64" class="ln">    64  </span>}
-<span id="L65" class="ln">    65  </span>
-<span id="L66" class="ln">    66  </span><span class="comment">// TestCronSplitToArraysUnknownValue checks the function created by cron.sql on a fresh install.</span>
-<span id="L67" class="ln">    67  </span>func TestCronSplitToArraysUnknownValue(t *testing.T) {
-<span id="L68" class="ln">    68  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L69" class="ln">    69  </span>	defer cleanup()
-<span id="L70" class="ln">    70  </span>	assertCronSplitRejectsValue(t, container.Engine)
-<span id="L71" class="ln">    71  </span>}
-<span id="L72" class="ln">    72  </span>
-<span id="L73" class="ln">    73  </span><span class="comment">// assertCronSplitRejectsValue expects the &#34;not recognized&#34; exception, not the</span>
-<span id="L74" class="ln">    74  </span><span class="comment">// 42725 error the old `text + text` hint raised.</span>
-<span id="L75" class="ln">    75  </span>func assertCronSplitRejectsValue(t *testing.T, pge *pgengine.PgEngine) {
-<span id="L76" class="ln">    76  </span>	t.Helper()
-<span id="L77" class="ln">    77  </span>	_, err := pge.ConfigDb.Exec(context.Background(), &#34;SELECT timetable.cron_split_to_arrays(&#39;foo * * * *&#39;)&#34;)
-<span id="L78" class="ln">    78  </span>	var pgErr *pgconn.PgError
-<span id="L79" class="ln">    79  </span>	require.True(t, errors.As(err, &amp;pgErr), &#34;expected a PostgreSQL error, got %v&#34;, err)
-<span id="L80" class="ln">    80  </span>	assert.Equal(t, &#34;P0001&#34;, pgErr.Code)
-<span id="L81" class="ln">    81  </span>	assert.Equal(t, `Value (&#34;foo&#34;) not recognized`, pgErr.Message)
-<span id="L82" class="ln">    82  </span>	assert.Contains(t, pgErr.Hint, &#34;fields separated by space or tab. Values allowed&#34;)
-<span id="L83" class="ln">    83  </span>}
-<span id="L84" class="ln">    84  </span>func TestExecuteMigrationScript(t *testing.T) {
-<span id="L85" class="ln">    85  </span>	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, &#34;foo&#34;), &#34;File does not exist&#34;)
-<span id="L86" class="ln">    86  </span>}
-<span id="L87" class="ln">    87  </span>
-<span id="L88" class="ln">    88  </span>func TestInitMigrator(t *testing.T) {
-<span id="L89" class="ln">    89  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
-<span id="L90" class="ln">    90  </span>	defer cleanup()
-<span id="L91" class="ln">    91  </span>	pgengine.Migrations = func() migrator.Option {
-<span id="L92" class="ln">    92  </span>		return migrator.Migrations()
-<span id="L93" class="ln">    93  </span>	}
-<span id="L94" class="ln">    94  </span>
-<span id="L95" class="ln">    95  </span>	ctx := context.Background()
-<span id="L96" class="ln">    96  </span>	pge := container.Engine
-<span id="L97" class="ln">    97  </span>	err := pge.MigrateDb(ctx)
-<span id="L98" class="ln">    98  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
-<span id="L99" class="ln">    99  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
-<span id="L100" class="ln">   100  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
-<span id="L101" class="ln">   101  </span>}
-<span id="L102" class="ln">   102  </span>
+<span id="L51" class="ln">    51  </span>	<span class="comment">// 00876 adds the task_builtin_command_known constraint.</span>
+<span id="L52" class="ln">    52  </span>	assertUnknownBuiltinRejected(t, pge)
+<span id="L53" class="ln">    53  </span>}
+<span id="L54" class="ln">    54  </span>
+<span id="L55" class="ln">    55  </span>func assertUnknownBuiltinRejected(t *testing.T, pge *pgengine.PgEngine) {
+<span id="L56" class="ln">    56  </span>	t.Helper()
+<span id="L57" class="ln">    57  </span>	ctx := context.Background()
+<span id="L58" class="ln">    58  </span>	_, err := pge.ConfigDb.Exec(ctx, &#34;SELECT timetable.add_job(&#39;typo-builtin&#39;, &#39;* * * * *&#39;, &#39;Slep&#39;, &#39;5&#39;, &#39;BUILTIN&#39;)&#34;)
+<span id="L59" class="ln">    59  </span>	var pgErr *pgconn.PgError
+<span id="L60" class="ln">    60  </span>	require.True(t, errors.As(err, &amp;pgErr), &#34;expected a PostgreSQL error, got %v&#34;, err)
+<span id="L61" class="ln">    61  </span>	assert.Equal(t, &#34;23514&#34;, pgErr.Code)
+<span id="L62" class="ln">    62  </span>	assert.Contains(t, pgErr.Message, `task_builtin_command_known`)
+<span id="L63" class="ln">    63  </span>	<span class="comment">// every command the scheduler handles must be accepted, so SQL and Go lists stay in sync</span>
+<span id="L64" class="ln">    64  </span>	for name := range scheduler.BuiltinTasks {
+<span id="L65" class="ln">    65  </span>		_, err = pge.ConfigDb.Exec(ctx, &#34;SELECT timetable.add_job($1, &#39;* * * * *&#39;, $1, NULL, &#39;BUILTIN&#39;)&#34;, name)
+<span id="L66" class="ln">    66  </span>		assert.NoError(t, err, &#34;BUILTIN command %s must be accepted by task_builtin_command_known&#34;, name)
+<span id="L67" class="ln">    67  </span>		_, _ = pge.ConfigDb.Exec(ctx, &#34;SELECT timetable.delete_job($1)&#34;, name)
+<span id="L68" class="ln">    68  </span>	}
+<span id="L69" class="ln">    69  </span>}
+<span id="L70" class="ln">    70  </span>
+<span id="L71" class="ln">    71  </span>func assertScalarParameterRejected(t *testing.T, pge *pgengine.PgEngine) {
+<span id="L72" class="ln">    72  </span>	t.Helper()
+<span id="L73" class="ln">    73  </span>	ctx := context.Background()
+<span id="L74" class="ln">    74  </span>	var chainID int64
+<span id="L75" class="ln">    75  </span>	require.NoError(t, pge.ConfigDb.QueryRow(ctx,
+<span id="L76" class="ln">    76  </span>		&#34;SELECT timetable.add_job(&#39;scalar-param&#39;, &#39;* * * * *&#39;, &#39;SELECT $1&#39;, &#39;[\&#34;ok\&#34;]&#39;)&#34;).Scan(&amp;chainID))
+<span id="L77" class="ln">    77  </span>	defer func() { _, _ = pge.ConfigDb.Exec(ctx, &#34;SELECT timetable.delete_job(&#39;scalar-param&#39;)&#34;) }()
+<span id="L78" class="ln">    78  </span>	_, err := pge.ConfigDb.Exec(ctx,
+<span id="L79" class="ln">    79  </span>		`UPDATE timetable.parameter p SET value = &#39;&#34;ok&#34;&#39; FROM timetable.task t
+<span id="L80" class="ln">    80  </span>		 WHERE p.task_id = t.task_id AND t.chain_id = $1`, chainID)
+<span id="L81" class="ln">    81  </span>	var pgErr *pgconn.PgError
+<span id="L82" class="ln">    82  </span>	require.True(t, errors.As(err, &amp;pgErr), &#34;expected a PostgreSQL error, got %v&#34;, err)
+<span id="L83" class="ln">    83  </span>	assert.Equal(t, &#34;23514&#34;, pgErr.Code)
+<span id="L84" class="ln">    84  </span>}
+<span id="L85" class="ln">    85  </span>
+<span id="L86" class="ln">    86  </span><span class="comment">// TestCronSplitToArraysUnknownValue checks the function created by cron.sql on a fresh install.</span>
+<span id="L87" class="ln">    87  </span>func TestCronSplitToArraysUnknownValue(t *testing.T) {
+<span id="L88" class="ln">    88  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L89" class="ln">    89  </span>	defer cleanup()
+<span id="L90" class="ln">    90  </span>	assertCronSplitRejectsValue(t, container.Engine)
+<span id="L91" class="ln">    91  </span>}
+<span id="L92" class="ln">    92  </span>
+<span id="L93" class="ln">    93  </span><span class="comment">// assertCronSplitRejectsValue expects the &#34;not recognized&#34; exception, not the</span>
+<span id="L94" class="ln">    94  </span><span class="comment">// 42725 error the old `text + text` hint raised.</span>
+<span id="L95" class="ln">    95  </span>func assertCronSplitRejectsValue(t *testing.T, pge *pgengine.PgEngine) {
+<span id="L96" class="ln">    96  </span>	t.Helper()
+<span id="L97" class="ln">    97  </span>	_, err := pge.ConfigDb.Exec(context.Background(), &#34;SELECT timetable.cron_split_to_arrays(&#39;foo * * * *&#39;)&#34;)
+<span id="L98" class="ln">    98  </span>	var pgErr *pgconn.PgError
+<span id="L99" class="ln">    99  </span>	require.True(t, errors.As(err, &amp;pgErr), &#34;expected a PostgreSQL error, got %v&#34;, err)
+<span id="L100" class="ln">   100  </span>	assert.Equal(t, &#34;P0001&#34;, pgErr.Code)
+<span id="L101" class="ln">   101  </span>	assert.Equal(t, `Value (&#34;foo&#34;) not recognized`, pgErr.Message)
+<span id="L102" class="ln">   102  </span>	assert.Contains(t, pgErr.Hint, &#34;fields separated by space or tab. Values allowed&#34;)
+<span id="L103" class="ln">   103  </span>}
+<span id="L104" class="ln">   104  </span>func TestExecuteMigrationScript(t *testing.T) {
+<span id="L105" class="ln">   105  </span>	assert.Error(t, pgengine.ExecuteMigrationScript(context.Background(), nil, &#34;foo&#34;), &#34;File does not exist&#34;)
+<span id="L106" class="ln">   106  </span>}
+<span id="L107" class="ln">   107  </span>
+<span id="L108" class="ln">   108  </span>func TestInitMigrator(t *testing.T) {
+<span id="L109" class="ln">   109  </span>	container, cleanup := testutils.SetupPostgresContainer(t)
+<span id="L110" class="ln">   110  </span>	defer cleanup()
+<span id="L111" class="ln">   111  </span>	pgengine.Migrations = func() migrator.Option {
+<span id="L112" class="ln">   112  </span>		return migrator.Migrations()
+<span id="L113" class="ln">   113  </span>	}
+<span id="L114" class="ln">   114  </span>
+<span id="L115" class="ln">   115  </span>	ctx := context.Background()
+<span id="L116" class="ln">   116  </span>	pge := container.Engine
+<span id="L117" class="ln">   117  </span>	err := pge.MigrateDb(ctx)
+<span id="L118" class="ln">   118  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
+<span id="L119" class="ln">   119  </span>	_, err = pge.CheckNeedMigrateDb(ctx)
+<span id="L120" class="ln">   120  </span>	assert.Error(t, err, &#34;Empty migrations&#34;)
+<span id="L121" class="ln">   121  </span>}
+<span id="L122" class="ln">   122  </span>
 </pre><p></p>
 
 <div id="footer">
