@@ -42,7 +42,10 @@ CREATE TABLE timetable.task (
     ignore_error        BOOLEAN                 NOT NULL DEFAULT FALSE,
     autonomous          BOOLEAN                 NOT NULL DEFAULT FALSE,
     timeout             INTEGER                 DEFAULT 0,
-    live                BOOLEAN                 NOT NULL DEFAULT TRUE
+    live                BOOLEAN                 NOT NULL DEFAULT TRUE,
+    CONSTRAINT task_builtin_command_known
+        CHECK (kind <> 'BUILTIN' OR command IN ('NoOp', 'Sleep', 'Log', 'SendMail', 'Download',
+            'CopyFromFile', 'CopyToFile', 'CopyToProgram', 'CopyFromProgram', 'Shutdown'))
 );          
 
 COMMENT ON TABLE timetable.task IS
@@ -78,7 +81,6 @@ CREATE TABLE timetable.parameter(
 COMMENT ON TABLE timetable.parameter IS
     'Stores parameters passed as arguments to a chain task';
 
--- 00870 Check parameter value shape (mirrors migrations/00870.sql).
 CREATE OR REPLACE FUNCTION timetable.parameter_shape_error(kind timetable.command_kind, command TEXT, value JSONB)
 RETURNS TEXT AS
 $CODE$
@@ -273,8 +275,6 @@ STRICT
 LANGUAGE plpgsql;
 
 
--- 00820 Add timetable.secret store (mirrors migrations/00820.sql).
---
 -- pg_timetable never installs any PostgreSQL extension. This block applies
 -- unchanged on a database that has no pgcrypto installed. The extension is
 -- looked up at call time inside resolve_secret.

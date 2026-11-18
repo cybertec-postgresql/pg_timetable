@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/cybertec-postgresql/pg_timetable/internal/pgengine"
+	"github.com/cybertec-postgresql/pg_timetable/internal/scheduler"
 	"github.com/cybertec-postgresql/pg_timetable/internal/testutils"
 	migrator "github.com/cybertec-postgresql/pgx-migrator"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -46,6 +47,25 @@ func TestMigrations(t *testing.T) {
 
 	// 00870 adds the check_parameter trigger.
 	assertScalarParameterRejected(t, pge)
+
+	// 00876 adds the task_builtin_command_known constraint.
+	assertUnknownBuiltinRejected(t, pge)
+}
+
+func assertUnknownBuiltinRejected(t *testing.T, pge *pgengine.PgEngine) {
+	t.Helper()
+	ctx := context.Background()
+	_, err := pge.ConfigDb.Exec(ctx, "SELECT timetable.add_job('typo-builtin', '* * * * *', 'Slep', '5', 'BUILTIN')")
+	var pgErr *pgconn.PgError
+	require.True(t, errors.As(err, &pgErr), "expected a PostgreSQL error, got %v", err)
+	assert.Equal(t, "23514", pgErr.Code)
+	assert.Contains(t, pgErr.Message, `task_builtin_command_known`)
+	// every command the scheduler handles must be accepted, so SQL and Go lists stay in sync
+	for name := range scheduler.BuiltinTasks {
+		_, err = pge.ConfigDb.Exec(ctx, "SELECT timetable.add_job($1, '* * * * *', $1, NULL, 'BUILTIN')", name)
+		assert.NoError(t, err, "BUILTIN command %s must be accepted by task_builtin_command_known", name)
+		_, _ = pge.ConfigDb.Exec(ctx, "SELECT timetable.delete_job($1)", name)
+	}
 }
 
 func assertScalarParameterRejected(t *testing.T, pge *pgengine.PgEngine) {
