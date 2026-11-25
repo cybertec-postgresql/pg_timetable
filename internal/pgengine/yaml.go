@@ -151,6 +151,28 @@ func nullString(s string) any {
 	return s
 }
 
+
+// isSpecialSchedule reports whether schedule matches the non-cron forms
+// accepted by the timetable.cron domain (see sql/cron.sql).
+func isSpecialSchedule(schedule string) bool {
+	if schedule == "@reboot" {
+		return true
+	}
+	if len(schedule) <= 6 {
+		return false
+	}
+	prefix := schedule[:6]
+	if prefix != "@every" && prefix != "@after" {
+		return false
+	}
+	rest := strings.TrimSpace(schedule[6:])
+	if rest == "" {
+		return false
+	}
+	// Reject lookalikes like "@everything" where the "interval" is not numeric.
+	return rest[0] >= '0' && rest[0] <= '9'
+}
+
 // ValidateChain validates a YAML chain configuration
 func (c *YamlChain) ValidateChain() error {
 	if c.ChainName == "" {
@@ -161,17 +183,11 @@ func (c *YamlChain) ValidateChain() error {
 		return fmt.Errorf("chain schedule is required")
 	}
 
-	// Validate cron format
-	specialSchedules := []string{"@reboot", "@after", "@every"}
-	isSpecial := false
-	for _, s := range specialSchedules {
-		if strings.HasPrefix(c.Schedule, s) {
-			isSpecial = true
-			break
-		}
-	}
-
-	if !isSpecial {
+	// Align with the timetable.cron domain check in sql/cron.sql:
+	// exact "@reboot", or "@every"/"@after" followed by a non-empty interval
+	// that starts with a digit (Postgres casts substr(run_at, 7) to INTERVAL).
+	// HasPrefix alone accepted "@everything" / "@afterglow" / bare "@every".
+	if !isSpecialSchedule(c.Schedule) {
 		fields := strings.Fields(c.Schedule)
 		if len(fields) != 5 {
 			return fmt.Errorf("invalid cron format: %s (expected 5 fields)", c.Schedule)

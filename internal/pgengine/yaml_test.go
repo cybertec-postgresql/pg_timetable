@@ -390,7 +390,7 @@ func TestYamlChainValidation(t *testing.T) {
 	})
 
 	t.Run("Special schedules", func(t *testing.T) {
-		specialSchedules := []string{"@reboot", "@after", "@every"}
+		specialSchedules := []string{"@reboot", "@after 5 minutes", "@every 1 hour", "@every1h"}
 		for _, schedule := range specialSchedules {
 			chain := &pgengine.YamlChain{
 				ChainName: "test-chain",
@@ -405,6 +405,20 @@ func TestYamlChainValidation(t *testing.T) {
 
 			err := chain.ValidateChain()
 			assert.NoError(t, err, "Schedule %s should be valid", schedule)
+		}
+	})
+
+	t.Run("Reject special schedule lookalikes", func(t *testing.T) {
+		for _, schedule := range []string{"@everything", "@afterglow", "@rebootx", "@every", "@after"} {
+			chain := &pgengine.YamlChain{
+				ChainName: "test-chain",
+				Schedule:  schedule,
+				Tasks: []pgengine.YamlTask{
+					{Command: "SELECT 1", Kind: "SQL"},
+				},
+			}
+			err := chain.ValidateChain()
+			assert.Error(t, err, "Schedule %s should be rejected", schedule)
 		}
 	})
 
